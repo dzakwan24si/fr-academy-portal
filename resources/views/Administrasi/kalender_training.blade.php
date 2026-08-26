@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Kalender Training | FR Academy Enterprise Portal</title>
-    
+
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -67,7 +67,7 @@
                 <span class="font-medium text-sm">Dashboard</span>
             </a>
         </nav>
-        
+
         <!-- Sidebar Footer Info -->
         <div class="p-4 border-t border-[#E5E7EB] text-center text-xs text-[#A1A1AA]">
             v{{ app()->version() }} &copy; FR Academy 2026
@@ -97,7 +97,7 @@
                 <button class="w-9 h-9 rounded-full hover:bg-[#F4F4F5] flex items-center justify-center text-[#71717A]">
                     <i data-lucide="help-circle" class="w-5 h-5"></i>
                 </button>
-                
+
                 <div class="h-6 w-px bg-[#E5E7EB]"></div>
 
                 <!-- Admin Profile Card -->
@@ -113,14 +113,14 @@
 
         <!-- Main Body -->
         <main class="flex-1 overflow-y-auto p-8 space-y-6">
-            
+
             <!-- Welcome Header -->
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h2 class="text-3xl font-bold text-primary-900 tracking-tight">Kalender Training</h2>
                     <p class="text-[#71717A] mt-1">Kelola master data program pelatihan.</p>
                 </div>
-                
+
                 <!-- Statically Locked Year indicator -->
                 <div class="bg-white border border-[#E5E7EB] rounded-full px-4 py-1.5 flex items-center gap-2 shadow-2xs">
                     <span class="w-2 h-2 bg-primary-500 rounded-full animate-pulse"></span>
@@ -141,7 +141,7 @@
                     ];
                 @endphp
                 @foreach ($categories as $cat)
-                    <a href="?category={{ urlencode($cat) }}" 
+                    <a href="?category={{ urlencode($cat) }}"
                        class="bg-white border rounded-xl p-4 flex flex-col justify-between transition-all hover:shadow-md hover:border-primary-300 {{ $activeCategory === $cat ? 'border-primary-500 ring-2 ring-primary-100 shadow-sm' : 'border-[#E5E7EB]' }}">
                         <div class="flex items-center justify-between">
                             <div class="p-2 rounded-lg {{ $activeCategory === $cat ? 'bg-primary-100 text-primary-600' : 'bg-[#F4F4F5] text-[#71717A]' }}">
@@ -214,7 +214,7 @@
                     <form action="" method="GET" class="w-full flex flex-col md:flex-row items-stretch md:items-center gap-4">
                         <!-- Retain active states -->
                         <input type="hidden" name="category" value="{{ $activeCategory }}">
-                        
+
                         <!-- Location Dropdown Filter -->
                         <div class="relative w-full md:w-56">
                             <select name="location" onchange="this.form.submit()" class="w-full appearance-none bg-white border border-[#E5E7EB] rounded-lg py-2 pl-4 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary-100 focus:border-primary-500 text-[#18181B] font-medium">
@@ -272,7 +272,7 @@
                                             <span class="text-xs font-normal text-[#71717A] mt-0.5 block truncate">{{ $prog['section'] }}</span>
                                         @endif
                                     </td>
-                                    
+
                                     <!-- Program Category Badge -->
                                     <td class="py-4 px-6 whitespace-nowrap">
                                         @php
@@ -410,7 +410,7 @@
                         <h4 class="font-bold text-sm text-[#18181B] border-b border-[#E5E7EB] pb-2 flex items-center gap-2">
                             <i data-lucide="users" class="w-4 h-4 text-primary-500"></i> Target & Breakdown Peserta
                         </h4>
-                        
+
                         <!-- Breakdown Grid -->
                         <div class="grid grid-cols-4 gap-2 text-center text-xs">
                             <div class="bg-white border rounded-lg p-2">
@@ -454,7 +454,7 @@
                     <h4 class="font-bold text-sm text-[#18181B] mb-3 flex items-center gap-2">
                         <i data-lucide="calendar-range" class="w-4 h-4 text-primary-500"></i> Kalender Rencana Pelaksanaan (Jan - Des 2026)
                     </h4>
-                    
+
                     <div class="grid grid-cols-3 md:grid-cols-6 gap-3" id="calendarGrid">
                         @php
                             $monthsList = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sept', 'Okt', 'Nov', 'Des'];
@@ -505,7 +505,7 @@
             const badge = document.getElementById('modalCategoryBadge');
             badge.textContent = program.subsection ? program.subsection : program.sheet;
             badge.className = "px-2.5 py-1 text-xs font-bold rounded-full ";
-            
+
             const sub = program.subsection;
             if (program.sheet === 'Reguler') {
                 badge.className += "bg-blue-100 text-blue-800";
@@ -522,11 +522,11 @@
             }
 
             const monthsList = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sept', 'Okt', 'Nov', 'Des'];
-            
+
             monthsList.forEach(m => {
                 const card = document.getElementById('m-card-' + m);
                 const valNode = document.getElementById('m-val-' + m);
-                
+
                 if (program.calendar && program.calendar[m]) {
                     const scheduleVal = program.calendar[m];
                     valNode.textContent = program.sheet === 'Reguler' ? (scheduleVal + " org") : ("Batch " + scheduleVal);
@@ -565,5 +565,6 @@
             if (e.target === document.getElementById('scheduleModal')) closeScheduleModal();
         });
     </script>
+    TEST
 </body>
 </html>

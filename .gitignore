@@ -25,3 +25,7 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Private Training Data
+/storage/app/kalender_training.json
+/storage/app/Kalender_Pelatihan.xlsx
