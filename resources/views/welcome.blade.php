@@ -197,7 +197,7 @@
                 <div>
                     <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">LAYANAN KAMI</span>
                     <h2 class="text-3xl md:text-4xl font-bold text-teal-primary mt-4 mb-10 leading-tight">
-                        Dari Bibit Hingga Panen — <br>Layanan Penuh Kami
+                        Pusat Pengembangan Kompetensi — <br>Kurikulum & Proses Bisnis
                     </h2>
                     
                     <div class="space-y-4" x-data="{ selected: 1 }">
@@ -208,7 +208,33 @@
                                 <svg class="w-6 h-6 transform transition-transform" :class="selected === 1 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                             <div x-show="selected === 1" x-collapse class="text-gray-600 mt-4 pr-8">
-                                Program pelatihan dasar bagi karyawan baru maupun calon karyawan yang akan ditempatkan di berbagai kebun operasional.
+                                <p class="mb-3">Program pelatihan dasar bagi karyawan baru maupun calon karyawan yang akan ditempatkan di berbagai kebun operasional.</p>
+                                <ul class="space-y-2 ml-4">
+                                    <li class="flex items-start">
+                                        <svg class="w-5 h-5 text-green-accent mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <span><a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Field Assistant</a>: Penjelasan singkat mengenai asisten kebun.</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-5 h-5 text-green-accent mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <span><a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Mill Assistant</a>: Penjelasan mengenai asisten pabrik kelapa sawit.</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-5 h-5 text-green-accent mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <span><a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Downstream Assistant</a>: Penjelasan mengenai asisten downstream.</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-5 h-5 text-green-accent mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <span><a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Traction Assistant</a>: Penjelasan mengenai asisten traksi.</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-5 h-5 text-green-accent mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <span><a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Administration Assistant</a>: Penjelasan mengenai asisten administrasi.</span>
+                                    </li>
+                                    <li class="flex items-start">
+                                        <svg class="w-5 h-5 text-green-accent mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <span><a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Management Associate</a>: Penjelasan mengenai jalur kepemimpinan masa depan.</span>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
 
@@ -219,29 +245,74 @@
                                 <svg class="w-6 h-6 transform transition-transform" :class="selected === 2 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                             <div x-show="selected === 2" x-collapse class="text-gray-600 mt-4 pr-8" style="display: none;">
-                                Pelatihan khusus yang dirancang sesuai dengan kebutuhan spesifik divisi atau tantangan operasional terkini.
+                                <p class="mb-3">Pelatihan khusus yang dirancang sesuai dengan kebutuhan spesifik divisi atau tantangan operasional terkini.</p>
+                                <ul class="space-y-2 ml-4">
+                                    <li class="flex items-center">
+                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Estate Program</a>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Mill & Downstream Program</a>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Soft Skill Program</a>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Administration Program</a>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Sustainability Program</a>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
 
                         <!-- Accordion Item 3 -->
                         <div class="border-b border-gray-200 pb-4">
                             <button @click="selected = 3" class="flex justify-between items-center w-full text-left font-bold text-xl py-2 focus:outline-none" :class="selected === 3 ? 'text-green-accent' : 'text-gray-400 hover:text-teal-primary'">
-                                <span>SERTIFIKASI & ASESMEN</span>
+                                <span>PROGRAM PENDUKUNG</span>
                                 <svg class="w-6 h-6 transform transition-transform" :class="selected === 3 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                             <div x-show="selected === 3" x-collapse class="text-gray-600 mt-4 pr-8" style="display: none;">
-                                Uji kompetensi dan pemberian sertifikasi standar industri perkebunan kelapa sawit nasional maupun internasional.
+                                <p class="mb-3">Pelatihan untuk meningkatkan kompetensi pendukung yang esensial di lingkungan operasional perkebunan.</p>
+                                <ul class="space-y-2 ml-4">
+                                    <li class="flex items-center">
+                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Soft Skill Program</a>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Administration Program</a>
+                                    </li>
+                                    <li class="flex items-center">
+                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Sustainability Program</a>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
 
                         <!-- Accordion Item 4 -->
                         <div class="border-b border-gray-200 pb-4">
                             <button @click="selected = 4" class="flex justify-between items-center w-full text-left font-bold text-xl py-2 focus:outline-none" :class="selected === 4 ? 'text-green-accent' : 'text-gray-400 hover:text-teal-primary'">
-                                <span>KLINIK KONSULTASI</span>
+                                <span>PROSES BISNIS KAMI</span>
                                 <svg class="w-6 h-6 transform transition-transform" :class="selected === 4 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </button>
                             <div x-show="selected === 4" x-collapse class="text-gray-600 mt-4 pr-8" style="display: none;">
-                                Layanan pendampingan ahli bagi perkebunan swasta atau masyarakat untuk menyelesaikan masalah agronomi.
+                                <p class="mb-4">Alur bisnis <i>resources</i> yang berurutan dalam operasional utama perusahaan:</p>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-2">
+                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">1</span> Nursery Cultivation</div>
+                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">2</span> Field Planting</div>
+                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">3</span> Up Keep</div>
+                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">4</span> Harvesting</div>
+                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">5</span> Palm Oil Mill</div>
+                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">6</span> Downstream Processing</div>
+                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">7</span> Sales To Customers</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -307,65 +378,43 @@
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- News 1 -->
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition duration-300">
-                    <div class="relative h-48">
-                        <img src="https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="News" class="w-full h-full object-cover">
-                        <div class="absolute top-4 left-4 bg-white px-3 py-1 rounded text-xs font-bold text-teal-primary uppercase tracking-wider shadow">Berita</div>
-                    </div>
-                    <div class="p-6">
-                        <div class="text-sm text-gray-500 mb-2 flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            12 Sep 2026
+                @forelse($latest_articles as $article)
+                <!-- News Item -->
+                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition duration-300 flex flex-col">
+                    <div class="relative h-48 overflow-hidden">
+                        @if($article->featured_image)
+                            <img src="{{ Storage::url($article->featured_image) }}" alt="Cover" class="w-full h-full object-cover">
+                        @else
+                            <div class="w-full h-full bg-[#114045] flex items-center justify-center opacity-90">
+                                <img src="{{ asset('images/logofr.png') }}" class="w-32 opacity-30">
+                            </div>
+                        @endif
+                        <div class="absolute top-4 left-4 bg-white px-3 py-1 rounded text-xs font-bold text-teal-primary uppercase tracking-wider shadow">
+                            {{ $article->category->name ?? 'Informasi' }}
                         </div>
-                        <h3 class="text-xl font-bold text-teal-primary mb-3 line-clamp-2 hover:text-green-accent transition">Pendaftaran Batch Terbaru Program Reguler Dibuka</h3>
-                        <p class="text-gray-600 text-sm mb-4 line-clamp-3">FR Academy kembali membuka pendaftaran untuk program pelatihan reguler calon asisten agronomi dan pabrik kelapa sawit.</p>
-                        <a href="#" class="text-green-accent font-semibold text-sm inline-flex items-center hover:text-green-600 transition">
-                            Baca Selengkapnya
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                        </a>
+                    </div>
+                    <div class="p-6 flex-grow flex flex-col justify-between">
+                        <div>
+                            <div class="text-sm text-gray-500 mb-2 flex items-center">
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                {{ $article->published_at ? \Carbon\Carbon::parse($article->published_at)->format('d M Y') : $article->created_at->format('d M Y') }}
+                            </div>
+                            <h3 class="text-xl font-bold text-teal-primary mb-3 line-clamp-2 hover:text-green-accent transition">{{ $article->title }}</h3>
+                            <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ Str::limit(strip_tags($article->content), 120) }}</p>
+                        </div>
+                        <div class="mt-4">
+                            <a href="{{ route('artikel.show', $article->slug) }}" class="text-green-accent font-semibold text-sm inline-flex items-center hover:text-green-600 transition">
+                                Baca Selengkapnya
+                                <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                            </a>
+                        </div>
                     </div>
                 </div>
-
-                <!-- News 2 -->
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition duration-300">
-                    <div class="relative h-48">
-                        <img src="https://images.unsplash.com/photo-1516937941344-00b4e0337589?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="News" class="w-full h-full object-cover">
-                        <div class="absolute top-4 left-4 bg-white px-3 py-1 rounded text-xs font-bold text-teal-primary uppercase tracking-wider shadow">Riset</div>
+                @empty
+                    <div class="col-span-1 md:col-span-3 text-center py-12">
+                        <p class="text-gray-500 text-lg">Belum ada artikel terbaru.</p>
                     </div>
-                    <div class="p-6">
-                        <div class="text-sm text-gray-500 mb-2 flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            05 Sep 2026
-                        </div>
-                        <h3 class="text-xl font-bold text-teal-primary mb-3 line-clamp-2 hover:text-green-accent transition">Cara Mencegah Hama Kumbang Tanduk</h3>
-                        <p class="text-gray-600 text-sm mb-4 line-clamp-3">Panduan praktis terbaru dari tim peneliti FR Academy mengenai pencegahan dan pengendalian hama Oryctes rhinoceros.</p>
-                        <a href="#" class="text-green-accent font-semibold text-sm inline-flex items-center hover:text-green-600 transition">
-                            Baca Selengkapnya
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- News 3 -->
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition duration-300">
-                    <div class="relative h-48">
-                        <img src="https://images.unsplash.com/photo-1551836022-d5d88e9218df?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="News" class="w-full h-full object-cover">
-                        <div class="absolute top-4 left-4 bg-white px-3 py-1 rounded text-xs font-bold text-teal-primary uppercase tracking-wider shadow">Prestasi</div>
-                    </div>
-                    <div class="p-6">
-                        <div class="text-sm text-gray-500 mb-2 flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                            28 Aug 2026
-                        </div>
-                        <h3 class="text-xl font-bold text-teal-primary mb-3 line-clamp-2 hover:text-green-accent transition">FR Academy Raih Penghargaan Lembaga Pelatihan Terbaik</h3>
-                        <p class="text-gray-600 text-sm mb-4 line-clamp-3">Penganugerahan dari Kementerian Ketenagakerjaan atas komitmen nyata dalam mencetak SDM unggul kelapa sawit.</p>
-                        <a href="#" class="text-green-accent font-semibold text-sm inline-flex items-center hover:text-green-600 transition">
-                            Baca Selengkapnya
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                        </a>
-                    </div>
-                </div>
+                @endforelse
             </div>
             
             <div class="mt-8 text-center md:hidden">

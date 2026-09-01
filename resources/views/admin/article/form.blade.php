@@ -107,6 +107,15 @@
                         </select>
                     </div>
 
+                    <!-- Tags Setup -->
+                    <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
+                        <h4 class="text-sm font-bold text-gray-700 mb-3 border-b border-gray-200 pb-2">Tag (Opsional)</h4>
+                        <input type="text" name="tags" value="{{ old('tags', isset($article) && is_array($article->tags) ? implode(', ', $article->tags) : '') }}"
+                            class="w-full bg-white border border-gray-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#509c38] transition text-gray-700"
+                            placeholder="Contoh: Lowongan, Riset, 2026">
+                        <p class="text-xs text-gray-400 mt-2">Pisahkan dengan koma.</p>
+                    </div>
+
                     <!-- Status Setup -->
                     <div class="bg-gray-50 rounded-xl p-5 border border-gray-100">
                         <h4 class="text-sm font-bold text-gray-700 mb-3 border-b border-gray-200 pb-2">Status Publikasi</h4>

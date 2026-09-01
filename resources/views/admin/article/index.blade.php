@@ -11,24 +11,32 @@
     </x-slot>
 
     <!-- Filters & Search -->
-    <div class="bg-white rounded-2xl border border-gray-200 p-4 mb-6 shadow-sm flex flex-col md:flex-row gap-4 items-center justify-between">
-        <form action="{{ route('admin.artikel.index') }}" method="GET" class="w-full md:w-1/2">
-            <div class="relative">
+    <div class="bg-white rounded-2xl border border-gray-200 p-4 mb-6 shadow-sm">
+        <form action="{{ route('admin.artikel.index') }}" method="GET" class="flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div class="relative w-full md:w-1/2">
                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                 </div>
                 <input type="text" name="search" value="{{ $search ?? '' }}" class="pl-10 w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#509c38] focus:border-transparent transition" placeholder="Cari judul artikel...">
             </div>
+            
+            <div class="flex space-x-2 w-full md:w-auto">
+                <select name="category" onchange="this.form.submit()" class="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#509c38] cursor-pointer">
+                    <option value="">Semua Kategori</option>
+                    @foreach($categories as $category)
+                        <option value="{{ $category->id }}" {{ ($filter_category ?? '') == $category->id ? 'selected' : '' }}>
+                            {{ $category->name }}
+                        </option>
+                    @endforeach
+                </select>
+                <select name="status" onchange="this.form.submit()" class="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#509c38] cursor-pointer">
+                    <option value="">Semua Status</option>
+                    <option value="published" {{ ($filter_status ?? '') == 'published' ? 'selected' : '' }}>Published</option>
+                    <option value="draft" {{ ($filter_status ?? '') == 'draft' ? 'selected' : '' }}>Draft</option>
+                </select>
+                <button type="submit" class="hidden">Filter</button>
+            </div>
         </form>
-        
-        <div class="flex space-x-2 w-full md:w-auto">
-            <select class="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#509c38] cursor-pointer">
-                <option value="">Semua Kategori</option>
-            </select>
-            <select class="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-[#509c38] cursor-pointer">
-                <option value="">Semua Status</option>
-            </select>
-        </div>
     </div>
 
     <!-- Table -->

@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title ?? 'Admin Dashboard' }} - FR Academy</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
     @livewireStyles
 </head>
 <body class="bg-white font-sans antialiased text-gray-900">
@@ -76,7 +75,7 @@
                                 const now = new Date();
                                 const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
                                 const dateStr = now.toLocaleDateString('id-ID', options);
-                                const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                                const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
                                 this.time = `${dateStr} • ${timeStr}`;
                             }
                         }" 

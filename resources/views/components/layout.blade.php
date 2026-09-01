@@ -78,10 +78,12 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-12">
                 <!-- Brand Info -->
                 <div class="col-span-1 md:col-span-2">
-                    <h2 class="text-3xl font-bold mb-4">FirstResources</h2>
-                    <p class="text-sm text-gray-300 mb-6">
-                        Didorong oleh semangat, Berakar pada tujuan. Fokus pada hasil untuk kemajuan industri perkebunan kelapa sawit.
-                    </p>
+                    <div class="flex items-start mb-6 gap-4">
+                        <img src="{{ asset('images/logofr.png') }}" alt="First Resources" class="h-16 object-contain bg-white p-1.5 rounded">
+                        <p class="text-sm text-gray-300 leading-relaxed">
+                            Didorong oleh semangat. Berakar pada tujuan.<br>Fokus pada hasil untuk kemajuan industri perkebunan kelapa sawit.
+                        </p>
+                    </div>
                     <div class="space-y-2 text-sm">
                         <p class="font-medium text-lg">academy@first-resources.com</p>
                         <p class="font-bold text-green-accent text-xl">+62 800 123 46 57</p>
@@ -97,28 +99,21 @@
 
                 <!-- Useful Links -->
                 <div>
-                    <h3 class="text-lg font-semibold mb-6">Tautan Berguna</h3>
+                    <h3 class="text-lg font-semibold mb-6">Pintasan Portal</h3>
                     <ul class="space-y-3 text-sm text-gray-300">
-                        <li><a href="#" class="hover:text-green-accent transition">Perusahaan</a></li>
-                        <li><a href="#" class="hover:text-green-accent transition">Layanan</a></li>
-                        <li><a href="#" class="hover:text-green-accent transition">Fitur</a></li>
-                        <li><a href="#" class="hover:text-green-accent transition">FAQ</a></li>
-                        <li><a href="#" class="hover:text-green-accent transition">Mulai</a></li>
+                        <li><a href="/" class="hover:text-green-accent transition">Beranda Utama</a></li>
+                        <li><a href="/artikel" class="hover:text-green-accent transition">Semua Artikel & Berita</a></li>
+                        <li><a href="/login" class="hover:text-green-accent transition">Login Admin / Staf</a></li>
                         <li><a href="/tv-display" class="hover:text-green-accent transition">Mode Layar TV (TV Display)</a></li>
                     </ul>
                 </div>
 
-                <!-- Newsletter -->
+                <!-- Location -->
                 <div>
-                    <h3 class="text-lg font-semibold mb-6">Berlangganan</h3>
-                    <p class="text-sm text-gray-300 mb-4">Dapatkan berita & pembaruan terbaru.</p>
-                    <form class="flex border-b border-gray-500 pb-2">
-                        <input type="email" placeholder="Alamat Email" class="bg-transparent w-full focus:outline-none text-sm text-white placeholder-gray-400">
-                        <button type="submit" class="text-green-accent hover:text-white transition">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                        </button>
-                    </form>
-                    <p class="text-xs text-gray-500 mt-4">Kami tidak akan pernah membagikan atau menjual email Anda kepada siapa pun.</p>
+                    <h3 class="text-lg font-semibold mb-6">Lokasi Kami</h3>
+                    <div class="w-full h-40 bg-teal-900 rounded-lg overflow-hidden border border-teal-800 shadow-inner">
+                        <iframe src="https://maps.google.com/maps?q=First+Resources+Learning+Centre&t=&z=14&ie=UTF8&iwloc=&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+                    </div>
                 </div>
             </div>
 

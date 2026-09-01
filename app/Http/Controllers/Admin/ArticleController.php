@@ -15,14 +15,26 @@ class ArticleController extends Controller
     public function index(Request $request)
     {
         $search = $request->input('search');
+        $filter_category = $request->input('category');
+        $filter_status = $request->input('status');
+
         $articles = Article::with(['category', 'author'])
             ->when($search, function($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%");
             })
+            ->when($filter_category, function($q) use ($filter_category) {
+                $q->where('category_id', $filter_category);
+            })
+            ->when($filter_status, function($q) use ($filter_status) {
+                $q->where('status', $filter_status);
+            })
             ->latest()
-            ->paginate(10);
+            ->paginate(10)
+            ->withQueryString();
             
-        return view('admin.article.index', compact('articles', 'search'));
+        $categories = Category::all();
+            
+        return view('admin.article.index', compact('articles', 'search', 'filter_category', 'filter_status', 'categories'));
     }
 
     public function create()
@@ -38,8 +50,15 @@ class ArticleController extends Controller
             'content' => 'required|string',
             'category_id' => 'nullable|exists:categories,id',
             'status' => 'required|in:draft,published',
-            'featured_image' => 'nullable|image|max:2048'
+            'featured_image' => 'nullable|image|max:2048',
+            'tags' => 'nullable|string'
         ]);
+
+        if ($request->has('tags') && !empty($request->tags)) {
+            $validated['tags'] = array_filter(array_map('trim', explode(',', $request->tags)));
+        } else {
+            $validated['tags'] = null;
+        }
 
         $validated['slug'] = Str::slug($validated['title']) . '-' . time();
         $validated['author_id'] = auth()->id();
@@ -70,8 +89,15 @@ class ArticleController extends Controller
             'content' => 'required|string',
             'category_id' => 'nullable|exists:categories,id',
             'status' => 'required|in:draft,published',
-            'featured_image' => 'nullable|image|max:2048'
+            'featured_image' => 'nullable|image|max:2048',
+            'tags' => 'nullable|string'
         ]);
+
+        if ($request->has('tags') && !empty($request->tags)) {
+            $validated['tags'] = array_filter(array_map('trim', explode(',', $request->tags)));
+        } else {
+            $validated['tags'] = null;
+        }
 
         if ($request->title !== $artikel->title) {
             $validated['slug'] = Str::slug($validated['title']) . '-' . time();
