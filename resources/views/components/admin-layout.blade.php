@@ -32,8 +32,8 @@
                     Manajemen Artikel
                 </a>
                 
-                <a href="#" class="{{ request()->is('admin/tv*') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 mb-6">
-                    <svg class="w-5 h-5 mr-3 {{ request()->is('admin/tv*') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                <a href="{{ route('admin.tv.index') }}" class="{{ request()->routeIs('admin.tv.*') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 mb-6">
+                    <svg class="w-5 h-5 mr-3 {{ request()->routeIs('admin.tv.*') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                     Playlist TV
                 </a>
 

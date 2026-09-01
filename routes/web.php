@@ -29,4 +29,8 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     })->name('admin.dashboard');
 
     Route::resource('artikel', AdminArticleController::class)->names('admin.artikel');
+    
+    Route::get('tv', function () {
+        return view('admin.tv.index');
+    })->name('admin.tv.index');
 });
