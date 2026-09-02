@@ -1,5 +1,8 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="scroll-smooth" 
+      x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" 
+      x-init="$watch('darkMode', val => localStorage.setItem('darkMode', val))" 
+      :class="{ 'dark': darkMode }">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,11 +11,24 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Alpine JS -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <!-- AOS CSS -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-50 text-gray-800 antialiased flex flex-col min-h-screen">
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 antialiased flex flex-col min-h-screen transition-colors duration-300">
+    @php
+        $active_event = \App\Models\HomepageEvent::where('is_active', true)->first();
+    @endphp
+
+    <!-- Event Overlay -->
+    @if(isset($active_event) && $active_event && $active_event->image_path)
+        <div class="fixed inset-0 z-[100] pointer-events-none flex items-center justify-center">
+            <!-- Asumsi gambar frame beresolusi tinggi dengan tengah bolong -->
+            <img src="{{ asset($active_event->image_path) }}" alt="{{ $active_event->name }}" class="w-full h-full object-cover">
+        </div>
+    @endif
     
     <!-- Navigation -->
     <header x-data="{ scrolled: false }" 
@@ -39,6 +55,18 @@
 
                 <!-- Right Actions -->
                 <div class="hidden md:flex items-center space-x-4">
+                    <!-- Theme Toggle -->
+                    <button @click="darkMode = !darkMode" class="text-white hover:text-green-accent p-2 transition rounded-full focus:outline-none">
+                        <!-- Sun Icon (shows when dark mode is active) -->
+                        <svg x-show="darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        <!-- Moon Icon (shows when light mode is active) -->
+                        <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+                        </svg>
+                    </button>
+                    <!-- Search Icon -->
                     <button class="text-white hover:text-green-accent p-2 transition">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -141,5 +169,15 @@
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path></svg>
         </button>
     </div>
+
+    <!-- AOS Script -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        AOS.init({
+            duration: 800,
+            once: true,
+            offset: 100,
+        });
+    </script>
 </body>
 </html>

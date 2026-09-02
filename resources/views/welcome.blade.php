@@ -1,6 +1,6 @@
 <x-layout>
     <!-- Hero Section -->
-    <section class="relative bg-teal-primary min-h-[600px] flex items-center pt-32 pb-16">
+    <section class="relative bg-teal-primary min-h-screen flex items-center pt-32 pb-16">
         <!-- Background Image -->
         <div class="absolute inset-0 z-0">
             <img src="{{ asset('images/welcomefr.jpg') }}" alt="FR Academy Welcome" class="w-full h-full object-cover">
@@ -8,48 +8,36 @@
         <!-- Dark overlay to ensure text readability -->
         <div class="absolute inset-0 bg-black/50 z-10"></div>
         
-        <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <div class="max-w-2xl">
+        <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex flex-col items-center text-center" data-aos="zoom-in" data-aos-duration="1000">
+            <div class="max-w-3xl flex flex-col items-center">
                 <span class="inline-block py-1 px-3 rounded bg-white/20 text-white text-xs font-semibold tracking-wider mb-4 border border-white/30 backdrop-blur-sm">FIRST RESOURCES LEARNING CENTER</span>
                 <h1 class="text-5xl md:text-6xl font-bold text-white leading-tight mb-6">
                     Membangun Masa Depan <br>
                     <span class="text-green-accent">Kelapa Sawit Berkelanjutan</span>
                 </h1>
-                <p class="text-lg text-gray-200 mb-8 max-w-xl">
+                <p class="text-lg text-gray-200 mb-10 max-w-2xl mx-auto">
                     Pusat pelatihan perusahaan terdepan untuk menciptakan sumber daya manusia yang unggul, profesional, dan berdedikasi.
                 </p>
                 
-                <!-- Search Box -->
-                <div class="bg-white p-2 rounded-full flex items-center shadow-lg max-w-xl">
-                    <input type="text" placeholder="Cari artikel atau program pelatihan..." class="flex-grow px-4 py-2 text-gray-700 focus:outline-none bg-transparent">
-                    <button class="bg-green-accent hover:bg-green-600 text-white px-6 py-3 rounded-full font-medium transition duration-300">
-                        Cari
-                    </button>
-                </div>
-
-                <div class="mt-8 flex items-center gap-4 text-white">
-                    <div class="flex -space-x-3">
-                        <img class="w-10 h-10 rounded-full border-2 border-teal-primary" src="https://ui-avatars.com/api/?name=A&background=random" alt="Avatar">
-                        <img class="w-10 h-10 rounded-full border-2 border-teal-primary" src="https://ui-avatars.com/api/?name=B&background=random" alt="Avatar">
-                        <img class="w-10 h-10 rounded-full border-2 border-teal-primary" src="https://ui-avatars.com/api/?name=C&background=random" alt="Avatar">
-                    </div>
-                    <div>
-                        <div class="flex text-yellow-400 text-sm">
-                            ★ ★ ★ ★ ★
-                        </div>
-                        <p class="text-xs text-gray-300">Dipercaya oleh ribuan profesional</p>
-                    </div>
+                <!-- CTA Buttons -->
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
+                    <a href="#program" class="w-full sm:w-auto bg-green-accent hover:bg-green-600 text-white px-8 py-4 rounded-full font-bold transition duration-300 shadow-lg text-lg">
+                        Jelajahi Program
+                    </a>
+                    <a href="/artikel" class="w-full sm:w-auto bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border border-white/30 px-8 py-4 rounded-full font-bold transition duration-300 shadow-lg text-lg">
+                        Baca Artikel
+                    </a>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Mission Section -->
-    <section class="py-24 bg-white">
+    <section class="py-24 bg-white dark:bg-gray-900 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
                 <!-- Image Grid -->
-                <div class="relative">
+                <div class="relative" data-aos="fade-right">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="h-64 bg-gray-200 rounded-2xl overflow-hidden mt-8">
                             <img src="https://images.unsplash.com/photo-1592982537447-6f29402c40c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Training" class="w-full h-full object-cover">
@@ -63,12 +51,12 @@
                 </div>
 
                 <!-- Text Content -->
-                <div>
+                <div data-aos="fade-left" data-aos-delay="200">
                     <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">TENTANG FR ACADEMY</span>
-                    <h2 class="text-4xl font-bold text-teal-primary mt-4 mb-6 leading-tight">
+                    <h2 class="text-4xl font-bold text-teal-primary dark:text-white mt-4 mb-6 leading-tight">
                         Misi Kami: Pertanian yang Lebih Baik untuk <span class="text-green-accent">Masa Depan</span>
                     </h2>
-                    <p class="text-gray-600 mb-8 leading-relaxed">
+                    <p class="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
                         Kami merancang program pelatihan komprehensif untuk meningkatkan keterampilan teknis dan manajerial para praktisi perkebunan. Didukung oleh instruktur berpengalaman dan fasilitas modern, kami berkomitmen untuk melahirkan agen perubahan yang dapat menerapkan praktik pertanian berkelanjutan dan mencapai efisiensi operasional yang optimal.
                     </p>
                     
@@ -78,8 +66,8 @@
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             </div>
                             <div class="ml-3">
-                                <h4 class="text-lg font-semibold text-teal-primary">Instruktur Berpengalaman</h4>
-                                <p class="text-sm text-gray-500">Belajar langsung dari praktisi ahli yang telah puluhan tahun berkecimpung di industri.</p>
+                                <h4 class="text-lg font-semibold text-teal-primary dark:text-white">Instruktur Berpengalaman</h4>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Belajar langsung dari praktisi ahli yang telah puluhan tahun berkecimpung di industri.</p>
                             </div>
                         </li>
                         <li class="flex items-start">
@@ -87,13 +75,13 @@
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             </div>
                             <div class="ml-3">
-                                <h4 class="text-lg font-semibold text-teal-primary">Fasilitas Modern</h4>
-                                <p class="text-sm text-gray-500">Fasilitas simulasi dan praktik lapangan yang memadai untuk pembelajaran aplikatif.</p>
+                                <h4 class="text-lg font-semibold text-teal-primary dark:text-white">Fasilitas Modern</h4>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Fasilitas simulasi dan praktik lapangan yang memadai untuk pembelajaran aplikatif.</p>
                             </div>
                         </li>
                     </ul>
                     
-                    <a href="#" class="inline-flex items-center text-teal-primary font-semibold hover:text-green-accent transition">
+                    <a href="#" class="inline-flex items-center text-teal-primary dark:text-teal-300 font-semibold hover:text-green-accent dark:hover:text-green-400 transition">
                         Lebih Lanjut Tentang Kami 
                         <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </a>
@@ -103,59 +91,59 @@
     </section>
 
     <!-- Solutions Section -->
-    <section class="py-24 bg-gray-50">
+    <section class="py-24 bg-gray-50 dark:bg-gray-800 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center max-w-3xl mx-auto mb-16">
+            <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
                 <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">PROGRAM PELATIHAN KAMI</span>
-                <h2 class="text-3xl md:text-4xl font-bold text-teal-primary mt-4 mb-4">Solusi Pelatihan Komprehensif</h2>
-                <p class="text-gray-600">FR Academy menawarkan berbagai spesialisasi untuk memenuhi kebutuhan industri kelapa sawit modern.</p>
+                <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white mt-4 mb-4">Solusi Pelatihan Komprehensif</h2>
+                <p class="text-gray-600 dark:text-gray-300">FR Academy menawarkan berbagai spesialisasi untuk memenuhi kebutuhan industri kelapa sawit modern.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <!-- Card 1 -->
-                <div class="bg-orange-50/50 rounded-2xl p-8 transition-transform hover:-translate-y-2 duration-300 border border-orange-100">
-                    <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center text-teal-primary mb-6 shadow-sm">
+                <div class="bg-orange-50/50 dark:bg-gray-700 rounded-2xl p-8 transition-transform hover:-translate-y-2 duration-300 border border-orange-100 dark:border-gray-600 shadow-sm" data-aos="fade-up" data-aos-delay="100">
+                    <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center text-teal-primary dark:text-teal-400 mb-6 shadow-sm">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-teal-primary mb-3">Manajemen Agronomi</h3>
-                    <p class="text-gray-600 text-sm mb-6">Pelatihan mendalam tentang pembibitan, perawatan tanaman, pemupukan, hingga teknik panen yang efisien dan ramah lingkungan.</p>
+                    <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Manajemen Agronomi</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Pelatihan mendalam tentang pembibitan, perawatan tanaman, pemupukan, hingga teknik panen yang efisien dan ramah lingkungan.</p>
                     
                     <div class="rounded-xl overflow-hidden h-40 mb-4">
                         <img src="https://images.unsplash.com/photo-1592982537447-6f29402c40c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Agronomi" class="w-full h-full object-cover">
                     </div>
-                    <a href="#" class="text-sm font-semibold text-teal-primary flex items-center hover:text-green-accent transition">
+                    <a href="#" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
                         Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>
                 </div>
 
                 <!-- Card 2 -->
-                <div class="bg-blue-50/50 rounded-2xl p-8 transition-transform hover:-translate-y-2 duration-300 border border-blue-100">
-                    <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center text-teal-primary mb-6 shadow-sm">
+                <div class="bg-blue-50/50 dark:bg-gray-700 rounded-2xl p-8 transition-transform hover:-translate-y-2 duration-300 border border-blue-100 dark:border-gray-600 shadow-sm" data-aos="fade-up" data-aos-delay="200">
+                    <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center text-teal-primary dark:text-teal-400 mb-6 shadow-sm">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-teal-primary mb-3">Operasional Pabrik</h3>
-                    <p class="text-gray-600 text-sm mb-6">Mempelajari standar operasional prosedur pengolahan kelapa sawit, manajemen K3, dan perawatan mesin pabrik.</p>
+                    <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Operasional Pabrik</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Mempelajari standar operasional prosedur pengolahan kelapa sawit, manajemen K3, dan perawatan mesin pabrik.</p>
                     
                     <div class="rounded-xl overflow-hidden h-40 mb-4">
                         <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Pabrik" class="w-full h-full object-cover">
                     </div>
-                    <a href="#" class="text-sm font-semibold text-teal-primary flex items-center hover:text-green-accent transition">
+                    <a href="#" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
                         Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>
                 </div>
 
                 <!-- Card 3 -->
-                <div class="bg-teal-50/50 rounded-2xl p-8 transition-transform hover:-translate-y-2 duration-300 border border-teal-100">
-                    <div class="w-12 h-12 bg-white rounded-lg flex items-center justify-center text-teal-primary mb-6 shadow-sm">
+                <div class="bg-teal-50/50 dark:bg-gray-700 rounded-2xl p-8 transition-transform hover:-translate-y-2 duration-300 border border-teal-100 dark:border-gray-600 shadow-sm" data-aos="fade-up" data-aos-delay="300">
+                    <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center text-teal-primary dark:text-teal-400 mb-6 shadow-sm">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-teal-primary mb-3">Kepemimpinan & Etika</h3>
-                    <p class="text-gray-600 text-sm mb-6">Fokus pada pengembangan karakter, keterampilan kepemimpinan, dan penyelesaian masalah bagi calon manajer.</p>
+                    <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Kepemimpinan & Etika</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Fokus pada pengembangan karakter, keterampilan kepemimpinan, dan penyelesaian masalah bagi calon manajer.</p>
                     
                     <div class="rounded-xl overflow-hidden h-40 mb-4">
                         <img src="https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Kepemimpinan" class="w-full h-full object-cover">
                     </div>
-                    <a href="#" class="text-sm font-semibold text-teal-primary flex items-center hover:text-green-accent transition">
+                    <a href="#" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
                         Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>
                 </div>
@@ -164,199 +152,186 @@
     </section>
 
     <!-- Stats Section -->
-    <section class="bg-teal-primary py-16 text-white relative">
+    <section id="stats-section" class="bg-teal-primary py-16 text-white relative">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-teal-700">
                 <!-- Stat 1 -->
-                <div class="text-center py-4">
-                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1">20<span class="text-green-accent text-4xl">k+</span></div>
+                <div class="text-center py-4" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span class="counter" data-target="20">0</span><span class="text-green-accent text-4xl">k+</span></div>
                     <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">SISWA LULUS</div>
                 </div>
                 <!-- Stat 2 -->
-                <div class="text-center py-4">
-                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1">98<span class="text-green-accent text-4xl">%</span></div>
+                <div class="text-center py-4" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span class="counter" data-target="98">0</span><span class="text-green-accent text-4xl">%</span></div>
                     <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">TINGKAT KEPUASAN</div>
                 </div>
                 <!-- Stat 3 -->
-                <div class="text-center py-4">
-                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1">1,5<span class="text-green-accent text-4xl">k+</span></div>
+                <div class="text-center py-4" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span class="counter" data-target="1.5">0</span><span class="text-green-accent text-4xl">k+</span></div>
                     <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">FASILITATOR BERPENGALAMAN</div>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Services / Testimonial Section -->
-    <section class="py-24 bg-white relative overflow-hidden">
-        <!-- Background Pattern -->
-        <div class="absolute inset-y-0 right-0 w-1/2 bg-teal-primary rounded-l-[100px] -z-10"></div>
-        
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                <!-- Left: Accordion / Services -->
-                <div>
-                    <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">LAYANAN KAMI</span>
-                    <h2 class="text-3xl md:text-4xl font-bold text-teal-primary mt-4 mb-10 leading-tight">
-                        Pusat Pengembangan Kompetensi — <br>Kurikulum & Proses Bisnis
-                    </h2>
-                    
-                    <div class="space-y-4" x-data="{ selected: 1 }">
-                        <!-- Accordion Item 1 -->
-                        <div class="border-b border-gray-200 pb-4">
-                            <button @click="selected = 1" class="flex justify-between items-center w-full text-left font-bold text-xl py-2 focus:outline-none" :class="selected === 1 ? 'text-green-accent' : 'text-gray-400 hover:text-teal-primary'">
-                                <span>PROGRAM REGULER</span>
-                                <svg class="w-6 h-6 transform transition-transform" :class="selected === 1 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </button>
-                            <div x-show="selected === 1" x-collapse class="text-gray-600 mt-4 pr-8">
-                                <p class="mb-3">Program pelatihan dasar bagi karyawan baru maupun calon karyawan yang akan ditempatkan di berbagai kebun operasional.</p>
-                                <ul class="space-y-2 ml-4">
-                                    <li class="flex items-start">
-                                        <svg class="w-5 h-5 text-green-accent mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <span><a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Field Assistant</a>: Penjelasan singkat mengenai asisten kebun.</span>
-                                    </li>
-                                    <li class="flex items-start">
-                                        <svg class="w-5 h-5 text-green-accent mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <span><a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Mill Assistant</a>: Penjelasan mengenai asisten pabrik kelapa sawit.</span>
-                                    </li>
-                                    <li class="flex items-start">
-                                        <svg class="w-5 h-5 text-green-accent mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <span><a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Downstream Assistant</a>: Penjelasan mengenai asisten downstream.</span>
-                                    </li>
-                                    <li class="flex items-start">
-                                        <svg class="w-5 h-5 text-green-accent mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <span><a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Traction Assistant</a>: Penjelasan mengenai asisten traksi.</span>
-                                    </li>
-                                    <li class="flex items-start">
-                                        <svg class="w-5 h-5 text-green-accent mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <span><a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Administration Assistant</a>: Penjelasan mengenai asisten administrasi.</span>
-                                    </li>
-                                    <li class="flex items-start">
-                                        <svg class="w-5 h-5 text-green-accent mr-2 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <span><a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Management Associate</a>: Penjelasan mengenai jalur kepemimpinan masa depan.</span>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
+    <!-- Script for Counter Animation -->
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const counters = document.querySelectorAll('.counter');
+        const speed = 40; 
+    
+        const animateCounters = () => {
+            counters.forEach(counter => {
+                const target = +counter.getAttribute('data-target');
+                let currentCount = 0;
+                const inc = target / speed;
+                
+                const updateCount = () => {
+                    if (currentCount < target) {
+                        currentCount += inc;
+                        if(currentCount > target) currentCount = target;
+                        
+                        let isDecimal = target % 1 !== 0;
+                        counter.innerText = isDecimal ? currentCount.toFixed(1).replace('.', ',') : Math.ceil(currentCount);
+                        
+                        setTimeout(updateCount, 30);
+                    } else {
+                        counter.innerText = target.toString().replace('.', ',');
+                    }
+                };
+                updateCount();
+            });
+        }
+    
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    animateCounters();
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.5 });
+    
+        const statsSection = document.getElementById('stats-section');
+        if(statsSection) {
+            observer.observe(statsSection);
+        }
+    });
+    </script>
 
-                        <!-- Accordion Item 2 -->
-                        <div class="border-b border-gray-200 pb-4">
-                            <button @click="selected = 2" class="flex justify-between items-center w-full text-left font-bold text-xl py-2 focus:outline-none" :class="selected === 2 ? 'text-green-accent' : 'text-gray-400 hover:text-teal-primary'">
-                                <span>PROGRAM NON-REGULER</span>
-                                <svg class="w-6 h-6 transform transition-transform" :class="selected === 2 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </button>
-                            <div x-show="selected === 2" x-collapse class="text-gray-600 mt-4 pr-8" style="display: none;">
-                                <p class="mb-3">Pelatihan khusus yang dirancang sesuai dengan kebutuhan spesifik divisi atau tantangan operasional terkini.</p>
-                                <ul class="space-y-2 ml-4">
-                                    <li class="flex items-center">
-                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Estate Program</a>
-                                    </li>
-                                    <li class="flex items-center">
-                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Mill & Downstream Program</a>
-                                    </li>
-                                    <li class="flex items-center">
-                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Soft Skill Program</a>
-                                    </li>
-                                    <li class="flex items-center">
-                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Administration Program</a>
-                                    </li>
-                                    <li class="flex items-center">
-                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Sustainability Program</a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </div>
+    <!-- Services Section (Modern Accordion) -->
+    <section id="program" class="py-24 bg-teal-900 dark:bg-gray-950 relative overflow-hidden text-white transition-colors duration-300">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" data-aos="fade-up">
+            <div class="mb-16">
+                <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">AREA FOKUS KAMI</span>
+                <h2 class="text-4xl md:text-5xl font-bold mt-4 leading-tight">
+                    Dari Bibit Hingga Panen — <br>Layanan Penuh Kami
+                </h2>
+            </div>
+            
+            <div class="space-y-0 border-t border-teal-700/50" x-data="{ selected: null }">
+                <style>
+                    .text-outline {
+                        color: transparent;
+                        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+                        transition: all 0.3s ease;
+                    }
+                    .text-outline-active {
+                        color: #509c38;
+                        -webkit-text-stroke: 0px transparent;
+                    }
+                    .accordion-item:hover .text-outline:not(.text-outline-active) {
+                        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.8);
+                    }
+                </style>
 
-                        <!-- Accordion Item 3 -->
-                        <div class="border-b border-gray-200 pb-4">
-                            <button @click="selected = 3" class="flex justify-between items-center w-full text-left font-bold text-xl py-2 focus:outline-none" :class="selected === 3 ? 'text-green-accent' : 'text-gray-400 hover:text-teal-primary'">
-                                <span>PROGRAM PENDUKUNG</span>
-                                <svg class="w-6 h-6 transform transition-transform" :class="selected === 3 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </button>
-                            <div x-show="selected === 3" x-collapse class="text-gray-600 mt-4 pr-8" style="display: none;">
-                                <p class="mb-3">Pelatihan untuk meningkatkan kompetensi pendukung yang esensial di lingkungan operasional perkebunan.</p>
-                                <ul class="space-y-2 ml-4">
-                                    <li class="flex items-center">
-                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Soft Skill Program</a>
-                                    </li>
-                                    <li class="flex items-center">
-                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Administration Program</a>
-                                    </li>
-                                    <li class="flex items-center">
-                                        <svg class="w-5 h-5 text-green-accent mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
-                                        <a href="#" class="font-semibold text-teal-primary hover:text-green-accent transition">Sustainability Program</a>
-                                    </li>
-                                </ul>
+                <!-- Accordion Item 1 -->
+                <div class="border-b border-teal-700/50 group accordion-item transition-colors duration-300" :class="selected === 1 ? 'bg-teal-800/50' : 'hover:bg-teal-800/30'">
+                    <button @click="selected = selected === 1 ? null : 1" class="flex items-center w-full text-left py-8 md:py-12 px-4 md:px-8 focus:outline-none">
+                        <span class="text-green-accent font-mono text-xl mr-6 md:mr-10" :class="selected === 1 ? 'opacity-100' : 'opacity-70'">(01)</span>
+                        <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === 1 ? 'text-outline-active' : ''">PROGRAM REGULER</h3>
+                    </button>
+                    <div x-show="selected === 1" x-collapse class="px-4 md:px-8 pb-10 md:pl-[6.5rem]">
+                        <p class="mb-6 text-lg text-teal-100 max-w-3xl">Program pelatihan dasar bagi karyawan baru maupun calon karyawan yang akan ditempatkan di berbagai kebun operasional.</p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl text-teal-50">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span><strong class="text-white">Field Assistant:</strong> Penjelasan singkat mengenai asisten kebun.</span>
                             </div>
-                        </div>
-
-                        <!-- Accordion Item 4 -->
-                        <div class="border-b border-gray-200 pb-4">
-                            <button @click="selected = 4" class="flex justify-between items-center w-full text-left font-bold text-xl py-2 focus:outline-none" :class="selected === 4 ? 'text-green-accent' : 'text-gray-400 hover:text-teal-primary'">
-                                <span>PROSES BISNIS KAMI</span>
-                                <svg class="w-6 h-6 transform transition-transform" :class="selected === 4 ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </button>
-                            <div x-show="selected === 4" x-collapse class="text-gray-600 mt-4 pr-8" style="display: none;">
-                                <p class="mb-4">Alur bisnis <i>resources</i> yang berurutan dalam operasional utama perusahaan:</p>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-3 gap-x-2">
-                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">1</span> Nursery Cultivation</div>
-                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">2</span> Field Planting</div>
-                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">3</span> Up Keep</div>
-                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">4</span> Harvesting</div>
-                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">5</span> Palm Oil Mill</div>
-                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">6</span> Downstream Processing</div>
-                                    <div class="flex items-center font-medium text-teal-primary"><span class="w-6 h-6 flex items-center justify-center bg-teal-50 text-teal-700 rounded-full text-xs font-bold mr-2">7</span> Sales To Customers</div>
-                                </div>
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span><strong class="text-white">Mill Assistant:</strong> Penjelasan mengenai asisten pabrik kelapa sawit.</span>
+                            </div>
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span><strong class="text-white">Downstream Assistant:</strong> Penjelasan mengenai asisten downstream.</span>
+                            </div>
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span><strong class="text-white">Traction Assistant:</strong> Penjelasan mengenai asisten traksi.</span>
+                            </div>
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span><strong class="text-white">Administration Assistant:</strong> Penjelasan mengenai asisten administrasi.</span>
+                            </div>
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span><strong class="text-white">Management Associate:</strong> Jalur kepemimpinan masa depan.</span>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Right: Testimonial & Image -->
-                <div class="relative">
-                    <div class="bg-white p-8 rounded-2xl shadow-xl relative z-10 lg:-ml-12 lg:mr-12 mb-8 md:mb-0">
-                        <div class="text-green-accent mb-4">
-                            <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24"><path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"></path></svg>
-                        </div>
-                        <p class="text-xl font-medium text-teal-primary italic leading-relaxed mb-6">
-                            "Pelatihan di FR Academy memberikan wawasan mendalam yang langsung dapat saya terapkan di lapangan. Dari teknik pemupukan hingga perlindungan tanaman, semuanya sangat aplikatif."
-                        </p>
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center">
-                                <img src="https://ui-avatars.com/api/?name=Budi+Santoso&background=random" alt="Budi" class="w-12 h-12 rounded-full mr-4">
-                                <div>
-                                    <h4 class="font-bold text-teal-primary">Budi Santoso</h4>
-                                    <p class="text-sm text-gray-500">Asisten Kepala, Divisi Agronomi</p>
-                                </div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button class="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition">
-                                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
-                                </button>
-                                <button class="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-50 transition">
-                                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                </button>
-                            </div>
+                <!-- Accordion Item 2 -->
+                <div class="border-b border-teal-700/50 group accordion-item transition-colors duration-300" :class="selected === 2 ? 'bg-teal-800/50' : 'hover:bg-teal-800/30'">
+                    <button @click="selected = selected === 2 ? null : 2" class="flex items-center w-full text-left py-8 md:py-12 px-4 md:px-8 focus:outline-none">
+                        <span class="text-green-accent font-mono text-xl mr-6 md:mr-10" :class="selected === 2 ? 'opacity-100' : 'opacity-70'">(02)</span>
+                        <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === 2 ? 'text-outline-active' : ''">PROGRAM NON-REGULER</h3>
+                    </button>
+                    <div x-show="selected === 2" x-collapse class="px-4 md:px-8 pb-10 md:pl-[6.5rem]">
+                        <p class="mb-6 text-lg text-teal-100 max-w-3xl">Pelatihan khusus yang dirancang sesuai dengan kebutuhan spesifik divisi atau tantangan operasional terkini.</p>
+                        <div class="flex flex-wrap gap-3 max-w-4xl">
+                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Estate Program</span>
+                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Mill & Downstream Program</span>
+                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Soft Skill Program</span>
+                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Administration Program</span>
+                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Sustainability Program</span>
                         </div>
                     </div>
-                    
-                    <div class="relative rounded-2xl overflow-hidden h-96 w-full lg:absolute lg:top-12 lg:-right-4 lg:w-4/5 -z-0 hidden md:block">
-                        <img src="https://images.unsplash.com/photo-1599839619722-39751411ea63?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Plantation House" class="w-full h-full object-cover">
-                        <!-- Certified Badge -->
-                        <div class="absolute bottom-6 left-6 bg-white px-4 py-2 rounded-lg flex items-center shadow-lg">
-                            <div class="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-accent mr-3">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-500 font-semibold uppercase">Tersertifikasi</p>
-                                <p class="text-sm font-bold text-teal-primary">ISO 9001:2015</p>
-                            </div>
+                </div>
+
+                <!-- Accordion Item 3 -->
+                <div class="border-b border-teal-700/50 group accordion-item transition-colors duration-300" :class="selected === 3 ? 'bg-teal-800/50' : 'hover:bg-teal-800/30'">
+                    <button @click="selected = selected === 3 ? null : 3" class="flex items-center w-full text-left py-8 md:py-12 px-4 md:px-8 focus:outline-none">
+                        <span class="text-green-accent font-mono text-xl mr-6 md:mr-10" :class="selected === 3 ? 'opacity-100' : 'opacity-70'">(03)</span>
+                        <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === 3 ? 'text-outline-active' : ''">PROGRAM PENDUKUNG</h3>
+                    </button>
+                    <div x-show="selected === 3" x-collapse class="px-4 md:px-8 pb-10 md:pl-[6.5rem]">
+                        <p class="mb-6 text-lg text-teal-100 max-w-3xl">Pelatihan untuk meningkatkan kompetensi pendukung yang esensial di lingkungan operasional perkebunan.</p>
+                        <div class="flex flex-wrap gap-3 max-w-4xl">
+                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Soft Skill Program</span>
+                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Administration Program</span>
+                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Sustainability Program</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accordion Item 4 -->
+                <div class="border-b border-teal-700/50 group accordion-item transition-colors duration-300" :class="selected === 4 ? 'bg-teal-800/50' : 'hover:bg-teal-800/30'">
+                    <button @click="selected = selected === 4 ? null : 4" class="flex items-center w-full text-left py-8 md:py-12 px-4 md:px-8 focus:outline-none">
+                        <span class="text-green-accent font-mono text-xl mr-6 md:mr-10" :class="selected === 4 ? 'opacity-100' : 'opacity-70'">(04)</span>
+                        <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === 4 ? 'text-outline-active' : ''">PROSES BISNIS KAMI</h3>
+                    </button>
+                    <div x-show="selected === 4" x-collapse class="px-4 md:px-8 pb-10 md:pl-[6.5rem]">
+                        <p class="mb-6 text-lg text-teal-100 max-w-3xl">Alur bisnis <i>resources</i> yang berurutan dalam operasional utama perusahaan:</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-6 max-w-5xl">
+                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">1</span> Nursery Cultivation</div>
+                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">2</span> Field Planting</div>
+                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">3</span> Up Keep</div>
+                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">4</span> Harvesting</div>
+                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">5</span> Palm Oil Mill</div>
+                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">6</span> Downstream Processing</div>
+                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">7</span> Sales To Customers</div>
                         </div>
                     </div>
                 </div>
@@ -364,15 +339,17 @@
         </div>
     </section>
 
+
+
     <!-- News Section -->
-    <section class="py-24 bg-gray-50">
+    <section class="py-24 bg-gray-50 dark:bg-gray-800 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-end mb-12">
+            <div class="flex justify-between items-end mb-12" data-aos="fade-up">
                 <div>
                     <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">ARTIKEL & PENGUMUMAN</span>
-                    <h2 class="text-3xl font-bold text-teal-primary mt-2">Jelajahi Berita & Tips</h2>
+                    <h2 class="text-3xl font-bold text-teal-primary dark:text-white mt-2">Jelajahi Berita & Tips</h2>
                 </div>
-                <a href="/artikel" class="hidden md:inline-flex items-center justify-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition">
+                <a href="/artikel" class="hidden md:inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                     Lihat Semua Berita
                 </a>
             </div>
@@ -380,7 +357,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 @forelse($latest_articles as $article)
                 <!-- News Item -->
-                <div class="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition duration-300 flex flex-col">
+                <div class="bg-white dark:bg-gray-700 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition duration-300 flex flex-col border border-transparent dark:border-gray-600">
                     <div class="relative h-48 overflow-hidden">
                         @if($article->featured_image)
                             <img src="{{ Storage::url($article->featured_image) }}" alt="Cover" class="w-full h-full object-cover">
@@ -389,21 +366,21 @@
                                 <img src="{{ asset('images/logofr.png') }}" class="w-32 opacity-30">
                             </div>
                         @endif
-                        <div class="absolute top-4 left-4 bg-white px-3 py-1 rounded text-xs font-bold text-teal-primary uppercase tracking-wider shadow">
+                        <div class="absolute top-4 left-4 bg-white dark:bg-gray-800 px-3 py-1 rounded text-xs font-bold text-teal-primary dark:text-teal-400 uppercase tracking-wider shadow">
                             {{ $article->category->name ?? 'Informasi' }}
                         </div>
                     </div>
                     <div class="p-6 flex-grow flex flex-col justify-between">
                         <div>
-                            <div class="text-sm text-gray-500 mb-2 flex items-center">
+                            <div class="text-sm text-gray-500 dark:text-gray-400 mb-2 flex items-center">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                 {{ $article->published_at ? \Carbon\Carbon::parse($article->published_at)->format('d M Y') : $article->created_at->format('d M Y') }}
                             </div>
-                            <h3 class="text-xl font-bold text-teal-primary mb-3 line-clamp-2 hover:text-green-accent transition">{{ $article->title }}</h3>
-                            <p class="text-gray-600 text-sm mb-4 line-clamp-3">{{ Str::limit(strip_tags($article->content), 120) }}</p>
+                            <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3 line-clamp-2 hover:text-green-accent dark:hover:text-green-400 transition">{{ $article->title }}</h3>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">{{ Str::limit(strip_tags($article->content), 120) }}</p>
                         </div>
                         <div class="mt-4">
-                            <a href="{{ route('artikel.show', $article->slug) }}" class="text-green-accent font-semibold text-sm inline-flex items-center hover:text-green-600 transition">
+                            <a href="{{ route('artikel.show', $article->slug) }}" class="text-green-accent dark:text-green-400 font-semibold text-sm inline-flex items-center hover:text-green-600 dark:hover:text-green-300 transition">
                                 Baca Selengkapnya
                                 <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                             </a>
@@ -418,7 +395,7 @@
             </div>
             
             <div class="mt-8 text-center md:hidden">
-                <a href="/artikel" class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition">
+                <a href="/artikel" class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 shadow-sm text-sm font-medium rounded-md text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 transition">
                     Lihat Semua Berita
                 </a>
             </div>

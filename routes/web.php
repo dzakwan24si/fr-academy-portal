@@ -7,7 +7,8 @@ use App\Models\TvPlaylist;
 
 Route::get('/', function () {
     $latest_articles = \App\Models\Article::where('status', 'published')->latest()->take(3)->get();
-    return view('welcome', compact('latest_articles'));
+    $active_event = \App\Models\HomepageEvent::where('is_active', true)->first();
+    return view('welcome', compact('latest_articles', 'active_event'));
 });
 
 Route::get('/tv-display', function () {
@@ -48,6 +49,9 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
 
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\ProfileController;
+
 // Admin Routes (Protected)
 Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/', function () {
@@ -55,6 +59,16 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     })->name('admin.dashboard');
 
     Route::resource('artikel', AdminArticleController::class)->names('admin.artikel');
+    
+    // User Management Routes
+    Route::resource('users', UserController::class)->names('admin.users');
+
+    // Event Themes Management
+    Route::resource('events', \App\Http\Controllers\Admin\HomepageEventController::class)->names('admin.events');
+
+    // Profile Management Routes
+    Route::get('profile', [ProfileController::class, 'edit'])->name('admin.profile.edit');
+    Route::put('profile', [ProfileController::class, 'update'])->name('admin.profile.update');
     
     Route::get('tv', function () {
         return view('admin.tv.index');
