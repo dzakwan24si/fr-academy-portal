@@ -31,7 +31,7 @@
     @endif
     
     <!-- Navigation -->
-    <header x-data="{ scrolled: false }" 
+    <header x-data="{ scrolled: false, mobileMenuOpen: false }" 
             @scroll.window="scrolled = (window.pageYOffset > 20)"
             :class="scrolled ? 'bg-teal-primary shadow-lg' : 'bg-teal-primary lg:bg-transparent'" 
             class="fixed w-full z-50 transition-all duration-300">
@@ -84,12 +84,46 @@
                 </div>
 
                 <!-- Mobile Menu Button -->
-                <div class="flex items-center md:hidden">
-                    <button type="button" class="text-white hover:text-green-accent focus:outline-none p-2">
-                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                <div class="flex items-center md:hidden space-x-2">
+                    <button @click="darkMode = !darkMode" class="text-white hover:text-green-accent p-2 transition rounded-full focus:outline-none">
+                        <svg x-show="darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                        </svg>
+                        <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
                         </svg>
                     </button>
+                    <button @click="mobileMenuOpen = !mobileMenuOpen" type="button" class="text-white hover:text-green-accent focus:outline-none p-2">
+                        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path x-show="!mobileMenuOpen" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                            <path x-show="mobileMenuOpen" style="display: none;" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown Menu -->
+        <div x-show="mobileMenuOpen" 
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-2"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-2"
+             class="md:hidden bg-teal-primary border-t border-teal-700 shadow-xl" 
+             style="display: none;">
+            <div class="px-4 pt-2 pb-6 space-y-1">
+                <a href="/" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">BERANDA</a>
+                <a href="#" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">TENTANG</a>
+                <a href="#" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">PROGRAM</a>
+                <a href="/artikel" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">ARTIKEL</a>
+                <div class="mt-4 pt-4 border-t border-teal-700">
+                    @auth
+                        <a href="/admin" class="block text-center w-full bg-green-accent hover:bg-green-600 text-white px-5 py-3 rounded-md text-base font-bold transition">Dashboard Admin</a>
+                    @else
+                        <a href="/login" class="block text-center w-full bg-green-accent hover:bg-green-600 text-white px-5 py-3 rounded-md text-base font-bold transition">Masuk Portal</a>
+                    @endauth
                 </div>
             </div>
         </div>
@@ -113,8 +147,8 @@
                         </p>
                     </div>
                     <div class="space-y-2 text-sm">
-                        <p class="font-medium text-lg">academy@first-resources.com</p>
-                        <p class="font-bold text-green-accent text-xl">+62 800 123 46 57</p>
+                        <p class="font-medium text-lg">yogie.hizkia@first-resources.co.id</p>
+                        <p class="font-bold text-green-accent text-xl">+62 852 7855 4025</p>
                     </div>
                     <!-- Social Icons -->
                     <div class="flex space-x-3 mt-6">
@@ -139,9 +173,16 @@
                 <!-- Location -->
                 <div>
                     <h3 class="text-lg font-semibold mb-6">Lokasi Kami</h3>
-                    <div class="w-full h-40 bg-teal-900 rounded-lg overflow-hidden border border-teal-800 shadow-inner">
-                        <iframe src="https://maps.google.com/maps?q=First+Resources+Learning+Centre&t=&z=14&ie=UTF8&iwloc=&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-                    </div>
+                    <a href="https://maps.google.com/maps?q=First+Resources+Learning+Centre" target="_blank" rel="noopener noreferrer" class="block group relative w-full h-40 bg-teal-900 rounded-lg overflow-hidden border border-teal-800 shadow-inner">
+                        <iframe src="https://maps.google.com/maps?q=First+Resources+Learning+Centre&t=&z=14&ie=UTF8&iwloc=&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" class="pointer-events-none w-full h-full"></iframe>
+                        <!-- Overlay Link -->
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+                            <span class="opacity-0 group-hover:opacity-100 bg-teal-primary text-white text-sm font-bold px-4 py-2 rounded-lg shadow-lg flex items-center transition-opacity duration-300 transform scale-95 group-hover:scale-100">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                Buka di Maps
+                            </span>
+                        </div>
+                    </a>
                 </div>
             </div>
 

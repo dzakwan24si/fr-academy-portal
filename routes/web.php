@@ -17,8 +17,19 @@ Route::get('/tv-display', function () {
         $item->qr_code = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->margin(1)->generate($url)->toHtml();
         return $item;
     });
-    return view('tv.display', compact('playlists'));
+    
+    // Generate a hash to identify the current state of the playlist
+    $currentHash = md5($playlists->toJson());
+    
+    return view('tv.display', compact('playlists', 'currentHash'));
 })->name('tv.display');
+
+Route::get('/tv-display/check', function () {
+    $playlists = TvPlaylist::with('article.author', 'article.category')->orderBy('order')->get();
+    return response()->json([
+        'hash' => md5($playlists->toJson())
+    ]);
+})->name('tv.check');
 
 Route::get('/artikel', function () {
     $query = \App\Models\Article::where('status', 'published')->latest();
@@ -55,7 +66,11 @@ use App\Http\Controllers\Admin\ProfileController;
 // Admin Routes (Protected)
 Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/', function () {
-        return view('admin.dashboard');
+        $totalArticles = \App\Models\Article::count();
+        $totalPlaylists = \App\Models\TvPlaylist::count();
+        $totalUsers = \App\Models\User::count();
+        $totalEvents = \App\Models\HomepageEvent::count();
+        return view('admin.dashboard', compact('totalArticles', 'totalPlaylists', 'totalUsers', 'totalEvents'));
     })->name('admin.dashboard');
 
     Route::resource('artikel', AdminArticleController::class)->names('admin.artikel');

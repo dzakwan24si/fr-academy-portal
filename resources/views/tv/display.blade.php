@@ -133,68 +133,87 @@
                 }
             </style>
         </div>
-
-        <script>
-            document.addEventListener('alpine:init', () => {
-                Alpine.data('tvDisplay', () => ({
-                    playlists: @json($playlists),
-                    currentIndex: 0,
-                    progress: 0,
-                    tickInterval: 100, // Update progress every 100ms
-                    timer: null,
-                    clockTimer: null,
-                    currentTime: '',
-                    currentDate: '',
-                    
-                    init() {
-                        if(this.playlists.length === 0) return;
-                        
-                        this.startClock();
-                        this.startSlide();
-                    },
-                    
-                    startSlide() {
-                        this.progress = 0;
-                        let durationMs = this.playlists[this.currentIndex].duration_seconds * 1000;
-                        let elapsed = 0;
-                        
-                        clearInterval(this.timer);
-                        this.timer = setInterval(() => {
-                            elapsed += this.tickInterval;
-                            this.progress = (elapsed / durationMs) * 100;
-                            
-                            if (elapsed >= durationMs) {
-                                this.nextSlide();
-                            }
-                        }, this.tickInterval);
-                    },
-                    
-                    nextSlide() {
-                        this.currentIndex = (this.currentIndex + 1) % this.playlists.length;
-                        this.startSlide();
-                    },
-                    
-                    startClock() {
-                        const updateClock = () => {
-                            const now = new Date();
-                            this.currentTime = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-                            this.currentDate = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-                        };
-                        updateClock();
-                        this.clockTimer = setInterval(updateClock, 1000);
-                    }
-                }));
-            });
-        </script>
     @else
         <!-- Empty State -->
-        <div class="flex-1 flex flex-col items-center justify-center bg-[#114045]">
+        <div x-data="tvDisplay()" x-init="init()" class="flex-1 flex flex-col items-center justify-center bg-[#114045]">
             <img src="{{ asset('images/logofr.png') }}" class="h-24 mb-8 opacity-80">
             <h1 class="text-4xl font-bold text-white mb-4">FR Academy TV Display</h1>
             <p class="text-xl text-teal-100">Belum ada playlist yang ditambahkan.</p>
             <p class="text-md text-teal-200 mt-2">Silakan login ke Admin Panel untuk mengatur daftar tayang.</p>
         </div>
     @endif
+    
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('tvDisplay', () => ({
+                playlists: @json($playlists ?? []),
+                currentIndex: 0,
+                progress: 0,
+                tickInterval: 100, // Update progress every 100ms
+                timer: null,
+                clockTimer: null,
+                currentTime: '',
+                currentDate: '',
+                
+                currentHash: '{{ $currentHash ?? "" }}',
+                
+                init() {
+                    this.startClock();
+                    this.pollForUpdates();
+                    
+                    if(this.playlists.length === 0) return;
+                    this.startSlide();
+                },
+                
+                startSlide() {
+                    this.progress = 0;
+                    let durationMs = this.playlists[this.currentIndex].duration_seconds * 1000;
+                    let elapsed = 0;
+                    
+                    clearInterval(this.timer);
+                    this.timer = setInterval(() => {
+                        elapsed += this.tickInterval;
+                        this.progress = (elapsed / durationMs) * 100;
+                        
+                        if (elapsed >= durationMs) {
+                            this.nextSlide();
+                        }
+                    }, this.tickInterval);
+                },
+                
+                nextSlide() {
+                    this.currentIndex = (this.currentIndex + 1) % this.playlists.length;
+                    this.startSlide();
+                },
+                
+                startClock() {
+                    const updateClock = () => {
+                        const now = new Date();
+                        this.currentTime = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                        this.currentDate = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+                    };
+                    updateClock();
+                    this.clockTimer = setInterval(updateClock, 1000);
+                },
+                
+                pollForUpdates() {
+                    // Cek update setiap 15 detik menggunakan API
+                    setInterval(async () => {
+                        try {
+                            const response = await fetch('{{ route("tv.check") }}');
+                            const data = await response.json();
+                            if (data.hash && data.hash !== this.currentHash) {
+                                console.log("Ada update! Merefresh halaman...");
+                                window.location.reload();
+                            }
+                        } catch (e) {
+                            console.error("Gagal mengecek update:", e);
+                        }
+                    }, 15000);
+                }
+            }));
+        });
+    </script>
 
 </body>
 </html>

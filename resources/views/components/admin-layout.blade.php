@@ -8,8 +8,20 @@
     @livewireStyles
 </head>
 <body class="bg-white font-sans antialiased text-gray-900">
-    <div x-data="{ sidebarOpen: true }" class="flex h-screen overflow-hidden bg-white">
+    <div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden bg-white">
         
+        <!-- Mobile Overlay -->
+        <div x-show="sidebarOpen" 
+             @click="sidebarOpen = false" 
+             x-transition:enter="transition-opacity ease-linear duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition-opacity ease-linear duration-300"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-40 bg-gray-900 bg-opacity-50 lg:hidden" style="display: none;">
+        </div>
+
         <!-- Sidebar -->
         <aside :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'" class="fixed inset-y-0 left-0 z-50 w-64 bg-gray-50 border-r border-gray-200 transition-transform duration-300 ease-in-out lg:static lg:translate-x-0 flex flex-col">
             <!-- Sidebar Header -->

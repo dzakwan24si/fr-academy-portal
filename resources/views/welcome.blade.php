@@ -40,10 +40,10 @@
                 <div class="relative" data-aos="fade-right">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="h-64 bg-gray-200 rounded-2xl overflow-hidden mt-8">
-                            <img src="https://images.unsplash.com/photo-1592982537447-6f29402c40c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Training" class="w-full h-full object-cover">
+                            <img src="https://i.ibb.co.com/hFZ1CScS/slides-6.jpg" alt="Training" class="w-full h-full object-cover">
                         </div>
                         <div class="h-64 bg-gray-200 rounded-2xl overflow-hidden">
-                            <img src="https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80" alt="Meeting" class="w-full h-full object-cover">
+                            <img src="https://i.ibb.co.com/nsYWPxcw/image-5.png" alt="Meeting" class="w-full h-full object-cover">
                         </div>
                     </div>
                     <!-- Decorative element -->
@@ -109,7 +109,7 @@
                     <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Pelatihan mendalam tentang pembibitan, perawatan tanaman, pemupukan, hingga teknik panen yang efisien dan ramah lingkungan.</p>
                     
                     <div class="rounded-xl overflow-hidden h-40 mb-4">
-                        <img src="https://images.unsplash.com/photo-1592982537447-6f29402c40c8?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Agronomi" class="w-full h-full object-cover">
+                        <img src="https://i.ibb.co.com/hFZ1CScS/slides-6.jpg" alt="Agronomi" class="w-full h-full object-cover">
                     </div>
                     <a href="#" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
                         Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
@@ -125,7 +125,7 @@
                     <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Mempelajari standar operasional prosedur pengolahan kelapa sawit, manajemen K3, dan perawatan mesin pabrik.</p>
                     
                     <div class="rounded-xl overflow-hidden h-40 mb-4">
-                        <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Pabrik" class="w-full h-full object-cover">
+                        <img src="https://i.ibb.co.com/nsYWPxcw/image-5.png" alt="Pabrik" class="w-full h-full object-cover">
                     </div>
                     <a href="#" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
                         Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
@@ -141,7 +141,7 @@
                     <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Fokus pada pengembangan karakter, keterampilan kepemimpinan, dan penyelesaian masalah bagi calon manajer.</p>
                     
                     <div class="rounded-xl overflow-hidden h-40 mb-4">
-                        <img src="https://images.unsplash.com/photo-1573164713988-8665fc963095?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" alt="Kepemimpinan" class="w-full h-full object-cover">
+                        <img src="https://i.ibb.co.com/LH86Lkw/20260818-083322.jpg" alt="Kepemimpinan" class="w-full h-full object-cover">
                     </div>
                     <a href="#" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
                         Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
