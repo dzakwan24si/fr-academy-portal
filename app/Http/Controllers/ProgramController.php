@@ -78,7 +78,7 @@ class ProgramController extends Controller
             });
         }
 
-        return view('Administrasi.kalender_training', [
+        return view('Administrasi.Pages.kalender_training', [
             'programs' => array_values($filteredPrograms),
             'categories' => $categories,
             'activeCategory' => $activeCategory,
@@ -119,7 +119,7 @@ class ProgramController extends Controller
             'total_participants' => $totalParticipants,
         ];
 
-        return view('Administrasi.dashboard', [
+        return view('Administrasi.Pages.dashboard', [
             'programs' => $programs,
             'activeYear' => $activeYear,
             'stats' => $stats
