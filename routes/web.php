@@ -11,23 +11,36 @@ Route::get('/', function () {
     return view('welcome', compact('latest_articles', 'active_event'));
 });
 
+Route::get('/tentang-kami', function () {
+    return view('about');
+})->name('about');
+
 Route::get('/tv-display', function () {
-    $playlists = TvPlaylist::with('article.author', 'article.category')->orderBy('order')->get()->map(function($item) {
+    $playlists = TvPlaylist::with('article.author', 'article.category')->orderBy('order')->get();
+    
+    // Stable hash based on latest updates and count
+    $playlistUpdate = TvPlaylist::max('updated_at');
+    $articleUpdate = \App\Models\Article::max('updated_at');
+    $playlistCount = TvPlaylist::count();
+    $currentHash = md5($playlistUpdate . $articleUpdate . $playlistCount);
+    
+    $playlists->transform(function($item) {
         $url = route('artikel.show', $item->article->slug);
         $item->qr_code = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->margin(1)->generate($url)->toHtml();
         return $item;
     });
     
-    // Generate a hash to identify the current state of the playlist
-    $currentHash = md5($playlists->toJson());
-    
     return view('tv.display', compact('playlists', 'currentHash'));
 })->name('tv.display');
 
 Route::get('/tv-display/check', function () {
-    $playlists = TvPlaylist::with('article.author', 'article.category')->orderBy('order')->get();
+    $playlistUpdate = TvPlaylist::max('updated_at');
+    $articleUpdate = \App\Models\Article::max('updated_at');
+    $playlistCount = TvPlaylist::count();
+    $currentHash = md5($playlistUpdate . $articleUpdate . $playlistCount);
+    
     return response()->json([
-        'hash' => md5($playlists->toJson())
+        'hash' => $currentHash
     ]);
 })->name('tv.check');
 
@@ -73,13 +86,14 @@ Route::middleware('auth')->prefix('admin')->group(function () {
         return view('admin.dashboard', compact('totalArticles', 'totalPlaylists', 'totalUsers', 'totalEvents'));
     })->name('admin.dashboard');
 
-    Route::resource('artikel', AdminArticleController::class)->names('admin.artikel');
+    Route::resource('artikel', AdminArticleController::class)->names('admin.artikel')->middleware('can:manage_articles');
     
     // User Management Routes
-    Route::resource('users', UserController::class)->names('admin.users');
+    Route::resource('users', UserController::class)->names('admin.users')->middleware('can:manage_users');
+    Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class)->names('admin.roles')->middleware('can:manage_roles');
 
     // Event Themes Management
-    Route::resource('events', \App\Http\Controllers\Admin\HomepageEventController::class)->names('admin.events');
+    Route::resource('events', \App\Http\Controllers\Admin\HomepageEventController::class)->names('admin.events')->middleware('can:manage_events');
 
     // Profile Management Routes
     Route::get('profile', [ProfileController::class, 'edit'])->name('admin.profile.edit');
@@ -87,5 +101,5 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     
     Route::get('tv', function () {
         return view('admin.tv.index');
-    })->name('admin.tv.index');
+    })->name('admin.tv.index')->middleware('can:manage_tv_display');
 });

@@ -90,6 +90,30 @@
                             @enderror
                         </div>
 
+                        <hr class="border-gray-200">
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-3">Pengecualian / Direct Permissions (Opsional)</label>
+                            <p class="text-xs text-gray-500 mb-4">Pilih ini hanya jika Anda ingin memberikan hak akses khusus yang TIDAK ada di dalam Role bawaan akun ini.</p>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                @forelse($permissions as $permission)
+                                    <label class="relative flex items-start border border-gray-200 rounded-xl p-4 cursor-pointer hover:bg-gray-50 transition-colors">
+                                        <div class="flex items-center h-5">
+                                            <input type="checkbox" name="permissions[]" value="{{ $permission->name }}" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded" {{ (is_array(old('permissions')) && in_array($permission->name, old('permissions'))) ? 'checked' : '' }}>
+                                        </div>
+                                        <div class="ml-3 text-sm">
+                                            <span class="font-medium text-gray-900">{{ $permission->name }}</span>
+                                        </div>
+                                    </label>
+                                @empty
+                                    <p class="text-sm text-gray-500">Belum ada permission yang terdaftar di database.</p>
+                                @endforelse
+                            </div>
+                            @error('permissions')
+                                <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <div class="flex items-center justify-end mt-8">
                             <button type="submit" class="inline-flex justify-center py-2.5 px-6 border border-transparent shadow-sm text-sm font-bold rounded-xl text-white bg-[#509c38] hover:bg-[#3d7a2b] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#509c38] transition-colors">
                                 Simpan User

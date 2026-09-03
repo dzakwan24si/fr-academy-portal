@@ -8,13 +8,35 @@ use Spatie\Permission\Models\Role;
 
 class RoleSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        $roles = [
-            'Admin',
+        // Reset cached roles and permissions
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        // 1. Create Permissions
+        $permissions = [
+            'manage_articles',
+            'manage_users',
+            'manage_tv_display',
+            'manage_events',
+            'manage_roles'
+        ];
+
+        foreach ($permissions as $permission) {
+            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => $permission]);
+        }
+
+        // 2. Create Roles and Assign Default Permissions
+        
+        // Superadmin bypasses everything, but we create it anyway
+        Role::firstOrCreate(['name' => 'Superadmin']);
+        
+        // Admin E-Information gets specific default permissions
+        $adminInfoRole = Role::firstOrCreate(['name' => 'Admin E-Information']);
+        $adminInfoRole->syncPermissions(['manage_articles', 'manage_tv_display', 'manage_events']);
+
+        // Other generic roles
+        $otherRoles = [
             'Administrasi',
             'Koordinator Mess',
             'Kepala TU',
@@ -23,7 +45,7 @@ class RoleSeeder extends Seeder
             'Trainer',
         ];
 
-        foreach ($roles as $role) {
+        foreach ($otherRoles as $role) {
             Role::firstOrCreate(['name' => $role]);
         }
     }

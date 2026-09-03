@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
@@ -29,7 +30,8 @@ class UserController extends Controller
     public function create()
     {
         $roles = Role::all();
-        return view('admin.users.create', compact('roles'));
+        $permissions = Permission::all();
+        return view('admin.users.create', compact('roles', 'permissions'));
     }
 
     public function store(Request $request)
@@ -40,6 +42,7 @@ class UserController extends Controller
             'nik' => ['nullable', 'string', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'roles' => ['nullable', 'array'],
+            'permissions' => ['nullable', 'array'],
         ]);
 
         $user = User::create([
@@ -53,15 +56,21 @@ class UserController extends Controller
             $user->syncRoles($validated['roles']);
         }
 
+        if (isset($validated['permissions'])) {
+            $user->syncPermissions($validated['permissions']);
+        }
+
         return redirect()->route('admin.users.index')->with('success', 'User berhasil ditambahkan.');
     }
 
     public function edit(User $user)
     {
         $roles = Role::all();
+        $permissions = Permission::all();
         $userRoles = $user->roles->pluck('name')->toArray();
+        $userPermissions = $user->permissions->pluck('name')->toArray(); // Direct permissions
         
-        return view('admin.users.edit', compact('user', 'roles', 'userRoles'));
+        return view('admin.users.edit', compact('user', 'roles', 'permissions', 'userRoles', 'userPermissions'));
     }
 
     public function update(Request $request, User $user)
@@ -72,6 +81,7 @@ class UserController extends Controller
             'nik' => ['nullable', 'string', 'max:255', 'unique:users,nik,' . $user->id],
             'password' => ['nullable', 'confirmed', Password::defaults()],
             'roles' => ['nullable', 'array'],
+            'permissions' => ['nullable', 'array'],
         ]);
 
         $user->update([
@@ -90,6 +100,12 @@ class UserController extends Controller
             $user->syncRoles($validated['roles']);
         } else {
             $user->syncRoles([]);
+        }
+
+        if (isset($validated['permissions'])) {
+            $user->syncPermissions($validated['permissions']);
+        } else {
+            $user->syncPermissions([]);
         }
 
         return redirect()->route('admin.users.index')->with('success', 'User berhasil diperbarui.');

@@ -6,7 +6,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ $title ?? 'FR Academy Portal' }}</title>
+    <title>{{ $title ?? 'FR Academy' }}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/faviconfr.svg') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Alpine JS -->
@@ -48,7 +49,7 @@
                 <!-- Desktop Menu -->
                 <nav class="hidden md:flex space-x-8">
                     <a href="/" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">BERANDA</a>
-                    <a href="#" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">TENTANG</a>
+                    <a href="/tentang-kami" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">TENTANG</a>
                     <a href="#" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">PROGRAM</a>
                     <a href="/artikel" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">ARTIKEL</a>
                 </nav>
@@ -115,7 +116,7 @@
              style="display: none;">
             <div class="px-4 pt-2 pb-6 space-y-1">
                 <a href="/" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">BERANDA</a>
-                <a href="#" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">TENTANG</a>
+                <a href="/tentang-kami" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">TENTANG</a>
                 <a href="#" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">PROGRAM</a>
                 <a href="/artikel" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">ARTIKEL</a>
                 <div class="mt-4 pt-4 border-t border-teal-700">
@@ -173,11 +174,12 @@
                 <!-- Location -->
                 <div>
                     <h3 class="text-lg font-semibold mb-6">Lokasi Kami</h3>
-                    <a href="https://maps.google.com/maps?q=First+Resources+Learning+Centre" target="_blank" rel="noopener noreferrer" class="block group relative w-full h-40 bg-teal-900 rounded-lg overflow-hidden border border-teal-800 shadow-inner">
-                        <iframe src="https://maps.google.com/maps?q=First+Resources+Learning+Centre&t=&z=14&ie=UTF8&iwloc=&output=embed" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" class="pointer-events-none w-full h-full"></iframe>
+                    <a href="https://maps.google.com/maps?q=First+Resources+Learning+Centre" target="_blank" rel="noopener noreferrer" class="block relative w-full h-40 bg-teal-900 rounded-lg overflow-hidden border border-teal-800 shadow-inner group">
+                        <!-- Peta Google Asli -->
+                        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15958.629399435649!2d101.41169300600109!3d0.4705599827050588!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31d5a86a6058e579%3A0xc3f1a26c4f03cb71!2sFirst%20Resources%20Learning%20Centre!5e0!3m2!1sen!2sid!4v1709618143491!5m2!1sen!2sid" width="100%" height="100%" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade" class="pointer-events-none w-full h-full"></iframe>
                         <!-- Overlay Link -->
-                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-                            <span class="opacity-0 group-hover:opacity-100 bg-teal-primary text-white text-sm font-bold px-4 py-2 rounded-lg shadow-lg flex items-center transition-opacity duration-300 transform scale-95 group-hover:scale-100">
+                        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+                            <span class="bg-green-accent text-white text-sm font-bold px-4 py-2 rounded-lg shadow-lg flex items-center">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                                 Buka di Maps
                             </span>

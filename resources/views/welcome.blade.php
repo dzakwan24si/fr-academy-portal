@@ -1,22 +1,71 @@
 <x-layout>
     <!-- Hero Section -->
-    <section class="relative bg-teal-primary min-h-screen flex items-center pt-32 pb-16">
-        <!-- Background Image -->
-        <div class="absolute inset-0 z-0">
-            <img src="{{ asset('images/welcomefr.jpg') }}" alt="FR Academy Welcome" class="w-full h-full object-cover">
+    <section class="relative bg-teal-primary min-h-screen flex items-center pt-32 pb-16 overflow-hidden"
+             x-data="{ 
+                currentSlide: 0, 
+                slides: [
+                    '{{ asset('images/welcomefr.jpg') }}',
+                    '{{ asset('images/slide2.png') }}',
+                    '{{ asset('images/slide3.png') }}',
+                    '{{ asset('images/slide4.png') }}'
+                ],
+                nextSlide() { this.currentSlide = (this.currentSlide === this.slides.length - 1) ? 0 : this.currentSlide + 1 },
+                prevSlide() { this.currentSlide = (this.currentSlide === 0) ? this.slides.length - 1 : this.currentSlide - 1 }
+             }" 
+             x-init="setInterval(() => nextSlide(), 5000)">
+             
+        <!-- Background Slider -->
+        <div class="absolute inset-0 z-0 bg-black">
+            <template x-for="(slide, index) in slides" :key="index">
+                <div x-show="currentSlide === index"
+                     x-transition:enter="transition ease-in-out duration-1000"
+                     x-transition:enter-start="opacity-0 scale-105"
+                     x-transition:enter-end="opacity-100 scale-100"
+                     x-transition:leave="transition ease-in-out duration-1000"
+                     x-transition:leave-start="opacity-100 scale-100"
+                     x-transition:leave-end="opacity-0 scale-105"
+                     class="absolute inset-0">
+                    <img :src="slide" alt="FR Academy Slide" class="w-full h-full object-cover">
+                </div>
+            </template>
         </div>
+        
         <!-- Dark overlay to ensure text readability -->
-        <div class="absolute inset-0 bg-black/50 z-10"></div>
+        <div class="absolute inset-0 bg-black/60 z-10 transition-opacity duration-1000"></div>
+
+        <!-- Slider Navigation Controls -->
+        <div class="absolute inset-y-0 left-0 z-30 flex items-center px-4 md:px-8">
+            <button @click="prevSlide()" class="p-3 rounded-full bg-black/20 text-white hover:bg-black/60 hover:scale-110 transition-all backdrop-blur-sm border border-white/10 hidden sm:block">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+            </button>
+        </div>
+        <div class="absolute inset-y-0 right-0 z-30 flex items-center px-4 md:px-8">
+            <button @click="nextSlide()" class="p-3 rounded-full bg-black/20 text-white hover:bg-black/60 hover:scale-110 transition-all backdrop-blur-sm border border-white/10 hidden sm:block">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            </button>
+        </div>
+
+        <!-- Slider Indicators -->
+        <div class="absolute bottom-10 left-0 right-0 z-30 flex justify-center space-x-3">
+            <template x-for="(slide, index) in slides" :key="index">
+                <button @click="currentSlide = index" 
+                        class="h-2 rounded-full transition-all duration-500 ease-out"
+                        :class="currentSlide === index ? 'bg-green-accent w-10 shadow-[0_0_10px_rgba(89,163,56,0.8)]' : 'bg-white/40 hover:bg-white/80 w-2'"></button>
+            </template>
+        </div>
         
         <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex flex-col items-center text-center" data-aos="zoom-in" data-aos-duration="1000">
             <div class="max-w-3xl flex flex-col items-center">
-                <span class="inline-block py-1 px-3 rounded bg-white/20 text-white text-xs font-semibold tracking-wider mb-4 border border-white/30 backdrop-blur-sm">FIRST RESOURCES LEARNING CENTER</span>
-                <h1 class="text-5xl md:text-6xl font-bold text-white leading-tight mb-6">
-                    Membangun Masa Depan <br>
-                    <span class="text-green-accent">Kelapa Sawit Berkelanjutan</span>
+                <span class="inline-block py-1 px-3 rounded bg-white/20 text-white text-xs font-semibold tracking-wider mb-4 border border-white/30 backdrop-blur-sm">FIRST RESOURCES ACADEMY</span>
+                <h1 class="text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
+                    Membangun Value, Menumbuhkan Karakter & <br>
+                    <span class="text-green-accent">Menyiapkan Masa Depan</span>
                 </h1>
-                <p class="text-lg text-gray-200 mb-10 max-w-2xl mx-auto">
-                    Pusat pelatihan perusahaan terdepan untuk menciptakan sumber daya manusia yang unggul, profesional, dan berdedikasi.
+                <p class="text-xl md:text-2xl text-green-accent font-semibold mb-6">
+                    "Kebun Itu Sebaik Manusianya."
+                </p>
+                <p class="text-lg text-gray-200 mb-10 max-w-3xl mx-auto">
+                    FR Academy hadir sebagai pusat pengembangan kompetensi dan pembentukan karakter kerja untuk menciptakan human capital perusahaan yang unggul, adaptif, dan siap menghadapi tantangan bisnis.
                 </p>
                 
                 <!-- CTA Buttons -->
@@ -43,7 +92,7 @@
                             <img src="https://i.ibb.co.com/hFZ1CScS/slides-6.jpg" alt="Training" class="w-full h-full object-cover">
                         </div>
                         <div class="h-64 bg-gray-200 rounded-2xl overflow-hidden">
-                            <img src="https://i.ibb.co.com/nsYWPxcw/image-5.png" alt="Meeting" class="w-full h-full object-cover">
+                            <img src="https://i.ibb.co.com/Rp1kWtfV/image-12.png" alt="Meeting" class="w-full h-full object-cover">
                         </div>
                     </div>
                     <!-- Decorative element -->
@@ -54,10 +103,10 @@
                 <div data-aos="fade-left" data-aos-delay="200">
                     <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">TENTANG FR ACADEMY</span>
                     <h2 class="text-4xl font-bold text-teal-primary dark:text-white mt-4 mb-6 leading-tight">
-                        Misi Kami: Pertanian yang Lebih Baik untuk <span class="text-green-accent">Masa Depan</span>
+                        Visi <span class="text-green-accent">FR Academy</span>
                     </h2>
                     <p class="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-                        Kami merancang program pelatihan komprehensif untuk meningkatkan keterampilan teknis dan manajerial para praktisi perkebunan. Didukung oleh instruktur berpengalaman dan fasilitas modern, kami berkomitmen untuk melahirkan agen perubahan yang dapat menerapkan praktik pertanian berkelanjutan dan mencapai efisiensi operasional yang optimal.
+                        Meningkatkan nilai perusahaan melalui pembelajaran berkelanjutan yang berkualitas dengan menjadi mitra strategis dalam pengembangan SDM. Kami merancang lingkungan belajar yang mengintegrasikan pengetahuan teknis lapangan dengan nilai-nilai kepemimpinan.
                     </p>
                     
                     <ul class="space-y-4 mb-8">
@@ -81,7 +130,7 @@
                         </li>
                     </ul>
                     
-                    <a href="#" class="inline-flex items-center text-teal-primary dark:text-teal-300 font-semibold hover:text-green-accent dark:hover:text-green-400 transition">
+                    <a href="/tentang-kami" class="inline-flex items-center text-teal-primary dark:text-teal-300 font-semibold hover:text-green-accent dark:hover:text-green-400 transition">
                         Lebih Lanjut Tentang Kami 
                         <svg class="ml-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </a>
@@ -94,9 +143,9 @@
     <section class="py-24 bg-gray-50 dark:bg-gray-800 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
-                <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">PROGRAM PELATIHAN KAMI</span>
-                <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white mt-4 mb-4">Solusi Pelatihan Komprehensif</h2>
-                <p class="text-gray-600 dark:text-gray-300">FR Academy menawarkan berbagai spesialisasi untuk memenuhi kebutuhan industri kelapa sawit modern.</p>
+                <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">PILAR PROGRAM UTAMA</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white mt-4 mb-4">Tiga Pilar Program Utama</h2>
+                <p class="text-gray-600 dark:text-gray-300">FR Academy berfokus pada pengembangan SDM melalui tiga pilar pembelajaran utama.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -105,11 +154,11 @@
                     <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center text-teal-primary dark:text-teal-400 mb-6 shadow-sm">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Manajemen Agronomi</h3>
-                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Pelatihan mendalam tentang pembibitan, perawatan tanaman, pemupukan, hingga teknik panen yang efisien dan ramah lingkungan.</p>
+                    <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Regular Training Program</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Program pengembangan berkesinambungan selama enam bulan dengan pendampingan mentoring untuk menyiapkan calon staf dan asisten perkebunan.</p>
                     
                     <div class="rounded-xl overflow-hidden h-40 mb-4">
-                        <img src="https://i.ibb.co.com/hFZ1CScS/slides-6.jpg" alt="Agronomi" class="w-full h-full object-cover">
+                        <img src="{{ asset('images/slide3.png') }}" alt="Agronomi" class="w-full h-full object-cover">
                     </div>
                     <a href="#" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
                         Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
@@ -121,11 +170,11 @@
                     <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center text-teal-primary dark:text-teal-400 mb-6 shadow-sm">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Operasional Pabrik</h3>
-                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Mempelajari standar operasional prosedur pengolahan kelapa sawit, manajemen K3, dan perawatan mesin pabrik.</p>
+                    <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Non-Regular Training Program</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Pelatihan berdurasi singkat untuk meningkatkan kompetensi teknis dan manajerial staf operasional di Kebun, Pabrik (Mill), Traksi, hingga Administrasi.</p>
                     
                     <div class="rounded-xl overflow-hidden h-40 mb-4">
-                        <img src="https://i.ibb.co.com/nsYWPxcw/image-5.png" alt="Pabrik" class="w-full h-full object-cover">
+                        <img src="https://i.ibb.co.com/3mg5bHQN/image-14.png" alt="Pabrik" class="w-full h-full object-cover">
                     </div>
                     <a href="#" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
                         Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
@@ -137,11 +186,11 @@
                     <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center text-teal-primary dark:text-teal-400 mb-6 shadow-sm">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Kepemimpinan & Etika</h3>
-                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Fokus pada pengembangan karakter, keterampilan kepemimpinan, dan penyelesaian masalah bagi calon manajer.</p>
+                    <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Talent Management Program</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Program akselerasi terstruktur yang dirancang khusus untuk mempersiapkan staf berpotensi (high talent) menjadi pemimpin masa depan perusahaan.</p>
                     
                     <div class="rounded-xl overflow-hidden h-40 mb-4">
-                        <img src="https://i.ibb.co.com/LH86Lkw/20260818-083322.jpg" alt="Kepemimpinan" class="w-full h-full object-cover">
+                        <img src="https://i.ibb.co.com/XrLSNbzC/image-13.png" alt="Kepemimpinan" class="w-full h-full object-cover">
                     </div>
                     <a href="#" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
                         Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
@@ -157,18 +206,18 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-teal-700">
                 <!-- Stat 1 -->
                 <div class="text-center py-4" data-aos="zoom-in" data-aos-delay="100">
-                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span class="counter" data-target="20">0</span><span class="text-green-accent text-4xl">k+</span></div>
-                    <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">SISWA LULUS</div>
+                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span class="counter" data-target="300">0</span><span class="text-green-accent text-4xl"> Ha</span></div>
+                    <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">Area Praktik & Simulasi</div>
                 </div>
                 <!-- Stat 2 -->
                 <div class="text-center py-4" data-aos="zoom-in" data-aos-delay="200">
-                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span class="counter" data-target="98">0</span><span class="text-green-accent text-4xl">%</span></div>
-                    <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">TINGKAT KEPUASAN</div>
+                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span>70:20:10</span></div>
+                    <div class="text-teal-200 text-xs md:text-sm uppercase tracking-wider font-semibold px-2">Metode Pembelajaran (Experiential, Social, Formal)</div>
                 </div>
                 <!-- Stat 3 -->
                 <div class="text-center py-4" data-aos="zoom-in" data-aos-delay="300">
-                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span class="counter" data-target="1.5">0</span><span class="text-green-accent text-4xl">k+</span></div>
-                    <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">FASILITATOR BERPENGALAMAN</div>
+                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span class="counter" data-target="3">0</span></div>
+                    <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">Pusat Pelatihan & Learning Station</div>
                 </div>
             </div>
         </div>

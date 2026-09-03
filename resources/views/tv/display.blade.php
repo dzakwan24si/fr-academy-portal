@@ -156,6 +156,7 @@
                 currentDate: '',
                 
                 currentHash: '{{ $currentHash ?? "" }}',
+                updatePending: false,
                 
                 init() {
                     this.startClock();
@@ -182,6 +183,13 @@
                 },
                 
                 nextSlide() {
+                    // Jika ada update tertunda, tunggu sampai slide terakhir selesai diputar, baru refresh
+                    if (this.updatePending && this.currentIndex === this.playlists.length - 1) {
+                        clearInterval(this.timer); // Hentikan timer agar tidak spam reload()
+                        window.location.reload();
+                        return;
+                    }
+                    
                     this.currentIndex = (this.currentIndex + 1) % this.playlists.length;
                     this.startSlide();
                 },
@@ -200,11 +208,16 @@
                     // Cek update setiap 15 detik menggunakan API
                     setInterval(async () => {
                         try {
-                            const response = await fetch('{{ route("tv.check") }}');
+                            const response = await fetch('{{ route("tv.check") }}?t=' + new Date().getTime());
                             const data = await response.json();
                             if (data.hash && data.hash !== this.currentHash) {
-                                console.log("Ada update! Merefresh halaman...");
-                                window.location.reload();
+                                console.log("Ada update! Menunggu siklus saat ini selesai untuk refresh...");
+                                this.updatePending = true;
+                                
+                                // Jika layar dalam keadaan kosong, langsung refresh saja tanpa menunggu
+                                if (this.playlists.length === 0) {
+                                    window.location.reload();
+                                }
                             }
                         } catch (e) {
                             console.error("Gagal mengecek update:", e);
