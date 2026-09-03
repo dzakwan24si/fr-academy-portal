@@ -11,6 +11,12 @@ Route::get('/', function () {
     return view('welcome', compact('latest_articles', 'active_event'));
 });
 
+Route::get('/sitemap.xml', function () {
+    $articles = \App\Models\Article::where('status', 'published')->get();
+    return response()->view('sitemap', compact('articles'))
+                     ->header('Content-Type', 'text/xml');
+})->name('sitemap');
+
 Route::get('/tentang-kami', function () {
     return view('about');
 })->name('about');
