@@ -17,6 +17,27 @@ Route::get('/sitemap.xml', function () {
                      ->header('Content-Type', 'text/xml');
 })->name('sitemap');
 
+// RUTE SEMENTARA UNTUK SETUP HOSTING
+Route::get('/setup-superadmin', function () {
+    try {
+        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'RoleSeeder']);
+        
+        $user = \App\Models\User::where('name', 'Yogie Hizkia')->first();
+        if (!$user) {
+            $user = \App\Models\User::first(); // Fallback ke user pertama
+        }
+
+        if ($user) {
+            $user->assignRole('Superadmin');
+            return 'Sukses! Role Superadmin dan Permissions telah dibuat, dan akses penuh telah diberikan ke akun: ' . $user->name;
+        }
+        
+        return 'Role dibuat, tapi gagal memberikan akses karena tabel User kosong.';
+    } catch (\Exception $e) {
+        return 'Terjadi kesalahan: ' . $e->getMessage();
+    }
+});
+
 Route::get('/tentang-kami', function () {
     return view('about');
 })->name('about');
