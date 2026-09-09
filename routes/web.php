@@ -38,6 +38,10 @@ Route::get('/setup-superadmin', function () {
     }
 });
 
+Route::get('/program', function () {
+    return view('program');
+})->name('program');
+
 Route::get('/tentang-kami', function () {
     return view('about');
 })->name('about');

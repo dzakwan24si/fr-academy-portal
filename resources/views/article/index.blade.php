@@ -1,11 +1,22 @@
 <x-layout>
-    <!-- Header -->
-    <div class="bg-teal-primary pt-32 pb-16">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">Artikel & Pengumuman</h1>
-            <p class="text-teal-100 text-lg max-w-2xl mx-auto">Kumpulan berita terbaru, penelitian, dan pencapaian dari FR Academy.</p>
+    <!-- Hero Section -->
+    <section class="relative h-[350px] md:h-[400px] pt-20 overflow-hidden flex items-center justify-center">
+        <div class="absolute inset-0 z-0">
+            <img src="{{ asset('images/slide5.png') }}" alt="Artikel FR Academy" class="w-full h-full object-cover object-center" data-aos="zoom-out" data-aos-duration="2000">
+            <div class="absolute inset-0 bg-black/50"></div>
         </div>
-    </div>
+        <div class="relative z-10 text-center px-4 max-w-4xl mx-auto" data-aos="fade-up" data-aos-duration="1000">
+            <span class="text-green-accent font-bold tracking-widest uppercase text-sm mb-4 block">
+                Pusat Informasi
+            </span>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6">
+                Artikel & <span class="text-green-accent">Pengumuman</span>
+            </h1>
+            <p class="text-lg md:text-xl text-teal-100 max-w-2xl mx-auto font-light">
+                Kumpulan berita terbaru, penelitian, dan pencapaian dari FR Academy.
+            </p>
+        </div>
+    </section>
 
     <!-- Category Tabs & Articles -->
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 transition-colors duration-300">

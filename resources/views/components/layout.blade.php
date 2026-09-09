@@ -50,7 +50,7 @@
                 <nav class="hidden md:flex space-x-8">
                     <a href="/" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">BERANDA</a>
                     <a href="/tentang-kami" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">TENTANG</a>
-                    <a href="#" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">PROGRAM</a>
+                    <a href="/program" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">PROGRAM</a>
                     <a href="/career" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">CAREER</a>
                     <a href="/artikel" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">ARTIKEL</a>
                 </nav>
@@ -118,7 +118,7 @@
             <div class="px-4 pt-2 pb-6 space-y-1">
                 <a href="/" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">BERANDA</a>
                 <a href="/tentang-kami" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">TENTANG</a>
-                <a href="#" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">PROGRAM</a>
+                <a href="/program" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">PROGRAM</a>
                 <a href="/career" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">CAREER</a>
                 <a href="/artikel" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">ARTIKEL</a>
                 <div class="mt-4 pt-4 border-t border-teal-700">

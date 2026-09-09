@@ -160,7 +160,7 @@
                     <div class="rounded-xl overflow-hidden h-40 mb-4">
                         <img src="{{ asset('images/slide3.png') }}" alt="Agronomi" class="w-full h-full object-cover">
                     </div>
-                    <a href="#" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
+                    <a href="/program#reguler" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
                         Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>
                 </div>
@@ -176,7 +176,7 @@
                     <div class="rounded-xl overflow-hidden h-40 mb-4">
                         <img src="https://i.ibb.co.com/3mg5bHQN/image-14.png" alt="Pabrik" class="w-full h-full object-cover">
                     </div>
-                    <a href="#" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
+                    <a href="/program#non-reguler" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
                         Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>
                 </div>
@@ -192,7 +192,7 @@
                     <div class="rounded-xl overflow-hidden h-40 mb-4">
                         <img src="https://i.ibb.co.com/XrLSNbzC/image-13.png" alt="Kepemimpinan" class="w-full h-full object-cover">
                     </div>
-                    <a href="#" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
+                    <a href="/program#talent" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
                         Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </a>
                 </div>
@@ -272,9 +272,9 @@
     <section id="program" class="py-24 bg-teal-900 dark:bg-gray-950 relative overflow-hidden text-white transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" data-aos="fade-up">
             <div class="mb-16">
-                <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">AREA FOKUS KAMI</span>
+                <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">MENCETAK PLANTER & ENGINEER UNGGUL</span>
                 <h2 class="text-4xl md:text-5xl font-bold mt-4 leading-tight">
-                    Dari Bibit Hingga Panen — <br>Layanan Penuh Kami
+                    Membangun Value, Menumbuhkan Karakter & <br> Menyiapkan Masa Depan
                 </h2>
             </div>
             
@@ -305,27 +305,27 @@
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl text-teal-50">
                             <div class="flex items-start">
                                 <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span><strong class="text-white">Field Assistant:</strong> Penjelasan singkat mengenai asisten kebun.</span>
+                                <span><strong class="text-white">Field Assistant Training (FAT):</strong> Program yang dirancang untuk menyiapkan calon Asisten Kebun agar memiliki pengetahuan, keterampilan, dan sikap kerja sesuai budaya First Resources.</span>
                             </div>
                             <div class="flex items-start">
                                 <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span><strong class="text-white">Mill Assistant:</strong> Penjelasan mengenai asisten pabrik kelapa sawit.</span>
+                                <span><strong class="text-white">Mill Assistant Training (MAT):</strong> Program yang dirancang untuk menyiapkan calon Asisten Pabrik dengan kompetensi teknis dan kepemimpinan yang sesuai kebutuhan operasional pabrik.</span>
                             </div>
                             <div class="flex items-start">
                                 <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span><strong class="text-white">Downstream Assistant:</strong> Penjelasan mengenai asisten downstream.</span>
+                                <span><strong class="text-white">Traction Assistant Training (TAT):</strong> Program untuk menyiapkan calon Asisten Traksi yang memiliki kemampuan teknis dan manajerial sesuai standar perusahaan.</span>
                             </div>
                             <div class="flex items-start">
                                 <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span><strong class="text-white">Traction Assistant:</strong> Penjelasan mengenai asisten traksi.</span>
+                                <span><strong class="text-white">Administration Assistant Training (AAT):</strong> Program untuk mempersiapkan calon Asisten Administrasi yang memiliki kompetensi administrasi, analisis, dan pengelolaan kerja sesuai budaya perusahaan.</span>
                             </div>
                             <div class="flex items-start">
                                 <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span><strong class="text-white">Administration Assistant:</strong> Penjelasan mengenai asisten administrasi.</span>
+                                <span><strong class="text-white">Downstream Management Trainee (DMT):</strong> Program yang dirancang untuk menyiapkan calon supervisor di unit downstream agar memiliki kompetensi teknis dan perilaku kerja yang sesuai dengan kebutuhan operasional.</span>
                             </div>
-                            <div class="flex items-start">
+                            <div class="flex items-start md:col-span-2">
                                 <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span><strong class="text-white">Management Associate:</strong> Jalur kepemimpinan masa depan.</span>
+                                <span><strong class="text-white">Management Associates Program (MAP):</strong> Program khusus yang ditujukan untuk mempersiapkan high talent menjadi future leader di berbagai business unit. Program ini dirancang sesuai kebutuhan operasional dan mencakup seluruh aspek bisnis perusahaan, mulai dari upstream, downstream, hingga support department. MAP diharapkan menjadi talent pool bagi kader pemimpin perusahaan di masa depan.</span>
                             </div>
                         </div>
                     </div>
@@ -339,12 +339,49 @@
                     </button>
                     <div x-show="selected === 2" x-collapse class="px-4 md:px-8 pb-10 md:pl-[6.5rem]">
                         <p class="mb-6 text-lg text-teal-100 max-w-3xl">Pelatihan khusus yang dirancang sesuai dengan kebutuhan spesifik divisi atau tantangan operasional terkini.</p>
-                        <div class="flex flex-wrap gap-3 max-w-4xl">
-                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Estate Program</span>
-                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Mill & Downstream Program</span>
-                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Soft Skill Program</span>
-                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Administration Program</span>
-                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Sustainability Program</span>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl text-teal-50">
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div>
+                                    <strong class="text-white block mb-1">Teknikal Estate</strong>
+                                    <span class="text-sm text-teal-100">Training untuk meningkatkan kompetensi teknis para staf di Kebun seperti: Klinik Kerja Mandor, Estate Coaching Program, Pengelolaan TBM, Klinik HPT, Manajemen Pemupukan dll.</span>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div>
+                                    <strong class="text-white block mb-1">Teknikal Mill</strong>
+                                    <span class="text-sm text-teal-100">Training untuk meningkatkan kompentensi para staf di Pabrik, seperti: Mill Mentoring, Manajemen Operasional Boiler, Pengelolaan Water Treatment, Total Productive Maintenance, Klinik Kinerja Pabrik, dll.</span>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div>
+                                    <strong class="text-white block mb-1">Teknikal Traksi</strong>
+                                    <span class="text-sm text-teal-100">Training untuk meningkatkan kompentensi para staf di Traksi seperti: Manajemen Workshop, Operation and Maintenance DT, Perawatan Genset, Defensive Driving, Overhaul DT Euro 4, dll.</span>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div>
+                                    <strong class="text-white block mb-1">Teknikal Downstream</strong>
+                                    <span class="text-sm text-teal-100">Training untuk meningkatkan kompentensi para staf di Downstream seperti: Operation and Maintenance Pump, Ref and Frac Operation for Operator, Sistem Kalibrasi PLC, Operasional Oleochemical for Operator, dll.</span>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div>
+                                    <strong class="text-white block mb-1">Teknikal Administrasi & Sustain</strong>
+                                    <span class="text-sm text-teal-100">Training untuk meningkatkan kompentensi tenaga Administrasi dan Sustainability, seperti: Pemadaman Kebakaran Hutan dan Lahan, K3-First Aid, Mentoring Asisten Administrasi, Pelatihan Pamong TPA, dll.</span>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <div>
+                                    <strong class="text-white block mb-1">Managerial & Softskill</strong>
+                                    <span class="text-sm text-teal-100">Training untuk meningkatkan kompetensi Softskills seluruh staf, seperti: Supervisory Management untuk Asisten, Fundamental Leadership untuk Askep, Strategic Leadership untuk Manager, Problem Solving and Decision Making, dll.</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -353,25 +390,9 @@
                 <div class="border-b border-teal-700/50 group accordion-item transition-colors duration-300" :class="selected === 3 ? 'bg-teal-800/50' : 'hover:bg-teal-800/30'">
                     <button @click="selected = selected === 3 ? null : 3" class="flex items-center w-full text-left py-8 md:py-12 px-4 md:px-8 focus:outline-none">
                         <span class="text-green-accent font-mono text-xl mr-6 md:mr-10" :class="selected === 3 ? 'opacity-100' : 'opacity-70'">(03)</span>
-                        <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === 3 ? 'text-outline-active' : ''">PROGRAM PENDUKUNG</h3>
+                        <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === 3 ? 'text-outline-active' : ''">PROSES BISNIS KAMI</h3>
                     </button>
                     <div x-show="selected === 3" x-collapse class="px-4 md:px-8 pb-10 md:pl-[6.5rem]">
-                        <p class="mb-6 text-lg text-teal-100 max-w-3xl">Pelatihan untuk meningkatkan kompetensi pendukung yang esensial di lingkungan operasional perkebunan.</p>
-                        <div class="flex flex-wrap gap-3 max-w-4xl">
-                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Soft Skill Program</span>
-                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Administration Program</span>
-                            <span class="px-4 py-2 bg-teal-800 rounded-full text-sm text-teal-50 border border-teal-600">Sustainability Program</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Accordion Item 4 -->
-                <div class="border-b border-teal-700/50 group accordion-item transition-colors duration-300" :class="selected === 4 ? 'bg-teal-800/50' : 'hover:bg-teal-800/30'">
-                    <button @click="selected = selected === 4 ? null : 4" class="flex items-center w-full text-left py-8 md:py-12 px-4 md:px-8 focus:outline-none">
-                        <span class="text-green-accent font-mono text-xl mr-6 md:mr-10" :class="selected === 4 ? 'opacity-100' : 'opacity-70'">(04)</span>
-                        <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === 4 ? 'text-outline-active' : ''">PROSES BISNIS KAMI</h3>
-                    </button>
-                    <div x-show="selected === 4" x-collapse class="px-4 md:px-8 pb-10 md:pl-[6.5rem]">
                         <p class="mb-6 text-lg text-teal-100 max-w-3xl">Alur bisnis <i>resources</i> yang berurutan dalam operasional utama perusahaan:</p>
                         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-6 max-w-5xl">
                             <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">1</span> Nursery Cultivation</div>

@@ -1,15 +1,20 @@
 <x-layout>
     <!-- Hero Section -->
-    <section class="relative bg-teal-primary pt-32 pb-24 lg:pt-40 lg:pb-32 overflow-hidden flex items-center justify-center min-h-[50vh]">
+    <section class="relative h-[350px] md:h-[400px] pt-20 overflow-hidden flex items-center justify-center">
         <div class="absolute inset-0 z-0">
-            <img src="{{ asset('images/slide4.png') }}" alt="Background" class="w-full h-full object-cover">
+            <img src="{{ asset('images/slide3.png') }}" alt="Karir FR Academy" class="w-full h-full object-cover object-center" data-aos="zoom-out" data-aos-duration="2000">
+            <div class="absolute inset-0 bg-black/50"></div>
         </div>
-        <div class="absolute inset-0 bg-black/60 z-10"></div>
-        <div class="relative z-20 text-center px-4 max-w-4xl mx-auto" data-aos="fade-up">
-            <span class="text-green-accent font-bold tracking-widest uppercase text-sm mb-4 block">KARIR & REKRUTMEN</span>
-            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white leading-tight">
-                Future Leader Program - <br><span class="text-green-accent">Recruitment Assistant Training</span>
+        <div class="relative z-10 text-center px-4 max-w-4xl mx-auto" data-aos="fade-up" data-aos-duration="1000">
+            <span class="text-green-accent font-bold tracking-widest uppercase text-sm mb-4 block">
+                Bergabung Bersama Kami
+            </span>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6">
+                Karir <span class="text-green-accent">First Resources</span>
             </h1>
+            <p class="text-lg md:text-xl text-teal-100 max-w-2xl mx-auto font-light">
+                Temukan peluang karir dan jadilah bagian dari perjalanan luar biasa kami dalam mencetak profesional andal di industri kelapa sawit.
+            </p>
         </div>
     </section>
 
