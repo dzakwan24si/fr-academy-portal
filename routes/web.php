@@ -42,6 +42,10 @@ Route::get('/tentang-kami', function () {
     return view('about');
 })->name('about');
 
+Route::get('/career', function () {
+    return view('career.index');
+})->name('career.index');
+
 Route::get('/tv-display', function () {
     $playlists = TvPlaylist::with('article.author', 'article.category')->orderBy('order')->get();
     
