@@ -115,8 +115,8 @@
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             </div>
                             <div class="ml-3">
-                                <h4 class="text-lg font-semibold text-teal-primary dark:text-white">Instruktur Berpengalaman</h4>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Belajar langsung dari praktisi ahli yang telah puluhan tahun berkecimpung di industri.</p>
+                                <h4 class="text-lg font-semibold text-teal-primary dark:text-white">Instruktur Internal Ahli</h4>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Dibimbing langsung oleh praktisi internal kompeten mulai dari level Manager hingga Direktur, serta External Expert sesuai bidangnya.</p>
                             </div>
                         </li>
                         <li class="flex items-start">
@@ -124,8 +124,8 @@
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             </div>
                             <div class="ml-3">
-                                <h4 class="text-lg font-semibold text-teal-primary dark:text-white">Fasilitas Modern</h4>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Fasilitas simulasi dan praktik lapangan yang memadai untuk pembelajaran aplikatif.</p>
+                                <h4 class="text-lg font-semibold text-teal-primary dark:text-white">Fasilitas Terintegrasi</h4>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Terintegrasi dengan kebun 300 Ha dan R&D, dilengkapi ruang kelas, mess 48 kamar, sarana olahraga, hingga area praktik langsung.</p>
                             </div>
                         </li>
                     </ul>
@@ -390,18 +390,13 @@
                 <div class="border-b border-teal-700/50 group accordion-item transition-colors duration-300" :class="selected === 3 ? 'bg-teal-800/50' : 'hover:bg-teal-800/30'">
                     <button @click="selected = selected === 3 ? null : 3" class="flex items-center w-full text-left py-8 md:py-12 px-4 md:px-8 focus:outline-none">
                         <span class="text-green-accent font-mono text-xl mr-6 md:mr-10" :class="selected === 3 ? 'opacity-100' : 'opacity-70'">(03)</span>
-                        <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === 3 ? 'text-outline-active' : ''">PROSES BISNIS KAMI</h3>
+                        <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === 3 ? 'text-outline-active' : ''">INISIATIF PROGRAM</h3>
                     </button>
                     <div x-show="selected === 3" x-collapse class="px-4 md:px-8 pb-10 md:pl-[6.5rem]">
-                        <p class="mb-6 text-lg text-teal-100 max-w-3xl">Alur bisnis <i>resources</i> yang berurutan dalam operasional utama perusahaan:</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-y-4 gap-x-6 max-w-5xl">
-                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">1</span> Nursery Cultivation</div>
-                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">2</span> Field Planting</div>
-                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">3</span> Up Keep</div>
-                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">4</span> Harvesting</div>
-                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">5</span> Palm Oil Mill</div>
-                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">6</span> Downstream Processing</div>
-                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">7</span> Sales To Customers</div>
+                        <p class="mb-6 text-lg text-teal-100 max-w-3xl">Beragam inisiatif strategis dan kegiatan komprehensif yang dirancang khusus untuk mendorong budaya inovasi, peningkatan kompetensi, serta kolaborasi antar divisi:</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 max-w-2xl">
+                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">✓</span> Klinik Kinerja Mandor</div>
+                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">✓</span> Learning Festival</div>
                         </div>
                     </div>
                 </div>

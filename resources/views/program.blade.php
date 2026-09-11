@@ -199,16 +199,10 @@
 
             <!-- SECTION 3: TALENT MANAGEMENT -->
             <section id="talent" class="scroll-section py-20 bg-teal-950 text-white relative overflow-hidden scroll-mt-20">
-                <!-- Background Pattern -->
-                <div class="absolute inset-0 opacity-10">
-                    <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <pattern id="pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-                                <path d="M0 40L40 0H20L0 20M40 40V20L20 40" fill="currentColor"></path>
-                            </pattern>
-                        </defs>
-                        <rect width="100%" height="100%" fill="url(#pattern)"></rect>
-                    </svg>
+                <!-- Background Glow -->
+                <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+                    <div class="absolute -top-1/4 -left-1/4 w-1/2 h-full bg-teal-800/40 blur-[120px] rounded-full mix-blend-screen"></div>
+                    <div class="absolute bottom-0 -right-1/4 w-1/2 h-1/2 bg-green-900/30 blur-[100px] rounded-full mix-blend-screen"></div>
                 </div>
                 
                 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">

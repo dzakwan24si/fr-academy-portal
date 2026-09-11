@@ -53,6 +53,7 @@
                     <a href="/program" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">PROGRAM</a>
                     <a href="/career" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">CAREER</a>
                     <a href="/artikel" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">ARTIKEL</a>
+                    <a href="https://mess-fr-academy.my.id/" target="_blank" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">MESS</a>
                 </nav>
 
                 <!-- Right Actions -->
@@ -121,6 +122,7 @@
                 <a href="/program" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">PROGRAM</a>
                 <a href="/career" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">CAREER</a>
                 <a href="/artikel" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">ARTIKEL</a>
+                <a href="https://mess-fr-academy.my.id/" target="_blank" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">MESS</a>
                 <div class="mt-4 pt-4 border-t border-teal-700">
                     @auth
                         <a href="/admin" class="block text-center w-full bg-green-accent hover:bg-green-600 text-white px-5 py-3 rounded-md text-base font-bold transition">Dashboard Admin</a>
