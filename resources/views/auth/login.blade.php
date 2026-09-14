@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Admin FR Academy</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
+    <!-- Script Cloudflare Turnstile -->
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body class="bg-white min-h-screen font-sans text-gray-900">
     <div class="flex min-h-screen">
@@ -81,6 +84,9 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Widget Cloudflare Turnstile -->
+                    <div class="cf-turnstile" data-sitekey="0x4AAAAAAEzPGJLBNyo86KAl"></div>
 
                     <!-- Options -->
                     <div class="flex items-center justify-between pt-2">
