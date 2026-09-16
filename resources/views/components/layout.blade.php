@@ -53,7 +53,16 @@
                     <a href="/program" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">PROGRAM</a>
                     <a href="/career" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">CAREER</a>
                     <a href="/artikel" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">ARTIKEL</a>
-                    <a href="https://mess-fr-academy.my.id/" target="_blank" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">MESS</a>
+                    <div x-data="{ open: false }" class="relative flex items-center" @mouseenter="open = true" @mouseleave="open = false">
+                        <button class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition flex items-center focus:outline-none">
+                            PORTAL
+                            <svg class="w-4 h-4 ml-1 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div x-show="open" x-transition.opacity class="absolute top-full left-0 mt-0 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700" style="display: none;">
+                            <a href="https://e-learning.first-resources.com" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 transition">E-Learning</a>
+                            <a href="https://mess-fr-academy.my.id/" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 transition">Mess FR Academy</a>
+                        </div>
+                    </div>
                 </nav>
 
                 <!-- Right Actions -->
@@ -122,7 +131,8 @@
                 <a href="/program" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">PROGRAM</a>
                 <a href="/career" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">CAREER</a>
                 <a href="/artikel" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">ARTIKEL</a>
-                <a href="https://mess-fr-academy.my.id/" target="_blank" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">MESS</a>
+                <a href="https://e-learning.first-resources.com" target="_blank" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">E-LEARNING</a>
+                <a href="https://mess-fr-academy.my.id/" target="_blank" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">MESS FR ACADEMY</a>
                 <div class="mt-4 pt-4 border-t border-teal-700">
                     @auth
                         <a href="/admin" class="block text-center w-full bg-green-accent hover:bg-green-600 text-white px-5 py-3 rounded-md text-base font-bold transition">Dashboard Admin</a>

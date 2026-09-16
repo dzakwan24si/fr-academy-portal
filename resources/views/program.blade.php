@@ -38,7 +38,7 @@
                     <button @click="activeTab = 'talent'; document.getElementById('talent').scrollIntoView({behavior: 'smooth', block: 'start', inline: 'nearest'})"
                             :class="activeTab === 'talent' ? 'bg-teal-primary text-white shadow-md' : 'text-gray-600 dark:text-gray-400 hover:text-teal-primary dark:hover:text-teal-400 hover:bg-teal-50 dark:hover:bg-gray-800'"
                             class="px-4 py-2.5 rounded-full font-bold text-sm transition-all duration-300 whitespace-nowrap">
-                        Talent Management
+                        Inisiatif Program
                     </button>
                 </nav>
             </div>
@@ -209,18 +209,25 @@
                     <div class="bg-teal-900/60 backdrop-blur-lg border border-teal-700 rounded-3xl p-8 md:p-12 lg:p-16 flex flex-col lg:flex-row items-center gap-12" data-aos="zoom-in">
                         <div class="lg:w-1/2">
                             <span class="inline-block py-1 px-3 rounded-full bg-teal-800 border border-teal-600 text-teal-200 text-sm font-bold tracking-wider uppercase mb-6">
-                                Kaderisasi Pemimpin
+                                Inovasi & Kolaborasi
                             </span>
                             <h2 class="text-3xl md:text-5xl font-extrabold text-white mb-6 leading-tight">
-                                Management Associates <span class="text-green-accent">Program (MAP)</span>
+                                Inisiatif <span class="text-green-accent">Program</span>
                             </h2>
                             <p class="text-lg text-teal-100 mb-8 leading-relaxed font-light">
-                                Program khusus yang ditujukan untuk mempersiapkan <strong class="text-white font-semibold">high talent</strong> menjadi <strong class="text-white font-semibold">future leader</strong> di berbagai business unit. 
-                                Program ini dirancang esklusif sesuai kebutuhan operasional esensial dan mencakup seluruh aspek bisnis perusahaan secara end-to-end, mulai dari hulu (upstream), hilir (downstream), hingga departemen pendukung (support department).
+                                Beragam inisiatif strategis dan kegiatan komprehensif yang dirancang khusus untuk mendorong budaya inovasi, peningkatan kompetensi, serta kolaborasi antar divisi.
                             </p>
-                            <p class="text-teal-200 text-sm border-l-4 border-green-accent pl-4 italic">
-                                "MAP diharapkan menjadi talent pool utama bagi kader pemimpin tangguh perusahaan di masa depan."
-                            </p>
+                            
+                            <ul class="space-y-4 mb-6">
+                                <li class="flex items-center text-teal-50 bg-teal-800/50 p-3 rounded-xl border border-teal-700">
+                                    <span class="w-8 h-8 flex shrink-0 items-center justify-center bg-green-accent text-teal-900 rounded-full text-sm font-bold mr-4">✓</span> 
+                                    <span class="font-semibold text-lg">Klinik Kinerja Mandor</span>
+                                </li>
+                                <li class="flex items-center text-teal-50 bg-teal-800/50 p-3 rounded-xl border border-teal-700">
+                                    <span class="w-8 h-8 flex shrink-0 items-center justify-center bg-green-accent text-teal-900 rounded-full text-sm font-bold mr-4">✓</span> 
+                                    <span class="font-semibold text-lg">Learning Festival</span>
+                                </li>
+                            </ul>
                         </div>
                         <div class="lg:w-1/2 w-full">
                             <div class="relative rounded-2xl overflow-hidden shadow-2xl border-4 border-teal-800/50 transform rotate-2 hover:rotate-0 transition-transform duration-500">
