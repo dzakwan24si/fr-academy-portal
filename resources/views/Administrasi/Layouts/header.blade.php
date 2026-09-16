@@ -28,7 +28,7 @@
                 <p class="text-sm font-semibold text-[#18181B] leading-none">Admin Name</p>
                 <p class="text-xs text-[#71717A]">Administrator</p>
             </div>
-            <div class="w-9 h-9 rounded-full bg-[#4B6A34] text-white flex items-center justify-center text-xs font-bold border border-[#E5E7EB]">
+            <div class="w-9 h-9 rounded-full bg-[#509c38] text-white flex items-center justify-center text-xs font-bold border border-[#E5E7EB]">
                 AN
             </div>
         </div>

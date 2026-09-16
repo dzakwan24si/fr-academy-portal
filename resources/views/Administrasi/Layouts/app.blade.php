@@ -20,7 +20,7 @@
                             200: '#cbdba8',
                             300: '#aac577',
                             400: '#87aa4e',
-                            500: '#4B6A34', // Brand forest green
+                            500: '#509c38', // Brand forest green
                             600: '#3d562a',
                             700: '#2f4321',
                             800: '#222f17',
