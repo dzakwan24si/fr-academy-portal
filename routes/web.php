@@ -173,7 +173,7 @@ use App\Http\Controllers\Inventaris\InventarisSummaryController;
 use App\Http\Controllers\DashboardController;
 
 // Mengamankan rute dashboard agar tidak bentrok dengan portal utama
-Route::get('/internal-dashboard', [DashboardController::class, 'index'])->name('dashboard.internal');
+Route::get('/internal-dashboard', [DashboardController::class, 'index'])->name('dashboard');
 Route::get('/administrasi/dashboard-realisasi', [DashboardRealisasiController::class, 'index'])->name('administrasi.dashboard-realisasi.index');
 Route::get('/administrasi/dashboard-monitoring-tahunan', [DashboardMonitoringTahunanController::class, 'index'])->name('administrasi.dashboard-monitoring-tahunan.index');
 
