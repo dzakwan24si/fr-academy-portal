@@ -25,7 +25,14 @@ class AuthController extends Controller
         ]);
 
         // 2. Kirim token ke API Cloudflare untuk divalidasi keasliannya
-        $turnstileResponse = Http::asForm()->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+        $http = Http::asForm();
+        
+        // Bypass verifikasi SSL HANYA saat dijalankan di Localhost/Laragon
+        if (app()->isLocal()) {
+            $http = $http->withoutVerifying();
+        }
+        
+        $turnstileResponse = $http->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
             'secret' => '0x4AAAAAAEzPGKSsKiRsoVbsX1tzF-N7x8k', 
             'response' => $request->input('cf-turnstile-response'),
             'remoteip' => $request->ip(),
