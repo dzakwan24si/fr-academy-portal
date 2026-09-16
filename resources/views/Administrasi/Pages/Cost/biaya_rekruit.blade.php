@@ -15,12 +15,14 @@
         <p class="text-sm text-[#71717A] mt-0.5">Manage and monitor recruitment-related expenses, accommodation, travel, and MCU.</p>
     </div>
     <div class="flex flex-wrap items-center gap-2.5">
-            <!-- Import CSV Button -->
+            @can('edit_cost')
+        <!-- Import CSV Button -->
         <button onclick="document.getElementById('modalImport').classList.remove('hidden')"
                 class="flex items-center gap-2 px-3.5 py-2 bg-white border border-[#E5E7EB] text-[#374151] text-xs font-semibold rounded-lg hover:bg-[#F9FAFB] transition-colors shadow-2xs">
             <i data-lucide="upload" class="w-4 h-4 text-[#4B6A34]"></i>
             Import CSV
         </button>
+        @endcan
 
             <!-- Template CSV Button -->
             <a href="{{ route('administrasi.biaya-rekruit.template') }}"
@@ -37,6 +39,7 @@
             Export Excel
         </a>
 
+        @can('edit_cost')
         <!-- Delete All Button -->
         <button onclick="document.getElementById('modalDeleteAll').classList.remove('hidden')"
                 class="flex items-center gap-2 px-3.5 py-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-lg hover:bg-red-100 hover:border-red-300 transition-colors shadow-2xs"
@@ -51,6 +54,7 @@
             <i data-lucide="plus" class="w-4 h-4"></i>
             Tambah Biaya
         </button>
+        @endcan
     </div>
 </div>
 

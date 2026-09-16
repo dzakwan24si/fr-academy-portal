@@ -11,12 +11,14 @@
         <p class="text-sm text-[#71717A] mt-0.5">Capital Expenditure Management & Realization Tracking</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
+        @can('edit_cost')
         {{-- Import CSV Button --}}
         <button onclick="openImportModal()"
                 class="flex items-center gap-2 px-3.5 py-2 bg-white border border-[#E5E7EB] text-[#374151] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] hover:border-[#D1D5DB] transition-all shadow-sm">
             <i data-lucide="upload" class="w-4 h-4 text-[#4B6A34]"></i>
             <span>Import CSV</span>
         </button>
+        @endcan
 
         {{-- Download Template Dropdown --}}
         <div class="relative inline-block text-left" id="templateDropdownContainer">
@@ -75,6 +77,7 @@
             </div>
         </div>
 
+        @can('edit_cost')
         {{-- Delete All Button --}}
         <button onclick="openDeleteAllModal()"
                 class="flex items-center gap-2 px-3.5 py-2 bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-semibold rounded-lg hover:bg-red-100 hover:border-red-300 transition-all shadow-2xs"

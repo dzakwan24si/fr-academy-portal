@@ -41,12 +41,14 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2.5">
+        @can('edit_cost')
         <!-- Import CSV Button -->
         <button onclick="openModal('modalImport')"
                 class="flex items-center gap-2 px-3.5 py-2 bg-white border border-[#E5E7EB] text-[#374151] text-xs font-semibold rounded-lg hover:bg-[#F9FAFB] transition-colors shadow-2xs">
             <i data-lucide="upload" class="w-4 h-4 text-[#4B6A34]"></i>
             Import CSV
         </button>
+        @endcan
 
         <!-- Template CSV Button -->
         <a href="{{ route('administrasi.vra.template') }}"
@@ -63,6 +65,7 @@
             Export Excel
         </a>
 
+        @can('edit_cost')
         <!-- Delete All Button -->
         <button onclick="openModal('modalDeleteAll')"
                 class="flex items-center gap-2 px-3.5 py-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-lg hover:bg-red-100 hover:border-red-300 transition-colors shadow-2xs"
@@ -77,6 +80,7 @@
             <i data-lucide="plus" class="w-4 h-4"></i>
             Tambah Data
         </button>
+        @endcan
     </div>
 </div>
 

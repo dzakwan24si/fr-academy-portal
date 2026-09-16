@@ -53,6 +53,15 @@ class AuthController extends Controller
         if (Auth::attempt([$fieldType => $identifier, 'password' => $request->input('password')], $request->boolean('remember'))) {
             $request->session()->regenerate();
 
+            $user = Auth::user();
+            if ($user->hasRole('Top Management')) {
+                return redirect()->intended('/Top_Management');
+            }
+
+            if ($user->hasAnyRole(['Administrasi', 'Staff'])) {
+                return redirect()->intended('/administrasi/dashboard-realisasi');
+            }
+
             return redirect()->intended('/admin');
         }
 
