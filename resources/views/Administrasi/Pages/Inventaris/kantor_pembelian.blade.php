@@ -12,6 +12,10 @@
 
     {{-- Sub-tabs --}}
     <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm shrink-0">
+        <a href="{{ route('administrasi.inventaris.summary') }}"
+           class="px-5 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'summary' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+            Summary
+        </a>
         <a href="{{ route('administrasi.inventaris.kantor.barang') }}"
            class="px-5 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'barang' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
             Barang
@@ -95,19 +99,25 @@
 {{-- ============================== SEARCH & ACTION BAR ============================== --}}
 <div class="bg-white border border-[#E5E7EB] rounded-2xl p-5 mb-6 shadow-sm">
     <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-        {{-- Search Input --}}
-        <div class="w-full sm:w-96">
-            <form method="GET" action="{{ route('administrasi.inventaris.kantor.pembelian') }}">
-                <input type="hidden" name="year" value="{{ $selectedYear }}">
-                <div class="relative">
-                    <span class="absolute inset-y-0 left-3.5 flex items-center text-[#A1A1AA]">
-                        <i data-lucide="search" class="w-4 h-4"></i>
-                    </span>
-                    <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama asset..."
-                           class="w-full pl-10 pr-4 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34] transition-all">
-                </div>
-            </form>
-        </div>
+        {{-- Search Input & Filter --}}
+        <form method="GET" action="{{ route('administrasi.inventaris.kantor.pembelian') }}" class="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto flex-1">
+            <input type="hidden" name="year" value="{{ $selectedYear }}">
+            <div class="relative w-full sm:w-72">
+                <span class="absolute inset-y-0 left-3.5 flex items-center text-[#A1A1AA]">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                </span>
+                <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama asset..."
+                       class="w-full pl-10 pr-4 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] placeholder-[#A1A1AA] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34] transition-all">
+            </div>
+
+            {{-- Filter Lokasi Spesifik / Ruangan --}}
+            <select name="lokasi_spesifik" onchange="this.form.submit()" class="w-full sm:w-auto px-3.5 py-2 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] font-medium focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
+                <option value="">Semua Ruangan Kantor</option>
+                @foreach($availableRooms ?? [] as $room)
+                    <option value="{{ $room }}" {{ ($lokasiSpesifikFilter ?? '') === $room ? 'selected' : '' }}>{{ $room }}</option>
+                @endforeach
+            </select>
+        </form>
 
         {{-- Add Button --}}
         <button onclick="document.getElementById('modalAddPembelian').classList.remove('hidden')"
@@ -130,6 +140,7 @@
                     <th class="px-6 py-4 text-center">Tahun</th>
                     <th class="px-6 py-4 text-center">Jumlah</th>
                     <th class="px-6 py-4 text-center">Satuan</th>
+                    <th class="px-6 py-4">Lokasi Spesifik</th>
                     <th class="px-6 py-4">Keterangan</th>
                     <th class="px-6 py-4 text-center w-28">Aksi</th>
                 </tr>
@@ -157,14 +168,24 @@
                     <td class="px-6 py-4 text-center text-[#71717A]">
                         {{ $item->barang->satuan ?? 'Unit' }}
                     </td>
+                    <td class="px-6 py-4 font-semibold text-[#374151]">
+                        @if($item->lokasi_spesifik)
+                            <span class="inline-flex items-center gap-1 bg-[#F9FAFB] px-2.5 py-1 rounded-lg border border-[#E5E7EB] text-xs">
+                                <i data-lucide="map-pin" class="w-3 h-3 text-amber-600"></i>
+                                {{ $item->lokasi_spesifik }}
+                            </span>
+                        @else
+                            <span class="text-[#A1A1AA] text-xs italic">-</span>
+                        @endif
+                    </td>
                     <td class="px-6 py-4 text-[#71717A]">
                         {{ $item->keterangan ?: '-' }}
                     </td>
                     <td class="px-6 py-4 text-center">
                         <div class="flex items-center justify-center gap-2">
                             <button onclick="openEditModal({{ json_encode($item) }})"
-                                    class="p-1.5 text-[#52525B] hover:text-[#4B6A34] hover:bg-[#F4F4F5] rounded-lg transition-colors"
-                                    title="Edit Pembelian">
+                                     class="p-1.5 text-[#52525B] hover:text-[#4B6A34] hover:bg-[#F4F4F5] rounded-lg transition-colors"
+                                     title="Edit Pembelian">
                                 <i data-lucide="pencil" class="w-4 h-4"></i>
                             </button>
                             <form action="{{ route('administrasi.inventaris.kantor.pembelian.destroy', $item->id) }}" method="POST"
@@ -181,7 +202,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="8" class="px-6 py-12 text-center text-[#A1A1AA]">
+                    <td colspan="9" class="px-6 py-12 text-center text-[#A1A1AA]">
                         <div class="flex flex-col items-center justify-center gap-2">
                             <i data-lucide="receipt" class="w-8 h-8 text-[#A1A1AA]"></i>
                             <p class="font-medium text-sm">Tidak ada catatan data pembelian untuk periode ini.</p>
@@ -207,6 +228,25 @@
     </div>
 </div>
 
+{{-- Datalist for Room Suggestions --}}
+<datalist id="roomSuggestions">
+    <option value="Planter">
+    <option value="Meeting">
+    <option value="Administrasi">
+    <option value="Loyality & Integrity">
+    <option value="Diligance">
+    <option value="Persistance & Care">
+    <option value="Pantry & Solat">
+    <option value="Academy Director">
+    <option value="Office Staf">
+    <option value="E-Learning">
+    <option value="Assasmenet Mill">
+    <option value="Assasmenet Estate">
+    <option value="Mentoring">
+    <option value="Loby">
+    <option value="Server">
+</datalist>
+
 {{-- ============================== MODAL: TAMBAH PEMBELIAN ============================== --}}
 <div id="modalAddPembelian" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm hidden">
     <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl border border-[#E5E7EB] mx-4 animate-in fade-in duration-200">
@@ -227,6 +267,13 @@
                         <option value="{{ $b->id }}">{{ $b->nama_asset }} ({{ $b->satuan }})</option>
                     @endforeach
                 </select>
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Lokasi Spesifik / Ruangan Kantor</label>
+                <input type="text" name="lokasi_spesifik" list="roomSuggestions" placeholder="Contoh: Planter, Meeting, Administrasi..."
+                       class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
+                <p class="text-[11px] text-[#71717A] mt-1">Kosongkan jika tidak merinci ruangan tertentu.</p>
             </div>
 
             <div class="grid grid-cols-2 gap-3">
@@ -283,6 +330,12 @@
                 </select>
             </div>
 
+            <div>
+                <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Lokasi Spesifik / Ruangan Kantor</label>
+                <input type="text" id="edit_lokasi_spesifik" name="lokasi_spesifik" list="roomSuggestions" placeholder="Contoh: Planter, Meeting, Administrasi..."
+                       class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
+            </div>
+
             <div class="grid grid-cols-2 gap-3">
                 <div>
                     <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Tanggal Beli <span class="text-red-500">*</span></label>
@@ -323,6 +376,7 @@
         const form = document.getElementById('formEditPembelian');
         form.action = `/administrasi/inventaris/kantor/pembelian/${item.id}`;
         document.getElementById('edit_barang_id').value = item.barang_id;
+        document.getElementById('edit_lokasi_spesifik').value = item.lokasi_spesifik || '';
         document.getElementById('edit_tanggal_pembelian').value = item.tanggal_pembelian ? item.tanggal_pembelian.split('T')[0] : '';
         document.getElementById('edit_jumlah').value = item.jumlah;
         document.getElementById('edit_keterangan').value = item.keterangan || '';

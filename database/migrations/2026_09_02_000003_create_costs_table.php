@@ -10,14 +10,18 @@ return new class extends Migration
     {
         Schema::create('costs', function (Blueprint $table) {
             $table->id('cost_id');
-            $table->unsignedSmallInteger('tahun');
-            $table->unsignedTinyInteger('bulan');            // 1–12
-            $table->string('kategori');                      // e.g. ATK, Konsumsi, Transportasi
+            $table->string('GL_ACCOUNT', 255)->nullable();
+            $table->string('jenis_cost', 100)->nullable();
+            $table->string('account_name', 150)->nullable();
+            $table->unsignedSmallInteger('tahun')->default(2026);
+            $table->unsignedTinyInteger('bulan')->nullable();            // 1–12
+            $table->string('kategori')->nullable();                      // e.g. ATK, Konsumsi, Transportasi
             $table->string('sub_kategori')->nullable();
-            $table->string('nama_item');
+            $table->string('nama_item')->nullable();
             $table->string('keterangan')->nullable();
-            $table->decimal('budget', 15, 2)->default(0);   // planned amount
-            $table->decimal('realisasi', 15, 2)->default(0); // actual amount
+            $table->decimal('budget', 20, 2)->nullable()->default(0);   // planned amount
+            $table->decimal('realisasi', 20, 2)->nullable()->default(0); // actual amount
+            $table->decimal('budget_tahunan', 20, 2)->nullable()->default(0);
             $table->date('tanggal')->nullable();
             $table->string('no_bukti')->nullable();          // receipt / voucher number
             $table->timestamps();

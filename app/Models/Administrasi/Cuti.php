@@ -16,6 +16,7 @@ class Cuti extends Model
         'nik',
         'nama',
         'jabatan',
+        'jenis_jabatan',
         'tmk',
         'tahun',
         'hak_cuti',
@@ -56,16 +57,59 @@ class Cuti extends Model
         'tmk' => 'date',
     ];
 
+    public const MONTHS = ['jan', 'feb', 'mar', 'apr', 'mei', 'jun', 'jul', 'agu', 'sep', 'okt', 'nov', 'des'];
+
+    /**
+     * Scope to order query by employee category and position hierarchy
+     */
+    public function scopeOrderedHierarchy($query)
+    {
+        $customOrderRaw = "CASE 
+            WHEN jenis_jabatan LIKE '%Staf%' OR jenis_jabatan LIKE '%Staff%' THEN 1 
+            WHEN jenis_jabatan LIKE '%PBT%' THEN 2 
+            WHEN jenis_jabatan LIKE '%KHT%' THEN 3 
+            ELSE 4 
+        END ASC,
+        CASE 
+            -- 1. Staff Specific Position Hierarchy
+            WHEN (jenis_jabatan LIKE '%Staf%' OR jenis_jabatan LIKE '%Staff%') AND jabatan LIKE '%Academy Director%' THEN 1
+            WHEN (jenis_jabatan LIKE '%Staf%' OR jenis_jabatan LIKE '%Staff%') AND (jabatan LIKE '%Sr Manager L & D%' OR jabatan LIKE '%Sr Manager L&D%') THEN 2
+            WHEN (jenis_jabatan LIKE '%Staf%' OR jenis_jabatan LIKE '%Staff%') AND jabatan LIKE '%Training Manager Downstream%' THEN 3
+            WHEN (jenis_jabatan LIKE '%Staf%' OR jenis_jabatan LIKE '%Staff%') AND (jabatan LIKE '%L & D Manager%' OR jabatan LIKE '%L&D Manager%') THEN 4
+            WHEN (jenis_jabatan LIKE '%Staf%' OR jenis_jabatan LIKE '%Staff%') AND jabatan LIKE '%Trainer%' THEN 5
+            WHEN (jenis_jabatan LIKE '%Staf%' OR jenis_jabatan LIKE '%Staff%') AND (jabatan LIKE '%L&D Officer%' OR jabatan LIKE '%L & D Officer%') THEN 6
+            WHEN (jenis_jabatan LIKE '%Staf%' OR jenis_jabatan LIKE '%Staff%') AND (jabatan LIKE '%Staf E-Learning%' OR jabatan LIKE '%E-Learning%') THEN 7
+            WHEN (jenis_jabatan LIKE '%Staf%' OR jenis_jabatan LIKE '%Staff%') AND jabatan LIKE '%KTU%' THEN 8
+            WHEN (jenis_jabatan LIKE '%Staf%' OR jenis_jabatan LIKE '%Staff%') AND (jabatan LIKE '%Recruitment%' OR jabatan LIKE '%Rekruitmen%') THEN 9
+
+            -- 2. Karyawan PBT Specific Position Hierarchy
+            WHEN jenis_jabatan LIKE '%PBT%' AND jabatan LIKE '%Driver Pool%' THEN 1
+            WHEN jenis_jabatan LIKE '%PBT%' AND jabatan LIKE '%Koordinator Mess%' THEN 2
+            WHEN jenis_jabatan LIKE '%PBT%' AND (jabatan LIKE '%Mandor Komp & Infrastruktur%' OR jabatan LIKE '%Mandor%') THEN 3
+
+            -- 3. Karyawan KHT Specific Hierarchy
+            WHEN jenis_jabatan LIKE '%KHT%' AND jabatan LIKE '%Pertamanan%' THEN 1
+            WHEN jenis_jabatan LIKE '%KHT%' AND jabatan LIKE '%Krani Pembukuan%' THEN 2
+            WHEN jenis_jabatan LIKE '%KHT%' AND jabatan LIKE '%Petugas Taman%' THEN 3
+            WHEN jenis_jabatan LIKE '%KHT%' AND jabatan LIKE '%Krani Development%' THEN 4
+            WHEN jenis_jabatan LIKE '%KHT%' AND jabatan LIKE '%Training Fasilitator%' THEN 5
+            WHEN jenis_jabatan LIKE '%KHT%' AND jabatan LIKE '%Petugas Mess%' THEN 6
+            WHEN jenis_jabatan LIKE '%KHT%' AND (jabatan LIKE '%Office Boy%' OR jabatan LIKE '%Office Girl%') THEN 7
+            WHEN jenis_jabatan LIKE '%KHT%' AND jabatan LIKE '%Supir%' THEN 8
+
+            ELSE 99
+        END ASC,
+        nama ASC";
+
+        return $query->orderByRaw($customOrderRaw);
+    }
+
     /**
      * Total Penggunaan Cuti dari rincian bulanan Jan - Des
      */
     public function getTotalBulananAttribute(): int
     {
-        return (int) (
-            $this->jan + $this->feb + $this->mar + $this->apr +
-            $this->mei + $this->jun + $this->jul + $this->agu +
-            $this->sep + $this->okt + $this->nov + $this->des
-        );
+        return (int) array_sum(array_map(fn($m) => (int) $this->$m, self::MONTHS));
     }
 
     /**
@@ -96,19 +140,19 @@ class Cuti extends Model
     }
 
     /**
-     * Cari histori sisa cuti dari 2 tahun sebelumnya
+     * Cari histori sisa cuti dari 2 tahun sebelumnya (misal untuk 2026: sisa cuti 2023 + sisa cuti 2024)
      */
     public static function getHistoricalCarryover(string $nik, int $currentYear): int
     {
-        // Tahun 2 periode lalu adalah (currentYear - 2)
-        $pastRecord = self::where('nik', $nik)
-            ->where('tahun', $currentYear - 2)
-            ->first();
+        $year1 = $currentYear - 3;
+        $year2 = $currentYear - 2;
 
-        if ($pastRecord) {
-            return $pastRecord->sisa_cuti;
-        }
+        $record1 = self::where('nik', $nik)->where('tahun', $year1)->first();
+        $record2 = self::where('nik', $nik)->where('tahun', $year2)->first();
 
-        return 0;
+        $sisa1 = $record1 ? $record1->sisa_cuti : 0;
+        $sisa2 = $record2 ? $record2->sisa_cuti : 0;
+
+        return (int) ($sisa1 + $sisa2);
     }
 }

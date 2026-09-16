@@ -14,6 +14,7 @@ class ExampleTest extends TestCase
     {
         $response = $this->get('/');
 
-        $response->assertRedirect('/administrasi/kalender-training');
+        $response->assertOk();
+        $response->assertViewIs('Administrasi.Pages.Dashboard.dashboard');
     }
 }

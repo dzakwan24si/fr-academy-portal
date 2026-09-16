@@ -1,0 +1,724 @@
+<?php
+
+namespace App\Http\Controllers\Program;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use App\Models\Program\TrainingRecord;
+use App\Models\Program\ProgramReguler;
+use App\Models\Program\ProgramNonReguler;
+use App\Models\Monitoring\MonitoringEmployee;
+use App\Models\Monitoring\MonitoringAngkatan;
+use App\Models\Monitoring\MonitoringCulled;
+use App\Models\Monitoring\MonitoringTalent;
+use App\Services\SpreadsheetReader;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
+
+class DashboardRealisasiController extends Controller
+{
+    public const MONTH_3_LETTERS = [
+        1 => 'JAN', 2 => 'FEB', 3 => 'MAR', 4 => 'APR',
+        5 => 'MEI', 6 => 'JUN', 7 => 'JUL', 8 => 'AGU',
+        9 => 'SEP', 10 => 'OKT', 11 => 'NOV', 12 => 'DES',
+    ];
+
+    public function parseMonthNumber($value): ?int
+    {
+        if ($value === null || $value === '' || $value === 'all') return null;
+        if (is_numeric($value)) {
+            $num = (int) $value;
+            return ($num >= 1 && $num <= 12) ? $num : null;
+        }
+
+        $upper = strtoupper(substr(trim((string) $value), 0, 3));
+        $map = [
+            'JAN' => 1, 'FEB' => 2, 'MAR' => 3, 'APR' => 4,
+            'MEI' => 5, 'MAY' => 5, 'JUN' => 6, 'JUL' => 7,
+            'AGU' => 8, 'AGS' => 8, 'AUG' => 8, 'SEP' => 9,
+            'OKT' => 10, 'OCT' => 10, 'NOV' => 11, 'DES' => 12, 'DEC' => 12,
+        ];
+        return $map[$upper] ?? null;
+    }
+
+    public function extractYearFromField($val): ?int
+    {
+        if (empty($val)) return null;
+        if ($val instanceof \DateTimeInterface) return (int) $val->format('Y');
+        if (is_numeric($val) && (int)$val >= 2000 && (int)$val <= 2100) return (int) $val;
+        if (is_array($val)) {
+            foreach ($val as $item) {
+                $y = $this->extractYearFromField($item);
+                if ($y) return $y;
+            }
+            return null;
+        }
+        if (is_string($val)) {
+            $trimmed = trim($val);
+            if (str_starts_with($trimmed, '[') && str_ends_with($trimmed, ']')) {
+                $decoded = json_decode($trimmed, true);
+                if (is_array($decoded)) {
+                    return $this->extractYearFromField($decoded);
+                }
+            }
+            if (preg_match('/\b(20\d{2})\b/', $trimmed, $m)) {
+                return (int) $m[1];
+            }
+            $time = strtotime($trimmed);
+            if ($time !== false && $time > 0) {
+                return (int) date('Y', $time);
+            }
+        }
+        return null;
+    }
+
+    public function resolveProgramRegulerYear($p): int
+    {
+        if ($p->Mulai_program && ($y = $this->extractYearFromField($p->Mulai_program))) return $y;
+        if (!empty($p->Training_Program) && preg_match('/\b(20\d{2})\b/', $p->Training_Program, $m)) return (int) $m[1];
+        if (!empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) return $y;
+        if (!empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) return $y;
+        if ($p->Selesai_program && ($y = $this->extractYearFromField($p->Selesai_program))) return $y;
+        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) return $y;
+        return 2026;
+    }
+
+    public function resolveProgramNonRegulerYear($p): int
+    {
+        if ($p->start_date && ($y = $this->extractYearFromField($p->start_date))) return $y;
+        if (!empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) return $y;
+        if (!empty($p->jenis_pelatihan) && preg_match('/\b(20\d{2})\b/', $p->jenis_pelatihan, $m)) return (int) $m[1];
+        if (!empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) return $y;
+        if ($p->end_date && ($y = $this->extractYearFromField($p->end_date))) return $y;
+        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) return $y;
+        return 2026;
+    }
+
+    protected function filterRegulerByYear($programs, int $year)
+    {
+        return $programs->filter(function($p) use ($year) {
+            $mulaiYear = $p->Mulai_program ? $this->extractYearFromField($p->Mulai_program) : null;
+            $selesaiYear = $p->Selesai_program ? $this->extractYearFromField($p->Selesai_program) : null;
+            $titleYear = (!empty($p->Training_Program) && preg_match('/\b(20\d{2})\b/', $p->Training_Program, $m)) ? (int) $m[1] : null;
+
+            if ($year === 2026) {
+                // Include programs from 2025 carry-over, 2026, and 2027 planned (like TAT I 2027, MAT I 2027)
+                if ($p->Mulai_program) {
+                    $mY = (int) date('Y', strtotime($p->Mulai_program));
+                    if ($mY === 2026 || $mY === 2025) return true;
+                }
+                if ($titleYear === 2026 || $titleYear === 2025) return true;
+                if (!empty($p->Training_Program) && (str_contains($p->Training_Program, 'TAT I 2027') || str_contains($p->Training_Program, 'MAT I 2027'))) {
+                    return true;
+                }
+            }
+
+            if ($titleYear === $year) return true;
+
+            if ($mulaiYear && $selesaiYear) {
+                if ($mulaiYear <= $year && $selesaiYear >= $year) {
+                    return true;
+                }
+            } elseif ($mulaiYear) {
+                if ($mulaiYear === $year) return true;
+            } elseif ($selesaiYear) {
+                if ($selesaiYear === $year) return true;
+            }
+
+            return $this->resolveProgramRegulerYear($p) === $year;
+        });
+    }
+
+    protected function filterNonRegulerByYear($programs, int $year)
+    {
+        return $programs->filter(function($p) use ($year) {
+            return $this->resolveProgramNonRegulerYear($p) === $year;
+        });
+    }
+
+    protected function filterRecordsByYearAndCumulativeMonth($records, int $year, ?int $selectedMonthNum)
+    {
+        return $records->filter(function($r) use ($year, $selectedMonthNum) {
+            // 1. Year filter
+            $rYear = null;
+            if (!empty($r->tahun)) {
+                $rYear = (int) $r->tahun;
+            } elseif (!empty($r->training_date)) {
+                $rYear = (int) date('Y', strtotime($r->training_date));
+            } elseif (method_exists($r, 'activityDates')) {
+                $dates = $r->activityDates();
+                foreach ($dates as $d) {
+                    if ($d) {
+                        $rYear = (int) date('Y', strtotime($d));
+                        break;
+                    }
+                }
+            } elseif (!empty($r->created_at)) {
+                $rYear = (int) date('Y', strtotime($r->created_at));
+            } else {
+                $rYear = 2026;
+            }
+
+            if ($rYear !== $year) {
+                // Allow carry-over training records (from previous year) for reguler programs
+                if (!($r->program_type === 'reguler' && $rYear === $year - 1)) {
+                    return false;
+                }
+            }
+
+            // 2. Month cumulative filter
+            if ($selectedMonthNum !== null) {
+                $mNum = null;
+                if ($r->bulan) {
+                    $mNum = $this->parseMonthNumber($r->bulan);
+                }
+                if (!$mNum && $r->training_date) {
+                    $mNum = (int) date('n', strtotime($r->training_date));
+                }
+                if (!$mNum && method_exists($r, 'activityDates')) {
+                    $dates = $r->activityDates();
+                    foreach ($dates as $d) {
+                        if ($d) {
+                            $mNum = (int) date('n', strtotime($d));
+                            break;
+                        }
+                    }
+                }
+
+                if ($mNum !== null && $mNum > $selectedMonthNum) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+
+    public function index(Request $request)
+    {
+        $trYears = TrainingRecord::whereNotNull('tahun')->pluck('tahun')->map(fn($y) => (int)$y)->filter()->all();
+        $trDateYears = TrainingRecord::whereNotNull('training_date')->get()->map(fn($r) => (int) date('Y', strtotime($r->training_date)))->filter()->all();
+        $regYears = ProgramReguler::all()->map(fn($p) => $this->resolveProgramRegulerYear($p))->filter()->all();
+        $nonRegYears = ProgramNonReguler::all()->map(fn($p) => $this->resolveProgramNonRegulerYear($p))->filter()->all();
+
+        $years = collect([2024, 2025, 2026, 2027])
+            ->merge($trYears)
+            ->merge($trDateYears)
+            ->merge($regYears)
+            ->merge($nonRegYears)
+            ->filter(fn($y) => $y >= 2000 && $y <= 2100)
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        $yearDefault = in_array(2026, $years, true) ? 2026 : ($years[count($years)-1] ?? (int)date('Y'));
+        $year = (int) $request->input('year', $yearDefault);
+
+        $rawMonth = $request->input('month', 'all');
+        $selectedMonthNum = $this->parseMonthNumber($rawMonth);
+        $selectedMonthCode = ($selectedMonthNum && isset(self::MONTH_3_LETTERS[$selectedMonthNum]))
+            ? self::MONTH_3_LETTERS[$selectedMonthNum]
+            : 'all';
+        $monthList = self::MONTH_3_LETTERS;
+
+        $rawRegion = trim((string) $request->input('region', 'all'));
+        $region = ($rawRegion === '' || $rawRegion === 'Semua Region') ? 'all' : $rawRegion;
+        $programType = trim((string) $request->input('program_type', 'all'));
+        $selectedProgram = trim((string) $request->input('program', 'all'));
+        $category = trim((string) $request->input('category', 'all'));
+        $unit = trim((string) $request->input('unit', 'all'));
+        $level = trim((string) $request->input('level', 'all'));
+
+        // Collect distinct available regions from databases
+        $regulerRegions = ProgramReguler::distinct()->pluck('Region')->filter()->map(fn($r) => trim((string)$r));
+        $nonRegulerRegions = ProgramNonReguler::distinct()->pluck('region')->filter()->map(fn($r) => trim((string)$r));
+        $recordRegions = TrainingRecord::distinct()->pluck('region')->filter()->map(fn($r) => trim((string)$r));
+
+        $allRegions = $regulerRegions->merge($nonRegulerRegions)->merge($recordRegions)
+            ->map(function($r) {
+                if (strcasecmp($r, 'riau') === 0) return 'Riau';
+                if (strcasecmp($r, 'kalbar') === 0) return 'Kalbar';
+                if (strcasecmp($r, 'kaltim') === 0 || strcasecmp($r, 'kaltim fr') === 0) return 'Kaltim FR';
+                if (strcasecmp($r, 'corporate') === 0) return 'Corporate';
+                return $r;
+            })
+            ->unique()
+            ->values()
+            ->all();
+
+        // Program Options & Category Options for Dropdown Filter
+        $regulerProgramOptions = ProgramReguler::pluck('Training_Program')
+            ->toBase()
+            ->map(function($p) {
+                return trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p));
+            })->filter()->unique()->values();
+
+        $nonRegulerProgramOptions = ProgramNonReguler::pluck('jenis_pelatihan')
+            ->toBase()
+            ->map(function($p) {
+                return trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p));
+            })->filter()->unique()->values();
+
+        $nonRegulerCategoryOptions = ProgramNonReguler::pluck('kategori_pelatihan')
+            ->concat(ProgramNonReguler::pluck('sub_kategori'))
+            ->filter()
+            ->map(fn($c) => trim((string)$c))
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($programType === 'reguler') {
+            $availablePrograms = $regulerProgramOptions;
+        } elseif ($programType === 'non_reguler') {
+            $availablePrograms = $nonRegulerProgramOptions;
+        } else {
+            $availablePrograms = $regulerProgramOptions->concat($nonRegulerProgramOptions)->unique()->values();
+        }
+
+        // Base Queries with Filters
+        $trainingRecordQuery = TrainingRecord::query();
+        if ($region !== 'all') {
+            $searchRegion = $region;
+            if (strcasecmp($region, 'Kaltim FR') === 0) {
+                $trainingRecordQuery->where(function($q) {
+                    $q->where('region', 'LIKE', '%kaltim%')
+                      ->orWhere('region', 'LIKE', '%Kaltim FR%');
+                });
+            } else {
+                $trainingRecordQuery->where('region', 'LIKE', '%' . $searchRegion . '%');
+            }
+        }
+        if ($level !== 'all' && $level !== '') {
+            $trainingRecordQuery->where('level', 'LIKE', '%' . $level . '%');
+        }
+
+        // 1. Progress MT Per Program Tables (Separated into Staf & Mandor)
+        $cleanStr = fn($str) => SpreadsheetReader::cleanString($str);
+
+        $normalizeName = function(?string $name): string {
+            if (!$name) return '';
+            $clean = strtolower(trim($name));
+            $clean = preg_replace('/[.\-_,]/', ' ', $clean);
+            $clean = preg_replace('/\s+/', ' ', $clean);
+            $clean = str_replace('deofinka', 'df', $clean);
+            return trim($clean);
+        };
+
+        $normalizeAngkatan = function(string $name): string {
+            $str = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', $name)));
+            $str = str_replace(
+                ['FIELD ASSISTANT', 'ESTATE CADET TRAINEE', 'ESTATE CADET', 'MILL ASSISTANT', 'ADMIN ASSISTANT', 'PROCESSING', 'PABRIK'],
+                ['FAT', 'ECT', 'ECT', 'MAT', 'AAT', 'PMT', 'PMT'],
+                $str
+            );
+            $str = preg_replace('/[^A-Z0-9]/', ' ', $str);
+            $parts = array_values(array_filter(explode(' ', $str)));
+            return implode('-', $parts);
+        };
+
+        $allEmployees = MonitoringEmployee::all();
+        $allCulled = MonitoringCulled::all();
+        $allAngkatans = MonitoringAngkatan::all();
+        $allTrainingRecords = (clone $trainingRecordQuery)->where('program_type', 'reguler')->get();
+        $allTrainingRecords = $this->filterRecordsByYearAndCumulativeMonth($allTrainingRecords, $year, $selectedMonthNum);
+
+        $regulerProgramsQuery = ProgramReguler::query();
+        if ($region !== 'all') {
+            if (strcasecmp($region, 'Kaltim FR') === 0) {
+                $regulerProgramsQuery->where(function($q) {
+                    $q->where('Region', 'LIKE', '%kaltim%')
+                      ->orWhere('Region', 'LIKE', '%Kaltim FR%');
+                });
+            } else {
+                $regulerProgramsQuery->where('Region', 'LIKE', '%' . $region . '%');
+            }
+        }
+        $regulerPrograms = $regulerProgramsQuery->get();
+        $regulerPrograms = $this->filterRegulerByYear($regulerPrograms, $year);
+
+        if ($programType === 'non_reguler') {
+            $regulerPrograms = collect();
+        } else {
+            if ($category === 'staf') {
+                $regulerPrograms = $regulerPrograms->filter(function($p) use ($cleanStr) {
+                    $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
+                    $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
+                    return !$isMandor;
+                });
+            } elseif ($category === 'mandor') {
+                $regulerPrograms = $regulerPrograms->filter(function($p) use ($cleanStr) {
+                    $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
+                    $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
+                    return $isMandor;
+                });
+            }
+
+            if ($selectedProgram !== 'all' && $selectedProgram !== '') {
+                $regulerPrograms = $regulerPrograms->filter(function($p) use ($selectedProgram, $cleanStr) {
+                    $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
+                    return strcasecmp($pName, $selectedProgram) === 0 || str_contains($cleanStr($pName), $cleanStr($selectedProgram));
+                });
+            }
+        }
+
+        $mtStafTable = [];
+        $stafRencana = 0;
+        $stafKelas = 0;
+        $stafResign = 0;
+        $stafLulus = 0;
+
+        $mtMandorTable = [];
+        $mandorRencana = 0;
+        $mandorKelas = 0;
+        $mandorResign = 0;
+        $mandorLulus = 0;
+
+        foreach ($regulerPrograms as $p) {
+            $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
+            $normPName = $normalizeAngkatan($pName);
+
+            // Matching helper strictly for this program batch
+            $isMatch = function(string $rawCandidate) use ($normPName, $normalizeAngkatan) {
+                if (trim($rawCandidate) === '') return false;
+                $candidate = $normalizeAngkatan($rawCandidate);
+                if ($candidate === $normPName) return true;
+                
+                // Special case for AAT II 2025 (Carry Over) which has records labeled AAT II 2026
+                if (str_starts_with($normPName, 'AAT-II') && str_starts_with($candidate, 'AAT-II')) {
+                    return true;
+                }
+                return false;
+            };
+
+            // 1. Matched Training Records (Unique participant names)
+            $trNames = $allTrainingRecords->filter(fn($r) => $isMatch((string)$r->notes))
+                ->pluck('participant_name')
+                ->map($normalizeName)
+                ->filter()
+                ->unique();
+
+            // 2. Matched Employees (Unique participant names)
+            $empNames = $allEmployees->filter(fn($e) => $isMatch((string)$e->angkatan_fr_academy))
+                ->pluck('nama')
+                ->map($normalizeName)
+                ->filter()
+                ->unique();
+
+            // 3. Matched Culled (Unique names)
+            $culledNames = $allCulled->filter(function($c) use ($allAngkatans, $isMatch) {
+                $ang = $allAngkatans->firstWhere('id_angkatan', $c->id_angkatan);
+                return $ang && $isMatch((string) $ang->angkatan);
+            })->pluck('nama')->map($normalizeName)->filter()->unique();
+
+            // 4. Combined in-class participants (Unique across TR, Employees, Culled)
+            $allInClass = $trNames->concat($empNames)->concat($culledNames)->unique()->values();
+            $kelas = $allInClass->count();
+
+            // 5. Resigned participants (Deduplicated)
+            $matchingEmps = $allEmployees->filter(fn($e) => $isMatch((string)$e->angkatan_fr_academy));
+            $resignedEmpNames = $matchingEmps->filter(function($e) {
+                $stat = strtoupper(trim($e->status ?: $e->kategori ?: ''));
+                return in_array($stat, ['RESIGN', 'TERMINATE']) || !empty($e->date_terminate) || !empty($e->alasan_resign);
+            })->pluck('nama')->map($normalizeName)->filter()->unique();
+
+            $allResigned = $resignedEmpNames->concat($culledNames)->unique()->values();
+            $resign = $allResigned->count();
+
+            $rencana = (int) ($p->TARGET_PESERTA ?? $p->target_peserta ?? 0);
+            $lulus = max(0, $kelas - $resign);
+
+            $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
+
+            $rowItem = [
+                'name' => $pName,
+                'region' => $p->Region ?: 'Nasional',
+                'rencana' => $rencana,
+                'kelas' => $kelas,
+                'resign' => $resign,
+                'lulus' => $lulus,
+            ];
+
+            if ($isMandor) {
+                $mandorRencana += $rencana;
+                $mandorKelas += $kelas;
+                $mandorResign += $resign;
+                $mandorLulus += $lulus;
+                $mtMandorTable[] = $rowItem;
+            } else {
+                $stafRencana += $rencana;
+                $stafKelas += $kelas;
+                $stafResign += $resign;
+                $stafLulus += $lulus;
+                $mtStafTable[] = $rowItem;
+            }
+        }
+
+        $mtStafSummary = [
+            'peserta' => $stafKelas,
+            'rencana' => $stafRencana,
+            'resign' => $stafResign,
+            'lulus' => $stafLulus,
+        ];
+
+        $mtMandorSummary = [
+            'peserta' => $mandorKelas,
+            'rencana' => $mandorRencana,
+            'resign' => $mandorResign,
+            'lulus' => $mandorLulus,
+        ];
+
+        // Combined MT summary for backwards compatibility
+        $mtProgramTable = array_merge($mtStafTable, $mtMandorTable);
+        $mtSummary = [
+            'peserta' => $stafKelas + $mandorKelas,
+            'rencana' => $stafRencana + $mandorRencana,
+            'resign' => $stafResign + $mandorResign,
+            'lulus' => $stafLulus + $mandorLulus,
+        ];
+
+        // 1. Progres Reguler Staff (Management Trainee) KPI Card - Excludes Mandor
+        // Kalkulasi persentase = (jumlah peserta di kelas / target rencana) * 100
+        $now = Carbon::now();
+        $regulerStaffPrograms = $regulerPrograms->filter(function($p) use ($cleanStr) {
+            $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
+            $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
+            return !$isMandor;
+        });
+
+        $regulerBerjalan = $regulerStaffPrograms->filter(function($p) use ($now) {
+            if (!$p->Mulai_program) return true;
+            return $p->Mulai_program <= $now && ($p->Selesai_program >= $now || !$p->Selesai_program);
+        })->count();
+
+        $regulerSelesai = $regulerStaffPrograms->filter(function($p) use ($now) {
+            if (!$p->Selesai_program) return false;
+            return $p->Selesai_program < $now;
+        })->count();
+
+        $regulerPercentage = $stafRencana > 0 ? round(($stafKelas / $stafRencana) * 100) : 0;
+
+        $regulerMt = [
+            'percentage' => $regulerPercentage,
+            'target' => 100,
+            'jumlah_peserta' => $stafKelas,
+            'target_peserta' => $stafRencana,
+            'program_berjalan' => $regulerBerjalan,
+            'program_selesai' => $regulerSelesai,
+        ];
+
+        // 2. Progres Talent Program (Dari Database Monitoring Talent)
+        $talentQuery = MonitoringTalent::query();
+        if ($region !== 'all') {
+            $searchReg = str_replace([' FR', ' fr'], '', $region);
+            $talentQuery->where('region', 'LIKE', "%{$searchReg}%");
+        }
+
+        $totalTalent = $talentQuery->count();
+        $sudahPenugasan = (clone $talentQuery)->where(function($sub) {
+            $sub->where('status', 'LIKE', '%sudah penugasan%')
+                ->orWhere('status', 'LIKE', '%confirm%');
+        })->count();
+        $akanPenugasan = (clone $talentQuery)->where('status', 'LIKE', '%akan penugasan%')->count();
+        $belumPenugasan = (clone $talentQuery)->where('status', 'LIKE', '%belum penugasan%')->count();
+
+        $talentPercentage = $totalTalent > 0 ? round(($sudahPenugasan / $totalTalent) * 100) : 0;
+
+        $talentToBreakdown = (clone $talentQuery)->select('talent_to', DB::raw('count(*) as total'))
+            ->whereNotNull('talent_to')
+            ->where('talent_to', '!=', '')
+            ->groupBy('talent_to')
+            ->orderByDesc('total')
+            ->get()
+            ->map(fn($item) => [
+                'role' => $item->talent_to,
+                'count' => (int) $item->total,
+            ])
+            ->all();
+
+        $talentProgram = [
+            'percentage' => $talentPercentage,
+            'target' => 100,
+            'jumlah_talent' => $totalTalent,
+            'sudah_penugasan' => $sudahPenugasan,
+            'akan_penugasan' => $akanPenugasan,
+            'belum_penugasan' => $belumPenugasan,
+            'breakdown' => $talentToBreakdown,
+        ];
+
+        // 3 & 4. Soft Skill & Teknikal
+        $nonRegulerProgramsQuery = ProgramNonReguler::query();
+        if ($region !== 'all') {
+            if (strcasecmp($region, 'Kaltim FR') === 0) {
+                $nonRegulerProgramsQuery->where(function($q) {
+                    $q->where('region', 'LIKE', '%kaltim%')
+                      ->orWhere('region', 'LIKE', '%Kaltim FR%');
+                });
+            } else {
+                $nonRegulerProgramsQuery->where('region', 'LIKE', '%' . $region . '%');
+            }
+        }
+        $nonRegulerPrograms = $nonRegulerProgramsQuery->get();
+        $nonRegulerPrograms = $this->filterNonRegulerByYear($nonRegulerPrograms, $year);
+        $trNonReg = (clone $trainingRecordQuery)->where('program_type', 'non_reguler')->get();
+        $trNonReg = $this->filterRecordsByYearAndCumulativeMonth($trNonReg, $year, $selectedMonthNum);
+
+        if ($programType === 'reguler') {
+            $nonRegulerPrograms = collect();
+        } else {
+            if ($category === 'managerial' || strcasecmp($category, 'Managerial and Leadership') === 0 || strcasecmp($category, 'Softskill') === 0) {
+                $nonRegulerPrograms = $nonRegulerPrograms->filter(fn($p) => $p->isSoftSkill() || str_contains($cleanStr($p->kategori_pelatihan), 'managerial') || str_contains($cleanStr($p->sub_kategori), 'soft'));
+            } elseif ($category === 'technical' || strcasecmp($category, 'Technical') === 0) {
+                $nonRegulerPrograms = $nonRegulerPrograms->filter(fn($p) => !$p->isSoftSkill() || str_contains($cleanStr($p->kategori_pelatihan), 'technical'));
+            } elseif ($category !== 'all' && $category !== '') {
+                $searchCat = $cleanStr($category);
+                $nonRegulerPrograms = $nonRegulerPrograms->filter(function($p) use ($searchCat, $cleanStr) {
+                    return str_contains($cleanStr($p->sub_kategori), $searchCat)
+                        || str_contains($cleanStr($p->kategori_pelatihan), $searchCat)
+                        || str_contains($cleanStr($p->jenis_pelatihan), $searchCat);
+                });
+            }
+
+            if ($selectedProgram !== 'all' && $selectedProgram !== '') {
+                $nonRegulerPrograms = $nonRegulerPrograms->filter(function($p) use ($selectedProgram, $cleanStr) {
+                    $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->jenis_pelatihan));
+                    return strcasecmp($pName, $selectedProgram) === 0 || str_contains($cleanStr($pName), $cleanStr($selectedProgram));
+                });
+            }
+        }
+
+        $softPrograms = [];
+        $tekPrograms = [];
+
+        foreach ($nonRegulerPrograms as $p) {
+            if ($p->isSoftSkill()) {
+                $softPrograms[] = $p;
+            } else {
+                $tekPrograms[] = $p;
+            }
+        }
+
+        $calcMetrics = function($progList) use ($trNonReg, $year) {
+            $targPeserta = 0;
+            $targBatch = 0;
+            $realPeserta = 0;
+            $realBatch = 0;
+
+            foreach ($progList as $p) {
+                $pId = $p->getKey();
+                $targPeserta += (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0);
+                $targBatch += (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0);
+                // Count all training records regardless of year
+                $pRecords = $trNonReg->where('program_id', $pId);
+
+                $count = $pRecords->count();
+                $realPeserta += $count;
+                if ($count > 0) {
+                    $distinctBatches = $pRecords->pluck('periode')->filter()->unique()->count();
+                    $realBatch += max(1, $distinctBatches);
+                }
+            }
+
+            $pct = $targPeserta > 0 ? round(($realPeserta / $targPeserta) * 100) : 0;
+
+            return [
+                'percentage' => $pct,
+                'target' => 100,
+                'peserta_realisasi' => $realPeserta,
+                'peserta_target' => $targPeserta,
+                'batch_realisasi' => $realBatch,
+                'batch_target' => $targBatch,
+                'total_program' => count($progList),
+            ];
+        };
+
+        $softSkill = $calcMetrics($softPrograms);
+        $teknikal = $calcMetrics($tekPrograms);
+
+        // 6. Monthly Chart Data (Jan - Des) - Real-time Per Bulan from TrainingRecord
+        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+        $monthMap = ['JAN' => 1, 'FEB' => 2, 'MAR' => 3, 'APR' => 4, 'MEI' => 5, 'MAY' => 5, 'JUN' => 6, 'JUL' => 7, 'AGU' => 8, 'AGS' => 8, 'AUG' => 8, 'SEP' => 9, 'OKT' => 10, 'OCT' => 10, 'NOV' => 11, 'DES' => 12, 'DEC' => 12];
+        
+        $allYearRecords = $this->filterRecordsByYearAndCumulativeMonth((clone $trainingRecordQuery)->get(), $year, null);
+
+        $monthlyPesertaMap = array_fill(1, 12, 0);
+        $monthlyProgramSets = array_fill(1, 12, []);
+
+        foreach ($allYearRecords as $r) {
+            $mCode = strtoupper(substr(trim((string) $r->bulan), 0, 3));
+            $mNum = $monthMap[$mCode] ?? null;
+            if (!$mNum && $r->training_date) {
+                $mNum = (int) date('n', strtotime($r->training_date));
+            }
+            if ($mNum && isset($monthlyPesertaMap[$mNum])) {
+                $monthlyPesertaMap[$mNum]++;
+                $monthlyProgramSets[$mNum][$r->program_type . ':' . $r->program_id] = true;
+            }
+        }
+
+        $monthlyPeserta = [];
+        $monthlyProgram = [];
+        for ($m = 1; $m <= 12; $m++) {
+            $monthlyPeserta[] = $monthlyPesertaMap[$m];
+            $monthlyProgram[] = count($monthlyProgramSets[$m]);
+        }
+
+        $monthlyData = [
+            'labels' => $months,
+            'peserta' => $monthlyPeserta,
+            'program' => $monthlyProgram,
+            'total_peserta_ytd' => array_sum($monthlyPeserta),
+            'total_program_ytd' => array_sum($monthlyProgram),
+        ];
+
+        // 7. Evaluasi Pelatihan
+        $evaluasi = [
+            'average_score' => 4.43,
+            'max_score' => 5.00,
+            'ratings' => [
+                ['stars' => '5. Sangat Baik', 'percent' => 58, 'color' => 'bg-[#1b4332]'],
+                ['stars' => '4. Baik', 'percent' => 32, 'color' => 'bg-[#2d5a27]'],
+                ['stars' => '3. Cukup', 'percent' => 7, 'color' => 'bg-amber-500'],
+                ['stars' => '2. Kurang', 'percent' => 2, 'color' => 'bg-orange-500'],
+                ['stars' => '1. Sangat Kurang', 'percent' => 1, 'color' => 'bg-rose-500'],
+            ],
+            'footer' => [
+                'rata_rata' => '4.43 / 5.00',
+                'responden' => '3.248 org',
+                'pelatihan' => '129 prg',
+                'respon_rate' => '92%',
+            ]
+        ];
+
+        return view('Administrasi.Pages.Dashboard.dashboard_realisasi', compact(
+            'regulerMt',
+            'talentProgram',
+            'softSkill',
+            'teknikal',
+            'mtProgramTable',
+            'mtSummary',
+            'mtStafTable',
+            'mtStafSummary',
+            'mtMandorTable',
+            'mtMandorSummary',
+            'monthlyData',
+            'evaluasi',
+            'years',
+            'year',
+            'monthList',
+            'selectedMonthCode',
+            'selectedMonthNum',
+            'region',
+            'allRegions',
+            'programType',
+            'selectedProgram',
+            'category',
+            'availablePrograms',
+            'regulerProgramOptions',
+            'nonRegulerProgramOptions',
+            'nonRegulerCategoryOptions',
+            'unit',
+            'level'
+        ));
+    }
+}

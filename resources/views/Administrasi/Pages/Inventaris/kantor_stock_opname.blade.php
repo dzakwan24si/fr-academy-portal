@@ -5,29 +5,35 @@
 @section('content')
 
 {{-- ============================== HEADER & SUB-TABS ============================== --}}
-<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-[#18181B] tracking-tight">Inventaris Kantor</h1>
-    </div>
+<div class="flex flex-col gap-4 mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-[#18181B] tracking-tight">Inventaris Kantor</h1>
+        </div>
 
-    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
         {{-- Sub-tabs --}}
-        <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm shrink-0">
+        <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm overflow-x-auto max-w-full">
+            <a href="{{ route('administrasi.inventaris.summary') }}"
+               class="px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap {{ $activeTab === 'summary' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+                Summary
+            </a>
             <a href="{{ route('administrasi.inventaris.kantor.barang') }}"
-               class="px-5 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'barang' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+               class="px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap {{ $activeTab === 'barang' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
                 Barang
             </a>
             <a href="{{ route('administrasi.inventaris.kantor.pembelian') }}"
-               class="px-5 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'pembelian' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+               class="px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap {{ $activeTab === 'pembelian' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
                 Pembelian
             </a>
             <a href="{{ route('administrasi.inventaris.kantor.stock-opname') }}"
-               class="px-5 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'stock_opname' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+               class="px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap {{ $activeTab === 'stock_opname' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
                 Stock Opname
             </a>
         </div>
+    </div>
 
-        {{-- Add Stock Opname Button --}}
+    {{-- Add Stock Opname Button Row --}}
+    <div class="flex items-center justify-start sm:justify-end gap-3 flex-wrap">
         <button onclick="document.getElementById('modalAddSession').classList.remove('hidden')"
                 class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#4B6A34] text-white text-sm font-semibold rounded-xl hover:bg-[#3d562a] transition-all shadow-sm">
             <i data-lucide="plus" class="w-4 h-4"></i>

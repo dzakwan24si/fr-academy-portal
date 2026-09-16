@@ -69,9 +69,9 @@
         {{-- Export CSV button --}}
         <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
             <a href="{{ route('administrasi.inventaris.mess.stock-opname.export', $date) }}"
-               class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#E5E7EB] text-[#52525B] hover:text-[#18181B] hover:bg-[#F9FAFB] text-xs font-semibold rounded-xl transition-colors shadow-sm" title="Download / Export CSV">
+               class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#E5E7EB] text-[#52525B] hover:text-[#18181B] hover:bg-[#F9FAFB] text-xs font-semibold rounded-xl transition-colors shadow-sm" title="Download / Export Excel">
                 <i data-lucide="download" class="w-4 h-4"></i>
-                <span>Export CSV</span>
+                <span>Export Excel</span>
             </a>
         </div>
     </div>

@@ -20,7 +20,7 @@
     <div>
         <h1 class="text-2xl font-bold text-[#18181B] tracking-tight">Stock Opname Gudang: {{ $formattedDate }}</h1>
         <p class="text-sm text-[#71717A] mt-0.5">
-            {{ $sessionMeta->catatan_sesi ?: 'Stock Opname rutin gudang' }}
+            {{ ($sessionMeta->catatan_sesi ?? null) ?: 'Stock Opname rutin gudang' }}
         </p>
     </div>
 
@@ -29,7 +29,7 @@
         <button onclick="document.getElementById('modalEditSession').classList.remove('hidden')"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#E5E7EB] text-[#374151] text-xs font-semibold rounded-xl hover:bg-[#F9FAFB] transition-all shadow-sm">
             <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-            <span>Edit</span>
+            <span>Edit Sesi</span>
         </button>
 
         {{-- Hapus Sesi --}}
@@ -40,7 +40,7 @@
             <button type="submit"
                     class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-red-200 text-red-600 text-xs font-semibold rounded-xl hover:bg-red-50 transition-all shadow-sm">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                <span>Hapus</span>
+                <span>Hapus Sesi</span>
             </button>
         </form>
 
@@ -108,20 +108,18 @@
             </form>
         </div>
 
-        {{-- Filter & Export buttons --}}
+        {{-- Export CSV --}}
         <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
-            <button class="p-2 bg-white border border-[#E5E7EB] text-[#52525B] hover:text-[#18181B] hover:bg-[#F9FAFB] rounded-xl transition-colors" title="Filter Data">
-                <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
-            </button>
             <a href="{{ route('administrasi.inventaris.gudang.stock-opname.export', $date) }}"
-               class="p-2 bg-white border border-[#E5E7EB] text-[#52525B] hover:text-[#18181B] hover:bg-[#F9FAFB] rounded-xl transition-colors" title="Download / Export CSV">
+               class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#E5E7EB] text-[#52525B] hover:text-[#18181B] hover:bg-[#F9FAFB] text-xs font-semibold rounded-xl transition-colors shadow-sm" title="Download / Export Excel">
                 <i data-lucide="download" class="w-4 h-4"></i>
+                <span>Export Excel</span>
             </a>
         </div>
     </div>
 </div>
 
-{{-- ============================== DETAILED TABLE (IMAGE 4) ============================== --}}
+{{-- ============================== DETAILED TABLE ============================== --}}
 <div class="bg-white border border-[#E5E7EB] rounded-2xl shadow-sm overflow-hidden mb-8">
     <div class="overflow-x-auto">
         <table class="w-full text-sm text-left">
@@ -130,10 +128,9 @@
                     <th class="px-5 py-4 w-14 text-center">No</th>
                     <th class="px-5 py-4">Nama Asset</th>
                     <th class="px-4 py-4 text-center">Satuan</th>
-                    <th class="px-4 py-4 text-center">Baik</th>
-                    <th class="px-4 py-4 text-center">Rusak Ringan</th>
-                    <th class="px-4 py-4 text-center">Rusak Berat</th>
-                    <th class="px-4 py-4 text-center">Hilang</th>
+                    <th class="px-4 py-4 text-center">Jenis Lokasi</th>
+                    <th class="px-4 py-4 text-center text-emerald-700">Baik</th>
+                    <th class="px-4 py-4 text-center text-rose-600">Rusak</th>
                     <th class="px-5 py-4 text-center bg-[#EEF2F6] text-[#1E293B]">Grand Total</th>
                     <th class="px-5 py-4">Keterangan</th>
                     <th class="px-4 py-4 text-center w-20">Foto</th>
@@ -158,29 +155,26 @@
                         {{ $item->barang->satuan ?? 'Unit' }}
                     </td>
 
+                    {{-- Jenis Lokasi --}}
+                    <td class="px-4 py-4 text-center">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            {{ $item->barang->jenis_lokasi ?? 'Gudang' }}
+                        </span>
+                    </td>
+
                     {{-- Baik --}}
-                    <td class="px-4 py-4 text-center font-bold text-[#18181B]">
-                        {{ $item->jumlah_baik }}
+                    <td class="px-4 py-4 text-center font-bold text-emerald-700">
+                        {{ number_format($item->jumlah_baik) }}
                     </td>
 
-                    {{-- Rusak Ringan --}}
-                    <td class="px-4 py-4 text-center font-bold {{ $item->jumlah_rusak_ringan > 0 ? 'text-[#C2410C]' : 'text-[#71717A]' }}">
-                        {{ $item->jumlah_rusak_ringan }}
-                    </td>
-
-                    {{-- Rusak Berat --}}
-                    <td class="px-4 py-4 text-center font-bold {{ $item->jumlah_rusak_berat > 0 ? 'text-[#DC2626]' : 'text-[#71717A]' }}">
-                        {{ $item->jumlah_rusak_berat }}
-                    </td>
-
-                    {{-- Hilang --}}
-                    <td class="px-4 py-4 text-center font-bold {{ $item->jumlah_hilang > 0 ? 'text-[#DC2626]' : 'text-[#71717A]' }}">
-                        {{ $item->jumlah_hilang }}
+                    {{-- Rusak --}}
+                    <td class="px-4 py-4 text-center font-bold {{ $item->jumlah_rusak > 0 ? 'text-rose-600' : 'text-[#71717A]' }}">
+                        {{ number_format($item->jumlah_rusak) }}
                     </td>
 
                     {{-- Grand Total --}}
                     <td class="px-5 py-4 text-center font-extrabold text-[#1E293B] bg-[#F0F4F8]">
-                        {{ $item->grand_total }}
+                        {{ number_format($item->grand_total) }}
                     </td>
 
                     {{-- Keterangan --}}
@@ -225,11 +219,11 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="11" class="px-6 py-12 text-center text-[#A1A1AA]">
+                    <td colspan="10" class="px-6 py-12 text-center text-[#A1A1AA]">
                         <div class="flex flex-col items-center justify-center gap-2">
                             <i data-lucide="clipboard-x" class="w-8 h-8 text-[#A1A1AA]"></i>
-                            <p class="font-medium text-sm">Belum ada rincian data aset yang dimasukkan pada sesi Stock Opname ini.</p>
-                            <p class="text-xs text-[#71717A]">Klik tombol "+ Tambah Barang" untuk mulai mencatat kondisi fisik aset.</p>
+                            <p class="font-medium text-sm">Belum ada rincian data aset yang dimasukkan pada sesi Stock Opname gudang ini.</p>
+                            <p class="text-xs text-[#71717A]">Klik tombol "+ Tambah Barang" untuk mulai mencatat kondisi fisik aset gudang.</p>
                         </div>
                     </td>
                 </tr>
@@ -243,7 +237,7 @@
 <div id="modalAddItem" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm hidden">
     <div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl border border-[#E5E7EB] mx-4 max-h-[90vh] overflow-y-auto animate-in fade-in duration-200">
         <div class="flex items-center justify-between pb-4 border-b border-[#E5E7EB]">
-            <h3 class="text-lg font-bold text-[#18181B]">Tambah Kondisi Barang</h3>
+            <h3 class="text-lg font-bold text-[#18181B]">Tambah Kondisi Barang Gudang</h3>
             <button onclick="document.getElementById('modalAddItem').classList.add('hidden')" class="text-[#A1A1AA] hover:text-[#18181B]">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
@@ -254,39 +248,29 @@
             <div>
                 <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Pilih Aset Barang <span class="text-red-500">*</span></label>
                 <select name="barang_id" required class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
-                    <option value="">-- Pilih Barang Gudang --</option>
+                    <option value="">-- Pilih Barang --</option>
                     @foreach($allBarang as $b)
-                        <option value="{{ $b->id }}">{{ $b->nama_asset }} (Satuan: {{ $b->satuan }})</option>
+                        <option value="{{ $b->id }}">{{ $b->nama_asset }} ({{ $b->satuan }}) - {{ $b->jenis_lokasi }}</option>
                     @endforeach
                 </select>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#F9FAFB] p-3.5 rounded-xl border border-[#E5E7EB]">
+            <div class="grid grid-cols-2 gap-3 bg-[#F9FAFB] p-3.5 rounded-xl border border-[#E5E7EB]">
                 <div>
-                    <label class="block text-[11px] font-bold text-[#374151] mb-1">Baik</label>
-                    <input type="number" name="jumlah_baik" min="0" value="0"
-                           class="w-full px-2.5 py-1.5 border border-[#E5E7EB] rounded-lg text-sm text-center font-bold text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]">
+                    <label class="block text-xs font-bold text-emerald-700 mb-1">Jumlah Baik <span class="text-red-500">*</span></label>
+                    <input type="number" name="jumlah_baik" min="0" value="0" required
+                           class="w-full px-3 py-2 border border-[#E5E7EB] rounded-xl text-sm text-center font-bold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
-                    <label class="block text-[11px] font-bold text-[#C2410C] mb-1">Rusak Ringan</label>
-                    <input type="number" name="jumlah_rusak_ringan" min="0" value="0"
-                           class="w-full px-2.5 py-1.5 border border-[#E5E7EB] rounded-lg text-sm text-center font-bold text-[#C2410C] focus:outline-none focus:ring-2 focus:ring-[#C2410C]">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-[#DC2626] mb-1">Rusak Berat</label>
-                    <input type="number" name="jumlah_rusak_berat" min="0" value="0"
-                           class="w-full px-2.5 py-1.5 border border-[#E5E7EB] rounded-lg text-sm text-center font-bold text-[#DC2626] focus:outline-none focus:ring-2 focus:ring-[#DC2626]">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-[#DC2626] mb-1">Hilang</label>
-                    <input type="number" name="jumlah_hilang" min="0" value="0"
-                           class="w-full px-2.5 py-1.5 border border-[#E5E7EB] rounded-lg text-sm text-center font-bold text-[#DC2626] focus:outline-none focus:ring-2 focus:ring-[#DC2626]">
+                    <label class="block text-xs font-bold text-rose-600 mb-1">Jumlah Rusak <span class="text-red-500">*</span></label>
+                    <input type="number" name="jumlah_rusak" min="0" value="0" required
+                           class="w-full px-3 py-2 border border-[#E5E7EB] rounded-xl text-sm text-center font-bold text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500">
                 </div>
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Keterangan / Temuan Lapangan</label>
-                <textarea name="keterangan" rows="2" placeholder="Catatan kerusakan, lokasi peletakan, atau nomor seri..."
+                <textarea name="keterangan" rows="2" placeholder="Catatan kerusakan atau penempatan..."
                           class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]"></textarea>
             </div>
 
@@ -313,7 +297,7 @@
 <div id="modalEditItem" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm hidden">
     <div class="bg-white rounded-2xl p-6 w-full max-w-lg shadow-2xl border border-[#E5E7EB] mx-4 max-h-[90vh] overflow-y-auto animate-in fade-in duration-200">
         <div class="flex items-center justify-between pb-4 border-b border-[#E5E7EB]">
-            <h3 class="text-lg font-bold text-[#18181B]">Edit Kondisi Barang</h3>
+            <h3 class="text-lg font-bold text-[#18181B]">Edit Kondisi Barang Gudang</h3>
             <button onclick="document.getElementById('modalEditItem').classList.add('hidden')" class="text-[#A1A1AA] hover:text-[#18181B]">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
@@ -326,31 +310,21 @@
                 <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Aset Barang <span class="text-red-500">*</span></label>
                 <select id="edit_item_barang_id" name="barang_id" required class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
                     @foreach($allBarang as $b)
-                        <option value="{{ $b->id }}">{{ $b->nama_asset }} ({{ $b->satuan }})</option>
+                        <option value="{{ $b->id }}">{{ $b->nama_asset }} ({{ $b->satuan }}) - {{ $b->jenis_lokasi }}</option>
                     @endforeach
                 </select>
             </div>
 
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#F9FAFB] p-3.5 rounded-xl border border-[#E5E7EB]">
+            <div class="grid grid-cols-2 gap-3 bg-[#F9FAFB] p-3.5 rounded-xl border border-[#E5E7EB]">
                 <div>
-                    <label class="block text-[11px] font-bold text-[#374151] mb-1">Baik</label>
+                    <label class="block text-xs font-bold text-emerald-700 mb-1">Jumlah Baik</label>
                     <input type="number" id="edit_item_baik" name="jumlah_baik" min="0"
-                           class="w-full px-2.5 py-1.5 border border-[#E5E7EB] rounded-lg text-sm text-center font-bold text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]">
+                           class="w-full px-3 py-2 border border-[#E5E7EB] rounded-xl text-sm text-center font-bold text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500">
                 </div>
                 <div>
-                    <label class="block text-[11px] font-bold text-[#C2410C] mb-1">Rusak Ringan</label>
-                    <input type="number" id="edit_item_rusak_ringan" name="jumlah_rusak_ringan" min="0"
-                           class="w-full px-2.5 py-1.5 border border-[#E5E7EB] rounded-lg text-sm text-center font-bold text-[#C2410C] focus:outline-none focus:ring-2 focus:ring-[#C2410C]">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-[#DC2626] mb-1">Rusak Berat</label>
-                    <input type="number" id="edit_item_rusak_berat" name="jumlah_rusak_berat" min="0"
-                           class="w-full px-2.5 py-1.5 border border-[#E5E7EB] rounded-lg text-sm text-center font-bold text-[#DC2626] focus:outline-none focus:ring-2 focus:ring-[#DC2626]">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-bold text-[#DC2626] mb-1">Hilang</label>
-                    <input type="number" id="edit_item_hilang" name="jumlah_hilang" min="0"
-                           class="w-full px-2.5 py-1.5 border border-[#E5E7EB] rounded-lg text-sm text-center font-bold text-[#DC2626] focus:outline-none focus:ring-2 focus:ring-[#DC2626]">
+                    <label class="block text-xs font-bold text-rose-600 mb-1">Jumlah Rusak</label>
+                    <input type="number" id="edit_item_rusak" name="jumlah_rusak" min="0"
+                           class="w-full px-3 py-2 border border-[#E5E7EB] rounded-xl text-sm text-center font-bold text-rose-600 focus:outline-none focus:ring-2 focus:ring-rose-500">
                 </div>
             </div>
 
@@ -383,7 +357,7 @@
 <div id="modalEditSession" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm hidden">
     <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl border border-[#E5E7EB] mx-4 animate-in fade-in duration-200">
         <div class="flex items-center justify-between pb-4 border-b border-[#E5E7EB]">
-            <h3 class="text-lg font-bold text-[#18181B]">Edit Sesi Stock Opname</h3>
+            <h3 class="text-lg font-bold text-[#18181B]">Edit Sesi Stock Opname Gudang</h3>
             <button onclick="document.getElementById('modalEditSession').classList.add('hidden')" class="text-[#A1A1AA] hover:text-[#18181B]">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
@@ -429,7 +403,7 @@
 <div id="modalPhotoPreview" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md hidden" onclick="closePhotoModal(event)">
     <div class="bg-white rounded-2xl p-4 w-full max-w-2xl shadow-2xl border border-[#E5E7EB] mx-4 animate-in zoom-in-95 duration-200" onclick="event.stopPropagation()">
         <div class="flex items-center justify-between pb-3 border-b border-[#E5E7EB] mb-3">
-            <h3 class="text-sm font-bold text-[#18181B]" id="photoPreviewTitle">Foto Kerusakan Aset</h3>
+            <h3 class="text-sm font-bold text-[#18181B]" id="photoPreviewTitle">Foto Kerusakan Aset Gudang</h3>
             <button onclick="document.getElementById('modalPhotoPreview').classList.add('hidden')" class="text-[#A1A1AA] hover:text-[#18181B]">
                 <i data-lucide="x" class="w-5 h-5"></i>
             </button>
@@ -449,9 +423,7 @@
         form.action = `/administrasi/inventaris/gudang/stock-opname/item/${item.id}`;
         document.getElementById('edit_item_barang_id').value = item.barang_id;
         document.getElementById('edit_item_baik').value = item.jumlah_baik;
-        document.getElementById('edit_item_rusak_ringan').value = item.jumlah_rusak_ringan;
-        document.getElementById('edit_item_rusak_berat').value = item.jumlah_rusak_berat;
-        document.getElementById('edit_item_hilang').value = item.jumlah_hilang;
+        document.getElementById('edit_item_rusak').value = item.jumlah_rusak;
         document.getElementById('edit_item_keterangan').value = item.keterangan || '';
         document.getElementById('modalEditItem').classList.remove('hidden');
     }

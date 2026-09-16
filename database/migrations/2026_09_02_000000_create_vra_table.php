@@ -15,25 +15,24 @@ return new class extends Migration
             $table->id('vra_id');
             $table->string('nomor_polisi', 20);
             $table->string('kendaraan', 100);
-            $table->unsignedTinyInteger('bulan')->comment('1-12');
-            $table->decimal('upah_bulan', 15, 2)->default(0);
-            $table->decimal('upah_tahun', 15, 2)->default(0);
-            $table->decimal('BBM_bulan', 15, 2)->default(0);
+            $table->unsignedSmallInteger('tahun')->default(2026)->index();
+            $table->unsignedTinyInteger('bulan')->comment('1-12')->index();
+            $table->decimal('upah', 15, 2)->default(0);
+            $table->decimal('BBM', 15, 2)->default(0);
             $table->decimal('BBM_tahun', 15, 2)->default(0);
-            $table->decimal('preventif_maintenance_bulan', 15, 2)->default(0);
-            $table->decimal('preventif_maintenance_tahun', 15, 2)->default(0);
-            $table->decimal('biaya_lainnya_bulan', 15, 2)->default(0);
-            $table->decimal('biaya_lainnya_tahun', 15, 2)->default(0);
+            $table->decimal('preventif_maintenance', 15, 2)->default(0);
+            $table->decimal('biaya_lainnya', 15, 2)->default(0);
             $table->decimal('total_biaya_bulan', 15, 2)->default(0);
-            $table->decimal('total_biaya_tahun', 15, 2)->default(0);
             $table->decimal('KM_awal', 12, 2)->default(0);
             $table->decimal('KM_akhir', 12, 2)->default(0);
-            $table->decimal('KM_bulan', 12, 2)->default(0);
-            $table->decimal('KM_tahun', 12, 2)->default(0);
-            $table->smallInteger('tahun')->index();
+            $table->decimal('KM', 12, 2)->default(0);
+            $table->decimal('BBM_liter', 12, 2)->default(0);
+            $table->decimal('BBM_KM_liter', 12, 2)->default(0);
+            $table->decimal('VRA', 15, 2)->default(0);
+            $table->decimal('budget_tahun', 12, 2)->default(0);
             $table->timestamps();
 
-            $table->index(['tahun', 'bulan']);
+            $table->index(['tahun', 'bulan', 'nomor_polisi']);
         });
     }
 

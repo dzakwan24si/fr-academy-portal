@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link rel="icon" type="image/png" href="{{ asset('Logo First Resource.png') }}">
     <title>@yield('title', 'FR Academy Enterprise Portal')</title>
-    
+
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -32,13 +33,13 @@
     </script>
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap');
         body {
             font-family: 'Instrument Sans', sans-serif;
         }
-        
+
         /* Custom scrollbar */
         ::-webkit-scrollbar {
             width: 6px;
@@ -71,8 +72,12 @@
 </head>
 <body class="bg-[#F8F9FA] text-[#1A1A1A] min-h-screen flex">
 
-    <!-- 1. SIDEBAR (Included from Layouts/sidebar.blade.php) -->
-    @include('Administrasi.Layouts.sidebar')
+    <!-- 1. SIDEBAR (Dynamic based on Role / Session / Query) -->
+    @if(session('user_role') === 'top_management' || request()->query('role') === 'top_management' || request()->is('Top_Management*') || (auth()->check() && auth()->user()?->role === 'top_management'))
+        @include('Administrasi.Layouts.sidebar_top_management')
+    @else
+        @include('Administrasi.Layouts.sidebar')
+    @endif
 
     <!-- 2. MAIN CONTENT AREA -->
     <div class="flex-1 flex flex-col min-w-0">

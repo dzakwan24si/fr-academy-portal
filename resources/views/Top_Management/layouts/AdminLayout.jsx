@@ -2,39 +2,83 @@ import { useState } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
+  BarChart3,
+  CalendarCheck,
+  Layers,
+  TrendingUp,
   Calendar,
-  Database,
-  Bell,
-  Search,
+  GraduationCap,
+  Users,
+  LineChart,
+  Contact,
+  Sparkles,
+  Boxes,
+  ChevronDown,
   Menu,
-  X,
-  User,
-  CalendarDays
+  X
 } from 'lucide-react';
 
 const AdminLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [openSections, setOpenSections] = useState({
+    dashboard: true,
+    program: true,
+    monitoring: true,
+    dataAset: true,
+  });
+
   const location = useLocation();
 
-  const navigation = [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Schedule', href: '/schedule', icon: CalendarDays },
-    { name: 'Kalender Training', href: '/calendar', icon: Calendar },
-    { name: 'Manajemen Data', href: '/data', icon: Database },
-  ];
-
-  const getPageTitle = () => {
-    switch (location.pathname) {
-      case '/': return 'Dashboard Analitik';
-      case '/schedule': return 'Schedule Bulanan';
-      case '/calendar': return 'Kalender Training';
-      case '/data': return 'Manajemen Data Pelatihan';
-      default: return 'FR Academy';
-    }
+  const toggleSection = (sectionId) => {
+    setOpenSections(prev => ({
+      ...prev,
+      [sectionId]: !prev[sectionId]
+    }));
   };
 
+  const menuSections = [
+    {
+      id: 'dashboard',
+      title: 'Dashboard',
+      items: [
+        { name: 'Dashboard Utama', href: '/administrasi/dashboard-realisasi', icon: BarChart3, isExternal: true },
+        { name: 'Dashboard MR', href: '/', icon: LayoutDashboard, isExternal: false },
+        { name: 'Dashboard Progress per Tahun', href: '/administrasi/dashboard-monitoring-tahunan', icon: CalendarCheck, isExternal: true },
+      ]
+    },
+    {
+      id: 'program',
+      title: 'Program',
+      items: [
+        { name: 'Program', href: '/administrasi/program', icon: Layers, isExternal: true },
+        { name: 'Realisasi Program Vs Target', href: '/administrasi/realisasi-vs-batch', icon: TrendingUp, isExternal: true },
+        { name: 'Schedule', href: '/administrasi/schedule', icon: Calendar, isExternal: true },
+        { name: 'Program / Batch', href: '/administrasi/program-batch', icon: GraduationCap, isExternal: true },
+        { name: 'Training Record', href: '/administrasi/training-record', icon: Users, isExternal: true },
+      ]
+    },
+    {
+      id: 'monitoring',
+      title: 'Monitoring',
+      items: [
+        { name: 'Monitoring Summarized', href: '/administrasi/monitoring-summarized', icon: BarChart3, isExternal: true },
+        { name: 'Monitoring Alumni', href: '/administrasi/monitoring-alumni', icon: GraduationCap, isExternal: true },
+        { name: 'Database Asisten', href: '/administrasi/asisten', icon: Contact, isExternal: true },
+        { name: 'Monitoring Talent', href: '/administrasi/monitoring-talent', icon: Sparkles, isExternal: true },
+        { name: 'Monitoring Detailed', href: '/administrasi/monitoring', icon: LineChart, isExternal: true },
+      ]
+    },
+    {
+      id: 'dataAset',
+      title: 'Data Aset',
+      items: [
+        { name: 'Dashboard Inventaris', href: '/administrasi/inventaris/dashboard', icon: Boxes, isExternal: true },
+      ]
+    }
+  ];
+
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
+    <div className="flex h-screen bg-slate-50 overflow-hidden font-sans">
       {/* Mobile sidebar backdrop */}
       {sidebarOpen && (
         <div
@@ -43,56 +87,108 @@ const AdminLayout = () => {
         />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar Top Management */}
       <aside
         className={`fixed inset-y-0 left-0 z-30 w-64 bg-white border-r border-slate-200 transform transition-transform duration-300 lg:translate-x-0 lg:static lg:inset-0 flex flex-col
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}
       >
-        <div className="flex items-center h-20 px-6 border-b border-slate-200 bg-white">
-          <div className="flex items-center gap-3 w-full">
-            <img src="/logo.png" alt="Logo" className="h-12 w-auto object-contain" />
-            <div className="flex flex-col">
-              <span className="text-[13px] font-extrabold text-slate-800 uppercase tracking-wide leading-tight">First Resources</span>
-              <span className="text-[11px] font-semibold text-green-600 uppercase tracking-wider leading-tight">ACADEMY</span>
+        {/* Header Branding Top Management */}
+        <div className="px-5 py-5 border-b border-slate-200 bg-white">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 bg-[#4B6A34] rounded-lg flex items-center justify-center shrink-0 shadow-sm">
+              <img src="/Logo First Resource.png" alt="Logo" className="w-6 h-6 object-contain" />
+            </div>
+            <div>
+              <h1 className="font-extrabold text-sm text-slate-800 leading-tight">First Resources</h1>
+              <p className="text-xs font-bold text-[#4B6A34]">Top Management</p>
             </div>
           </div>
-          <button className="lg:hidden text-slate-500 absolute right-4" onClick={() => setSidebarOpen(false)}>
-            <X size={20} />
-          </button>
+
+          {/* User Profile Badge */}
+          <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2">
+            <div className="w-7 h-7 rounded-full bg-[#4B6A34] text-white flex items-center justify-center text-xs font-bold shrink-0">
+              TM
+            </div>
+            <div className="min-w-0">
+              <p class="text-xs font-bold text-slate-800 truncate leading-tight">Top Executive</p>
+              <p class="text-[10px] text-slate-500 font-medium">Management Level</p>
+            </div>
+          </div>
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
-          {navigation.map((item) => {
-            const isActive = location.pathname === item.href;
-            const Icon = item.icon;
+        {/* Navigation Sections */}
+        <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-4">
+          {menuSections.map((sec) => {
+            const isOpen = openSections[sec.id];
 
             return (
-              <Link
-                key={item.name}
-                to={item.href}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors
-                  ${isActive
-                    ? 'bg-green-50 text-green-700 font-medium'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-                  }`}
-              >
-                <Icon size={20} className={isActive ? 'text-green-600' : 'text-slate-400'} />
-                {item.name}
-              </Link>
+              <div key={sec.id} className="space-y-1">
+                {/* Section Header Button */}
+                <button
+                  onClick={() => toggleSection(sec.id)}
+                  className="w-full flex items-center justify-between px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                >
+                  <span>{sec.title}</span>
+                  <ChevronDown
+                    size={14}
+                    className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {/* Sub-menu Items */}
+                {isOpen && (
+                  <div className="space-y-0.5 pt-0.5">
+                    {sec.items.map((item) => {
+                      const isActive = !item.isExternal && (location.pathname === item.href || (item.href === '/' && (location.pathname === '/' || location.pathname === '')));
+                      const Icon = item.icon;
+
+                      if (item.isExternal) {
+                        const targetHref = item.href.includes('?') ? `${item.href}&role=top_management` : `${item.href}?role=top_management`;
+                        return (
+                          <a
+                            key={item.name}
+                            href={targetHref}
+                            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium transition-colors"
+                          >
+                            <Icon size={16} className="shrink-0 text-slate-400" />
+                            <span className="truncate">{item.name}</span>
+                          </a>
+                        );
+                      }
+
+                      return (
+                        <Link
+                          key={item.name}
+                          to={item.href}
+                          className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                            ${isActive
+                              ? 'bg-[#4B6A34] text-white font-semibold shadow-sm'
+                              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 font-medium'
+                            }`}
+                        >
+                          <Icon size={16} className={`shrink-0 ${isActive ? 'text-white' : 'text-slate-400'}`} />
+                          <span className="truncate">{item.name}</span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             );
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-200">
-          <div className="text-xs text-slate-500 text-center">
-            &copy; 2026 First Resources
+        {/* Sidebar Footer */}
+        <div className="p-3 border-t border-slate-200">
+          <div className="text-[10px] text-slate-400 text-center">
+            &copy; 2026 FR Academy Top Management
           </div>
         </div>
       </aside>
 
-      {/* Main Content */}
+      {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden relative">
-        {/* Mobile menu toggle (visible only on mobile) */}
+        {/* Mobile menu button */}
         <button
           className="lg:hidden absolute top-4 right-4 z-40 bg-white p-2 rounded-full shadow-md text-slate-500 hover:text-slate-700 border border-slate-200"
           onClick={() => setSidebarOpen(true)}
@@ -100,7 +196,7 @@ const AdminLayout = () => {
           <Menu size={20} />
         </button>
 
-        {/* Page Content */}
+        {/* Main Body */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
           <Outlet />
         </main>

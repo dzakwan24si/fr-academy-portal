@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('nik', 50);
             $table->string('nama', 150);
             $table->string('jabatan', 100)->nullable();
+            $table->string('jenis_jabatan', 50)->nullable();
             $table->date('tmk')->nullable(); // Tanggal Mulai Kerja
             $table->integer('tahun'); // Periode tahun aktif (misal 2026)
             

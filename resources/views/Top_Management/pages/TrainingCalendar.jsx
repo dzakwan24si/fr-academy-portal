@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAllPelatihan } from '@services/supabase/client';
+import { getAllPelatihan } from '@services/trainingApi';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import {
@@ -268,9 +268,9 @@ const TrainingCalendar = () => {
 
     const dates = selectedProgram?.tanggal_pelaksanaan;
     if (!dates || !Array.isArray(dates) || dates.length === 0) return false;
-    
+
     const targetTime = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-    
+
     return dates.some(d => {
       const pDate = new Date(d);
       return new Date(pDate.getFullYear(), pDate.getMonth(), pDate.getDate()).getTime() === targetTime;
@@ -497,22 +497,22 @@ const TrainingCalendar = () => {
               <option value={100}>100</option>
             </select>
           </div>
-          
+
           <div className="flex items-center gap-1">
-            <button 
+            <button
               onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
               disabled={currentPage === 1}
               className="w-8 h-8 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 transition-colors">
               <ChevronLeft size={16} />
             </button>
-            
+
             <div className="flex items-center gap-1 mx-1">
               {Array.from({ length: totalPages }).map((_, i) => {
                 if (totalPages > 7) {
                   if (i === 0 || i === totalPages - 1 || (i >= currentPage - 2 && i <= currentPage)) {
                     return (
-                      <button 
-                        key={i} 
+                      <button
+                        key={i}
                         onClick={() => setCurrentPage(i + 1)}
                         className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${currentPage === i + 1 ? 'bg-[#0095ff] text-white' : 'text-slate-600 hover:bg-slate-100'}`}
                       >
@@ -524,10 +524,10 @@ const TrainingCalendar = () => {
                   if (i === totalPages - 2 && currentPage < totalPages - 2) return <span key={i} className="px-1 text-slate-400">...</span>;
                   return null;
                 }
-                
+
                 return (
-                  <button 
-                    key={i} 
+                  <button
+                    key={i}
                     onClick={() => setCurrentPage(i + 1)}
                     className={`w-8 h-8 flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${currentPage === i + 1 ? 'bg-[#0095ff] text-white' : 'text-slate-600 hover:bg-slate-100'}`}
                   >
@@ -537,7 +537,7 @@ const TrainingCalendar = () => {
               })}
             </div>
 
-            <button 
+            <button
               onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
               disabled={currentPage === totalPages || totalPages === 0}
               className="w-8 h-8 flex items-center justify-center rounded text-slate-400 hover:text-slate-700 disabled:opacity-30 transition-colors">
@@ -707,7 +707,7 @@ const TrainingCalendar = () => {
                 <h2 className="text-xl font-extrabold text-slate-800 mt-4 leading-tight">{CATEGORIES.find(category => category.id === activeCategory)?.title}</h2>
                 <p className="text-sm text-slate-500 mt-1">Detail Seluruh Program</p>
               </div>
-              <button onClick={() => setIsDetailModalOpen(false)} className="text-slate-400 hover:text-slate-700 p-2" aria-label="Tutup detail"> 
+              <button onClick={() => setIsDetailModalOpen(false)} className="text-slate-400 hover:text-slate-700 p-2" aria-label="Tutup detail">
                 <X size={20} />
               </button>
             </div>

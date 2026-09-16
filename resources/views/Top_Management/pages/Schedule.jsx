@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAllPelatihan } from '@services/supabase/client';
+import { getAllPelatihan } from '@services/trainingApi';
 import {
   Calendar as CalendarIcon, ChevronLeft, ChevronRight, X, Users, MapPin, Search
 } from 'lucide-react';
@@ -14,12 +14,12 @@ const Schedule = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [calendarDate, setCalendarDate] = useState(new Date());
-  
+
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [filterLokasi, setFilterLokasi] = useState('Semua Lokasi');
   const [filterSubKategori, setFilterSubKategori] = useState('Semua Sub Kategori');
-  
+
   // Modal
   const [selectedProgram, setSelectedProgram] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -75,7 +75,7 @@ const Schedule = () => {
     if (date.getDay() === 0) return []; // Minggu tidak pernah ditandai training
 
     const targetTime = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
-    
+
     return filteredData.filter(program => {
       const dates = program.tanggal_pelaksanaan;
       if (!dates || !Array.isArray(dates) || dates.length === 0) return false;
@@ -129,7 +129,7 @@ const Schedule = () => {
               <ChevronRight size={18} />
             </button>
           </div>
-          
+
           <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-4">
             <select
               value={filterLokasi}
@@ -176,7 +176,7 @@ const Schedule = () => {
                 </div>
               ))}
             </div>
-            
+
             {/* Calendar Cells */}
             <div className="grid grid-cols-7">
               {getCalendarDays(calendarDate).map((cell, idx) => {
@@ -188,8 +188,8 @@ const Schedule = () => {
                   >
                     <div className="flex justify-between items-start mb-2">
                       <span className={`w-8 h-8 flex items-center justify-center rounded-full text-sm font-bold ${
-                        cell.date.toDateString() === new Date().toDateString() 
-                          ? 'bg-green-600 text-white shadow-md' 
+                        cell.date.toDateString() === new Date().toDateString()
+                          ? 'bg-green-600 text-white shadow-md'
                           : cell.inMonth ? 'text-slate-700' : 'text-slate-400'
                       }`}>
                         {cell.day}
@@ -200,15 +200,15 @@ const Schedule = () => {
                         </span>
                       )}
                     </div>
-                    
+
                     <div className="space-y-1.5 mt-2">
                       {dayPrograms.map((program, pIdx) => (
                         <button
                           key={pIdx}
                           onClick={() => { setSelectedProgram(program); setIsModalOpen(true); }}
                           className={`w-full text-left px-2 py-1.5 rounded text-[11px] font-semibold truncate transition-colors border ${
-                            program.type === 'Reguler' 
-                              ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100 hover:border-blue-200' 
+                            program.type === 'Reguler'
+                              ? 'bg-blue-50 text-blue-700 border-blue-100 hover:bg-blue-100 hover:border-blue-200'
                               : 'bg-orange-50 text-orange-700 border-orange-100 hover:bg-orange-100 hover:border-orange-200'
                           }`}
                           title={program.title}
