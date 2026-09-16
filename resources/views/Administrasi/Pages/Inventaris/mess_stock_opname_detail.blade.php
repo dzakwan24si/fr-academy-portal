@@ -1,8 +1,9 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Detail Stock Opname Mess | FR Academy')
+<x-slot name="title">Detail Stock Opname Mess | FR Academy</x-slot>
+    <x-slot name="header">Detail Stock Opname Mess | FR Academy</x-slot>
 
-@section('content')
+
 
 {{-- ============================== BREADCRUMB ============================== --}}
 <nav class="flex items-center gap-2 text-xs text-[#71717A] mb-3">
@@ -188,7 +189,7 @@
     </div>
 </div>
 
-@endsection
+</x-admin-layout>
 
 @push('scripts')
 <script>

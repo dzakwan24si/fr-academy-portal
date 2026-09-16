@@ -1,10 +1,11 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Database Asisten / Trainee | FR Academy')
+<x-slot name="title">Database Asisten / Trainee | FR Academy</x-slot>
+    <x-slot name="header">Database Asisten / Trainee | FR Academy</x-slot>
 
-@section('content')
+
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @viteReactRefresh
     @vite('resources/views/Administrasi/Pages/Monitoring/Asisten.jsx')
     <div id="asisten-root"></div>
-@endsection
+</x-admin-layout>

@@ -1,12 +1,13 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Dashboard Realisasi Program | FR Academy Enterprise Portal')
+<x-slot name="title">Dashboard Realisasi Program | FR Academy Enterprise Portal</x-slot>
+    <x-slot name="header">Dashboard Realisasi Program | FR Academy Enterprise Portal</x-slot>
 
 @push('styles')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 @endpush
 
-@section('content')
+
 
 {{-- ============================== PAGE HEADER & FILTERS ============================== --}}
 <div class="bg-white border border-[#E5E7EB] rounded-xl p-4 mb-5 shadow-xs">
@@ -593,7 +594,7 @@
 
 </div>
 
-@endsection
+</x-admin-layout>
 
 @push('scripts')
 <script>

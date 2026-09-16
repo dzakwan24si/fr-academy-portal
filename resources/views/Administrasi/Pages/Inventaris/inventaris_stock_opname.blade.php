@@ -1,8 +1,9 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Inventaris Gudang & Kantor: Stock Opname | FR Academy')
+<x-slot name="title">Inventaris Gudang & Kantor: Stock Opname | FR Academy</x-slot>
+    <x-slot name="header">Inventaris Gudang & Kantor: Stock Opname | FR Academy</x-slot>
 
-@section('content')
+
 
 {{-- ============================== HEADER & SUB-TABS ============================== --}}
 <div class="flex flex-col gap-4 mb-6">
@@ -247,4 +248,4 @@
     </div>
 </div>
 
-@endsection
+</x-admin-layout>

@@ -1,8 +1,9 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Realisasi Vs Batch | FR Academy')
+<x-slot name="title">Realisasi Vs Batch | FR Academy</x-slot>
+    <x-slot name="header">Realisasi Vs Batch | FR Academy</x-slot>
 
-@section('content')
+
 <div class="space-y-5">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
@@ -74,5 +75,5 @@
         </tbody></table></div>
     </div>
 </div>
-@endsection
+</x-admin-layout>
 

@@ -1,6 +1,7 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Dashboard Monitoring Tahunan | FR Academy')
+<x-slot name="title">Dashboard Monitoring Tahunan | FR Academy</x-slot>
+    <x-slot name="header">Dashboard Monitoring Tahunan | FR Academy</x-slot>
 
 @push('styles')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -46,7 +47,7 @@
 </style>
 @endpush
 
-@section('content')
+
 <div class="space-y-6 pb-12">
 
     {{-- ============================== 1. HEADER BANNER (GAMBAR 1) ============================== --}}
@@ -768,4 +769,4 @@ function exportToPDF() {
 }
 </script>
 @endpush
-@endsection
+</x-admin-layout>

@@ -1,8 +1,9 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'MPP Jabatan | FR Academy Enterprise Portal')
+<x-slot name="title">MPP Jabatan | FR Academy Enterprise Portal</x-slot>
+    <x-slot name="header">MPP Jabatan | FR Academy Enterprise Portal</x-slot>
 
-@section('content')
+
     <!-- Alert Notifications -->
     @if(session('success'))
         <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 px-4 py-3 rounded-xl flex items-center justify-between shadow-xs">
@@ -603,7 +604,7 @@
             </form>
         </div>
     </div>
-@endsection
+</x-admin-layout>
 
 @push('scripts')
 <script>

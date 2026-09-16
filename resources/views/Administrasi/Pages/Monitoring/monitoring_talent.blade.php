@@ -1,8 +1,9 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Monitoring Talent | FR Academy')
+<x-slot name="title">Monitoring Talent | FR Academy</x-slot>
+    <x-slot name="header">Monitoring Talent | FR Academy</x-slot>
 
-@section('content')
+
 <div class="space-y-6">
 
     {{-- ============================== 1. HERO & ACTION BAR ============================== --}}
@@ -690,4 +691,4 @@
         document.getElementById('modalDeleteAll').classList.add('hidden');
     }
 </script>
-@endsection
+</x-admin-layout>

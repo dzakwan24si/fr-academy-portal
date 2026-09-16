@@ -1,8 +1,9 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Cost Management | FR Academy Enterprise Portal')
+<x-slot name="title">Cost Management | FR Academy Enterprise Portal</x-slot>
+    <x-slot name="header">Cost Management | FR Academy Enterprise Portal</x-slot>
 
-@section('content')
+
 
 {{-- ============================== PAGE HEADER ============================== --}}
 <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
@@ -803,7 +804,7 @@
     </div>
 </div>
 
-@endsection
+</x-admin-layout>
 
 @push('scripts')
 <script>

@@ -1,8 +1,9 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Biaya Rekruit | FR Academy Enterprise Portal')
+<x-slot name="title">Biaya Rekruit | FR Academy Enterprise Portal</x-slot>
+    <x-slot name="header">Biaya Rekruit | FR Academy Enterprise Portal</x-slot>
 
-@section('content')
+
 
 {{-- ============================== PAGE HEADER ============================== --}}
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
@@ -570,7 +571,7 @@
             </form>
         </div>
     </div>
-@endsection
+</x-admin-layout>
 
 @push('scripts')
 <script>

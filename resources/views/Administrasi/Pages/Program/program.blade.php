@@ -1,7 +1,8 @@
-@extends('Administrasi.Layouts.app')
-@section('title', 'Program | FR Academy')
+<x-admin-layout>
+<x-slot name="title">Program | FR Academy</x-slot>
+    <x-slot name="header">Program | FR Academy</x-slot>
 
-@section('content')
+
 <div class="space-y-5">
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white border border-[#E5E7EB] rounded-xl p-5 shadow-xs">
@@ -171,4 +172,4 @@
         </div>
     </div>
 </div>
-@endsection
+</x-admin-layout>

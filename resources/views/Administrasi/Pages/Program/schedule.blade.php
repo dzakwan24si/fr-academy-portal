@@ -1,10 +1,11 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Schedule Bulanan | FR Academy')
+<x-slot name="title">Schedule Bulanan | FR Academy</x-slot>
+    <x-slot name="header">Schedule Bulanan | FR Academy</x-slot>
 
-@section('content')
+
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @viteReactRefresh
     @vite('resources/views/Administrasi/Pages/Program/SchedulePage.jsx')
     <div id="schedule-root"></div>
-@endsection
+</x-admin-layout>

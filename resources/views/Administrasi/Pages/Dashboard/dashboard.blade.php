@@ -1,6 +1,7 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Training & Monitoring Report | FR Academy Enterprise Portal')
+<x-slot name="title">Training & Monitoring Report | FR Academy Enterprise Portal</x-slot>
+    <x-slot name="header">Training & Monitoring Report | FR Academy Enterprise Portal</x-slot>
 
 @push('styles')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -24,7 +25,7 @@
 </style>
 @endpush
 
-@section('content')
+
 <div class="space-y-6 pb-12">
 
     {{-- ============================== TOP EXECUTIVE HEADER ============================== --}}
@@ -896,4 +897,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
-@endsection
+</x-admin-layout>

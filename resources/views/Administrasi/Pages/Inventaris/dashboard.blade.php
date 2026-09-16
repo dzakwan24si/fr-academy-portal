@@ -1,12 +1,13 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Dashboard Visualisasi Aset & Inventaris | FR Academy')
+<x-slot name="title">Dashboard Visualisasi Aset & Inventaris | FR Academy</x-slot>
+    <x-slot name="header">Dashboard Visualisasi Aset & Inventaris | FR Academy</x-slot>
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 @endpush
 
-@section('content')
+
 
 {{-- ============================== HEADER & SUB-TABS ============================== --}}
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -384,4 +385,4 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 @endpush
 
-@endsection
+</x-admin-layout>

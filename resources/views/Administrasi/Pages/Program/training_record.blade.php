@@ -1,8 +1,9 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Training Record | FR Academy')
+<x-slot name="title">Training Record | FR Academy</x-slot>
+    <x-slot name="header">Training Record | FR Academy</x-slot>
 
-@section('content')
+
 <div class="space-y-5">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div><h1 class="text-2xl font-bold text-[#18181B]">Training Record</h1><p class="mt-1 text-sm text-[#71717A]">Kelola peserta berdasarkan training activity yang sudah tersedia.</p></div>
@@ -393,4 +394,4 @@ function proceedDeleteAll() {
     }
 }
 </script>
-@endsection
+</x-admin-layout>

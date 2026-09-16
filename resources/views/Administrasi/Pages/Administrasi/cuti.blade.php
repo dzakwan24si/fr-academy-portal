@@ -1,6 +1,7 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Cuti (Employee Leave Management) | FR Academy Enterprise Portal')
+<x-slot name="title">Cuti (Employee Leave Management) | FR Academy Enterprise Portal</x-slot>
+    <x-slot name="header">Cuti (Employee Leave Management) | FR Academy Enterprise Portal</x-slot>
 
 @push('styles')
 <style>
@@ -26,7 +27,7 @@
 </style>
 @endpush
 
-@section('content')
+
     @if(isset($errors) && $errors->any())
         <div class="bg-rose-50 border border-rose-200 text-rose-800 px-4 py-3 rounded-xl shadow-xs">
             <span class="text-sm font-medium">{{ $errors->first('file') }}</span>
@@ -903,7 +904,7 @@
             </form>
         </div>
     </div>
-@endsection
+</x-admin-layout>
 
 @push('scripts')
 <script>

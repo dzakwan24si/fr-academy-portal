@@ -1,10 +1,11 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'Monitoring Lulusan Alumni | FR Academy')
+<x-slot name="title">Monitoring Lulusan Alumni | FR Academy</x-slot>
+    <x-slot name="header">Monitoring Lulusan Alumni | FR Academy</x-slot>
 
-@section('content')
+
     <meta name="csrf-token" content="{{ csrf_token() }}">
     @viteReactRefresh
     @vite('resources/views/Administrasi/Pages/Monitoring/MonitoringLulusan.jsx')
     <div id="monitoring-lulusan-root"></div>
-@endsection
+</x-admin-layout>

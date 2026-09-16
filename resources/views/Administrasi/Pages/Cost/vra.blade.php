@@ -1,8 +1,9 @@
-@extends('Administrasi.Layouts.app')
+<x-admin-layout>
 
-@section('title', 'VRA (Vehicle Running Account) | FR Academy Enterprise Portal')
+<x-slot name="title">VRA (Vehicle Running Account) | FR Academy Enterprise Portal</x-slot>
+    <x-slot name="header">VRA (Vehicle Running Account) | FR Academy Enterprise Portal</x-slot>
 
-@section('content')
+
 
 {{-- ============================== ALERT NOTIFICATIONS ============================== --}}
 @if(session('success'))
@@ -1090,7 +1091,7 @@
     </div>
 </div>
 
-@endsection
+</x-admin-layout>
 
 @push('scripts')
 <script>
