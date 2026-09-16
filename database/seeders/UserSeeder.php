@@ -29,11 +29,11 @@ class UserSeeder extends Seeder
         $adminInfo = User::firstOrCreate(
             ['email' => 'admin.informasi@fr-academy.id'],
             [
-                'name' => 'Admin Informasi',
+                'name' => 'Admin E-Information',
                 'password' => Hash::make('password123'),
             ]
         );
-        $adminInfo->assignRole('Admin Informasi');
+        $adminInfo->assignRole('Admin E-Information');
         
         // Buat akun Staff Administrasi
         $admin = User::firstOrCreate(
