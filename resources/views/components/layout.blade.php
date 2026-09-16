@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id" class="scroll-smooth" 
+<html lang="id" class="scroll-smooth overflow-x-hidden" 
       x-data="{ darkMode: localStorage.getItem('darkMode') === 'true' }" 
       x-init="$watch('darkMode', val => localStorage.setItem('darkMode', val))" 
       :class="{ 'dark': darkMode }">
@@ -19,7 +19,7 @@
         body { font-family: 'Inter', sans-serif; }
     </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 antialiased flex flex-col min-h-screen transition-colors duration-300">
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 antialiased flex flex-col min-h-screen transition-colors duration-300 overflow-x-hidden">
     @php
         $active_event = \App\Models\HomepageEvent::where('is_active', true)->first();
     @endphp
@@ -146,7 +146,7 @@
     </header>
 
     <!-- Main Content -->
-    <main class="flex-grow">
+    <main class="flex-grow w-full overflow-x-hidden">
         {{ $slot }}
     </main>
 
