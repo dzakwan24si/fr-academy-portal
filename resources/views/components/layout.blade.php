@@ -5,6 +5,7 @@
       :class="{ 'dark': darkMode }">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Portal resmi First Resources Academy. Pusat informasi pendaftaran, pengumuman, dan lowongan kerja program MAT dan FAT.">
     <title>First Resources Academy - Portal Resmi</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/faviconfr.svg') }}">
