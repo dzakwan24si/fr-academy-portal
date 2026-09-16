@@ -25,3 +25,17 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Sensitive / Private Company Data Files
+*.csv
+*.xlsx
+*.xls
+*.sql
+*.sqlite
+/storage/app/*.json
+/storage/app/*.xlsx
+/storage/app/*.csv
+/resources/views/Administrasi/Pages/Monitoring/data/*.csv
+/resources/views/Top_Management/*.csv
+/data/*
+!/data/.gitkeep
