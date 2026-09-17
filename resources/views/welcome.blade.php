@@ -207,9 +207,15 @@
     </section>
 
     <!-- Stats Section -->
-    <section id="stats-section" class="bg-teal-primary py-16 text-white relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-teal-700">
+    <section id="stats-section" class="relative py-12 text-white bg-teal-900 overflow-hidden">
+        <!-- Background Image Palm Tree -->
+        <div class="absolute inset-0 z-0">
+            <img src="{{ asset('images/PALM TREE_Panorama1.png') }}" alt="Palm Tree Background" class="w-full h-full object-cover opacity-30 mix-blend-luminosity">
+            <div class="absolute inset-0 bg-teal-primary/60"></div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-teal-700/50">
                 <!-- Stat 1 -->
                 <div class="text-center py-4" data-aos="zoom-in" data-aos-delay="100">
                     <div class="flex justify-center mb-6">
