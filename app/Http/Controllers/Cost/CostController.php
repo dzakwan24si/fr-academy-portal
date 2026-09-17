@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cost;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Cost\BiayaRekruit;
 use App\Models\Cost\CapexRab;
 use App\Models\Cost\CapexRealisasi;
@@ -502,12 +503,21 @@ class CostController extends Controller
             $this->syncAggregatedCosts($defaultYear, $targetMonth);
         } catch (\Exception $e) {
             DB::rollBack();
-            fclose($handle);
+            if (is_resource($handle)) {
+                fclose($handle);
+            }
             return back()->with('error', 'Terjadi kesalahan saat import data: ' . $e->getMessage());
         }
 
         $monthLabel = $targetMonth ? ' (' . (self::MONTH_NAMES[$targetMonth] ?? 'Bulan ' . $targetMonth) . ')' : '';
         $msg = "Import Data Cost{$monthLabel} berhasil! ({$importedCount} data baru ditambahkan, {$updatedCount} data diperbarui).";
+
+        ActivityLog::log(
+            'Import',
+            'Cost',
+            "Mengimport data Cost dari file " . $file->getClientOriginalName() . " ({$importedCount} baru, {$updatedCount} diperbarui)",
+            ['filename' => $file->getClientOriginalName(), 'imported' => $importedCount, 'updated' => $updatedCount]
+        );
 
         $redirectMonth = $targetMonth ?? $request->get('current_month', 'all');
 
@@ -627,6 +637,12 @@ class CostController extends Controller
             $deleted = $query->delete();
             $msg = "Seluruh data Cost tahun {$year} ({$deleted} data) berhasil dihapus.";
         }
+
+        ActivityLog::log('Hapus', 'Cost', $msg, [
+            'count' => $deleted,
+            'year'  => $year,
+            'month' => $month,
+        ]);
 
         return redirect()
             ->route('administrasi.cost.index', ['year' => $year, 'month' => $month])

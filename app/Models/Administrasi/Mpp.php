@@ -2,12 +2,15 @@
 
 namespace App\Models\Administrasi;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Mpp extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected static $logModuleName = 'MPP';
 
     protected $table = 'mpp';
     protected $primaryKey = 'mpp_id';

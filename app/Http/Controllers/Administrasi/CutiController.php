@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Administrasi;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Administrasi\Cuti;
 use App\Services\ExcelExporter;
 use Illuminate\Http\Request;
@@ -331,6 +332,13 @@ class CutiController extends Controller
                 }
             }
         });
+
+        ActivityLog::log(
+            'Import',
+            'Cuti',
+            "Mengimport {$imported} data karyawan Cuti dari file " . $file->getClientOriginalName(),
+            ['filename' => $file->getClientOriginalName(), 'count' => $imported]
+        );
 
         return back()->with('success', "{$imported} data karyawan Cuti berhasil diproses dan disimpan.");
     }

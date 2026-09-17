@@ -2,12 +2,15 @@
 
 namespace App\Models\Administrasi;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Cuti extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected static $logModuleName = 'Cuti';
 
     protected $table = 'cuti';
     protected $primaryKey = 'cuti_id';

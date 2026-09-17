@@ -158,6 +158,7 @@ use App\Http\Controllers\Cost\CostController;
 use App\Http\Controllers\Cost\VraController;
 
 // Administrasi Controllers
+use App\Http\Controllers\Administrasi\ActivityLogController;
 use App\Http\Controllers\Administrasi\CutiController;
 use App\Http\Controllers\Administrasi\MppController;
 use App\Http\Controllers\Administrasi\RekrutmenController;
@@ -387,6 +388,12 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
             Route::put('/{id}', [CostController::class, 'update'])->name('update');
             Route::delete('/{id}', [CostController::class, 'destroy'])->name('destroy');
         });
+    });
+
+    // Histori Aktivitas / Audit Log Routes
+    Route::prefix('administrasi/activity-logs')->name('administrasi.activity-logs.')->group(function () {
+        Route::get('/', [ActivityLogController::class, 'index'])->name('index');
+        Route::get('/{id}', [ActivityLogController::class, 'show'])->name('show');
     });
 
     // Administrasi - Inventaris Routes

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Program;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Program\ProgramNonReguler;
 use App\Models\Program\ProgramReguler;
 use App\Models\Program\RealisasiVsBatch;
@@ -78,6 +79,14 @@ class RealisasiVsBatchController extends Controller
     {
         $count = RealisasiVsBatch::count();
         RealisasiVsBatch::truncate();
+
+        ActivityLog::log(
+            'Hapus',
+            'Realisasi Vs Target',
+            "Menghapus semua data realisasi vs batch ({$count} data)",
+            ['count' => $count]
+        );
+
         return back()->with('success', "Semua data realisasi vs batch ({$count} data) berhasil dihapus.");
     }
 
@@ -115,6 +124,13 @@ class RealisasiVsBatchController extends Controller
                 $imported++;
             }
         });
+
+        ActivityLog::log(
+            'Import',
+            'Realisasi Vs Target',
+            "Mengimport {$imported} data realisasi vs target dari file " . $request->file('file')->getClientOriginalName(),
+            ['filename' => $request->file('file')->getClientOriginalName(), 'count' => $imported, 'skipped' => $skipped]
+        );
 
         return back()->with('success', "{$imported} data realisasi berhasil disimpan" . ($skipped ? ". {$skipped} baris dilewati karena ID atau bulan tidak valid" : '') . '. Nilai akan digantikan otomatis saat Training Record tersedia.');
     }

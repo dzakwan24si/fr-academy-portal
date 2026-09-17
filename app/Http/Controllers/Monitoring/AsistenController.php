@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Monitoring;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Monitoring\Asisten;
 use App\Models\Monitoring\AsistenProgramMonitoring;
 use App\Services\SpreadsheetReader;
@@ -306,7 +307,15 @@ class AsistenController extends Controller
      */
     public function destroyAll()
     {
+        $count = Asisten::count();
         Asisten::truncate();
+
+        ActivityLog::log(
+            'Hapus',
+            'Database Asisten',
+            "Menghapus semua data asisten ({$count} data)",
+            ['count' => $count]
+        );
 
         return response()->json([
             'status' => 'success',
@@ -559,6 +568,13 @@ class AsistenController extends Controller
             }
 
             DB::commit();
+
+            ActivityLog::log(
+                'Import',
+                'Database Asisten',
+                "Mengimport " . count($rowsToInsert) . " data asisten dari file " . $file->getClientOriginalName(),
+                ['filename' => $file->getClientOriginalName(), 'count' => count($rowsToInsert), 'mode' => $mode]
+            );
 
             return response()->json([
                 'status' => 'success',
@@ -1405,6 +1421,13 @@ class AsistenController extends Controller
         foreach (array_chunk($rows, 50) as $chunk) {
             AsistenProgramMonitoring::insert($chunk);
         }
+
+        ActivityLog::log(
+            'Import',
+            'Monitoring Alumni',
+            "Mengimport " . count($rows) . " data batch program dari file " . $file->getClientOriginalName(),
+            ['filename' => $file->getClientOriginalName(), 'count' => count($rows), 'mode' => $mode]
+        );
 
         return response()->json([
             'status' => 'success',

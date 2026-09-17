@@ -2,12 +2,15 @@
 
 namespace App\Models\Cost;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CapexRealisasi extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected static $logModuleName = 'Capex Realisasi';
 
     protected $table = 'capex_realisasi';
     protected $primaryKey = 'realisasi_id';

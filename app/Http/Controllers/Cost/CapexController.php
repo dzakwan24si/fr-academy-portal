@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cost;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Cost\CapexRab;
 use App\Models\Cost\CapexRealisasi;
 use App\Traits\HandlesCsvImports;
@@ -570,9 +571,20 @@ class CapexController extends Controller
 
             DB::commit();
             fclose($handle);
+
+            $typeLabel = $detectedType === 'rab' ? 'RAB' : 'Realisasi';
+
+            ActivityLog::log(
+                'Import',
+                'CAPEX',
+                "Mengimport data {$typeLabel} CAPEX dari file " . $file->getClientOriginalName() . " ({$importedCount} baru, {$updatedCount} diperbarui)",
+                ['filename' => $file->getClientOriginalName(), 'imported' => $importedCount, 'updated' => $updatedCount, 'type' => $typeLabel]
+            );
         } catch (\Exception $e) {
             DB::rollBack();
-            fclose($handle);
+            if (is_resource($handle)) {
+                fclose($handle);
+            }
             return back()->with('error', 'Terjadi kesalahan saat import data: ' . $e->getMessage());
         }
 
@@ -749,6 +761,12 @@ class CapexController extends Controller
             $deletedReal = $realQuery->delete();
             $msg = "Seluruh data CAPEX ({$deletedRab} RAB, {$deletedReal} Realisasi) berhasil dihapus.";
         }
+
+        ActivityLog::log('Hapus', 'Capex', $msg, [
+            'deleted_rab' => $deletedRab,
+            'deleted_realisasi' => $deletedReal,
+            'location' => $location,
+        ]);
 
         return redirect()
             ->route('administrasi.capex.index', ['location' => $location])

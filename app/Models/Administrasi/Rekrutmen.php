@@ -2,12 +2,15 @@
 
 namespace App\Models\Administrasi;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Rekrutmen extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected static $logModuleName = 'Rekrutmen';
 
     protected $table = 'rekrutmen';
 

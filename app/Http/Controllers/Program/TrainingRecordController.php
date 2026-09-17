@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Program;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Program\ProgramNonReguler;
 use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
@@ -102,6 +103,14 @@ class TrainingRecordController extends Controller
     {
         $count = TrainingRecord::count();
         TrainingRecord::truncate();
+
+        ActivityLog::log(
+            'Hapus',
+            'Training Record',
+            "Menghapus seluruh data Training Record ({$count} data)",
+            ['count' => $count]
+        );
+
         return back()->with('success', "Seluruh data Training Record ({$count} data) berhasil dihapus.");
     }
 
@@ -194,6 +203,13 @@ class TrainingRecordController extends Controller
                 $insertBatch = [];
             }
         });
+
+        ActivityLog::log(
+            'Import',
+            'Training Record',
+            "Mengimport {$count} data Training Record dari file " . $file->getClientOriginalName(),
+            ['filename' => $file->getClientOriginalName(), 'count' => $count, 'skipped' => $skipped]
+        );
 
         $message = "{$count} data Training Record berhasil diimpor.";
         if ($skipped > 0) {

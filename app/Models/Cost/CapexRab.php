@@ -2,12 +2,15 @@
 
 namespace App\Models\Cost;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class CapexRab extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected static $logModuleName = 'Capex RAB';
 
     protected $table = 'capex_rab';
     protected $primaryKey = 'rab_id';

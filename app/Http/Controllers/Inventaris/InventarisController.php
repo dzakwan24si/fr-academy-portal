@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Inventaris;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Inventaris\Barang;
 use App\Models\Inventaris\Pembelian;
 use App\Models\Inventaris\StockOpname;
@@ -256,6 +257,14 @@ class InventarisController extends Controller
             $imported++;
         }
 
+        $fileName = $request->file('file')?->getClientOriginalName() ?? 'file.csv';
+        ActivityLog::log(
+            'Import',
+            'Inventaris Barang',
+            "Mengimport {$imported} data barang inventaris dari file " . $fileName,
+            ['filename' => $fileName, 'count' => $imported]
+        );
+
         return redirect()->back()->with('success', "Berhasil mengimpor {$imported} data barang!");
     }
 
@@ -493,6 +502,14 @@ class InventarisController extends Controller
 
             $imported++;
         }
+
+        $fileName = $request->file('file')?->getClientOriginalName() ?? 'file.csv';
+        ActivityLog::log(
+            'Import',
+            'Inventaris Pembelian',
+            "Mengimport {$imported} data pembelian inventaris dari file " . $fileName,
+            ['filename' => $fileName, 'count' => $imported]
+        );
 
         return redirect()->back()->with('success', "Berhasil mengimpor {$imported} data pembelian!");
     }
@@ -868,6 +885,14 @@ class InventarisController extends Controller
             $imported++;
         }
 
+        $fileName = $request->file('file')?->getClientOriginalName() ?? 'file.csv';
+        ActivityLog::log(
+            'Import',
+            'Inventaris Stock Opname',
+            "Mengimport {$imported} data stock opname inventaris dari file " . $fileName,
+            ['filename' => $fileName, 'count' => $imported]
+        );
+
         return redirect()->back()->with('success', "Berhasil mengimpor {$imported} data stock opname!");
     }
 
@@ -895,6 +920,13 @@ class InventarisController extends Controller
                 $deleted = Barang::query()->delete();
                 $msg = "Seluruh data Barang inventaris ({$deleted} data) beserta riwayatnya berhasil dihapus.";
             }
+
+            ActivityLog::log(
+                'Hapus',
+                'Inventaris Barang',
+                $msg,
+                ['jenis_lokasi' => $jenisLokasi, 'count' => $deleted]
+            );
         });
 
         return redirect()->route('administrasi.inventaris.barang', array_filter(['jenis_lokasi' => $jenisLokasi]))
@@ -916,6 +948,13 @@ class InventarisController extends Controller
             $msg = "Seluruh data Pembelian inventaris ({$deleted} data) berhasil dihapus.";
         }
 
+        ActivityLog::log(
+            'Hapus',
+            'Inventaris Pembelian',
+            $msg,
+            ['jenis_lokasi' => $jenisLokasi, 'count' => $deleted]
+        );
+
         return redirect()->route('administrasi.inventaris.pembelian', array_filter(['jenis_lokasi' => $jenisLokasi]))
             ->with('success', $msg);
     }
@@ -934,6 +973,13 @@ class InventarisController extends Controller
             $deleted = StockOpname::query()->delete();
             $msg = "Seluruh data Stock Opname inventaris ({$deleted} data) berhasil dihapus.";
         }
+
+        ActivityLog::log(
+            'Hapus',
+            'Inventaris Stock Opname',
+            $msg,
+            ['jenis_lokasi' => $jenisLokasi, 'count' => $deleted]
+        );
 
         return redirect()->route('administrasi.inventaris.stock-opname', array_filter(['jenis_lokasi' => $jenisLokasi]))
             ->with('success', $msg);
