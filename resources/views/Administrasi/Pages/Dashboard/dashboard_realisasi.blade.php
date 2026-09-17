@@ -120,6 +120,12 @@
                 <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                 <span>Reset</span>
             </a>
+
+            {{-- Fullscreen Button --}}
+            <button type="button" onclick="toggleDashboardFullscreen()" class="btn-toggle-fullscreen flex items-center gap-1.5 bg-[#1b4332] hover:bg-[#2d5a27] text-white rounded-lg px-3 py-1.5 text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer">
+                <i data-lucide="maximize-2" class="w-3.5 h-3.5 fullscreen-btn-icon"></i>
+                <span class="fullscreen-btn-text">Full Screen</span>
+            </button>
         </form>
     </div>
 </div>

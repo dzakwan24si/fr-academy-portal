@@ -108,9 +108,17 @@
                 {{-- Reset Filter Button --}}
                 <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => $tab, 'year' => $year]) }}" 
                    class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-xs font-semibold backdrop-blur-sm transition-all text-white shadow-xs">
-                    <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                     <span>Reset Filter</span>
                 </a>
+
+                {{-- Fullscreen Button --}}
+                <button type="button" 
+                        onclick="toggleDashboardFullscreen()" 
+                        class="btn-toggle-fullscreen inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-700/80 hover:bg-emerald-600/90 border border-emerald-400/40 text-xs font-bold transition-all text-white shadow-xs cursor-pointer">
+                    <i data-lucide="maximize-2" class="w-3.5 h-3.5 fullscreen-btn-icon"></i>
+                    <span class="fullscreen-btn-text">Full Screen</span>
+                </button>
             </div>
         </div>
     </div>

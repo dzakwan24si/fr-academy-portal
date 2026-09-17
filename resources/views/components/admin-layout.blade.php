@@ -10,6 +10,39 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     @stack('styles')
+    <style>
+        /* Fullscreen Mode Layout Rules */
+        :fullscreen aside,
+        :fullscreen header,
+        body.is-fullscreen-mode aside,
+        body.is-fullscreen-mode header {
+            display: none !important;
+        }
+
+        :fullscreen main,
+        body.is-fullscreen-mode main {
+            padding: 1.25rem 2rem !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            max-width: 100% !important;
+            overflow-y: auto !important;
+            background-color: #f8fafc !important;
+        }
+
+        /* Floating Exit Fullscreen Button */
+        .floating-exit-fullscreen-btn {
+            display: none;
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            z-index: 99999;
+        }
+
+        :fullscreen .floating-exit-fullscreen-btn,
+        body.is-fullscreen-mode .floating-exit-fullscreen-btn {
+            display: flex !important;
+        }
+    </style>
 </head>
 <body class="bg-white font-sans antialiased text-gray-900">
     <div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden bg-white">
@@ -403,8 +436,60 @@
         </div>
     </div>
     
+    <!-- Floating Exit Fullscreen Button -->
+    <button type="button" onclick="toggleDashboardFullscreen()" class="floating-exit-fullscreen-btn items-center gap-2 px-4 py-2.5 bg-gray-900/90 hover:bg-gray-900 text-white rounded-full shadow-2xl text-xs font-bold transition-all border border-gray-700 backdrop-blur-md cursor-pointer">
+        <i data-lucide="minimize-2" class="w-4 h-4"></i>
+        <span>Keluar Fullscreen</span>
+    </button>
+    
     @livewireScripts
     <script>
+        function toggleDashboardFullscreen() {
+            if (!document.fullscreenElement) {
+                const docEl = document.documentElement;
+                if (docEl.requestFullscreen) {
+                    docEl.requestFullscreen();
+                } else if (docEl.webkitRequestFullscreen) {
+                    docEl.webkitRequestFullscreen();
+                } else if (docEl.msRequestFullscreen) {
+                    docEl.msRequestFullscreen();
+                }
+                document.body.classList.add('is-fullscreen-mode');
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+                document.body.classList.remove('is-fullscreen-mode');
+            }
+        }
+
+        document.addEventListener('fullscreenchange', () => {
+            const isFS = !!document.fullscreenElement;
+            document.body.classList.toggle('is-fullscreen-mode', isFS);
+            updateFullscreenButtons(isFS);
+        });
+
+        function updateFullscreenButtons(isFS) {
+            document.querySelectorAll('.btn-toggle-fullscreen').forEach(btn => {
+                const textEl = btn.querySelector('.fullscreen-btn-text');
+                const iconEl = btn.querySelector('.fullscreen-btn-icon');
+                if (isFS) {
+                    if (textEl) textEl.textContent = 'Keluar Fullscreen';
+                    if (iconEl) iconEl.setAttribute('data-lucide', 'minimize-2');
+                } else {
+                    if (textEl) textEl.textContent = 'Full Screen';
+                    if (iconEl) iconEl.setAttribute('data-lucide', 'maximize-2');
+                }
+            });
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();

@@ -46,7 +46,7 @@
                 </p>
             </div>
 
-            {{-- Year Filter Selector --}}
+            {{-- Year Filter Selector & Fullscreen --}}
             <div class="flex items-center gap-3 self-start md:self-auto bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/20">
                 <i data-lucide="calendar" class="w-4 h-4 text-emerald-200"></i>
                 <span class="text-xs font-semibold text-emerald-100 uppercase tracking-wider">Tahun:</span>
@@ -58,6 +58,13 @@
                         @endforeach
                     </select>
                 </form>
+
+                <div class="w-px h-5 bg-white/20"></div>
+
+                <button type="button" onclick="toggleDashboardFullscreen()" class="btn-toggle-fullscreen flex items-center gap-1.5 bg-emerald-700/80 hover:bg-emerald-600/90 text-white text-xs font-bold rounded-lg px-3 py-1.5 border border-emerald-400/40 transition-colors cursor-pointer">
+                    <i data-lucide="maximize-2" class="w-3.5 h-3.5 fullscreen-btn-icon"></i>
+                    <span class="fullscreen-btn-text">Full Screen</span>
+                </button>
             </div>
         </div>
     </div>

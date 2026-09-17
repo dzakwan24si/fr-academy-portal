@@ -8,7 +8,6 @@ use App\Models\Administrasi\Cuti;
 use App\Services\ExcelExporter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use ZipArchive;
 
 class CutiController extends Controller
 {
@@ -587,7 +586,9 @@ class CutiController extends Controller
             $validated[$field] = isset($validated[$field]) && $validated[$field] !== '' ? (int) $validated[$field] : 0;
         }
 
-        if (isset($validated['tahun'])) {
+        if (empty($validated['tahun'])) {
+            $validated['tahun'] = (int) date('Y');
+        } else {
             $validated['tahun'] = (int) $validated['tahun'];
         }
 

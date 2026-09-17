@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use App\Services\ExcelExporter;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RekrutmenController extends Controller
 {
