@@ -82,8 +82,8 @@
     </section>
 
     <!-- Mission Section -->
-    <section class="py-24 bg-white dark:bg-gray-900 transition-colors duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section class="relative py-24 bg-white dark:bg-gray-900 transition-colors duration-300 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
                 <!-- Image Grid -->
                 <div class="relative" data-aos="fade-right">
@@ -140,8 +140,14 @@
     </section>
 
     <!-- Solutions Section -->
-    <section class="py-24 bg-gray-50 dark:bg-gray-800 transition-colors duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section class="relative py-24 bg-gray-50 dark:bg-gray-800 transition-colors duration-300 overflow-hidden">
+        
+        <!-- Floating Ornament Sawit di Kanan Atas (Area Kosong) -->
+        <div class="absolute top-10 right-0 z-0 opacity-40 pointer-events-none transform translate-x-1/3 hover:scale-105 transition-transform duration-700 animate-[bounce_5s_infinite]">
+            <img src="{{ asset('images/sawit.png') }}" alt="Ornamen Sawit" class="w-64 h-64 md:w-96 md:h-96 object-contain drop-shadow-2xl">
+        </div>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
                 <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">PILAR PROGRAM UTAMA</span>
                 <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white mt-4 mb-4">Tiga Pilar Program Utama</h2>
@@ -151,8 +157,8 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <!-- Card 1 -->
                 <div class="bg-orange-50/50 dark:bg-gray-700 rounded-2xl p-8 transition-transform hover:-translate-y-2 duration-300 border border-orange-100 dark:border-gray-600 shadow-sm" data-aos="fade-up" data-aos-delay="100">
-                    <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center text-teal-primary dark:text-teal-400 mb-6 shadow-sm">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"></path></svg>
+                    <div class="w-24 h-24 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-8 shadow-md overflow-hidden">
+                        <img src="{{ asset('images/reguler.png') }}" alt="Reguler Icon" class="w-full h-full object-contain p-2">
                     </div>
                     <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Regular Training Program</h3>
                     <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Program pengembangan berkesinambungan selama enam bulan dengan pendampingan mentoring untuk menyiapkan calon staf dan asisten perkebunan.</p>
@@ -167,8 +173,8 @@
 
                 <!-- Card 2 -->
                 <div class="bg-blue-50/50 dark:bg-gray-700 rounded-2xl p-8 transition-transform hover:-translate-y-2 duration-300 border border-blue-100 dark:border-gray-600 shadow-sm" data-aos="fade-up" data-aos-delay="200">
-                    <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center text-teal-primary dark:text-teal-400 mb-6 shadow-sm">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    <div class="w-24 h-24 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-8 shadow-md overflow-hidden">
+                        <img src="{{ asset('images/nonreguler.png') }}" alt="Non-Reguler Icon" class="w-full h-full object-contain p-2">
                     </div>
                     <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Non-Regular Training Program</h3>
                     <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Pelatihan berdurasi singkat untuk meningkatkan kompetensi teknis dan manajerial staf operasional di Kebun, Pabrik (Mill), Traksi, hingga Administrasi.</p>
@@ -183,8 +189,8 @@
 
                 <!-- Card 3 -->
                 <div class="bg-teal-50/50 dark:bg-gray-700 rounded-2xl p-8 transition-transform hover:-translate-y-2 duration-300 border border-teal-100 dark:border-gray-600 shadow-sm" data-aos="fade-up" data-aos-delay="300">
-                    <div class="w-12 h-12 bg-white dark:bg-gray-800 rounded-lg flex items-center justify-center text-teal-primary dark:text-teal-400 mb-6 shadow-sm">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+                    <div class="w-24 h-24 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-8 shadow-md overflow-hidden">
+                        <img src="{{ asset('images/talent.png') }}" alt="Talent Icon" class="w-full h-full object-contain p-2">
                     </div>
                     <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Talent Management Program</h3>
                     <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Program akselerasi terstruktur yang dirancang khusus untuk mempersiapkan staf berpotensi (high talent) menjadi pemimpin masa depan perusahaan.</p>
@@ -201,21 +207,36 @@
     </section>
 
     <!-- Stats Section -->
-    <section id="stats-section" class="bg-teal-primary py-16 text-white relative">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-teal-700">
+    <section id="stats-section" class="relative py-12 text-white bg-teal-900 overflow-hidden">
+        <!-- Background Image Palm Tree -->
+        <div class="absolute inset-0 z-0">
+            <img src="{{ asset('images/PALM TREE_Panorama1.png') }}" alt="Palm Tree Background" class="w-full h-full object-cover opacity-30 mix-blend-luminosity">
+            <div class="absolute inset-0 bg-teal-primary/60"></div>
+        </div>
+        
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 divide-y md:divide-y-0 md:divide-x divide-teal-700/50">
                 <!-- Stat 1 -->
                 <div class="text-center py-4" data-aos="zoom-in" data-aos-delay="100">
+                    <div class="flex justify-center mb-6">
+                        <img src="{{ asset('images/300h.png') }}" alt="Area Icon" class="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-lg">
+                    </div>
                     <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span class="counter" data-target="300">0</span><span class="text-green-accent text-4xl"> Ha</span></div>
                     <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">Area Praktik & Simulasi</div>
                 </div>
                 <!-- Stat 2 -->
                 <div class="text-center py-4" data-aos="zoom-in" data-aos-delay="200">
+                    <div class="flex justify-center mb-6">
+                        <img src="{{ asset('images/learningmethod.png') }}" alt="Method Icon" class="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-lg">
+                    </div>
                     <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span>70:20:10</span></div>
                     <div class="text-teal-200 text-xs md:text-sm uppercase tracking-wider font-semibold px-2">Metode Pembelajaran (Experiential, Social, Formal)</div>
                 </div>
                 <!-- Stat 3 -->
                 <div class="text-center py-4" data-aos="zoom-in" data-aos-delay="300">
+                    <div class="flex justify-center mb-6">
+                        <img src="{{ asset('images/3pillar.png') }}" alt="Pillars Icon" class="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-lg">
+                    </div>
                     <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span class="counter" data-target="3">0</span></div>
                     <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">Pusat Pelatihan & Learning Station</div>
                 </div>

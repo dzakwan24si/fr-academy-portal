@@ -250,27 +250,8 @@
                         </p>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-                        <!-- Station 1 -->
-                        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm flex items-center space-x-6" data-aos="fade-up" data-aos-delay="100">
-                            <div class="w-16 h-16 shrink-0 rounded-full bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            </div>
-                            <div>
-                                <h4 class="text-xl font-bold text-gray-900 dark:text-white">Region Kalimantan Barat</h4>
-                                <p class="text-teal-600 dark:text-teal-400 text-sm font-semibold mt-1">📍 Lokasi: Kebun Limpah Sejahtera</p>
-                            </div>
-                        </div>
-                        <!-- Station 2 -->
-                        <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-100 dark:border-gray-700 shadow-sm flex items-center space-x-6" data-aos="fade-up" data-aos-delay="200">
-                            <div class="w-16 h-16 shrink-0 rounded-full bg-teal-50 dark:bg-teal-900/30 flex items-center justify-center text-teal-600 dark:text-teal-400">
-                                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            </div>
-                            <div>
-                                <h4 class="text-xl font-bold text-gray-900 dark:text-white">Region Kutai Barat</h4>
-                                <p class="text-teal-600 dark:text-teal-400 text-sm font-semibold mt-1">📍 Lokasi: Kebun Cak Begai</p>
-                            </div>
-                        </div>
+                    <div class="max-w-4xl mx-auto flex justify-center" data-aos="zoom-in">
+                        <img src="{{ asset('images/peta.png') }}" alt="Peta Persebaran Learning Station" class="w-full h-auto object-contain drop-shadow-xl">
                     </div>
                 </div>
             </section>
