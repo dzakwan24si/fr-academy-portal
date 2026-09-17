@@ -195,32 +195,8 @@
                 <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Kami terus berkembang dengan mendirikan pos pembelajaran di lokasi operasional strategis yang berfokus pada persiapan kedisiplinan dan teknis tenaga supervisi seperti Mandor dan Kerani.</p>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-5xl mx-auto">
-                <!-- Kalbar -->
-                <div class="bg-white dark:bg-gray-700 border border-teal-100 dark:border-gray-600 rounded-2xl p-8 shadow-sm hover:shadow-md hover:-translate-y-1 transition duration-300" data-aos="fade-right">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0 w-12 h-12 bg-green-100 dark:bg-gray-800 rounded-full flex items-center justify-center mt-1">
-                            <svg class="w-6 h-6 text-green-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        </div>
-                        <div class="ml-6">
-                            <h3 class="text-2xl font-bold mb-2 text-teal-primary dark:text-white">Learning Station Kalbar</h3>
-                            <p class="text-gray-600 dark:text-gray-400">Berlokasi di Kebun Limpah Sejahtera, Provinsi Kalimantan Barat.</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Kubar -->
-                <div class="bg-white dark:bg-gray-700 border border-teal-100 dark:border-gray-600 rounded-2xl p-8 shadow-sm hover:shadow-md hover:-translate-y-1 transition duration-300" data-aos="fade-left">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0 w-12 h-12 bg-green-100 dark:bg-gray-800 rounded-full flex items-center justify-center mt-1">
-                            <svg class="w-6 h-6 text-green-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                        </div>
-                        <div class="ml-6">
-                            <h3 class="text-2xl font-bold mb-2 text-teal-primary dark:text-white">Learning Station Kutai Barat</h3>
-                            <p class="text-gray-600 dark:text-gray-400">Berlokasi di Kebun Cak Begai, Provinsi Kalimantan Timur.</p>
-                        </div>
-                    </div>
-                </div>
+            <div class="max-w-4xl mx-auto mt-8 flex justify-center" data-aos="zoom-in">
+                <img src="{{ asset('images/peta.png') }}" alt="Peta Persebaran Learning Station" class="w-full h-auto object-contain drop-shadow-xl">
             </div>
         </div>
     </section>
