@@ -304,6 +304,9 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
     Route::prefix('administrasi/monitoring-alumni')->name('administrasi.monitoring-alumni.')->group(function () {
         Route::get('/', [AsistenController::class, 'indexMonitoringAlumni'])->name('index');
         Route::get('/api/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.data');
+        Route::post('/api/store', [AsistenController::class, 'storeMonitoringProgram'])->name('api.store');
+        Route::put('/api/{id}', [AsistenController::class, 'updateMonitoringProgram'])->name('api.update');
+        Route::delete('/api/{id}', [AsistenController::class, 'destroyMonitoringProgram'])->name('api.destroy');
         Route::get('/api/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.drilldown');
         Route::get('/api/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.export');
     });
@@ -324,6 +327,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
     Route::prefix('administrasi/monitoring-talent')->name('administrasi.monitoring-talent.')->group(function () {
         Route::get('/', [MonitoringTalentController::class, 'index'])->name('index');
         Route::post('/store', [MonitoringTalentController::class, 'store'])->name('store');
+        Route::post('/update-progress-materi', [MonitoringTalentController::class, 'updateProgressMateri'])->name('update-progress-materi');
         Route::put('/{id}', [MonitoringTalentController::class, 'update'])->name('update');
         Route::delete('/destroy-all', [MonitoringTalentController::class, 'destroyAll'])->name('destroyAll');
         Route::delete('/{id}', [MonitoringTalentController::class, 'destroy'])->name('destroy');
@@ -393,6 +397,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
         Route::get('/summary', [InventarisSummaryController::class, 'index'])->name('summary');
 
         // Unified Routes (Single Controller)
+        Route::delete('/barang/destroy-all', [InventarisController::class, 'barangDestroyAll'])->name('barang.destroyAll');
         Route::get('/barang', [InventarisController::class, 'barangIndex'])->name('barang');
         Route::get('/barang/template', [InventarisController::class, 'barangTemplate'])->name('barang.template');
         Route::post('/barang/import', [InventarisController::class, 'barangImport'])->name('barang.import');
@@ -400,6 +405,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
         Route::put('/barang/{id}', [InventarisController::class, 'barangUpdate'])->name('barang.update');
         Route::delete('/barang/{id}', [InventarisController::class, 'barangDestroy'])->name('barang.destroy');
 
+        Route::delete('/pembelian/destroy-all', [InventarisController::class, 'pembelianDestroyAll'])->name('pembelian.destroyAll');
         Route::get('/pembelian', [InventarisController::class, 'pembelianIndex'])->name('pembelian');
         Route::get('/pembelian/template', [InventarisController::class, 'pembelianTemplate'])->name('pembelian.template');
         Route::post('/pembelian/import', [InventarisController::class, 'pembelianImport'])->name('pembelian.import');
@@ -407,6 +413,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
         Route::put('/pembelian/{id}', [InventarisController::class, 'pembelianUpdate'])->name('pembelian.update');
         Route::delete('/pembelian/{id}', [InventarisController::class, 'pembelianDestroy'])->name('pembelian.destroy');
 
+        Route::delete('/stock-opname/destroy-all', [InventarisController::class, 'stockOpnameDestroyAll'])->name('stock-opname.destroyAll');
         Route::get('/stock-opname', [InventarisController::class, 'stockOpnameIndex'])->name('stock-opname');
         Route::get('/stock-opname/template', [InventarisController::class, 'stockOpnameTemplate'])->name('stock-opname.template');
         Route::post('/stock-opname/import', [InventarisController::class, 'stockOpnameImport'])->name('stock-opname.import');
@@ -422,6 +429,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
 
         // Gudang Subsystem (Aliases to InventarisController)
         Route::prefix('gudang')->name('gudang.')->group(function () {
+            Route::delete('/barang/destroy-all', [InventarisGudangController::class, 'barangDestroyAll'])->name('barang.destroyAll');
             Route::get('/barang', [InventarisGudangController::class, 'barangIndex'])->name('barang');
             Route::get('/barang/template', [InventarisGudangController::class, 'barangTemplate'])->name('barang.template');
             Route::post('/barang/import', [InventarisGudangController::class, 'barangImport'])->name('barang.import');
@@ -429,6 +437,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
             Route::put('/barang/{id}', [InventarisGudangController::class, 'barangUpdate'])->name('barang.update');
             Route::delete('/barang/{id}', [InventarisGudangController::class, 'barangDestroy'])->name('barang.destroy');
 
+            Route::delete('/pembelian/destroy-all', [InventarisGudangController::class, 'pembelianDestroyAll'])->name('pembelian.destroyAll');
             Route::get('/pembelian', [InventarisGudangController::class, 'pembelianIndex'])->name('pembelian');
             Route::get('/pembelian/template', [InventarisGudangController::class, 'pembelianTemplate'])->name('pembelian.template');
             Route::post('/pembelian/import', [InventarisGudangController::class, 'pembelianImport'])->name('pembelian.import');
@@ -436,6 +445,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
             Route::put('/pembelian/{id}', [InventarisGudangController::class, 'pembelianUpdate'])->name('pembelian.update');
             Route::delete('/pembelian/{id}', [InventarisGudangController::class, 'pembelianDestroy'])->name('pembelian.destroy');
 
+            Route::delete('/stock-opname/destroy-all', [InventarisGudangController::class, 'stockOpnameDestroyAll'])->name('stock-opname.destroyAll');
             Route::get('/stock-opname', [InventarisGudangController::class, 'stockOpnameIndex'])->name('stock-opname');
             Route::get('/stock-opname/template', [InventarisGudangController::class, 'stockOpnameTemplate'])->name('stock-opname.template');
             Route::post('/stock-opname/import', [InventarisGudangController::class, 'stockOpnameImport'])->name('stock-opname.import');
@@ -452,6 +462,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
 
         // Kantor Subsystem (Aliases to InventarisController)
         Route::prefix('kantor')->name('kantor.')->group(function () {
+            Route::delete('/barang/destroy-all', [InventarisKantorController::class, 'barangDestroyAll'])->name('barang.destroyAll');
             Route::get('/barang', [InventarisKantorController::class, 'barangIndex'])->name('barang');
             Route::get('/barang/template', [InventarisKantorController::class, 'barangTemplate'])->name('barang.template');
             Route::post('/barang/import', [InventarisKantorController::class, 'barangImport'])->name('barang.import');
@@ -459,6 +470,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
             Route::put('/barang/{id}', [InventarisKantorController::class, 'barangUpdate'])->name('barang.update');
             Route::delete('/barang/{id}', [InventarisKantorController::class, 'barangDestroy'])->name('barang.destroy');
 
+            Route::delete('/pembelian/destroy-all', [InventarisKantorController::class, 'pembelianDestroyAll'])->name('pembelian.destroyAll');
             Route::get('/pembelian', [InventarisKantorController::class, 'pembelianIndex'])->name('pembelian');
             Route::get('/pembelian/template', [InventarisKantorController::class, 'pembelianTemplate'])->name('pembelian.template');
             Route::post('/pembelian/import', [InventarisKantorController::class, 'pembelianImport'])->name('pembelian.import');
@@ -466,6 +478,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
             Route::put('/pembelian/{id}', [InventarisKantorController::class, 'pembelianUpdate'])->name('pembelian.update');
             Route::delete('/pembelian/{id}', [InventarisKantorController::class, 'pembelianDestroy'])->name('pembelian.destroy');
 
+            Route::delete('/stock-opname/destroy-all', [InventarisKantorController::class, 'stockOpnameDestroyAll'])->name('stock-opname.destroyAll');
             Route::get('/stock-opname', [InventarisKantorController::class, 'stockOpnameIndex'])->name('stock-opname');
             Route::get('/stock-opname/template', [InventarisController::class, 'stockOpnameTemplate'])->name('stock-opname.template');
             Route::post('/stock-opname/import', [InventarisController::class, 'stockOpnameImport'])->name('stock-opname.import');

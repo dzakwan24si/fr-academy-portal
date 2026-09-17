@@ -79,6 +79,7 @@
                 <i data-lucide="file-spreadsheet" class="w-4 h-4 text-[#71717A]"></i> Download Template
             </a>
 
+            @can('edit_cost')
             <form action="{{ route('administrasi.cuti.import') }}" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
                 @csrf
                 <label class="bg-white border border-[#E5E7EB] hover:bg-[#F4F4F5] text-[#18181B] font-medium text-sm rounded-lg px-4 py-2 flex items-center gap-2 shadow-2xs transition-colors cursor-pointer">
@@ -93,6 +94,7 @@
                     class="bg-[#4B6A34] hover:bg-[#3d562a] text-white font-medium text-sm rounded-lg px-4 py-2 flex items-center gap-2 shadow-sm transition-colors">
                 <i data-lucide="plus" class="w-4 h-4"></i> + Tambah Data
             </button>
+            @endcan
         </div>
     </div>
 
@@ -128,6 +130,7 @@
             </div>
 
             {{-- Tambah Tahun Button --}}
+            @can('edit_cost')
             <div class="shrink-0">
                 <button type="button" onclick="openTambahTahunModal()"
                         class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#4B6A34] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center gap-1.5 transition-colors shadow-2xs">
@@ -135,6 +138,7 @@
                     <span>+ Tambah Tahun</span>
                 </button>
             </div>
+            @endcan
         </div>
     </div>
 
@@ -410,7 +414,8 @@
                                         <i data-lucide="eye" class="w-4 h-4"></i>
                                     </button>
 
-                                    <!-- Edit -->
+                                     <!-- Edit -->
+                                    @can('edit_cost')
                                     <button type="button"
                                             onclick="openEditModal({{ $row->cuti_id }})"
                                             class="p-1.5 text-[#71717A] hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -425,6 +430,7 @@
                                             title="Hapus Data">
                                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                                     </button>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>
@@ -437,11 +443,15 @@
                                     </div>
                                     <div>
                                         <p class="font-semibold text-sm text-[#18181B]">Belum ada data cuti untuk tahun {{ $selectedYear }}</p>
+                                        @can('edit_cost')
                                         <p class="text-xs text-[#71717A] mt-0.5">Silakan klik tombol "+ Tambah Data" untuk mulai memasukkan data karyawan.</p>
+                                        @endcan
                                     </div>
+                                    @can('edit_cost')
                                     <button onclick="openAddModal()" class="mt-2 bg-[#4B6A34] hover:bg-[#3d562a] text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
                                         + Tambah Data Baru
                                     </button>
+                                    @endcan
                                 </div>
                             </td>
                         </tr>
@@ -461,6 +471,7 @@
         @endif
     </div>
 
+    @can('edit_cost')
     <!-- ======================================================== -->
     <!-- 6. MODAL: TAMBAH DATA                                    -->
     <!-- ======================================================== -->
@@ -762,8 +773,7 @@
             </form>
         </div>
     </div>
-
-    <!-- ======================================================== -->
+    @endcan<!-- ======================================================== -->
     <!-- 8. MODAL: DETAIL KARYAWAN                                -->
     <!-- ======================================================== -->
     <div id="detailModal" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
@@ -852,6 +862,7 @@
         </div>
     </div>
 
+    @can('edit_cost')
     <!-- ======================================================== -->
     <!-- 9. MODAL: TAHUN BARU                                     -->
     <!-- ======================================================== -->
@@ -904,7 +915,8 @@
             </form>
         </div>
     </div>
-</x-admin-layout>
+    @endcan
+
 
 @push('scripts')
 <script>
@@ -1109,6 +1121,7 @@
 </script>
 
 {{-- ============================== MODAL: TAMBAH TAHUN ============================== --}}
+@can('edit_cost')
 <div id="modalTambahTahun" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/40 backdrop-blur-xs" onclick="closeTambahTahunModal()"></div>
     <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden p-6 z-10 animate-in fade-in zoom-in-95 duration-150">
@@ -1163,4 +1176,7 @@
         </form>
     </div>
 </div>
+@endcan
 @endpush
+
+</x-admin-layout>

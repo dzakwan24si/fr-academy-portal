@@ -248,6 +248,7 @@
 
 
 
+                @canany(['manage_articles', 'manage_tv_display', 'manage_events'])
                 <!-- SECTION: Konten & Media -->
                 <details class="group" {{ request()->routeIs('admin.artikel.*', 'admin.tv.*', 'admin.events.*') ? 'open' : '' }}>
                     <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-wider text-gray-400 hover:bg-gray-100 [&::-webkit-details-marker]:hidden transition-colors">
@@ -277,6 +278,7 @@
                         @endcan
                     </div>
                 </details>
+                @endcanany
                 
                 <!-- SECTION: Sistem & Pengaturan -->
                 <details class="group" {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.profile.*') ? 'open' : '' }}>

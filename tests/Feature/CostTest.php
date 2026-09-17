@@ -18,6 +18,7 @@ class CostTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->authenticateUser();
         Cost::create([
             'tahun'          => 2026,
             'GL_ACCOUNT'     => '135.80.00001',

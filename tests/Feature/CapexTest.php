@@ -14,6 +14,7 @@ class CapexTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->authenticateUser();
         CapexRealisasi::query()->delete();
         CapexRab::query()->delete();
 

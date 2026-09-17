@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
     GraduationCap, Users, UserCheck, UserX, Search, Download, Upload,
-    RefreshCw, ChevronUp, ChevronDown, Filter, AlertCircle, X, FileSpreadsheet
+    RefreshCw, ChevronUp, ChevronDown, Filter, AlertCircle, X, FileSpreadsheet,
+    Plus, Pencil, Trash2, Save, CheckCircle2
 } from 'lucide-react';
 
 const CATEGORY_TABS = [
@@ -11,6 +12,14 @@ const CATEGORY_TABS = [
     { code: 'C', name: 'Admin Assistant Training', label: 'Admin Assistant (AAT)' },
     { code: 'D', name: 'Traction Assistant Training', label: 'Traction Assistant (TAT)' },
     { code: 'E', name: 'Downstream Management Training', label: 'Downstream (DMT)' },
+];
+
+const CATEGORY_OPTIONS = [
+    { code: 'A', name: 'Field Assistant Training' },
+    { code: 'B', name: 'Mill Assistant Training' },
+    { code: 'C', name: 'Admin Assistant Training' },
+    { code: 'D', name: 'Traction Assistant Training' },
+    { code: 'E', name: 'Downstream Management Training' },
 ];
 
 export default function MonitoringAlumniTab() {
@@ -40,7 +49,56 @@ export default function MonitoringAlumniTab() {
     const [importing, setImporting] = useState(false);
     const [importMessage, setImportMessage] = useState(null);
 
+    // CRUD Manual Add / Edit Modal
+    const [formModalOpen, setFormModalOpen] = useState(false);
+    const [isEditMode, setIsEditMode] = useState(false);
+    const [selectedId, setSelectedId] = useState(null);
+    const [formData, setFormData] = useState({
+        kode_kategori: 'A',
+        kategori_program: 'Field Assistant Training',
+        nama_program: '',
+        tahun: new Date().getFullYear(),
+        catatan: '',
+    });
+    const [saving, setSaving] = useState(false);
+
+    // Delete Modal
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [recordToDelete, setRecordToDelete] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+
+    // Global Alert Feedback Message
+    const [alertMessage, setAlertMessage] = useState(null);
+
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+    // Open Add Modal
+    const handleOpenAddModal = () => {
+        setIsEditMode(false);
+        setSelectedId(null);
+        setFormData({
+            kode_kategori: 'A',
+            kategori_program: 'Field Assistant Training',
+            nama_program: '',
+            tahun: new Date().getFullYear(),
+            catatan: '',
+        });
+        setFormModalOpen(true);
+    };
+
+    // Open Edit Modal
+    const handleOpenEditModal = (row) => {
+        setIsEditMode(true);
+        setSelectedId(row.id);
+        setFormData({
+            kode_kategori: row.kode_kategori || 'A',
+            kategori_program: row.kategori_program || 'Field Assistant Training',
+            nama_program: row.nama_program || '',
+            tahun: row.tahun_training || row.tahun_lulus || row.tahun_rekrut || new Date().getFullYear(),
+            catatan: row.catatan || '',
+        });
+        setFormModalOpen(true);
+    };
 
     // Fetch Data (Strictly batch mode)
     const fetchData = async () => {
@@ -172,9 +230,97 @@ export default function MonitoringAlumniTab() {
         }
     };
 
+
+
+    // Category Selection Change in Form Modal
+    const handleCategoryChange = (e) => {
+        const selectedCode = e.target.value;
+        const matched = CATEGORY_OPTIONS.find(c => c.code === selectedCode);
+        setFormData(prev => ({
+            ...prev,
+            kode_kategori: selectedCode,
+            kategori_program: matched ? matched.name : 'Program Training',
+        }));
+    };
+
+    // Save Form (Create or Update)
+    const handleFormSubmit = async (e) => {
+        e.preventDefault();
+        setSaving(true);
+        setAlertMessage(null);
+
+        try {
+            const url = isEditMode 
+                ? `/administrasi/monitoring-alumni/api/${selectedId}`
+                : '/administrasi/monitoring-alumni/api/store';
+            
+            const method = isEditMode ? 'PUT' : 'POST';
+
+            const res = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken || '',
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            const result = await res.json();
+
+            if (res.ok && result.status === 'success') {
+                setAlertMessage({ status: 'success', message: result.message || 'Data batch program berhasil disimpan!' });
+                setFormModalOpen(false);
+                fetchData();
+            } else {
+                setAlertMessage({ status: 'error', message: result.message || 'Gagal menyimpan data.' });
+            }
+        } catch (err) {
+            setAlertMessage({ status: 'error', message: 'Terjadi kesalahan sistem saat menyimpan data.' });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    // Open Delete Modal
+    const handleOpenDeleteModal = (row) => {
+        setRecordToDelete(row);
+        setDeleteModalOpen(true);
+    };
+
+    // Confirm Delete
+    const handleDeleteSubmit = async () => {
+        if (!recordToDelete) return;
+        setDeleting(true);
+
+        try {
+            const res = await fetch(`/administrasi/monitoring-alumni/api/${recordToDelete.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken || '',
+                    'Accept': 'application/json',
+                },
+            });
+
+            const result = await res.json();
+            if (res.ok && result.status === 'success') {
+                setAlertMessage({ status: 'success', message: 'Data batch program berhasil dihapus!' });
+                setDeleteModalOpen(false);
+                setRecordToDelete(null);
+                fetchData();
+            } else {
+                setAlertMessage({ status: 'error', message: result.message || 'Gagal menghapus data.' });
+            }
+        } catch (err) {
+            setAlertMessage({ status: 'error', message: 'Terjadi kesalahan sistem saat menghapus data.' });
+        } finally {
+            setDeleting(false);
+        }
+    };
+
     return (
         <div className="space-y-6">
-            {/* Header & Export/Import Controls */}
+            {/* Header & Action Controls */}
             <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-emerald-100 text-[#4B6A34] flex items-center justify-center font-bold shadow-xs">
@@ -185,7 +331,7 @@ export default function MonitoringAlumniTab() {
                             Monitoring Alumni
                         </h2>
                         <p className="text-xs text-gray-500 font-medium">
-                            Analisis kelulusan, retensi & monitoring karir alumni per gelombang batch program (123 batch sinkronisasi live)
+                            Analisis kelulusan, retensi & monitoring karir alumni per gelombang batch program
                         </p>
                     </div>
                 </div>
@@ -215,6 +361,15 @@ export default function MonitoringAlumniTab() {
 
                     <button
                         type="button"
+                        onClick={handleOpenAddModal}
+                        className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#4B6A34] hover:bg-[#3d562a] text-xs font-bold text-white transition shadow-sm cursor-pointer"
+                    >
+                        <Plus className="w-4 h-4" />
+                        <span>Tambah Data Batch</span>
+                    </button>
+
+                    <button
+                        type="button"
                         onClick={fetchData}
                         className="p-2 rounded-xl bg-gray-100 text-gray-600 hover:bg-gray-200 transition"
                         title="Segarkan Data"
@@ -223,6 +378,27 @@ export default function MonitoringAlumniTab() {
                     </button>
                 </div>
             </div>
+
+            {/* Notification Banner */}
+            {alertMessage && (
+                <div className={`p-4 rounded-xl text-xs font-semibold flex items-center justify-between shadow-2xs ${
+                    alertMessage.status === 'success' 
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' 
+                        : 'bg-rose-50 text-rose-800 border border-rose-200'
+                }`}>
+                    <div className="flex items-center gap-2.5">
+                        {alertMessage.status === 'success' ? (
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                        ) : (
+                            <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />
+                        )}
+                        <span>{alertMessage.message}</span>
+                    </div>
+                    <button type="button" onClick={() => setAlertMessage(null)} className="text-gray-400 hover:text-gray-600">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
 
             {/* KPI Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
@@ -327,13 +503,13 @@ export default function MonitoringAlumniTab() {
                 </div>
             </div>
 
-            {/* Main Batch Table: 21 Columns */}
+            {/* Main Batch Table */}
             <div className="bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
                 <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between text-xs text-gray-500">
                     <span className="font-semibold text-gray-800">
                         Menampilkan {sortedData.length} Batch Program
                     </span>
-                    <span className="text-[11px] text-gray-400">Klik angka Eksis/Resign/Posisi untuk melihat rincian nama peserta</span>
+                    <span className="text-[11px] text-gray-400">Klik angka Eksis/Resign/Posisi untuk rincian peserta</span>
                 </div>
 
                 <div className="overflow-x-auto max-h-[700px]">
@@ -345,7 +521,8 @@ export default function MonitoringAlumniTab() {
                                 <th colSpan={3} className="px-3 py-2 text-center border-r border-gray-200 bg-gray-200/70">Periode Tahun</th>
                                 <th colSpan={5} className="px-3 py-2 text-center border-r border-gray-200 bg-blue-100/70 text-blue-900">Peserta Training</th>
                                 <th colSpan={4} className="px-3 py-2 text-center border-r border-gray-200 bg-emerald-100/70 text-emerald-900">Kalkulasi % (Formula / Trainee)</th>
-                                <th colSpan={5} className="px-3 py-2 text-center bg-purple-100/70 text-purple-900">Distribusi Posisi Terakhir (Eksis)</th>
+                                <th colSpan={5} className="px-3 py-2 text-center border-r border-gray-200 bg-purple-100/70 text-purple-900">Distribusi Posisi Terakhir (Eksis)</th>
+                                <th rowSpan={2} className="px-3 py-3 text-center w-16">Aksi</th>
                             </tr>
                             <tr className="border-t border-gray-200 text-[10px]">
                                 {/* Periode */}
@@ -368,21 +545,21 @@ export default function MonitoringAlumniTab() {
                                 <th className="px-2 py-2 text-center border-r border-gray-200 bg-purple-50">GM</th>
                                 <th className="px-2 py-2 text-center border-r border-gray-200 bg-purple-50">MGR</th>
                                 <th className="px-2 py-2 text-center border-r border-gray-200 bg-purple-50">Askep</th>
-                                <th className="px-2 py-2 text-center bg-purple-50">Asisten</th>
+                                <th className="px-2 py-2 text-center border-r border-gray-200 bg-purple-50">Asisten</th>
                             </tr>
                         </thead>
 
                         <tbody className="divide-y divide-gray-200 font-medium">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={21} className="px-4 py-16 text-center text-gray-500">
+                                    <td colSpan={22} className="px-4 py-16 text-center text-gray-500">
                                         <RefreshCw className="w-7 h-7 text-[#4B6A34] animate-spin mx-auto mb-2" />
                                         <p className="font-semibold">Menghitung live formula dan rekap data batch...</p>
                                     </td>
                                 </tr>
                             ) : sortedData.length === 0 ? (
                                 <tr>
-                                    <td colSpan={21} className="px-4 py-12 text-center text-gray-400">
+                                    <td colSpan={22} className="px-4 py-12 text-center text-gray-400">
                                         <AlertCircle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                                         <p className="font-semibold text-gray-600">Tidak ada batch program yang ditemukan.</p>
                                     </td>
@@ -429,7 +606,7 @@ export default function MonitoringAlumniTab() {
                                                 <button
                                                     type="button"
                                                     onClick={() => openDrilldown(row.nama_program, 'resign', `Resign - ${row.nama_program}`)}
-                                                    className="px-2 py-0.5 rounded-full text-xs font-bold text-rose-700 hover:bg-rose-200 bg-rose-100 transition"
+                                                    className="px-2 py-0.5 rounded-full text-xs font-bold text-rose-700 hover:bg-rose-200 bg-rose-100 transition cursor-pointer"
                                                     title="Lihat nama asisten resign"
                                                 >
                                                     {row.jumlah_resign}
@@ -445,7 +622,7 @@ export default function MonitoringAlumniTab() {
                                                 <button
                                                     type="button"
                                                     onClick={() => openDrilldown(row.nama_program, 'eksis', `Eksis/Aktif - ${row.nama_program}`)}
-                                                    className="px-2 py-0.5 rounded-full text-xs font-bold text-emerald-800 hover:bg-emerald-200 bg-emerald-100 transition"
+                                                    className="px-2 py-0.5 rounded-full text-xs font-bold text-emerald-800 hover:bg-emerald-200 bg-emerald-100 transition cursor-pointer"
                                                     title="Lihat nama asisten aktif"
                                                 >
                                                     {row.jumlah_eksis}
@@ -481,7 +658,7 @@ export default function MonitoringAlumniTab() {
                                                 <button
                                                     type="button"
                                                     onClick={() => openDrilldown(row.nama_program, 'pc', `Posisi PC - ${row.nama_program}`)}
-                                                    className="font-bold text-purple-700 hover:underline"
+                                                    className="font-bold text-purple-700 hover:underline cursor-pointer"
                                                 >
                                                     {row.posisi_pc}
                                                 </button>
@@ -494,7 +671,7 @@ export default function MonitoringAlumniTab() {
                                                 <button
                                                     type="button"
                                                     onClick={() => openDrilldown(row.nama_program, 'gm', `Posisi GM - ${row.nama_program}`)}
-                                                    className="font-bold text-purple-700 hover:underline"
+                                                    className="font-bold text-purple-700 hover:underline cursor-pointer"
                                                 >
                                                     {row.posisi_gm}
                                                 </button>
@@ -507,7 +684,7 @@ export default function MonitoringAlumniTab() {
                                                 <button
                                                     type="button"
                                                     onClick={() => openDrilldown(row.nama_program, 'mgr', `Posisi MGR - ${row.nama_program}`)}
-                                                    className="font-bold text-purple-700 hover:underline"
+                                                    className="font-bold text-purple-700 hover:underline cursor-pointer"
                                                 >
                                                     {row.posisi_mgr}
                                                 </button>
@@ -520,7 +697,7 @@ export default function MonitoringAlumniTab() {
                                                 <button
                                                     type="button"
                                                     onClick={() => openDrilldown(row.nama_program, 'askep', `Posisi Askep - ${row.nama_program}`)}
-                                                    className="font-bold text-purple-700 hover:underline"
+                                                    className="font-bold text-purple-700 hover:underline cursor-pointer"
                                                 >
                                                     {row.posisi_askep}
                                                 </button>
@@ -528,16 +705,38 @@ export default function MonitoringAlumniTab() {
                                         </td>
 
                                         {/* 21. Posisi Asisten */}
-                                        <td className="px-2 py-2 text-center bg-purple-50/20">
+                                        <td className="px-2 py-2 text-center border-r border-gray-100 bg-purple-50/20">
                                             {row.posisi_asisten > 0 ? (
                                                 <button
                                                     type="button"
                                                     onClick={() => openDrilldown(row.nama_program, 'asisten', `Posisi Asisten - ${row.nama_program}`)}
-                                                    className="font-bold text-purple-700 hover:underline"
+                                                    className="font-bold text-purple-700 hover:underline cursor-pointer"
                                                 >
                                                     {row.posisi_asisten}
                                                 </button>
                                             ) : <span className="text-gray-300">-</span>}
+                                        </td>
+
+                                        {/* 22. Action Column (Edit / Delete) */}
+                                        <td className="px-2 py-2 text-center">
+                                            <div className="flex items-center justify-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleOpenEditModal(row)}
+                                                    className="p-1 rounded-lg text-amber-600 hover:text-amber-800 hover:bg-amber-50 transition cursor-pointer"
+                                                    title="Edit Data Batch"
+                                                >
+                                                    <Pencil className="w-3.5 h-3.5" />
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleOpenDeleteModal(row)}
+                                                    className="p-1 rounded-lg text-rose-600 hover:text-rose-800 hover:bg-rose-50 transition cursor-pointer"
+                                                    title="Hapus Data Batch"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))
@@ -596,9 +795,10 @@ export default function MonitoringAlumniTab() {
                                     <td className="px-2 py-3 text-center border-r border-gray-800 text-purple-200">
                                         {summary.posisi_askep_total}
                                     </td>
-                                    <td className="px-2 py-3 text-center text-purple-200">
+                                    <td className="px-2 py-3 text-center border-r border-gray-800 text-purple-200">
                                         {summary.posisi_asisten_total}
                                     </td>
+                                    <td className="px-2 py-3 text-center text-gray-500">-</td>
                                 </tr>
                             </tfoot>
                         )}
@@ -623,7 +823,7 @@ export default function MonitoringAlumniTab() {
                             <button
                                 type="button"
                                 onClick={() => setDrilldownOpen(false)}
-                                className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+                                className="p-2 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition cursor-pointer"
                             >
                                 <X className="w-5 h-5" />
                             </button>
@@ -700,7 +900,7 @@ export default function MonitoringAlumniTab() {
                             <button
                                 type="button"
                                 onClick={() => setDrilldownOpen(false)}
-                                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-semibold rounded-xl transition"
+                                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 text-xs font-semibold rounded-xl transition cursor-pointer"
                             >
                                 Tutup
                             </button>
@@ -721,7 +921,7 @@ export default function MonitoringAlumniTab() {
                             <button
                                 type="button"
                                 onClick={() => setImportModalOpen(false)}
-                                className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition"
+                                className="p-1.5 rounded-xl text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition cursor-pointer"
                             >
                                 <X className="w-5 h-5" />
                             </button>
@@ -758,20 +958,174 @@ export default function MonitoringAlumniTab() {
                                 <button
                                     type="button"
                                     onClick={() => setImportModalOpen(false)}
-                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition"
+                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold rounded-xl transition cursor-pointer"
                                 >
                                     Batal
                                 </button>
                                 <button
                                     type="submit"
                                     disabled={importing || !importFile}
-                                    className="px-4 py-2 bg-[#4B6A34] hover:bg-[#3D562A] text-white text-xs font-bold rounded-xl shadow-xs transition disabled:opacity-50 inline-flex items-center gap-2"
+                                    className="px-4 py-2 bg-[#4B6A34] hover:bg-[#3D562A] text-white text-xs font-bold rounded-xl shadow-xs transition disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
                                 >
                                     {importing && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
                                     <span>{importing ? 'Mengimpor...' : 'Mulai Impor CSV'}</span>
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Tambah / Edit Data Batch Program */}
+            {formModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200 relative">
+                        <div className="flex items-center justify-between pb-4 border-b border-gray-100">
+                            <div className="flex items-center gap-2.5">
+                                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-[#4B6A34] flex items-center justify-center shrink-0">
+                                    {isEditMode ? <Pencil className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-gray-900 text-base">
+                                        {isEditMode ? 'Edit Data Batch Program' : 'Tambah Data Batch Program'}
+                                    </h3>
+                                    <p className="text-xs text-gray-500">
+                                        {isEditMode ? 'Perbarui nama program & tahun angkatan' : 'Input nama program dan tahun angkatan secara manual'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                type="button"
+                                onClick={() => setFormModalOpen(false)}
+                                className="text-gray-400 hover:text-gray-600 p-1.5 rounded-xl hover:bg-gray-100 transition cursor-pointer"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleFormSubmit} className="mt-4 space-y-4">
+                            {/* Kategori Program */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                    Kategori Program
+                                </label>
+                                <select
+                                    value={formData.kode_kategori}
+                                    onChange={handleCategoryChange}
+                                    className="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-[#4B6A34] bg-white transition"
+                                    required
+                                >
+                                    {CATEGORY_OPTIONS.map(c => (
+                                        <option key={c.code} value={c.code}>
+                                            [{c.code}] {c.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Nama Program */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                    Nama Program Batch <span className="text-rose-600">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.nama_program}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, nama_program: e.target.value }))}
+                                    placeholder="Contoh: Field Assistant - I/2026 atau FAT II 2026"
+                                    className="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-[#4B6A34] transition"
+                                    required
+                                />
+                            </div>
+
+                            {/* Tahun */}
+                            <div>
+                                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                    Tahun Angkatan / Training <span className="text-rose-600">*</span>
+                                </label>
+                                <input
+                                    type="number"
+                                    min="1990"
+                                    max="2100"
+                                    value={formData.tahun}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, tahun: e.target.value ? parseInt(e.target.value) : '' }))}
+                                    className="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-[#4B6A34]"
+                                    required
+                                />
+                            </div>
+
+                            {/* Info Card explaining live derivation */}
+                            <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3 text-[11px] text-emerald-900 flex items-start gap-2">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <p className="font-bold mb-0.5">Otomatisasi Data Peserta</p>
+                                    <p className="text-emerald-800 leading-snug">
+                                        Jumlah peserta (Trainee, Culled, Passed, Resign, Eksis) dan distribusi jabatan alumni akan terhitung secara otomatis dari data peserta di tab <strong>Monitoring Asisten</strong>.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+                                <button
+                                    type="button"
+                                    onClick={() => setFormModalOpen(false)}
+                                    className="px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition cursor-pointer"
+                                >
+                                    Batal
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={saving}
+                                    className="px-5 py-2 text-xs font-bold text-white bg-[#4B6A34] hover:bg-[#3d562a] rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                                >
+                                    {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                                    <span>{saving ? 'Menyimpan...' : 'Simpan Data'}</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal Hapus Data Batch */}
+            {deleteModalOpen && recordToDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
+                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center shrink-0">
+                                <Trash2 className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-gray-900 text-base">Hapus Data Batch Program</h3>
+                                <p className="text-xs text-gray-500">Konfirmasi penghapusan data</p>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-gray-600 mb-6">
+                            Apakah Anda yakin ingin menghapus data batch program <strong className="text-gray-900">{recordToDelete.nama_program}</strong>? Tindakan ini tidak dapat dibatalkan.
+                        </p>
+
+                        <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-gray-100">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setDeleteModalOpen(false);
+                                    setRecordToDelete(null);
+                                }}
+                                className="px-4 py-2 text-xs font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition cursor-pointer"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleDeleteSubmit}
+                                disabled={deleting}
+                                className="px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-xs transition inline-flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                            >
+                                {deleting && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
+                                <span>{deleting ? 'Menghapus...' : 'Ya, Hapus'}</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

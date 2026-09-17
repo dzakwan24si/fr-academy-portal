@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Monitoring;
 
 use App\Http\Controllers\Controller;
 use App\Models\Monitoring\MonitoringTalent;
+use App\Models\AppSetting;
 use App\Services\ExcelExporter;
 use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
@@ -55,6 +56,9 @@ class MonitoringTalentController extends Controller
         $countBelum = $allTalents->filter(fn($t) => str_contains(strtolower($t->status ?? ''), 'belum penugasan'))->count();
         $countConfirm = $allTalents->filter(fn($t) => str_contains(strtolower($t->status ?? ''), 'confirm'))->count();
 
+        // Manual Progress Materi Setting
+        $progressMateri = (float) AppSetting::get('talent_program_progress_materi', 83);
+
         // Dynamic Category counts
         $categories = MonitoringTalent::distinct()->pluck('kategori')->filter()->values();
         $categoryCounts = [];
@@ -82,12 +86,27 @@ class MonitoringTalentController extends Controller
             'countAkan',
             'countBelum',
             'countConfirm',
+            'progressMateri',
             'categoryCounts',
             'categories',
             'statuses',
             'regions',
             'talentToList'
         ));
+    }
+
+    /**
+     * Update manual Progress Materi for Talent Program.
+     */
+    public function updateProgressMateri(Request $request)
+    {
+        $request->validate([
+            'progress_materi' => 'required|numeric|min:0|max:100',
+        ]);
+
+        AppSetting::set('talent_program_progress_materi', $request->input('progress_materi'));
+
+        return redirect()->back()->with('success', 'Progres Materi Talent Program berhasil diperbarui.');
     }
 
     /**

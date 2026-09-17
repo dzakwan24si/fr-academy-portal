@@ -10,7 +10,7 @@
         <div class="flex flex-wrap items-center gap-2">
             <a href="{{ route('administrasi.training-record.template') }}" class="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-semibold text-[#374151]">Template Excel</a>
             <a href="{{ route('administrasi.training-record.export', request()->query()) }}" class="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-semibold text-[#374151]">Export Excel</a>
-            <form method="POST" action="{{ route('administrasi.training-record.import') }}" enctype="multipart/form-data" class="flex items-center gap-2">@csrf<input type="file" name="file" required accept=".csv,.xlsx" class="max-w-52 text-xs"><button class="rounded-lg bg-[#4B6A34] px-3 py-2 text-xs font-semibold text-white">Import Data</button></form>
+            <form method="POST" action="{{ route('administrasi.training-record.import') }}" enctype="multipart/form-data" class="flex items-center gap-2">@csrf<input type="file" name="file" required accept=".csv,.xlsx" class="max-w-60 text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#4B6A34] file:text-white hover:file:bg-[#3d572b] file:cursor-pointer cursor-pointer"><button class="rounded-lg bg-[#4B6A34] px-3 py-2 text-xs font-semibold text-white hover:bg-[#3d572b] transition-colors">Import Data</button></form>
             <button type="button" onclick="openDeleteAllModal()" class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 px-3 py-2 text-xs font-semibold transition-colors">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                 <span>Hapus Semua Data</span>

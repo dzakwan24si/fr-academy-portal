@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class AppSetting extends Model
+{
+    use HasFactory;
+
+    protected $table = 'app_settings';
+    protected $primaryKey = 'key';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
+    protected $fillable = [
+        'key',
+        'value',
+    ];
+
+    /**
+     * Get a setting value by key.
+     */
+    public static function get(string $key, mixed $default = null): mixed
+    {
+        $setting = static::find($key);
+        return $setting !== null ? $setting->value : $default;
+    }
+
+    /**
+     * Set a setting value by key.
+     */
+    public static function set(string $key, mixed $value): static
+    {
+        return static::updateOrCreate(
+            ['key' => $key],
+            ['value' => (string) $value]
+        );
+    }
+}

@@ -44,6 +44,8 @@ import {
 } from 'recharts';
 
 export default function RekrutmenApp() {
+    const canEditCost = window.canEditCost !== undefined ? window.canEditCost : true;
+
     // State Data & Loading
     const [data, setData] = useState([]);
     const [summary, setSummary] = useState(null);
@@ -533,20 +535,24 @@ export default function RekrutmenApp() {
 
                     {/* Action Buttons */}
                     <div className="flex flex-wrap items-center gap-2.5">
-                        <button
-                            onClick={openCreate}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#4B6A34] text-white text-sm font-semibold hover:bg-[#3d562a] shadow-xs transition-all cursor-pointer"
-                        >
-                            <Plus className="w-4 h-4" />
-                            <span>Tambah Batch</span>
-                        </button>
-                        <button
-                            onClick={() => setIsImportOpen(true)}
-                            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-50 shadow-xs transition-all cursor-pointer"
-                        >
-                            <Upload className="w-4 h-4 text-slate-500" />
-                            <span>Import CSV</span>
-                        </button>
+                        {canEditCost && (
+                            <>
+                                <button
+                                    onClick={openCreate}
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#4B6A34] text-white text-sm font-semibold hover:bg-[#3d562a] shadow-xs transition-all cursor-pointer"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    <span>Tambah Batch</span>
+                                </button>
+                                <button
+                                    onClick={() => setIsImportOpen(true)}
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-50 shadow-xs transition-all cursor-pointer"
+                                >
+                                    <Upload className="w-4 h-4 text-slate-500" />
+                                    <span>Import CSV</span>
+                                </button>
+                            </>
+                        )}
                         <button
                             onClick={handleExport}
                             className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-50 shadow-xs transition-all cursor-pointer"
@@ -633,20 +639,22 @@ export default function RekrutmenApp() {
                     </div>
 
                     {/* Tambah Tahun Button */}
-                    <div className="shrink-0 flex items-center gap-2">
-                        <button
-                            type="button"
-                            onClick={() => {
-                                const maxY = sortedYears.length > 0 ? Math.max(...sortedYears) + 1 : new Date().getFullYear();
-                                setTambahTahunInput(String(maxY));
-                                setIsTambahTahunOpen(true);
-                            }}
-                            className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#4B6A34] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
-                        >
-                            <PlusCircle className="w-4 h-4" />
-                            <span>+ Tambah Tahun</span>
-                        </button>
-                    </div>
+                    {canEditCost && (
+                        <div className="shrink-0 flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    const maxY = sortedYears.length > 0 ? Math.max(...sortedYears) + 1 : new Date().getFullYear();
+                                    setTambahTahunInput(String(maxY));
+                                    setIsTambahTahunOpen(true);
+                                }}
+                                className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#4B6A34] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                            >
+                                <PlusCircle className="w-4 h-4" />
+                                <span>+ Tambah Tahun</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 

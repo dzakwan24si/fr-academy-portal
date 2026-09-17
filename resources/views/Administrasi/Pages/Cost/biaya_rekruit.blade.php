@@ -94,6 +94,7 @@
         </div>
 
         {{-- Tambah Tahun Button --}}
+        @can('edit_cost')
         <div class="shrink-0 flex items-center gap-2">
             <button type="button" onclick="openTambahTahunModal()"
                     class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#4B6A34] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center gap-1.5 transition-colors shadow-2xs">
@@ -101,6 +102,7 @@
                 <span>+ Tambah Tahun</span>
             </button>
         </div>
+        @endcan
     </div>
 </div>
 
@@ -220,6 +222,7 @@
                             Rp {{ number_format($row->total_biaya, 0, ',', '.') }}
                         </td>
                         <td class="px-5 py-3 text-center">
+                            @can('edit_cost')
                             <div class="flex items-center justify-center gap-2">
                                 <button onclick="openEditModal({{ $row->id_biaya_rekruit }})"
                                         class="p-1 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors" title="Edit">
@@ -230,6 +233,7 @@
                                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                 </button>
                             </div>
+                            @endcan
                         </td>
                     </tr>
                     @endforeach
@@ -240,7 +244,9 @@
                 <td colspan="4" class="px-5 py-16 text-center text-[#A1A1AA]">
                     <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
                     <p class="text-sm font-semibold text-[#18181B]">Belum ada data biaya rekruit</p>
+                    @can('edit_cost')
                     <p class="text-xs mt-1 text-[#71717A]">Klik "+ Tambah Biaya" atau "Import CSV" untuk menambahkan data</p>
+                    @endcan
                 </td>
             </tr>
             @endforelse
@@ -267,6 +273,7 @@
      MODALS
 ================================================================ --}}
 
+@can('edit_cost')
 {{-- ---- 1. MODAL: IMPORT CSV ---- --}}
 <div id="modalImport" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/40 backdrop-blur-xs" onclick="document.getElementById('modalImport').classList.add('hidden')"></div>
@@ -575,7 +582,7 @@
             </form>
         </div>
     </div>
-</x-admin-layout>
+@endcan
 
 @push('scripts')
 <script>
@@ -644,3 +651,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+</x-admin-layout>

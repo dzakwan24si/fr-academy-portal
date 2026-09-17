@@ -12,6 +12,7 @@ class VraTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->authenticateUser();
         Vra::query()->delete();
 
         $records = [

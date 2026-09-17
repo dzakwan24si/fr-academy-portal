@@ -99,6 +99,7 @@
         </div>
 
         {{-- Tambah Tahun Button --}}
+        @can('edit_cost')
         <div class="shrink-0 flex items-center gap-2">
             <button type="button" onclick="openTambahTahunModal()"
                     class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#4B6A34] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center gap-1.5 transition-colors shadow-2xs">
@@ -106,6 +107,7 @@
                 <span>+ Tambah Tahun</span>
             </button>
         </div>
+        @endcan
     </div>
 
     {{-- Row 2: Month Navigation Tabs + Category Filter & Search --}}
@@ -469,6 +471,7 @@
      MODALS SECTION
 ================================================================ --}}
 
+@can('edit_cost')
 {{-- ---------------- MODAL: IMPORT CSV ---------------- --}}
 <div id="modalImport" class="hidden fixed inset-0 z-50 flex items-center justify-center">
     <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeImportModal()"></div>
@@ -773,7 +776,7 @@
         </div>
     </div>
 </div>
-
+@endcan
 {{-- Modal Tambah Tahun --}}
 <div id="modalTambahTahun" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs hidden p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-[#E5E7EB] animate-in fade-in zoom-in-95 duration-150">
@@ -811,8 +814,6 @@
         </form>
     </div>
 </div>
-
-</x-admin-layout>
 
 @push('scripts')
 <script>
@@ -905,3 +906,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+</x-admin-layout>

@@ -117,6 +117,7 @@
                 </div>
             </div>
         </div>
+        @endcan
     </div>
 </div>
 
@@ -153,6 +154,7 @@
         </div>
 
         {{-- Right: Tambah Tahun Button --}}
+        @can('edit_cost')
         <div class="flex items-center gap-2 shrink-0">
             <button type="button" onclick="openTambahTahunModal()"
                     class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#4B6A34] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center gap-1.5 transition-colors shadow-2xs">
@@ -160,6 +162,7 @@
                 <span>+ Tambah Tahun</span>
             </button>
         </div>
+        @endcan
     </div>
 </div>
 
@@ -351,10 +354,12 @@
                                 {{ $rabKantor->total() }} Data
                             </span>
                         </div>
+                        @can('edit_cost')
                         <button onclick="openAddRabModalPreset('kantor')"
                                 class="flex items-center gap-1 text-xs font-semibold text-[#4B6A34] hover:text-[#3d5829] transition-colors">
                             <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tambah RAB
                         </button>
+                        @endcan
                     </div>
 
                     <div class="flex-1">
@@ -395,6 +400,7 @@
                                     <td class="px-3 py-2.5 text-right text-[#52525B] whitespace-nowrap">{{ number_format($row->harga_satuan, 0, ',', '.') }}</td>
                                     <td class="px-3 py-2.5 text-right font-bold text-blue-700 whitespace-nowrap">{{ number_format($row->total_rp, 0, ',', '.') }}</td>
                                     <td class="px-2 py-2.5 text-center whitespace-nowrap">
+                                        @can('edit_cost')
                                         <div class="flex items-center justify-center gap-1">
                                             <button onclick="openEditRabModal({{ $row->rab_id }})"
                                                     class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors" title="Edit">
@@ -405,6 +411,7 @@
                                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                             </button>
                                         </div>
+                                        @endcan
                                     </td>
                                 </tr>
                                 @empty
@@ -447,10 +454,12 @@
                                 {{ $realisasiKantor->total() }} Data
                             </span>
                         </div>
+                        @can('edit_cost')
                         <button onclick="openAddRealisasiModalPreset('kantor')"
                                 class="flex items-center gap-1 text-xs font-semibold text-[#4B6A34] hover:text-[#3d5829] transition-colors">
                             <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tambah Realisasi
                         </button>
+                        @endcan
                     </div>
 
                     <div class="flex-1">
@@ -509,6 +518,7 @@
                                         {{ number_format($row->total_rp, 0, ',', '.') }}
                                     </td>
                                     <td class="px-2 py-2.5 text-center whitespace-nowrap">
+                                        @can('edit_cost')
                                         <div class="flex items-center justify-center gap-1">
                                             <button onclick="openEditRealisasiModal({{ $row->realisasi_id }})"
                                                     class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors" title="Edit">
@@ -519,6 +529,7 @@
                                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                             </button>
                                         </div>
+                                        @endcan
                                     </td>
                                 </tr>
                                 @empty
@@ -582,10 +593,12 @@
                                 {{ $rabMess->total() }} Data
                             </span>
                         </div>
+                        @can('edit_cost')
                         <button onclick="openAddRabModalPreset('mess')"
                                 class="flex items-center gap-1 text-xs font-semibold text-[#4B6A34] hover:text-[#3d5829] transition-colors">
                             <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tambah RAB
                         </button>
+                        @endcan
                     </div>
 
                     <div class="flex-1">
@@ -626,6 +639,7 @@
                                     <td class="px-3 py-2.5 text-right text-[#52525B] whitespace-nowrap">{{ number_format($row->harga_satuan, 0, ',', '.') }}</td>
                                     <td class="px-3 py-2.5 text-right font-bold text-purple-700 whitespace-nowrap">{{ number_format($row->total_rp, 0, ',', '.') }}</td>
                                     <td class="px-2 py-2.5 text-center whitespace-nowrap">
+                                        @can('edit_cost')
                                         <div class="flex items-center justify-center gap-1">
                                             <button onclick="openEditRabModal({{ $row->rab_id }})"
                                                     class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors" title="Edit">
@@ -636,6 +650,7 @@
                                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                             </button>
                                         </div>
+                                        @endcan
                                     </td>
                                 </tr>
                                 @empty
@@ -678,10 +693,12 @@
                                 {{ $realisasiMess->total() }} Data
                             </span>
                         </div>
+                        @can('edit_cost')
                         <button onclick="openAddRealisasiModalPreset('mess')"
                                 class="flex items-center gap-1 text-xs font-semibold text-[#4B6A34] hover:text-[#3d5829] transition-colors">
                             <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> Tambah Realisasi
                         </button>
+                        @endcan
                     </div>
 
                     <div class="flex-1">
@@ -740,6 +757,7 @@
                                         {{ number_format($row->total_rp, 0, ',', '.') }}
                                     </td>
                                     <td class="px-2 py-2.5 text-center whitespace-nowrap">
+                                        @can('edit_cost')
                                         <div class="flex items-center justify-center gap-1">
                                             <button onclick="openEditRealisasiModal({{ $row->realisasi_id }})"
                                                     class="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors" title="Edit">
@@ -750,6 +768,7 @@
                                                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                                             </button>
                                         </div>
+                                        @endcan
                                     </td>
                                 </tr>
                                 @empty
@@ -790,8 +809,9 @@
 
 {{-- =========================================================================
      MODALS SECTION
-========================================================================= --}}
+================================================================ insolvency --}}
 
+@can('edit_cost')
 {{-- ============================== 1. MODAL TAMBAH RAB ============================== --}}
 <div id="modalAddRab" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/40 backdrop-blur-xs" onclick="closeAddRabModal()"></div>
@@ -1426,8 +1446,7 @@
         </form>
     </div>
 </div>
-
-
+@endcan
 
 {{-- ============================== 8. MODAL IMAGE PREVIEW ============================== --}}
 <div id="modalImagePreview" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -1444,8 +1463,6 @@
         </div>
     </div>
 </div>
-
-</x-admin-layout>
 
 @push('scripts')
 <script>
@@ -1751,6 +1768,7 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 {{-- ============================== MODAL: TAMBAH TAHUN ============================== --}}
+@can('edit_cost')
 <div id="modalTambahTahun" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="absolute inset-0 bg-black/40 backdrop-blur-xs" onclick="closeTambahTahunModal()"></div>
     <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden p-6 z-10 animate-in fade-in zoom-in-95 duration-150">
@@ -1805,4 +1823,6 @@ document.addEventListener('DOMContentLoaded', function() {
         </form>
     </div>
 </div>
+@endcan
 @endpush
+</x-admin-layout>

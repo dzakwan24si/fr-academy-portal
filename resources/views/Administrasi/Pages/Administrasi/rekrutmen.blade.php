@@ -5,6 +5,9 @@
 
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <script>
+        window.canEditCost = @json(auth()->user()?->can('edit_cost') ?? false);
+    </script>
     @viteReactRefresh
     @vite('resources/views/Administrasi/Pages/Administrasi/Rekrutmen.jsx')
     <div id="rekrutmen-root"></div>

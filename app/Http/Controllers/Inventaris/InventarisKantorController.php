@@ -613,4 +613,43 @@ class InventarisKantorController extends Controller
         $filename = "Stock_Opname_Kantor_{$date}.xlsx";
         return ExcelExporter::download($filename, $headers, $dataRows, 'Stock Opname Kantor');
     }
+
+    public function barangDestroyAll()
+    {
+        $msg = '';
+        DB::transaction(function () use (&$msg) {
+            $barangIds = Barang::where('jenis_lokasi', $this->lokasi)
+                ->orWhere('lokasi', $this->lokasi)
+                ->pluck('id');
+
+            StockOpname::whereIn('barang_id', $barangIds)->delete();
+            Pembelian::whereIn('barang_id', $barangIds)->delete();
+            $deleted = Barang::whereIn('id', $barangIds)->delete();
+            $msg = "Seluruh data Barang inventaris Kantor ({$deleted} data) berhasil dihapus.";
+        });
+
+        return redirect()->route('administrasi.inventaris.kantor.barang')->with('success', $msg);
+    }
+
+    public function pembelianDestroyAll()
+    {
+        $barangIds = Barang::where('jenis_lokasi', $this->lokasi)
+            ->orWhere('lokasi', $this->lokasi)
+            ->pluck('id');
+        $deleted = Pembelian::whereIn('barang_id', $barangIds)->delete();
+
+        return redirect()->route('administrasi.inventaris.kantor.pembelian')
+            ->with('success', "Seluruh data Pembelian inventaris Kantor ({$deleted} data) berhasil dihapus.");
+    }
+
+    public function stockOpnameDestroyAll()
+    {
+        $barangIds = Barang::where('jenis_lokasi', $this->lokasi)
+            ->orWhere('lokasi', $this->lokasi)
+            ->pluck('id');
+        $deleted = StockOpname::whereIn('barang_id', $barangIds)->delete();
+
+        return redirect()->route('administrasi.inventaris.kantor.stock-opname')
+            ->with('success', "Seluruh data Stock Opname inventaris Kantor ({$deleted} data) berhasil dihapus.");
+    }
 }

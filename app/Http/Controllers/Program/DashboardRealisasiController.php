@@ -11,6 +11,7 @@ use App\Models\Monitoring\MonitoringEmployee;
 use App\Models\Monitoring\MonitoringAngkatan;
 use App\Models\Monitoring\MonitoringCulled;
 use App\Models\Monitoring\MonitoringTalent;
+use App\Models\AppSetting;
 use App\Services\SpreadsheetReader;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -320,7 +321,17 @@ class DashboardRealisasiController extends Controller
         $allEmployees = MonitoringEmployee::all();
         $allCulled = MonitoringCulled::all();
         $allAngkatans = MonitoringAngkatan::all();
-        $allTrainingRecords = (clone $trainingRecordQuery)->where('program_type', 'reguler')->get();
+        $allTrainingRecords = (clone $trainingRecordQuery)->where(function($q) {
+            $q->where('program_type', 'reguler')
+              ->orWhere('notes', 'LIKE', 'FAT%')
+              ->orWhere('notes', 'LIKE', 'MAT%')
+              ->orWhere('notes', 'LIKE', 'TAT%')
+              ->orWhere('notes', 'LIKE', 'AAT%')
+              ->orWhere('notes', 'LIKE', 'DMT%')
+              ->orWhere('notes', 'LIKE', 'ECT%')
+              ->orWhere('notes', 'LIKE', 'PMT%')
+              ->orWhere('notes', 'LIKE', 'PKT%');
+        })->get();
         $allTrainingRecords = $this->filterRecordsByYearAndCumulativeMonth($allTrainingRecords, $year, $selectedMonthNum);
 
         $regulerProgramsQuery = ProgramReguler::query();
@@ -522,7 +533,7 @@ class DashboardRealisasiController extends Controller
         $akanPenugasan = (clone $talentQuery)->where('status', 'LIKE', '%akan penugasan%')->count();
         $belumPenugasan = (clone $talentQuery)->where('status', 'LIKE', '%belum penugasan%')->count();
 
-        $talentPercentage = $totalTalent > 0 ? round(($sudahPenugasan / $totalTalent) * 100) : 0;
+        $talentPercentage = (float) AppSetting::get('talent_program_progress_materi', 83);
 
         $talentToBreakdown = (clone $talentQuery)->select('talent_to', DB::raw('count(*) as total'))
             ->whereNotNull('talent_to')
@@ -558,10 +569,24 @@ class DashboardRealisasiController extends Controller
                 $nonRegulerProgramsQuery->where('region', 'LIKE', '%' . $region . '%');
             }
         }
+        $regulerPrefixes = ['FAT', 'MAT', 'TAT', 'AAT', 'DMT', 'ECT', 'PMT', 'PKT'];
         $nonRegulerPrograms = $nonRegulerProgramsQuery->get();
-        $nonRegulerPrograms = $this->filterNonRegulerByYear($nonRegulerPrograms, $year);
+        $nonRegulerPrograms = $this->filterNonRegulerByYear($nonRegulerPrograms, $year)->filter(function($p) use ($regulerPrefixes) {
+            $name = strtoupper(trim($p->jenis_pelatihan));
+            foreach ($regulerPrefixes as $prefix) {
+                if (str_starts_with($name, $prefix)) return false;
+            }
+            return true;
+        });
+
         $trNonReg = (clone $trainingRecordQuery)->where('program_type', 'non_reguler')->get();
-        $trNonReg = $this->filterRecordsByYearAndCumulativeMonth($trNonReg, $year, $selectedMonthNum);
+        $trNonReg = $this->filterRecordsByYearAndCumulativeMonth($trNonReg, $year, $selectedMonthNum)->filter(function($r) use ($regulerPrefixes) {
+            $notes = strtoupper(trim((string)$r->notes));
+            foreach ($regulerPrefixes as $prefix) {
+                if (str_starts_with($notes, $prefix)) return false;
+            }
+            return true;
+        });
 
         if ($programType === 'reguler') {
             $nonRegulerPrograms = collect();
