@@ -89,9 +89,29 @@
                         <input type="hidden" name="category" value="{{ $category }}">
                         <input type="hidden" name="program" value="{{ $selectedProgramName }}">
                         <input type="hidden" name="month" value="{{ $selectedMonthCode }}">
+                        <input type="hidden" name="region" value="{{ $selectedRegion }}">
                         <select name="year" onchange="this.form.submit()" class="bg-emerald-900/80 text-white text-xs font-bold rounded-lg px-2.5 py-1 border border-emerald-500/50 focus:outline-hidden focus:ring-2 focus:ring-emerald-400 cursor-pointer">
                             @foreach($years as $y)
                                 <option value="{{ $y }}" {{ (int)($year ?? 2026) === (int)$y ? 'selected' : '' }}>{{ $y }}</option>
+                            @endforeach
+                        </select>
+                    </form>
+                </div>
+
+                {{-- Region Filter Selector --}}
+                <div class="flex items-center gap-2 bg-white/10 backdrop-blur-md px-3.5 py-1.5 rounded-xl border border-white/20">
+                    <i data-lucide="map-pin" class="w-4 h-4 text-emerald-200"></i>
+                    <span class="text-xs font-semibold text-emerald-100 uppercase tracking-wider">Region:</span>
+                    <form method="GET" action="{{ route('administrasi.dashboard-monitoring-tahunan.index') }}" class="inline-block">
+                        <input type="hidden" name="tab" value="{{ $tab }}">
+                        <input type="hidden" name="category" value="{{ $category }}">
+                        <input type="hidden" name="program" value="{{ $selectedProgramName }}">
+                        <input type="hidden" name="month" value="{{ $selectedMonthCode }}">
+                        <input type="hidden" name="year" value="{{ $year }}">
+                        <select name="region" onchange="this.form.submit()" class="bg-emerald-900/80 text-white text-xs font-bold rounded-lg px-2.5 py-1 border border-emerald-500/50 focus:outline-hidden focus:ring-2 focus:ring-emerald-400 cursor-pointer">
+                            <option value="all" {{ ($selectedRegion === 'all' || !$selectedRegion) ? 'selected' : '' }}>Semua Region</option>
+                            @foreach($regions as $reg)
+                                <option value="{{ $reg }}" {{ (string)($selectedRegion ?? 'all') === (string)$reg ? 'selected' : '' }}>{{ $reg }}</option>
                             @endforeach
                         </select>
                     </form>
@@ -138,7 +158,7 @@
 
             <div class="flex items-center gap-1.5 flex-wrap overflow-x-auto no-scrollbar py-0.5">
                 {{-- Tombol Semua Bulan --}}
-                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => $tab, 'category' => $category, 'program' => $selectedProgramName, 'month' => 'all', 'year' => $year]) }}"
+                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => $tab, 'category' => $category, 'program' => $selectedProgramName, 'month' => 'all', 'year' => $year, 'region' => $selectedRegion]) }}"
                    class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs {{ ($selectedMonthCode === 'all' || !$selectedMonthNum) ? 'bg-[#1b4332] text-white shadow-xs ring-2 ring-[#1b4332]/20' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200' }}">
                     Semua Bulan
                 </a>
@@ -147,7 +167,7 @@
                     @php
                         $isActiveMonth = ($selectedMonthNum === $mNum);
                     @endphp
-                    <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => $tab, 'category' => $category, 'program' => $selectedProgramName, 'month' => $mCode, 'year' => $year]) }}"
+                    <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => $tab, 'category' => $category, 'program' => $selectedProgramName, 'month' => $mCode, 'year' => $year, 'region' => $selectedRegion]) }}"
                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs {{ $isActiveMonth ? 'bg-green-600 text-white shadow-xs ring-2 ring-green-600/30' : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300' }}"
                        title="Bulan {{ ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][$mNum] }}">
                         {{ $mCode }}
@@ -162,7 +182,7 @@
         
         {{-- Main Tab Switcher (Program Reguler vs Program Non Reguler) --}}
         <div class="flex items-center gap-2 p-1.5 bg-slate-100/90 rounded-xl w-fit border border-slate-200 shadow-inner">
-            <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'reguler', 'category' => 'all', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year]) }}"
+            <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'reguler', 'category' => 'all', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}"
                class="flex items-center gap-2.5 px-5 py-2 rounded-lg text-sm font-bold transition-all {{ $tab === 'reguler' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
                 <i data-lucide="graduation-cap" class="w-4.5 h-4.5"></i>
                 <span>Program Reguler</span>
@@ -171,7 +191,7 @@
                 </span>
             </a>
 
-            <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'non_reguler', 'category' => 'all', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year]) }}"
+            <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'non_reguler', 'category' => 'all', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}"
                class="flex items-center gap-2.5 px-5 py-2 rounded-lg text-sm font-bold transition-all {{ $tab === 'non_reguler' ? 'bg-white text-green-700 shadow-sm' : 'text-slate-600 hover:text-slate-900' }}">
                 <i data-lucide="award" class="w-4.5 h-4.5"></i>
                 <span>Program Non Reguler</span>
@@ -185,7 +205,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             @if($tab === 'reguler')
                 {{-- Card: Semua Reguler --}}
-                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'reguler', 'category' => 'all', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year]) }}"
+                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'reguler', 'category' => 'all', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}"
                    class="text-left p-5 rounded-2xl border transition-all relative block {{ $category === 'all' ? 'border-green-600 bg-white shadow-md shadow-green-600/5 ring-1 ring-green-600' : 'border-slate-200 bg-white hover:border-slate-300 shadow-xs' }}">
                     <div class="flex justify-between items-start mb-4">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center {{ $category === 'all' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500' }}">
@@ -205,7 +225,7 @@
                 </a>
 
                 {{-- Card: Training Reguler - Staf --}}
-                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'reguler', 'category' => 'staf', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year]) }}"
+                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'reguler', 'category' => 'staf', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}"
                    class="text-left p-5 rounded-2xl border transition-all relative block {{ $category === 'staf' ? 'border-green-600 bg-white shadow-md shadow-green-600/5 ring-1 ring-green-600' : 'border-slate-200 bg-white hover:border-slate-300 shadow-xs' }}">
                     <div class="flex justify-between items-start mb-4">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center {{ $category === 'staf' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500' }}">
@@ -225,7 +245,7 @@
                 </a>
 
                 {{-- Card: Training Reguler - Mandor --}}
-                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'reguler', 'category' => 'mandor', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year]) }}"
+                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'reguler', 'category' => 'mandor', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}"
                    class="text-left p-5 rounded-2xl border transition-all relative block {{ $category === 'mandor' ? 'border-green-600 bg-white shadow-md shadow-green-600/5 ring-1 ring-green-600' : 'border-slate-200 bg-white hover:border-slate-300 shadow-xs' }}">
                     <div class="flex justify-between items-start mb-4">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center {{ $category === 'mandor' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500' }}">
@@ -245,7 +265,7 @@
                 </a>
             @else
                 {{-- Card: Semua Non Reguler --}}
-                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'non_reguler', 'category' => 'all', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year]) }}"
+                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'non_reguler', 'category' => 'all', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}"
                    class="text-left p-5 rounded-2xl border transition-all relative block {{ $category === 'all' ? 'border-green-600 bg-white shadow-md shadow-green-600/5 ring-1 ring-green-600' : 'border-slate-200 bg-white hover:border-slate-300 shadow-xs' }}">
                     <div class="flex justify-between items-start mb-4">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center {{ $category === 'all' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500' }}">
@@ -265,7 +285,7 @@
                 </a>
 
                 {{-- Card: Managerial and Leadership --}}
-                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'non_reguler', 'category' => 'managerial', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year]) }}"
+                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'non_reguler', 'category' => 'managerial', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}"
                    class="text-left p-5 rounded-2xl border transition-all relative block {{ $category === 'managerial' ? 'border-green-600 bg-white shadow-md shadow-green-600/5 ring-1 ring-green-600' : 'border-slate-200 bg-white hover:border-slate-300 shadow-xs' }}">
                     <div class="flex justify-between items-start mb-4">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center {{ $category === 'managerial' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500' }}">
@@ -285,7 +305,7 @@
                 </a>
 
                 {{-- Card: Technical --}}
-                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'non_reguler', 'category' => 'technical', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year]) }}"
+                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'non_reguler', 'category' => 'technical', 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}"
                    class="text-left p-5 rounded-2xl border transition-all relative block {{ $category === 'technical' ? 'border-green-600 bg-white shadow-md shadow-green-600/5 ring-1 ring-green-600' : 'border-slate-200 bg-white hover:border-slate-300 shadow-xs' }}">
                     <div class="flex justify-between items-start mb-4">
                         <div class="w-11 h-11 rounded-full flex items-center justify-center {{ $category === 'technical' ? 'bg-green-100 text-green-700' : 'bg-slate-100 text-slate-500' }}">
@@ -326,7 +346,7 @@
                         $isSubActive = (strcasecmp($category, $subCat) === 0 || ($category === 'managerial' && strcasecmp($subCat, 'softskill') === 0));
                         $subCount = $subCategoryCounts[$subCat] ?? ($subCat === 'Softskill' ? $nonRegulerManagerialCount : 0);
                     @endphp
-                    <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'non_reguler', 'category' => $subCat, 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year]) }}"
+                    <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => 'non_reguler', 'category' => $subCat, 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}"
                        class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold transition-all shadow-2xs {{ $isSubActive ? 'bg-green-700 text-white shadow-xs ring-2 ring-green-600/30' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200' }}">
                         <span>{{ $subCat }}</span>
                         <span class="text-[10px] px-1.5 py-0.2 rounded-full font-bold {{ $isSubActive ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700' }}">
@@ -350,7 +370,7 @@
             {{-- Horizontal Wrap Button List --}}
             <div class="flex flex-wrap items-center gap-2 max-h-48 overflow-y-auto pr-1">
                 {{-- Tombol Semua Program --}}
-                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => $tab, 'category' => $category, 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year]) }}"
+                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => $tab, 'category' => $category, 'program' => 'all', 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}"
                    class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs {{ $selectedProgramName === 'all' || !$selectedProgramName ? 'bg-[#1b4332] text-white ring-2 ring-[#1b4332]/20' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200' }}">
                     Semua Program ({{ count($allProgramButtons) }})
                 </a>
@@ -359,7 +379,7 @@
                     @php
                         $isActiveBtn = ($selectedProgramName === $pName);
                     @endphp
-                    <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => $tab, 'category' => $category, 'program' => $pName, 'month' => $selectedMonthCode, 'year' => $year]) }}"
+                    <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => $tab, 'category' => $category, 'program' => $pName, 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}"
                        class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs whitespace-nowrap {{ $isActiveBtn ? 'bg-green-600 text-white ring-2 ring-green-600/30' : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 hover:border-slate-400' }}"
                        title="{{ $pName }}">
                         {{ $pName }}
@@ -449,11 +469,11 @@
             {{-- Legend Indicators --}}
             <div class="flex items-center gap-4 text-xs font-bold">
                 <div class="flex items-center gap-2">
-                    <span class="w-4 h-3 rounded-xs bg-[#9ca3af]"></span>
+                    <span class="w-4 h-3 rounded-xs bg-[#0284c7]"></span>
                     <span class="text-slate-600">Target peserta</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="w-4 h-3 rounded-xs bg-[#0b3b24]"></span>
+                    <span class="w-4 h-3 rounded-xs bg-[#059669]"></span>
                     <span class="text-slate-600">Realisasi peserta</span>
                 </div>
                 <div class="flex items-center gap-1.5 pl-3 border-l border-slate-300 text-slate-500">
@@ -510,7 +530,7 @@
                         @endphp
                         <tr class="{{ $rowBg }} hover:bg-emerald-50/40 transition-colors">
                             <td class="py-3 px-5 font-semibold text-slate-800">
-                                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => $tab, 'category' => $category, 'program' => $prog['name'], 'month' => $selectedMonthCode, 'year' => $year]) }}" 
+                                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => $tab, 'category' => $category, 'program' => $prog['name'], 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}" 
                                    class="hover:text-green-700 hover:underline">
                                     {{ $prog['name'] }}
                                 </a>
@@ -664,8 +684,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     {
                         label: 'Target peserta',
                         data: targetData,
-                        backgroundColor: '#9ca3af', // Gray
-                        hoverBackgroundColor: '#6b7280',
+                        backgroundColor: '#0284c7', // Vibrant Sky Blue
+                        hoverBackgroundColor: '#0369a1',
                         borderRadius: 4,
                         barPercentage: 0.75,
                         categoryPercentage: 0.8,
@@ -673,8 +693,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     {
                         label: 'Realisasi peserta',
                         data: realisasiData,
-                        backgroundColor: '#0b3b24', // Deep Green
-                        hoverBackgroundColor: '#062617',
+                        backgroundColor: '#059669', // Vibrant Emerald Green
+                        hoverBackgroundColor: '#047857',
                         borderRadius: 4,
                         barPercentage: 0.75,
                         categoryPercentage: 0.8,

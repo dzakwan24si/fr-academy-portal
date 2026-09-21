@@ -5,7 +5,7 @@ export function useEmployees(statusFilter = null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
   const fetchEmployees = useCallback(async () => {
     setLoading(true);
@@ -46,7 +46,7 @@ export function useEmployees(statusFilter = null) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
         body: JSON.stringify(newEmployee),
@@ -69,7 +69,7 @@ export function useEmployees(statusFilter = null) {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
         body: JSON.stringify(updatedEmployee),
@@ -91,7 +91,7 @@ export function useEmployees(statusFilter = null) {
       const res = await fetch(`/administrasi/monitoring/api/employees/${id}`, {
         method: 'DELETE',
         headers: {
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
       });
@@ -118,7 +118,7 @@ export function useEmployees(statusFilter = null) {
         res = await fetch('/administrasi/monitoring/api/employees/import', {
           method: 'POST',
           headers: {
-            'X-CSRF-TOKEN': csrfToken || '',
+            'X-CSRF-TOKEN': getCsrfToken(),
             'Accept': 'application/json',
           },
           body: payload,
@@ -128,7 +128,7 @@ export function useEmployees(statusFilter = null) {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken || '',
+            'X-CSRF-TOKEN': getCsrfToken(),
             'Accept': 'application/json',
           },
           body: JSON.stringify({ rows: payload, mode }),
@@ -155,7 +155,7 @@ export function useEmployees(statusFilter = null) {
       const res = await fetch('/administrasi/monitoring/api/employees/destroy-all', {
         method: 'DELETE',
         headers: {
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
       });
@@ -178,7 +178,7 @@ export function useEmployees(statusFilter = null) {
       const res = await fetch('/administrasi/monitoring/api/reset-data', {
         method: 'POST',
         headers: {
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
       });

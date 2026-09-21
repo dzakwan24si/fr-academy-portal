@@ -220,13 +220,19 @@
         </details>
 
         <!-- SECTION: Sistem & Pengaturan -->
-        <details class="group" {{ request()->routeIs('administrasi.activity-logs.*') ? 'open' : '' }}>
+        <details class="group" {{ request()->routeIs('administrasi.activity-logs.*', 'admin.dashboard') ? 'open' : '' }}>
             <summary
                 class="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA] hover:bg-[#F9FAFB] [&::-webkit-details-marker]:hidden">
                 <span>Sistem & Pengaturan</span>
                 <i data-lucide="chevron-down" class="h-3.5 w-3.5 transition-transform group-open:rotate-180"></i>
             </summary>
             <div class="space-y-0.5">
+                <a href="{{ route('admin.dashboard') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                          {{ request()->routeIs('admin.dashboard') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0"></i>
+                    <span>Dashboard Overview</span>
+                </a>
                 <a href="{{ route('administrasi.activity-logs.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.activity-logs.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">

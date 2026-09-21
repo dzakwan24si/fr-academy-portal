@@ -487,7 +487,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
 
             Route::delete('/stock-opname/destroy-all', [InventarisKantorController::class, 'stockOpnameDestroyAll'])->name('stock-opname.destroyAll');
             Route::get('/stock-opname', [InventarisKantorController::class, 'stockOpnameIndex'])->name('stock-opname');
-            Route::get('/stock-opname/template', [InventarisController::class, 'stockOpnameTemplate'])->name('stock-opname.template');
+            Route::get('/stock-opname/template', [InventarisKantorController::class, 'stockOpnameTemplate'])->name('stock-opname.template');
             Route::post('/stock-opname/import', [InventarisController::class, 'stockOpnameImport'])->name('stock-opname.import');
             Route::post('/stock-opname/session', [InventarisKantorController::class, 'stockOpnameSessionStore'])->name('stock-opname.session.store');
             Route::put('/stock-opname/session/{date}', [InventarisKantorController::class, 'stockOpnameSessionUpdate'])->name('stock-opname.session.update');

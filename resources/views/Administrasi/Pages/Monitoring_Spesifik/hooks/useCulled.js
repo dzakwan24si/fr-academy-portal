@@ -6,7 +6,7 @@ export function useCulled() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
   const fetchCulled = useCallback(async () => {
     setLoading(true);
@@ -45,7 +45,7 @@ export function useCulled() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
         body: JSON.stringify(newCulled),
@@ -68,7 +68,7 @@ export function useCulled() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
         body: JSON.stringify(updatedCulled),
@@ -90,7 +90,7 @@ export function useCulled() {
       const res = await fetch(`/administrasi/monitoring/api/culled/${id}`, {
         method: 'DELETE',
         headers: {
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
       });
@@ -111,7 +111,7 @@ export function useCulled() {
       const res = await fetch('/administrasi/monitoring/api/culled/destroy-all', {
         method: 'DELETE',
         headers: {
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
       });
@@ -134,7 +134,7 @@ export function useCulled() {
         res = await fetch('/administrasi/monitoring/api/culled/import', {
           method: 'POST',
           headers: {
-            'X-CSRF-TOKEN': csrfToken || '',
+            'X-CSRF-TOKEN': getCsrfToken(),
             'Accept': 'application/json',
           },
           body: payload,
@@ -144,7 +144,7 @@ export function useCulled() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken || '',
+            'X-CSRF-TOKEN': getCsrfToken(),
             'Accept': 'application/json',
           },
           body: JSON.stringify({ rows: payload, mode }),

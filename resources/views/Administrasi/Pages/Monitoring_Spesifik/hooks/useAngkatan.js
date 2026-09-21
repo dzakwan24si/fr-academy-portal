@@ -5,7 +5,7 @@ export function useAngkatan() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
   const fetchAngkatan = useCallback(async () => {
     setLoading(true);
@@ -37,7 +37,7 @@ export function useAngkatan() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
         body: JSON.stringify(newAngkatan),
@@ -60,7 +60,7 @@ export function useAngkatan() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
         body: JSON.stringify(updatedAngkatan),
@@ -82,7 +82,7 @@ export function useAngkatan() {
       const res = await fetch(`/administrasi/monitoring/api/angkatan/${id}`, {
         method: 'DELETE',
         headers: {
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
       });
@@ -109,7 +109,7 @@ export function useAngkatan() {
         res = await fetch('/administrasi/monitoring/api/angkatan/import', {
           method: 'POST',
           headers: {
-            'X-CSRF-TOKEN': csrfToken || '',
+            'X-CSRF-TOKEN': getCsrfToken(),
             'Accept': 'application/json',
           },
           body: payload,
@@ -119,7 +119,7 @@ export function useAngkatan() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrfToken || '',
+            'X-CSRF-TOKEN': getCsrfToken(),
             'Accept': 'application/json',
           },
           body: JSON.stringify({ rows: payload, mode }),
@@ -146,7 +146,7 @@ export function useAngkatan() {
       const res = await fetch('/administrasi/monitoring/api/angkatan/destroy-all', {
         method: 'DELETE',
         headers: {
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
       });

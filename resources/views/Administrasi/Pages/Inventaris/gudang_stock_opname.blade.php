@@ -35,6 +35,16 @@
 
     {{-- Add Stock Opname Button Row --}}
     <div class="flex items-center justify-start sm:justify-end gap-3 flex-wrap">
+        <a href="{{ route('administrasi.inventaris.gudang.stock-opname.template') }}"
+           class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-white border border-[#E5E7EB] text-[#52525B] hover:bg-[#F9FAFB] text-xs font-semibold rounded-xl transition-all shadow-sm">
+            <i data-lucide="download" class="w-4 h-4"></i>
+            <span>Template Excel</span>
+        </a>
+        <button type="button" onclick="document.getElementById('modalImportStockOpname').classList.remove('hidden')"
+                class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-[#F0F5EB] border border-[#CBDDA8] text-[#4B6A34] hover:bg-[#CBDDA8] text-xs font-semibold rounded-xl transition-all shadow-sm">
+            <i data-lucide="file-up" class="w-4 h-4"></i>
+            <span>Import CSV</span>
+        </button>
         <button onclick="document.getElementById('modalAddSession').classList.remove('hidden')"
                 class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-[#4B6A34] text-white text-sm font-semibold rounded-xl hover:bg-[#3d562a] transition-all shadow-sm">
             <i data-lucide="plus" class="w-4 h-4"></i>
@@ -173,6 +183,42 @@
                 <button type="submit" class="px-5 py-2 bg-[#4B6A34] text-white text-sm font-semibold rounded-xl hover:bg-[#3d562a] transition-colors shadow-sm">
                     Buat Sesi & Isi Detail
                 </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- ============================== MODAL IMPORT STOCK OPNAME GUDANG ============================== --}}
+<div id="modalImportStockOpname" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm hidden">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl border border-[#E5E7EB]">
+        <div class="flex items-center justify-between pb-4 border-b border-[#E5E7EB]">
+            <h3 class="text-base font-bold text-[#18181B]">Import Data Stock Opname Gudang</h3>
+            <button onclick="document.getElementById('modalImportStockOpname').classList.add('hidden')" class="text-[#A1A1AA] hover:text-[#18181B]">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <form method="POST" action="{{ route('administrasi.inventaris.gudang.stock-opname.import') }}" enctype="multipart/form-data" class="mt-4 space-y-4">
+            @csrf
+            <div>
+                <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">File CSV / Excel</label>
+                <input type="file" name="file" accept=".csv,.txt,.xlsx" required
+                       class="w-full text-xs text-[#52525B] file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-[#F0F5EB] file:text-[#4B6A34] hover:file:bg-[#CBDDA8]">
+                <p class="text-[11px] text-[#71717A] mt-1">Format file .csv dengan separator koma (,) atau titik koma (;).</p>
+            </div>
+            <div class="flex items-center justify-between pt-4 border-t border-[#E5E7EB]">
+                <a href="{{ route('administrasi.inventaris.gudang.stock-opname.template') }}" class="text-xs font-semibold text-[#4B6A34] hover:underline flex items-center gap-1">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>Download Template</span>
+                </a>
+                <div class="flex gap-2">
+                    <button type="button" onclick="document.getElementById('modalImportStockOpname').classList.add('hidden')"
+                            class="px-4 py-2 border border-[#E5E7EB] text-[#52525B] text-xs font-semibold rounded-xl hover:bg-[#F4F4F5]">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-[#4B6A34] text-white text-xs font-semibold rounded-xl hover:bg-[#3d562a] shadow-sm">
+                        Import Data
+                    </button>
+                </div>
             </div>
         </form>
     </div>

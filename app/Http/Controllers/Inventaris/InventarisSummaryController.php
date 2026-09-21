@@ -83,21 +83,48 @@ class InventarisSummaryController extends Controller
         }
 
         // Room summary aggregation for Kantor
-        $kantorRoomSummary = StockOpname::whereHas('barang', function($q) {
+        $kantorBarangSummary = Barang::where(function($q) {
             $q->where('jenis_lokasi', 'Kantor')->orWhere('lokasi', 'Kantor');
-        })
-        ->whereNotNull('lokasi_spesifik')
-        ->where('lokasi_spesifik', '!=', '')
-        ->select(
-            'lokasi_spesifik',
-            \DB::raw('COUNT(DISTINCT barang_id) as total_jenis_barang'),
-            \DB::raw('SUM(jumlah_baik) as total_baik'),
-            \DB::raw('SUM(jumlah_rusak) as total_rusak'),
-            \DB::raw('SUM(grand_total) as total_aset')
-        )
-        ->groupBy('lokasi_spesifik')
-        ->orderBy('lokasi_spesifik', 'asc')
-        ->get();
+        })->get();
+
+        $summaryRoomMap = [];
+        foreach ($kantorBarangSummary as $b) {
+            $latestSO = StockOpname::where('barang_id', $b->id)
+                ->whereYear('tanggal_stock_opname', '<=', $selectedYear)
+                ->orderByDesc('tanggal_stock_opname')
+                ->first();
+
+            $totalPembelian = Pembelian::where('barang_id', $b->id)
+                ->whereYear('tanggal_pembelian', '<=', $selectedYear)
+                ->sum('jumlah');
+
+            $stok = $latestSO ? $latestSO->grand_total : $totalPembelian;
+            $baik = $latestSO ? $latestSO->jumlah_baik : $stok;
+            $rusak = $latestSO ? $latestSO->jumlah_rusak : 0;
+
+            $roomName = ($latestSO && !empty(trim($latestSO->lokasi_spesifik)))
+                ? trim($latestSO->lokasi_spesifik)
+                : (($b->lokasi && !in_array($b->lokasi, ['Kantor', 'Gudang'])) ? $b->lokasi : 'Kantor (Umum)');
+
+            if (!isset($summaryRoomMap[$roomName])) {
+                $summaryRoomMap[$roomName] = (object) [
+                    'lokasi_spesifik' => $roomName,
+                    'total_jenis_barang' => 0,
+                    'total_baik' => 0,
+                    'total_rusak' => 0,
+                    'total_aset' => 0,
+                ];
+            }
+
+            $summaryRoomMap[$roomName]->total_jenis_barang += 1;
+            $summaryRoomMap[$roomName]->total_baik += $baik;
+            $summaryRoomMap[$roomName]->total_rusak += $rusak;
+            $summaryRoomMap[$roomName]->total_aset += $stok;
+        }
+
+        $summaryRoomList = array_values($summaryRoomMap);
+        usort($summaryRoomList, fn($a, $b) => strcmp($a->lokasi_spesifik, $b->lokasi_spesifik));
+        $kantorRoomSummary = collect($summaryRoomList);
 
         return view('Administrasi.Pages.Inventaris.summary', [
             'summaryData' => $summaryData,

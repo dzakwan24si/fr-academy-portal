@@ -15,6 +15,7 @@ class StockOpname extends Model
     protected $table = 'stock_opname';
 
     protected $fillable = [
+        'id',
         'barang_id',
         'tanggal_stock_opname',
         'status',

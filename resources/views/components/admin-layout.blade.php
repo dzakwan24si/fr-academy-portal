@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Admin Dashboard' }} - FR Academy</title>
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/faviconfr.svg') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
@@ -15,12 +16,15 @@
         :fullscreen aside,
         :fullscreen header,
         body.is-fullscreen-mode aside,
-        body.is-fullscreen-mode header {
+        body.is-fullscreen-mode header,
+        html.is-fullscreen-mode aside,
+        html.is-fullscreen-mode header {
             display: none !important;
         }
 
         :fullscreen main,
-        body.is-fullscreen-mode main {
+        body.is-fullscreen-mode main,
+        html.is-fullscreen-mode main {
             padding: 1.25rem 2rem !important;
             width: 100vw !important;
             height: 100vh !important;
@@ -39,10 +43,16 @@
         }
 
         :fullscreen .floating-exit-fullscreen-btn,
-        body.is-fullscreen-mode .floating-exit-fullscreen-btn {
+        body.is-fullscreen-mode .floating-exit-fullscreen-btn,
+        html.is-fullscreen-mode .floating-exit-fullscreen-btn {
             display: flex !important;
         }
     </style>
+    <script>
+        if (sessionStorage.getItem('dashboard_fullscreen') === 'true') {
+            document.documentElement.classList.add('is-fullscreen-mode');
+        }
+    </script>
 </head>
 <body class="bg-white font-sans antialiased text-gray-900">
     <div x-data="{ sidebarOpen: false }" class="flex h-screen overflow-hidden bg-white">
@@ -314,12 +324,17 @@
                 @endcanany
                 
                 <!-- SECTION: Sistem & Pengaturan -->
-                <details class="group" {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.profile.*', 'administrasi.activity-logs.*') ? 'open' : '' }}>
+                <details class="group" {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.profile.*', 'administrasi.activity-logs.*', 'admin.dashboard') ? 'open' : '' }}>
                     <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-wider text-gray-400 hover:bg-gray-100 [&::-webkit-details-marker]:hidden transition-colors">
                         <span>Sistem & Pengaturan</span>
                         <svg class="h-4 w-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </summary>
                     <div class="space-y-1 mt-1">
+                        <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">
+                            <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3 {{ request()->routeIs('admin.dashboard') ? 'text-white' : 'text-gray-400' }}"></i>
+                            Dashboard Overview
+                        </a>
+
                         @can('manage_users')
                         <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">
                             <svg class="w-5 h-5 mr-3 {{ request()->routeIs('admin.users.*') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
@@ -445,31 +460,50 @@
     @livewireScripts
     <script>
         function toggleDashboardFullscreen() {
-            if (!document.fullscreenElement) {
+            const isCurrentlyFS = !!document.fullscreenElement || document.body.classList.contains('is-fullscreen-mode') || document.documentElement.classList.contains('is-fullscreen-mode');
+
+            if (!isCurrentlyFS) {
                 const docEl = document.documentElement;
                 if (docEl.requestFullscreen) {
-                    docEl.requestFullscreen();
+                    docEl.requestFullscreen().catch(() => {});
                 } else if (docEl.webkitRequestFullscreen) {
                     docEl.webkitRequestFullscreen();
                 } else if (docEl.msRequestFullscreen) {
                     docEl.msRequestFullscreen();
                 }
                 document.body.classList.add('is-fullscreen-mode');
+                document.documentElement.classList.add('is-fullscreen-mode');
+                sessionStorage.setItem('dashboard_fullscreen', 'true');
+                updateFullscreenButtons(true);
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                } else if (document.msExitFullscreen) {
-                    document.msExitFullscreen();
+                if (document.fullscreenElement) {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen().catch(() => {});
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    } else if (document.msExitFullscreen) {
+                        document.msExitFullscreen();
+                    }
                 }
                 document.body.classList.remove('is-fullscreen-mode');
+                document.documentElement.classList.remove('is-fullscreen-mode');
+                sessionStorage.setItem('dashboard_fullscreen', 'false');
+                updateFullscreenButtons(false);
             }
         }
 
         document.addEventListener('fullscreenchange', () => {
             const isFS = !!document.fullscreenElement;
-            document.body.classList.toggle('is-fullscreen-mode', isFS);
+            if (isFS) {
+                document.body.classList.add('is-fullscreen-mode');
+                document.documentElement.classList.add('is-fullscreen-mode');
+                sessionStorage.setItem('dashboard_fullscreen', 'true');
+            } else {
+                // If user exits native fullscreen (e.g. Esc key)
+                document.body.classList.remove('is-fullscreen-mode');
+                document.documentElement.classList.remove('is-fullscreen-mode');
+                sessionStorage.setItem('dashboard_fullscreen', 'false');
+            }
             updateFullscreenButtons(isFS);
         });
 
@@ -491,6 +525,15 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            const isFS = sessionStorage.getItem('dashboard_fullscreen') === 'true';
+            if (isFS) {
+                document.body.classList.add('is-fullscreen-mode');
+                document.documentElement.classList.add('is-fullscreen-mode');
+                updateFullscreenButtons(true);
+                if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                }
+            }
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }

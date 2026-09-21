@@ -15,6 +15,7 @@ class Pembelian extends Model
     protected $table = 'pembelian';
 
     protected $fillable = [
+        'id',
         'barang_id',
         'tanggal_pembelian',
         'jumlah',

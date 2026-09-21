@@ -5,7 +5,7 @@ export function useAfdeling() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+  const getCsrfToken = () => document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
   const fetchAfdeling = useCallback(async () => {
     setLoading(true);
@@ -37,7 +37,7 @@ export function useAfdeling() {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'X-CSRF-TOKEN': csrfToken || '',
+          'X-CSRF-TOKEN': getCsrfToken(),
           'Accept': 'application/json',
         },
         body: JSON.stringify(regionMap),

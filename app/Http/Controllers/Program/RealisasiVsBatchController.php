@@ -176,7 +176,7 @@ class RealisasiVsBatchController extends Controller
         $trainingRecords = TrainingRecord::where('status', 'valid')->get();
 
         return $programs->map(function ($program) use ($year, $month, $trainingRecords) {
-            $records = $trainingRecords
+            $matchingRecords = $trainingRecords
                 ->filter(fn (TrainingRecord $record) => $this->recordMatchesActivity($record, $program))
                 ->filter(function (TrainingRecord $record) use ($program, $year, $month) {
                     if ($program['program_type'] === 'non_reguler' && !$this->recordMatchesRegion($record, $program['region'])) {
@@ -200,10 +200,17 @@ class RealisasiVsBatchController extends Controller
                     return collect($record->activityDates())->contains(fn ($date) =>
                         $date && (int) date('Y', strtotime($date)) === $year && (int) date('n', strtotime($date)) <= $month
                     );
-                })
-                ->count();
-            $realizedParticipants = $records;
-            $realizedBatch = $records > 0 ? 1 : 0;
+                });
+
+            $realizedParticipants = $matchingRecords->count();
+            $distinctBatchCount = $matchingRecords->map(function ($r) {
+                if (!empty($r->periode)) return $r->periode;
+                if (!empty($r->training_date)) return is_object($r->training_date) ? $r->training_date->format('Y-m-d') : (string) $r->training_date;
+                if (!empty($r->batch)) return $r->batch;
+                return 'default';
+            })->filter()->unique()->count();
+
+            $realizedBatch = $realizedParticipants > 0 ? max(1, $distinctBatchCount) : 0;
             $row = (object) array_merge($program, ['realisasi_id' => null, 'realized_batch' => $realizedBatch, 'realized_participants' => $realizedParticipants]);
             $row->batch_percent = $this->percent($row->realized_batch, $row->planned_batch);
             $row->participant_percent = $this->percent($row->realized_participants, $row->planned_participants);

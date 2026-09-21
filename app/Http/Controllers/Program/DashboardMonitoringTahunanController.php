@@ -101,11 +101,25 @@ class DashboardMonitoringTahunanController extends Controller
         $category = $request->input('category', 'all'); // 'all', 'staf', 'mandor', 'managerial', 'technical'
         $selectedProgramName = $request->input('program', 'all');
         $rawMonth = $request->input('month', 'all'); // 'all' or 1..12 or 'JAN'..'DES'
+        $selectedRegion = trim((string) $request->input('region', 'all'));
 
         $selectedMonthNum = $this->parseMonthNumber($rawMonth); // null if 'all'
         $selectedMonthCode = $selectedMonthNum ? self::MONTH_3_LETTERS[$selectedMonthNum] : 'all';
 
         $cleanStr = fn($str) => SpreadsheetReader::cleanString($str);
+
+        // Fetch List of Available Regions
+        $regRegions = ProgramReguler::pluck('Region');
+        $nonRegRegions = ProgramNonReguler::pluck('region');
+        $trRegions = TrainingRecord::pluck('region');
+        $regions = $regRegions->merge($nonRegRegions)->merge($trRegions)
+            ->filter()
+            ->map(fn($r) => trim((string)$r))
+            ->filter(fn($r) => $r !== '' && $r !== '-' && strtolower($r) !== 'all')
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
 
         // 1. Fetch Master Programs Filtered By Year
         $regulerAll = ProgramReguler::all()->filter(fn($p) => $this->resolveProgramRegulerYear($p) === $year);
@@ -192,13 +206,32 @@ class DashboardMonitoringTahunanController extends Controller
             ]);
         }
 
+        // Filter currentBatches by Region if selected
+        if ($selectedRegion !== 'all' && $selectedRegion !== '') {
+            $currentBatches = $currentBatches->filter(function($b) use ($selectedRegion) {
+                $bReg = strtolower(trim((string) ($b['region'] ?? '')));
+                $sReg = strtolower($selectedRegion);
+                return $bReg === $sReg || str_contains($bReg, $sReg) || str_contains($sReg, $bReg);
+            });
+        }
+
         // Group by distinct Program Name
-        $programGroups = $currentBatches->groupBy('name')->map(function ($items, $name) use ($trainingRecords, $tab, $year, $selectedMonthNum) {
+        $programGroups = $currentBatches->groupBy('name')->map(function ($items, $name) use ($trainingRecords, $tab, $year, $selectedMonthNum, $selectedRegion) {
             $first = $items->first();
-            $related = $items->map(function ($batch) use ($trainingRecords, $tab, $year, $selectedMonthNum) {
+            $related = $items->map(function ($batch) use ($trainingRecords, $tab, $year, $selectedMonthNum, $selectedRegion) {
                 // Find actual records matching id or program name, filtered cumulatively (Jan s/d selected month)
-                $matchedRecords = $trainingRecords->filter(function($r) use ($batch, $tab, $year, $selectedMonthNum) {
+                $matchedRecords = $trainingRecords->filter(function($r) use ($batch, $tab, $year, $selectedMonthNum, $selectedRegion) {
                     if ($r->program_type !== $tab) return false;
+
+                    // Match Region if specified
+                    if ($selectedRegion !== 'all' && $selectedRegion !== '') {
+                        $sReg = strtolower($selectedRegion);
+                        $rReg = strtolower(trim((string) ($r->region ?: '')));
+                        $bReg = strtolower(trim((string) ($batch['region'] ?? '')));
+                        if ($rReg !== '' && !str_contains($rReg, $sReg) && !str_contains($sReg, $rReg) && $bReg !== '' && !str_contains($bReg, $sReg) && !str_contains($sReg, $bReg)) {
+                            return false;
+                        }
+                    }
                     
                     // Match program
                     $matchesProgram = false;
@@ -283,7 +316,14 @@ class DashboardMonitoringTahunanController extends Controller
                     $actualParticipants = $matchedRecords->count();
                 }
 
-                $realizedBatch = $actualParticipants > 0 ? max(1, (int) $batch['batch']) : 0;
+                $distinctBatchCount = $matchedRecords->map(function ($r) {
+                    if (!empty($r->periode)) return $r->periode;
+                    if (!empty($r->training_date)) return is_object($r->training_date) ? $r->training_date->format('Y-m-d') : (string) $r->training_date;
+                    if (!empty($r->batch)) return $r->batch;
+                    return 'default';
+                })->filter()->unique()->count();
+
+                $realizedBatch = $actualParticipants > 0 ? max(1, $distinctBatchCount) : 0;
 
                 $periodStr = '- - -';
                 if ($batch['start']) {
@@ -429,6 +469,8 @@ class DashboardMonitoringTahunanController extends Controller
             'selectedMonthNum',
             'selectedMonthCode',
             'monthList',
+            'regions',
+            'selectedRegion',
             'headerTitle',
             'regulerTotalCount',
             'regulerStafCount',

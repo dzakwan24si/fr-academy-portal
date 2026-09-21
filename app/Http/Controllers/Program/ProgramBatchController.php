@@ -120,7 +120,8 @@ class ProgramBatchController extends Controller
                 $key = $batch['type'] . ':' . $batch['id'];
                 $actualRecords = $records->get($key, collect())->filter(fn ($record) => $this->recordInYear($record, $year));
                 $actualParticipants = $actualRecords->count();
-                $realizedBatch = $actualRecords->isNotEmpty() ? 1 : 0;
+                $explicitBatch = (int) ($batch['model']->total_batch ?? 0);
+                $realizedBatch = $explicitBatch > 0 ? $explicitBatch : ($actualRecords->isNotEmpty() ? 1 : 0);
                 return $batch + ['actual_participants' => $actualParticipants, 'realized_batch' => $realizedBatch, 'period' => $this->period($batch)];
             });
             $targetBatch = $items->sum('batch');
@@ -343,7 +344,9 @@ class ProgramBatchController extends Controller
         }
 
         $imported = 0;
-        DB::transaction(function () use ($rows, $normalizedHeaders, $table, &$imported) {
+        $seenRegIds = [];
+        $seenNonRegIds = [];
+        DB::transaction(function () use ($rows, $normalizedHeaders, $table, &$imported, &$seenRegIds, &$seenNonRegIds) {
             foreach ($rows as $row) {
                 if (empty(array_filter($row, fn ($val) => trim((string) $val) !== ''))) continue;
                 $item = [];
@@ -351,7 +354,7 @@ class ProgramBatchController extends Controller
                     $clean = str_replace(['_', ' ', '-'], '', $h);
                     $item[$clean] = trim((string) ($row[$idx] ?? ''));
                 }
-                $stored = $this->storeRowMapped($item, $table);
+                $stored = $this->storeRowMapped($item, $table, $seenRegIds, $seenNonRegIds);
                 if ($stored) $imported++;
             }
         });
@@ -371,7 +374,7 @@ class ProgramBatchController extends Controller
         return back()->with('success', $message);
     }
 
-    private function storeRowMapped(array $item, string $table): bool
+    private function storeRowMapped(array $item, string $table, array &$seenRegIds = [], array &$seenNonRegIds = []): bool
     {
         if ($table === 'reg') {
             $trainingProgram = $item['trainingprogram'] ?? $item['namaprogramreguler'] ?? $item['namaprogram'] ?? $item['pelatihan'] ?? $item['namapelatihan'] ?? '';
@@ -402,7 +405,14 @@ class ProgramBatchController extends Controller
 
             $id = $item['programregulerid'] ?? $item['programid'] ?? $item['id'] ?? null;
             if (is_numeric($id) && (int) $id > 0) {
-                ProgramReguler::query()->updateOrCreate(['Program_reguler_id' => (int) $id], $record);
+                $intId = (int) $id;
+                if (!in_array($intId, $seenRegIds, true)) {
+                    $seenRegIds[] = $intId;
+                    $record['Program_reguler_id'] = $intId;
+                    ProgramReguler::query()->updateOrCreate(['Program_reguler_id' => $intId], $record);
+                } else {
+                    ProgramReguler::query()->create($record);
+                }
             } else {
                 ProgramReguler::query()->create($record);
             }
@@ -451,7 +461,14 @@ class ProgramBatchController extends Controller
 
             $id = $item['idnonreguler'] ?? $item['programid'] ?? $item['id'] ?? null;
             if (is_numeric($id) && (int) $id > 0) {
-                ProgramNonReguler::query()->updateOrCreate(['id_nonreguler' => (int) $id], $record);
+                $intId = (int) $id;
+                if (!in_array($intId, $seenNonRegIds, true)) {
+                    $seenNonRegIds[] = $intId;
+                    $record['id_nonreguler'] = $intId;
+                    ProgramNonReguler::query()->updateOrCreate(['id_nonreguler' => $intId], $record);
+                } else {
+                    ProgramNonReguler::query()->create($record);
+                }
             } else {
                 ProgramNonReguler::query()->create($record);
             }

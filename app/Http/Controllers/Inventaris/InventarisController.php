@@ -111,12 +111,21 @@ class InventarisController extends Controller
         if (!$barang) {
             $finalLokasi = $jenisLokasiRow ?: ($defaultLokasi === 'auto' ? 'Kantor' : $defaultLokasi);
             $finalNama = !empty($namaAsset) ? $namaAsset : (!empty($idBarang) ? "Asset #{$idBarang}" : "Asset Baru");
-            $barang = Barang::create([
+            $attr = [
                 'nama_asset' => $finalNama,
                 'satuan' => 'Unit',
                 'jenis_lokasi' => $finalLokasi,
                 'lokasi' => $finalLokasi,
-            ]);
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+            if (!empty($idBarang) && is_numeric($idBarang)) {
+                $attr['id'] = (int) $idBarang;
+                DB::table('barang')->insert($attr);
+                $barang = Barang::find((int) $idBarang);
+            } else {
+                $barang = Barang::create($attr);
+            }
         }
 
         return $barang;
@@ -209,36 +218,70 @@ class InventarisController extends Controller
         }
 
         $headerMap = $csvData['headerMap'];
-        $hasHeader = isset($headerMap['namaasset']) || isset($headerMap['nama']) || isset($headerMap['barang']);
+        $hasHeader = isset($headerMap['idbarang']) || isset($headerMap['id']) || isset($headerMap['namaasset']) || isset($headerMap['namabarang']) || isset($headerMap['nama']) || isset($headerMap['barang']);
         $rows = $csvData['rows'];
 
         $imported = 0;
         foreach ($rows as $data) {
+            $idBarang = null;
             $namaAsset = null;
             $satuan = 'Unit';
             $jenisLokasi = null;
             $keterangan = null;
 
             if ($hasHeader) {
-                $namaAsset = isset($headerMap['namaasset']) && isset($data[$headerMap['namaasset']]) ? trim($data[$headerMap['namaasset']]) : (isset($data[0]) ? trim($data[0]) : '');
-                $satuan = isset($headerMap['satuan']) && isset($data[$headerMap['satuan']]) ? trim($data[$headerMap['satuan']]) : (isset($data[1]) ? trim($data[1]) : 'Unit');
-                $rawLokasi = isset($headerMap['jenislokasi']) && isset($data[$headerMap['jenislokasi']]) ? trim($data[$headerMap['jenislokasi']]) : (isset($headerMap['lokasi']) && isset($data[$headerMap['lokasi']]) ? trim($data[$headerMap['lokasi']]) : null);
+                if (isset($headerMap['idbarang']) && isset($data[$headerMap['idbarang']])) {
+                    $idBarang = trim($data[$headerMap['idbarang']]);
+                } elseif (isset($headerMap['id']) && isset($data[$headerMap['id']])) {
+                    $idBarang = trim($data[$headerMap['id']]);
+                }
+
+                foreach (['namaasset', 'namabarang', 'nama', 'barang'] as $k) {
+                    if (isset($headerMap[$k]) && isset($data[$headerMap[$k]])) {
+                        $namaAsset = trim($data[$headerMap[$k]]);
+                        break;
+                    }
+                }
+
+                if (isset($headerMap['satuan']) && isset($data[$headerMap['satuan']])) {
+                    $satuan = trim($data[$headerMap['satuan']]);
+                }
+
+                $rawLokasi = isset($headerMap['jenislokasi']) && isset($data[$headerMap['jenislokasi']])
+                    ? trim($data[$headerMap['jenislokasi']])
+                    : (isset($headerMap['lokasi']) && isset($data[$headerMap['lokasi']]) ? trim($data[$headerMap['lokasi']]) : null);
                 if ($rawLokasi && in_array(ucfirst(strtolower($rawLokasi)), ['Kantor', 'Gudang'], true)) {
                     $jenisLokasi = ucfirst(strtolower($rawLokasi));
                 }
-                $keterangan = isset($headerMap['keterangan']) && isset($data[$headerMap['keterangan']]) ? trim($data[$headerMap['keterangan']]) : null;
+
+                if (isset($headerMap['keterangan']) && isset($data[$headerMap['keterangan']])) {
+                    $keterangan = trim($data[$headerMap['keterangan']]);
+                }
             } else {
-                $namaAsset = trim($data[0] ?? '');
-                $satuan = isset($data[1]) && !empty(trim($data[1])) ? trim($data[1]) : 'Unit';
-                if (isset($data[2]) && in_array(ucfirst(strtolower(trim($data[2]))), ['Kantor', 'Gudang'], true)) {
-                    $jenisLokasi = ucfirst(strtolower(trim($data[2])));
+                $col0 = trim($data[0] ?? '');
+                if (is_numeric($col0) && isset($data[1])) {
+                    $idBarang = $col0;
+                    $namaAsset = trim($data[1]);
+                    $satuan = isset($data[2]) && !empty(trim($data[2])) ? trim($data[2]) : 'Unit';
                     $keterangan = isset($data[3]) ? trim($data[3]) : null;
                 } else {
-                    $keterangan = isset($data[2]) ? trim($data[2]) : null;
+                    $namaAsset = $col0;
+                    $satuan = isset($data[1]) && !empty(trim($data[1])) ? trim($data[1]) : 'Unit';
+                    if (isset($data[2]) && in_array(ucfirst(strtolower(trim($data[2]))), ['Kantor', 'Gudang'], true)) {
+                        $jenisLokasi = ucfirst(strtolower(trim($data[2])));
+                        $keterangan = isset($data[3]) ? trim($data[3]) : null;
+                    } else {
+                        $keterangan = isset($data[2]) ? trim($data[2]) : null;
+                    }
                 }
             }
 
-            if (empty($namaAsset) || in_array(strtolower($namaAsset), ['nama_asset', 'nama asset', 'nama barang'], true)) {
+            if (($namaAsset && in_array(strtolower($namaAsset), ['nama_asset', 'nama asset', 'nama barang', 'nama_barang', 'id_barang', 'id'], true)) ||
+                ($idBarang && !is_numeric($idBarang) && in_array(strtolower($idBarang), ['id_barang', 'id', 'id_pembelian'], true))) {
+                continue;
+            }
+
+            if (empty($namaAsset) && empty($idBarang)) {
                 continue;
             }
 
@@ -246,13 +289,39 @@ class InventarisController extends Controller
                 $jenisLokasi = in_array($defaultLokasi, ['Kantor', 'Gudang'], true) ? $defaultLokasi : 'Kantor';
             }
 
-            Barang::create([
-                'nama_asset' => $namaAsset,
-                'satuan' => !empty($satuan) ? $satuan : 'Unit',
-                'jenis_lokasi' => $jenisLokasi,
-                'lokasi' => $jenisLokasi,
-                'keterangan' => $keterangan,
-            ]);
+            $barang = null;
+            if (!empty($idBarang) && is_numeric($idBarang)) {
+                $barang = Barang::find((int) $idBarang);
+            }
+            if (!$barang && !empty($namaAsset)) {
+                $barang = Barang::where('nama_asset', $namaAsset)->first();
+            }
+
+            if ($barang) {
+                $barang->update([
+                    'nama_asset' => !empty($namaAsset) ? $namaAsset : $barang->nama_asset,
+                    'satuan' => !empty($satuan) ? $satuan : $barang->satuan,
+                    'jenis_lokasi' => $jenisLokasi ?: $barang->jenis_lokasi,
+                    'lokasi' => $jenisLokasi ?: $barang->lokasi,
+                    'keterangan' => $keterangan !== null ? $keterangan : $barang->keterangan,
+                ]);
+            } else {
+                $attributes = [
+                    'nama_asset' => !empty($namaAsset) ? $namaAsset : "Asset #{$idBarang}",
+                    'satuan' => !empty($satuan) ? $satuan : 'Unit',
+                    'jenis_lokasi' => $jenisLokasi,
+                    'lokasi' => $jenisLokasi,
+                    'keterangan' => $keterangan,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+                if (!empty($idBarang) && is_numeric($idBarang)) {
+                    $attributes['id'] = (int) $idBarang;
+                    DB::table('barang')->insert($attributes);
+                } else {
+                    Barang::create($attributes);
+                }
+            }
 
             $imported++;
         }
@@ -269,26 +338,37 @@ class InventarisController extends Controller
     }
 
     /* =========================================================================
-     * 2. PEMBELIAN TAB (DYNAMIC YEAR & UNIFIED FILTER)
+     * 2. PEMBELIAN TAB (GUDANG & KANTOR UNIFIED)
      * ========================================================================= */
     public function pembelianIndex(Request $request)
     {
         $search = $request->query('search');
-        $selectedYear = $request->query('year', 'all');
+        $selectedYear = $request->query('year');
         $jenisLokasiFilter = $request->query('jenis_lokasi');
         $lokasiSpesifikFilter = $request->query('lokasi_spesifik');
 
-        $availableYears = Pembelian::selectRaw('YEAR(tanggal_pembelian) as year')
+        if (!$selectedYear) {
+            $selectedYear = 'all';
+        }
+
+
+        $pembelianYearQuery = Pembelian::query();
+        $this->applyJenisLokasiFilter($pembelianYearQuery, $jenisLokasiFilter, 'barang');
+        $pembelianYears = $pembelianYearQuery
+            ->selectRaw('YEAR(tanggal_pembelian) as yr')
             ->whereNotNull('tanggal_pembelian')
-            ->distinct()
-            ->pluck('year')
-            ->map(fn($y) => (int)$y)
-            ->filter(fn($y) => $y > 0)
-            ->toArray();
+            ->pluck('yr')->map(fn($y) => (int)$y)->toArray();
+
+        $soYearQuery = StockOpname::query();
+        $this->applyJenisLokasiFilter($soYearQuery, $jenisLokasiFilter, 'barang');
+        $soYears = $soYearQuery
+            ->selectRaw('YEAR(tanggal_stock_opname) as yr')
+            ->whereNotNull('tanggal_stock_opname')
+            ->pluck('yr')->map(fn($y) => (int)$y)->toArray();
 
         $currentYear = (int) date('Y');
-        $defaultYears = [2017, 2018, 2020, 2021, 2023, 2024, 2025, $currentYear];
-        $allYears = array_values(array_unique(array_merge($defaultYears, $availableYears)));
+        $defaultYears = [2017, 2018, 2020, 2021, 2022, 2023, 2024, 2025, 2026, $currentYear];
+        $allYears = array_values(array_unique(array_merge($defaultYears, $pembelianYears, $soYears)));
         sort($allYears);
 
         $query = Pembelian::with('barang');
@@ -484,7 +564,12 @@ class InventarisController extends Controller
                 }
             }
 
-            if ($namaAsset && in_array(strtolower($namaAsset), ['nama_asset', 'nama asset', 'nama barang', 'id_barang', 'id_pembelian'], true)) {
+            if (($namaAsset && in_array(strtolower($namaAsset), ['nama_asset', 'nama asset', 'nama barang', 'id_barang', 'id_pembelian'], true)) ||
+                ($idBarang && !is_numeric($idBarang) && in_array(strtolower($idBarang), ['id_barang', 'id_pembelian', 'id'], true))) {
+                continue;
+            }
+
+            if (empty($idBarang) && empty($namaAsset)) {
                 continue;
             }
 
@@ -492,13 +577,27 @@ class InventarisController extends Controller
             $tanggal = $this->parseDateString($tanggalRaw);
             $jumlah = max(1, (int) $jumlahRaw);
 
-            Pembelian::create([
+            $pembelianAttr = [
                 'barang_id' => $barang->id,
                 'tanggal_pembelian' => $tanggal,
                 'jumlah' => $jumlah,
                 'lokasi_spesifik' => $lokasiSpesifik,
                 'keterangan' => $keterangan,
-            ]);
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            if (!empty($idPembelian) && is_numeric($idPembelian)) {
+                $pembelian = Pembelian::find((int) $idPembelian);
+                if ($pembelian) {
+                    $pembelian->update($pembelianAttr);
+                } else {
+                    $pembelianAttr['id'] = (int) $idPembelian;
+                    DB::table('pembelian')->insert($pembelianAttr);
+                }
+            } else {
+                Pembelian::create($pembelianAttr);
+            }
 
             $imported++;
         }
@@ -786,11 +885,12 @@ class InventarisController extends Controller
         }
 
         $headerMap = $csvData['headerMap'];
-        $hasHeader = isset($headerMap['idstockopname']) || isset($headerMap['idbarang']) || isset($headerMap['namaasset']) || isset($headerMap['nama']) || isset($headerMap['barang']) || isset($headerMap['tanggalstockopname']) || isset($headerMap['tanggal']);
+        $hasHeader = isset($headerMap['idstockopname']) || isset($headerMap['idbarang']) || isset($headerMap['namaasset']) || isset($headerMap['namabarang']) || isset($headerMap['nama']) || isset($headerMap['barang']) || isset($headerMap['tanggalstockopname']) || isset($headerMap['tanggal']);
         $rows = $csvData['rows'];
 
         $imported = 0;
         foreach ($rows as $data) {
+            $idStockOpname = null;
             $idBarang = null;
             $namaAsset = null;
             $tanggalRaw = null;
@@ -801,7 +901,12 @@ class InventarisController extends Controller
             $keterangan = null;
 
             if ($hasHeader) {
-                if (isset($headerMap['idbarang']) && isset($data[$headerMap['idbarang']])) $idBarang = trim($data[$headerMap['idbarang']]);
+                if (isset($headerMap['idstockopname']) && isset($data[$headerMap['idstockopname']])) {
+                    $idStockOpname = trim($data[$headerMap['idstockopname']]);
+                }
+                if (isset($headerMap['idbarang']) && isset($data[$headerMap['idbarang']])) {
+                    $idBarang = trim($data[$headerMap['idbarang']]);
+                }
 
                 foreach (['namaasset', 'namabarang', 'nama', 'barang'] as $k) {
                     if (isset($headerMap[$k]) && isset($data[$headerMap[$k]])) {
@@ -852,15 +957,29 @@ class InventarisController extends Controller
                     $keterangan = trim($data[$headerMap['keterangan']]);
                 }
             } else {
-                if (isset($data[0])) $namaAsset = trim($data[0]);
-                if (isset($data[1])) $tanggalRaw = trim($data[1]);
-                if (isset($data[2])) $lokasiSpesifik = trim($data[2]);
-                if (isset($data[3])) $jumlahBaik = (int) trim($data[3]);
-                if (isset($data[4])) $jumlahRusak = (int) trim($data[4]);
-                if (isset($data[5])) $keterangan = trim($data[5]);
+                if (count($data) >= 4 && is_numeric(trim($data[0])) && is_numeric(trim($data[1]))) {
+                    $idStockOpname = trim($data[0]);
+                    $idBarang = trim($data[1]);
+                    $tanggalRaw = trim($data[2]);
+                    $jumlahBaik = (int) trim($data[3] ?? 0);
+                    $jumlahRusak = (int) trim($data[4] ?? 0);
+                    $keterangan = isset($data[6]) ? trim($data[6]) : (isset($data[5]) && !is_numeric(trim($data[5])) ? trim($data[5]) : null);
+                } else {
+                    if (isset($data[0])) $namaAsset = trim($data[0]);
+                    if (isset($data[1])) $tanggalRaw = trim($data[1]);
+                    if (isset($data[2])) $lokasiSpesifik = trim($data[2]);
+                    if (isset($data[3])) $jumlahBaik = (int) trim($data[3]);
+                    if (isset($data[4])) $jumlahRusak = (int) trim($data[4]);
+                    if (isset($data[5])) $keterangan = trim($data[5]);
+                }
             }
 
-            if ($namaAsset && in_array(strtolower($namaAsset), ['nama_asset', 'nama asset', 'nama barang', 'id_barang', 'id_stock_opname'], true)) {
+            if (($namaAsset && in_array(strtolower($namaAsset), ['nama_asset', 'nama asset', 'nama barang', 'id_barang', 'id_stock_opname'], true)) ||
+                ($idBarang && !is_numeric($idBarang) && in_array(strtolower($idBarang), ['id_barang', 'id_stock_opname', 'id'], true))) {
+                continue;
+            }
+
+            if (empty($idBarang) && empty($namaAsset)) {
                 continue;
             }
 
@@ -870,7 +989,7 @@ class InventarisController extends Controller
             $baik = max(0, $jumlahBaik);
             $rusak = max(0, $jumlahRusak);
 
-            StockOpname::create([
+            $soAttr = [
                 'barang_id' => $barang->id,
                 'tanggal_stock_opname' => $tanggal,
                 'status' => 'Selesai',
@@ -880,7 +999,21 @@ class InventarisController extends Controller
                 'jumlah_rusak' => $rusak,
                 'grand_total' => $baik + $rusak,
                 'keterangan' => $keterangan,
-            ]);
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            if (!empty($idStockOpname) && is_numeric($idStockOpname)) {
+                $so = StockOpname::find((int) $idStockOpname);
+                if ($so) {
+                    $so->update($soAttr);
+                } else {
+                    $soAttr['id'] = (int) $idStockOpname;
+                    DB::table('stock_opname')->insert($soAttr);
+                }
+            } else {
+                StockOpname::create($soAttr);
+            }
 
             $imported++;
         }

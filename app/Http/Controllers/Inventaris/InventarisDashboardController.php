@@ -95,21 +95,46 @@ class InventarisDashboardController extends Controller
         ];
 
         // 3. CHART 2 DATA: Room Breakdown (Kantor Rooms)
-        $roomSummary = StockOpname::whereHas('barang', function($q) {
+        $kantorBarang = Barang::where(function($q) {
             $q->where('jenis_lokasi', 'Kantor')->orWhere('lokasi', 'Kantor');
-        })
-        ->whereYear('tanggal_stock_opname', '<=', $selectedYear)
-        ->whereNotNull('lokasi_spesifik')
-        ->where('lokasi_spesifik', '!=', '')
-        ->select(
-            'lokasi_spesifik',
-            DB::raw('SUM(jumlah_baik) as total_baik'),
-            DB::raw('SUM(jumlah_rusak) as total_rusak'),
-            DB::raw('SUM(grand_total) as total_aset')
-        )
-        ->groupBy('lokasi_spesifik')
-        ->orderByDesc('total_aset')
-        ->get();
+        })->get();
+
+        $roomMap = [];
+        foreach ($kantorBarang as $b) {
+            $latestSO = StockOpname::where('barang_id', $b->id)
+                ->whereYear('tanggal_stock_opname', '<=', $selectedYear)
+                ->orderByDesc('tanggal_stock_opname')
+                ->first();
+
+            $totalPembelian = Pembelian::where('barang_id', $b->id)
+                ->whereYear('tanggal_pembelian', '<=', $selectedYear)
+                ->sum('jumlah');
+
+            $stok = $latestSO ? $latestSO->grand_total : $totalPembelian;
+            $baik = $latestSO ? $latestSO->jumlah_baik : $stok;
+            $rusak = $latestSO ? $latestSO->jumlah_rusak : 0;
+
+            $roomName = ($latestSO && !empty(trim($latestSO->lokasi_spesifik)))
+                ? trim($latestSO->lokasi_spesifik)
+                : (($b->lokasi && !in_array($b->lokasi, ['Kantor', 'Gudang'])) ? $b->lokasi : 'Kantor (Umum)');
+
+            if (!isset($roomMap[$roomName])) {
+                $roomMap[$roomName] = (object) [
+                    'lokasi_spesifik' => $roomName,
+                    'total_baik' => 0,
+                    'total_rusak' => 0,
+                    'total_aset' => 0,
+                ];
+            }
+
+            $roomMap[$roomName]->total_baik += $baik;
+            $roomMap[$roomName]->total_rusak += $rusak;
+            $roomMap[$roomName]->total_aset += $stok;
+        }
+
+        $roomSummaryList = array_values($roomMap);
+        usort($roomSummaryList, fn($a, $b) => $b->total_aset <=> $a->total_aset);
+        $roomSummary = collect($roomSummaryList);
 
         $chartRoom = [
             'rooms' => $roomSummary->pluck('lokasi_spesifik')->toArray(),

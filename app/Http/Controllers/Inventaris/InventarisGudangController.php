@@ -91,18 +91,7 @@ class InventarisGudangController extends Controller
             ->with('success', 'Data aset barang berhasil dihapus!');
     }
 
-    public function barangTemplate()
-    {
-        $headers = ['nama_asset', 'satuan', 'keterangan'];
-        $sampleRows = [
-            ['Semen Padang 50kg', 'Sak', 'Pengadaan stok gudang'],
-            ['Cat Tembok Putih 25kg', 'Pail', 'Stok renovasi gedung'],
-        ];
-
-        return ExcelExporter::download('Template_Import_Barang_Gudang.xlsx', $headers, $sampleRows, 'Template Barang Gudang');
-    }
-
-    public function barangImport(Request $request)
+    private function parseCsvFile(Request $request): array
     {
         $request->validate([
             'file' => 'required|file|mimes:csv,txt',
@@ -111,36 +100,200 @@ class InventarisGudangController extends Controller
         $file = $request->file('file');
         $handle = fopen($file->getRealPath(), 'r');
         if (!$handle) {
+            return [];
+        }
+
+        $rawHeaderLine = fgets($handle);
+        $rawHeaderLine = str_replace("\xEF\xBB\xBF", '', $rawHeaderLine);
+        rewind($handle);
+
+        $delimiter = (strpos($rawHeaderLine, ';') !== false) ? ';' : ',';
+
+        $rawHeader = fgetcsv($handle, 1000, $delimiter);
+        $headerMap = [];
+        if ($rawHeader) {
+            foreach ($rawHeader as $idx => $colName) {
+                $cleanName = strtolower(trim(str_replace(["\xEF\xBB\xBF", ' ', '_', '-'], '', $colName)));
+                $headerMap[$cleanName] = $idx;
+            }
+        }
+
+        $rows = [];
+        while (($data = fgetcsv($handle, 1000, $delimiter)) !== false) {
+            if (!empty($data) && count($data) >= 1) {
+                $rows[] = $data;
+            }
+        }
+        fclose($handle);
+
+        return [
+            'headerMap' => $headerMap,
+            'rows' => $rows,
+        ];
+    }
+
+    private function parseDateString(?string $tanggalRaw): string
+    {
+        if (empty($tanggalRaw)) {
+            return date('Y-m-d');
+        }
+
+        if (preg_match('/^\d{4}$/', $tanggalRaw)) {
+            return $tanggalRaw . '-01-01';
+        }
+
+        try {
+            return Carbon::parse($tanggalRaw)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return date('Y-m-d');
+        }
+    }
+
+    private function findOrCreateBarang(?string $idBarang, ?string $namaAsset): Barang
+    {
+        $barang = null;
+        if (!empty($idBarang) && is_numeric($idBarang)) {
+            $barang = Barang::find((int) $idBarang);
+        }
+
+        if (!$barang && !empty($namaAsset)) {
+            if (is_numeric($namaAsset)) {
+                $barang = Barang::find((int) $namaAsset);
+            }
+            if (!$barang) {
+                $barang = Barang::where(function($q) {
+                    $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
+                })->where('nama_asset', $namaAsset)->first();
+            }
+        }
+
+        if (!$barang) {
+            $finalNama = !empty($namaAsset) ? $namaAsset : (!empty($idBarang) ? "Asset #{$idBarang}" : "Asset Baru");
+            $attributes = [
+                'nama_asset' => $finalNama,
+                'satuan' => 'Unit',
+                'jenis_lokasi' => $this->lokasi,
+                'lokasi' => $this->lokasi,
+            ];
+            if (!empty($idBarang) && is_numeric($idBarang)) {
+                $attributes['id'] = (int) $idBarang;
+                DB::table('barang')->insert($attributes);
+                $barang = Barang::find((int) $idBarang);
+            } else {
+                $barang = Barang::create($attributes);
+            }
+        }
+
+        return $barang;
+    }
+
+    public function barangTemplate()
+    {
+        $headers = ['id_barang', 'nama_barang', 'satuan', 'keterangan'];
+        $sampleRows = [
+            ['13', 'Topi Jepang', 'Unit', 'Stok gudang'],
+            ['18', 'Egrek + Tangkai', 'Unit', 'ada 7 set di SAM 2'],
+        ];
+
+        return ExcelExporter::download('Template_Import_Barang_Gudang.xlsx', $headers, $sampleRows, 'Template Barang Gudang');
+    }
+
+    public function barangImport(Request $request)
+    {
+        $csvData = $this->parseCsvFile($request);
+        if (empty($csvData)) {
             return redirect()->back()->withErrors(['file' => 'Gagal membaca file import.']);
         }
 
-        $header = fgetcsv($handle, 1000, ',');
-        if (!$header || count($header) < 2) {
-            rewind($handle);
-            $header = fgetcsv($handle, 1000, ';');
-        }
+        $headerMap = $csvData['headerMap'];
+        $hasHeader = isset($headerMap['idbarang']) || isset($headerMap['id']) || isset($headerMap['namaasset']) || isset($headerMap['namabarang']) || isset($headerMap['nama']) || isset($headerMap['barang']);
+        $rows = $csvData['rows'];
 
         $imported = 0;
-        while (($data = fgetcsv($handle, 1000, ',')) !== false || ($data = fgetcsv($handle, 1000, ';')) !== false) {
-            if (empty($data) || count($data) < 1 || empty(trim($data[0]))) {
+        foreach ($rows as $data) {
+            $idBarang = null;
+            $namaAsset = null;
+            $satuan = 'Unit';
+            $keterangan = null;
+
+            if ($hasHeader) {
+                if (isset($headerMap['idbarang']) && isset($data[$headerMap['idbarang']])) {
+                    $idBarang = trim($data[$headerMap['idbarang']]);
+                } elseif (isset($headerMap['id']) && isset($data[$headerMap['id']])) {
+                    $idBarang = trim($data[$headerMap['id']]);
+                }
+
+                foreach (['namaasset', 'namabarang', 'nama', 'barang'] as $k) {
+                    if (isset($headerMap[$k]) && isset($data[$headerMap[$k]])) {
+                        $namaAsset = trim($data[$headerMap[$k]]);
+                        break;
+                    }
+                }
+
+                if (isset($headerMap['satuan']) && isset($data[$headerMap['satuan']])) {
+                    $satuan = trim($data[$headerMap['satuan']]);
+                }
+
+                if (isset($headerMap['keterangan']) && isset($data[$headerMap['keterangan']])) {
+                    $keterangan = trim($data[$headerMap['keterangan']]);
+                }
+            } else {
+                $col0 = trim($data[0] ?? '');
+                if (is_numeric($col0) && isset($data[1])) {
+                    $idBarang = $col0;
+                    $namaAsset = trim($data[1]);
+                    $satuan = isset($data[2]) && !empty(trim($data[2])) ? trim($data[2]) : 'Unit';
+                    $keterangan = isset($data[3]) ? trim($data[3]) : null;
+                } else {
+                    $namaAsset = $col0;
+                    $satuan = isset($data[1]) && !empty(trim($data[1])) ? trim($data[1]) : 'Unit';
+                    $keterangan = isset($data[2]) ? trim($data[2]) : null;
+                }
+            }
+
+            if (($namaAsset && in_array(strtolower($namaAsset), ['nama_asset', 'nama asset', 'nama barang', 'nama_barang', 'id_barang', 'id'], true)) ||
+                ($idBarang && !is_numeric($idBarang) && in_array(strtolower($idBarang), ['id_barang', 'id', 'id_pembelian'], true))) {
                 continue;
             }
 
-            $namaAsset = trim($data[0]);
-            $satuan = isset($data[1]) && !empty(trim($data[1])) ? trim($data[1]) : 'Unit';
-            $keterangan = isset($data[2]) ? trim($data[2]) : null;
+            if (empty($namaAsset) && empty($idBarang)) {
+                continue;
+            }
 
-            Barang::create([
-                'nama_asset' => $namaAsset,
-                'satuan' => $satuan,
-                'jenis_lokasi' => $this->lokasi,
-                'lokasi' => $this->lokasi,
-                'keterangan' => $keterangan,
-            ]);
+            $barang = null;
+            if (!empty($idBarang) && is_numeric($idBarang)) {
+                $barang = Barang::find((int) $idBarang);
+            }
+            if (!$barang && !empty($namaAsset)) {
+                $barang = Barang::where(function($q) {
+                    $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
+                })->where('nama_asset', $namaAsset)->first();
+            }
+
+            if ($barang) {
+                $barang->update([
+                    'nama_asset' => !empty($namaAsset) ? $namaAsset : $barang->nama_asset,
+                    'satuan' => !empty($satuan) ? $satuan : $barang->satuan,
+                    'jenis_lokasi' => $this->lokasi,
+                    'lokasi' => $this->lokasi,
+                    'keterangan' => $keterangan !== null ? $keterangan : $barang->keterangan,
+                ]);
+            } else {
+                $attributes = [
+                    'nama_asset' => !empty($namaAsset) ? $namaAsset : "Asset #{$idBarang}",
+                    'satuan' => !empty($satuan) ? $satuan : 'Unit',
+                    'jenis_lokasi' => $this->lokasi,
+                    'lokasi' => $this->lokasi,
+                    'keterangan' => $keterangan,
+                ];
+                if (!empty($idBarang) && is_numeric($idBarang)) {
+                    $attributes['id'] = (int) $idBarang;
+                }
+                Barang::create($attributes);
+            }
 
             $imported++;
         }
-        fclose($handle);
 
         return redirect()->route('administrasi.inventaris.gudang.barang')
             ->with('success', "Berhasil mengimpor {$imported} data barang untuk Gudang!");
@@ -155,18 +308,23 @@ class InventarisGudangController extends Controller
         $selectedYear = $request->query('year');
         $lokasiSpesifikFilter = $request->query('lokasi_spesifik');
 
-        $availableYears = Pembelian::whereHas('barang', function ($q) {
+        $pembelianYears = Pembelian::whereHas('barang', function ($q) {
             $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
         })
-        ->selectRaw('YEAR(tanggal_pembelian) as year')
-        ->distinct()
-        ->orderByDesc('year')
-        ->pluck('year')
-        ->toArray();
+        ->selectRaw('YEAR(tanggal_pembelian) as yr')
+        ->whereNotNull('tanggal_pembelian')
+        ->pluck('yr')->map(fn($y) => (int)$y)->toArray();
+
+        $soYears = StockOpname::whereHas('barang', function ($q) {
+            $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
+        })
+        ->selectRaw('YEAR(tanggal_stock_opname) as yr')
+        ->whereNotNull('tanggal_stock_opname')
+        ->pluck('yr')->map(fn($y) => (int)$y)->toArray();
 
         $currentYear = (int) date('Y');
-        $defaultYears = [2020, 2021, 2022, 2023, 2024, 2025, $currentYear];
-        $allYears = array_values(array_unique(array_merge($defaultYears, $availableYears)));
+        $defaultYears = [2017, 2018, 2020, 2021, 2022, 2023, 2024, 2025, 2026, $currentYear];
+        $allYears = array_values(array_unique(array_merge($defaultYears, $pembelianYears, $soYears)));
         sort($allYears);
 
         if (!$selectedYear) {
@@ -268,9 +426,10 @@ class InventarisGudangController extends Controller
 
     public function pembelianTemplate()
     {
-        $headers = ['nama_asset', 'tanggal_pembelian', 'jumlah', 'lokasi_spesifik', 'keterangan'];
+        $headers = ['id_pembelian', 'id_barang', 'nama_barang', 'tahun_pembelian', 'jumlah', 'lokasi_spesifik', 'keterangan'];
         $sampleRows = [
-            ['Semen Padang 50kg', date('Y-m-d'), '10', '', 'Pembelian tahap 1'],
+            ['1', '1', 'Semen Padang 50kg', '2023', '15', '', 'Pembelian tahap 1'],
+            ['2', '4', 'Cat Tembok Putih 25kg', '2024', '5', '', 'Stok renovasi gedung'],
         ];
 
         return ExcelExporter::download('Template_Import_Pembelian_Gudang.xlsx', $headers, $sampleRows, 'Template Pembelian Gudang');
@@ -278,58 +437,115 @@ class InventarisGudangController extends Controller
 
     public function pembelianImport(Request $request)
     {
-        $request->validate([
-            'file' => 'required|file|mimes:csv,txt',
-        ]);
-
-        $file = $request->file('file');
-        $handle = fopen($file->getRealPath(), 'r');
-        if (!$handle) {
+        $csvData = $this->parseCsvFile($request);
+        if (empty($csvData)) {
             return redirect()->back()->withErrors(['file' => 'Gagal membaca file import.']);
         }
 
-        $header = fgetcsv($handle, 1000, ',');
-        if (!$header || count($header) < 2) {
-            rewind($handle);
-            $header = fgetcsv($handle, 1000, ';');
-        }
+        $headerMap = $csvData['headerMap'];
+        $hasHeader = isset($headerMap['idpembelian']) || isset($headerMap['idbarang']) || isset($headerMap['namaasset']) || isset($headerMap['namabarang']) || isset($headerMap['nama']) || isset($headerMap['barang']) || isset($headerMap['tanggalpembelian']) || isset($headerMap['tanggal']) || isset($headerMap['tahunpembelian']) || isset($headerMap['tahun']);
+        $rows = $csvData['rows'];
 
         $imported = 0;
-        while (($data = fgetcsv($handle, 1000, ',')) !== false || ($data = fgetcsv($handle, 1000, ';')) !== false) {
-            if (empty($data) || count($data) < 2 || empty(trim($data[0]))) {
+        foreach ($rows as $data) {
+            $idPembelian = null;
+            $idBarang = null;
+            $namaAsset = null;
+            $tanggalRaw = null;
+            $jumlahRaw = null;
+            $lokasiSpesifik = null;
+            $keterangan = null;
+
+            if ($hasHeader) {
+                if (isset($headerMap['idpembelian']) && isset($data[$headerMap['idpembelian']])) {
+                    $idPembelian = trim($data[$headerMap['idpembelian']]);
+                }
+                if (isset($headerMap['idbarang']) && isset($data[$headerMap['idbarang']])) {
+                    $idBarang = trim($data[$headerMap['idbarang']]);
+                }
+
+                foreach (['namaasset', 'namabarang', 'nama', 'barang'] as $k) {
+                    if (isset($headerMap[$k]) && isset($data[$headerMap[$k]])) {
+                        $namaAsset = trim($data[$headerMap[$k]]);
+                        break;
+                    }
+                }
+
+                foreach (['tanggalpembelian', 'tanggal', 'tahunpembelian', 'tahun'] as $k) {
+                    if (isset($headerMap[$k]) && isset($data[$headerMap[$k]])) {
+                        $tanggalRaw = trim($data[$headerMap[$k]]);
+                        break;
+                    }
+                }
+
+                foreach (['jumlah', 'qty', 'jumlahpembelian'] as $k) {
+                    if (isset($headerMap[$k]) && isset($data[$headerMap[$k]])) {
+                        $jumlahRaw = trim($data[$headerMap[$k]]);
+                        break;
+                    }
+                }
+
+                foreach (['lokasispesifik', 'ruangan'] as $k) {
+                    if (isset($headerMap[$k]) && isset($data[$headerMap[$k]])) {
+                        $lokasiSpesifik = trim($data[$headerMap[$k]]);
+                        break;
+                    }
+                }
+
+                if (isset($headerMap['keterangan']) && isset($data[$headerMap['keterangan']])) {
+                    $keterangan = trim($data[$headerMap['keterangan']]);
+                }
+            } else {
+                if (count($data) >= 4 && is_numeric(trim($data[0])) && is_numeric(trim($data[1]))) {
+                    $idPembelian = trim($data[0]);
+                    $idBarang = trim($data[1]);
+                    $tanggalRaw = trim($data[2]);
+                    $jumlahRaw = trim($data[3]);
+                    $keterangan = isset($data[4]) ? trim($data[4]) : null;
+                } else {
+                    if (isset($data[0])) $namaAsset = trim($data[0]);
+                    if (isset($data[1])) $tanggalRaw = trim($data[1]);
+                    if (isset($data[2])) $jumlahRaw = trim($data[2]);
+                    if (isset($data[3])) $lokasiSpesifik = trim($data[3]);
+                    if (isset($data[4])) $keterangan = trim($data[4]);
+                }
+            }
+
+            if (($namaAsset && in_array(strtolower($namaAsset), ['nama_asset', 'nama asset', 'nama barang', 'id_barang', 'id_pembelian'], true)) ||
+                ($idBarang && !is_numeric($idBarang) && in_array(strtolower($idBarang), ['id_barang', 'id_pembelian', 'id'], true))) {
                 continue;
             }
 
-            $namaAsset = trim($data[0]);
-            $tanggal = !empty(trim($data[1])) ? trim($data[1]) : date('Y-m-d');
-            $jumlah = isset($data[2]) ? (int) trim($data[2]) : 1;
-            $lokasiSpesifik = isset($data[3]) ? trim($data[3]) : null;
-            $keterangan = isset($data[4]) ? trim($data[4]) : null;
-
-            $barang = Barang::where(function($q) {
-                $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
-            })->where('nama_asset', $namaAsset)->first();
-
-            if (!$barang) {
-                $barang = Barang::create([
-                    'nama_asset' => $namaAsset,
-                    'satuan' => 'Unit',
-                    'jenis_lokasi' => $this->lokasi,
-                    'lokasi' => $this->lokasi,
-                ]);
+            if (empty($idBarang) && empty($namaAsset)) {
+                continue;
             }
 
-            Pembelian::create([
+            $barang = $this->findOrCreateBarang($idBarang, $namaAsset);
+            $tanggal = $this->parseDateString($tanggalRaw);
+            $jumlah = max(1, (int) $jumlahRaw);
+
+            $pembelianAttr = [
                 'barang_id' => $barang->id,
                 'tanggal_pembelian' => $tanggal,
-                'jumlah' => max(1, $jumlah),
+                'jumlah' => $jumlah,
                 'lokasi_spesifik' => $lokasiSpesifik,
                 'keterangan' => $keterangan,
-            ]);
+            ];
+
+            if (!empty($idPembelian) && is_numeric($idPembelian)) {
+                $pembelian = Pembelian::find((int) $idPembelian);
+                if ($pembelian) {
+                    $pembelian->update($pembelianAttr);
+                } else {
+                    $pembelianAttr['id'] = (int) $idPembelian;
+                    Pembelian::create($pembelianAttr);
+                }
+            } else {
+                Pembelian::create($pembelianAttr);
+            }
 
             $imported++;
         }
-        fclose($handle);
 
         return redirect()->route('administrasi.inventaris.gudang.pembelian')
             ->with('success', "Berhasil mengimpor {$imported} data pembelian untuk Gudang!");
@@ -591,6 +807,17 @@ class InventarisGudangController extends Controller
 
         $filename = "Stock_Opname_Gudang_{$date}.xlsx";
         return ExcelExporter::download($filename, $headers, $dataRows, 'Stock Opname Gudang');
+    }
+
+    public function stockOpnameTemplate()
+    {
+        $headers = ['id_stock_opname', 'id_barang', 'nama_barang', 'tanggal_stock_opname', 'lokasi_spesifik', 'jumlah_baik', 'jumlah_rusak', 'keterangan'];
+        $sampleRows = [
+            ['1', '13', 'Topi Jepang', date('Y-m-d'), 'Gudang Utama', '100', '0', 'Stok utuh'],
+            ['2', '18', 'Egrek + Tangkai', date('Y-m-d'), 'SAM 2', '7', '0', '7 set di SAM 2'],
+        ];
+
+        return ExcelExporter::download('Template_Import_Stock_Opname_Gudang.xlsx', $headers, $sampleRows, 'Template Stock Opname Gudang');
     }
 
     public function barangDestroyAll()
