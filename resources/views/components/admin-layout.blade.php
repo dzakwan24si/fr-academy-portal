@@ -248,6 +248,7 @@
 
 
 
+                @canany(['manage_articles', 'manage_tv_display', 'manage_events'])
                 <!-- SECTION: Konten & Media -->
                 <details class="group" {{ request()->routeIs('admin.artikel.*', 'admin.tv.*', 'admin.events.*') ? 'open' : '' }}>
                     <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-wider text-gray-400 hover:bg-gray-100 [&::-webkit-details-marker]:hidden transition-colors">
@@ -277,9 +278,10 @@
                         @endcan
                     </div>
                 </details>
+                @endcanany
                 
                 <!-- SECTION: Sistem & Pengaturan -->
-                <details class="group" {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.profile.*') ? 'open' : '' }}>
+                <details class="group" {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.profile.*', 'administrasi.activity-logs.*') ? 'open' : '' }}>
                     <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-wider text-gray-400 hover:bg-gray-100 [&::-webkit-details-marker]:hidden transition-colors">
                         <span>Sistem & Pengaturan</span>
                         <svg class="h-4 w-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -298,6 +300,11 @@
                             Manajemen Role
                         </a>
                         @endcan
+
+                        <a href="{{ route('administrasi.activity-logs.index') }}" class="{{ request()->routeIs('administrasi.activity-logs.*') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">
+                            <i data-lucide="history" class="w-5 h-5 mr-3 {{ request()->routeIs('administrasi.activity-logs.*') ? 'text-white' : 'text-gray-400' }}"></i>
+                            Histori Aktivitas
+                        </a>
 
                         <a href="{{ route('admin.profile.edit') }}" class="{{ request()->routeIs('admin.profile.*') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">
                             <svg class="w-5 h-5 mr-3 {{ request()->routeIs('admin.profile.*') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>

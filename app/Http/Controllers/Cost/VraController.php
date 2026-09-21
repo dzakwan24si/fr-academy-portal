@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cost;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Cost\Vra;
 use App\Traits\HandlesCsvImports;
 use Illuminate\Http\Request;
@@ -616,6 +617,13 @@ class VraController extends Controller
         }
         $msg .= ".";
 
+        ActivityLog::log(
+            'Import',
+            'VRA',
+            "Mengimport data VRA dari file " . $file->getClientOriginalName() . " ({$insertedCount} baru, {$updatedCount} diperbarui)",
+            ['filename' => $file->getClientOriginalName(), 'inserted' => $insertedCount, 'updated' => $updatedCount]
+        );
+
         return redirect()->route('administrasi.vra.index', [
             'year' => $fallbackYear,
             'period' => $request->get('period', 'overall')
@@ -645,6 +653,12 @@ class VraController extends Controller
             $deleted = $query->delete();
             $msg = $year ? "Seluruh data VRA tahun {$year} ({$deleted} data) berhasil dihapus." : "Seluruh data VRA ({$deleted} data) berhasil dihapus.";
         }
+
+        ActivityLog::log('Hapus', 'VRA', $msg, [
+            'count'  => $deleted,
+            'year'   => $year,
+            'period' => $period,
+        ]);
 
         return redirect()->route('administrasi.vra.index', [
             'year' => $year ?: 2026,

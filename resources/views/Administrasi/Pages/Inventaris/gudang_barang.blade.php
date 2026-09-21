@@ -106,6 +106,11 @@
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 <span>Tambah Barang</span>
             </button>
+            <button type="button" onclick="document.getElementById('modalDeleteAllBarang').classList.remove('hidden')"
+                    class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 text-xs font-semibold rounded-xl transition-all shadow-sm">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                <span>Hapus Semua Data</span>
+            </button>
         </div>
     </form>
 </div>
@@ -349,7 +354,7 @@
     </div>
 </div>
 
-</x-admin-layout>
+
 
 @push('scripts')
 <script>
@@ -364,3 +369,5 @@
     }
 </script>
 @endpush
+
+</x-admin-layout>

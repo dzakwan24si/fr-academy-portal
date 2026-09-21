@@ -2,10 +2,15 @@
 
 namespace App\Models\Program;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class TrainingRecord extends Model
 {
+    use LogsActivity;
+
+    protected static $logModuleName = 'Training Record';
+
     private static array $activityCache = [];
 
     protected $guarded = [];

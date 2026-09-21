@@ -42,6 +42,11 @@
                 <span>Import CSV</span>
             </button>
 
+            <button type="button" onclick="openProgressMateriModal()" class="inline-flex items-center gap-1.5 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-900 px-3.5 py-2 text-xs font-bold transition-all shadow-2xs">
+                <i data-lucide="edit-3" class="w-3.5 h-3.5 text-amber-700"></i>
+                <span>Progres Materi: {{ $progressMateri }}%</span>
+            </button>
+
             <button type="button" onclick="openAddModal()" class="inline-flex items-center gap-1.5 rounded-xl bg-[#4B6A34] hover:bg-[#3d562a] text-white px-4 py-2 text-xs font-bold transition-all shadow-sm">
                 <i data-lucide="plus" class="w-4 h-4"></i>
                 <span>Tambah Talent</span>
@@ -690,5 +695,56 @@
     function closeDeleteAllModal() {
         document.getElementById('modalDeleteAll').classList.add('hidden');
     }
+
+    function openProgressMateriModal() {
+        document.getElementById('modalProgressMateri').classList.remove('hidden');
+    }
+    function closeProgressMateriModal() {
+        document.getElementById('modalProgressMateri').classList.add('hidden');
+    }
 </script>
+
+{{-- Modal Edit Progres Materi Talent --}}
+<div id="modalProgressMateri" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0">
+                    <i data-lucide="edit-3" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="font-black text-slate-900 text-base">Edit Progres Materi Talent</h3>
+                    <p class="text-xs text-slate-500">Input persentase manual progres materi talent program</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeProgressMateriModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form action="{{ route('administrasi.monitoring-talent.update-progress-materi') }}" method="POST" class="mt-4 space-y-4">
+            @csrf
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Persentase Progres Materi (%)</label>
+                <div class="relative">
+                    <input type="number" step="0.1" min="0" max="100" name="progress_materi" value="{{ $progressMateri }}" required
+                           class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
+                    <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">%</span>
+                </div>
+                <p class="text-[11px] text-slate-500 mt-1.5">Nilai persentase ini akan disimpan dan ditampilkan pada Dashboard Realisasi & Monitoring Talent.</p>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeProgressMateriModal()" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all">
+                    Batal
+                </button>
+                <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 rounded-xl transition-all shadow-sm flex items-center gap-1.5">
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 </x-admin-layout>

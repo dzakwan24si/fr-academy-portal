@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Administrasi;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Administrasi\Rekrutmen;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -434,7 +435,12 @@ class RekrutmenController extends Controller
      */
     public function destroyAll()
     {
+        $count = Rekrutmen::count();
         Rekrutmen::truncate();
+
+        ActivityLog::log('Hapus', 'Rekrutmen', 'Seluruh data rekrutmen berhasil dikosongkan.', [
+            'count' => $count,
+        ]);
 
         return response()->json([
             'status' => 'success',
@@ -633,6 +639,13 @@ class RekrutmenController extends Controller
             }
 
             DB::commit();
+
+            ActivityLog::log(
+                'Import',
+                'Rekrutmen',
+                "Mengimport " . count($rowsToInsert) . " data rekrutmen dari file " . $file->getClientOriginalName(),
+                ['filename' => $file->getClientOriginalName(), 'count' => count($rowsToInsert), 'mode' => $mode]
+            );
 
             return response()->json([
                 'status' => 'success',

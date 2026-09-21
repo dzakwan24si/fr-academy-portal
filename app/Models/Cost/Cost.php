@@ -2,10 +2,14 @@
 
 namespace App\Models\Cost;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class Cost extends Model
 {
+    use LogsActivity;
+
+    protected static $logModuleName = 'Cost';
     protected $table      = 'costs';
     protected $primaryKey = 'cost_id';
 

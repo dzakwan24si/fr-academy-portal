@@ -15,6 +15,6 @@ class ExampleTest extends TestCase
         $response = $this->get('/');
 
         $response->assertOk();
-        $response->assertViewIs('Administrasi.Pages.Dashboard.dashboard');
+        $response->assertViewIs('welcome');
     }
 }

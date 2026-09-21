@@ -2,10 +2,14 @@
 
 namespace App\Models\Cost;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class Capex extends Model
 {
+    use LogsActivity;
+
+    protected static $logModuleName = 'CAPEX';
     protected $table = 'capex';
     protected $primaryKey = 'capex_id';
 

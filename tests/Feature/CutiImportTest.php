@@ -10,6 +10,7 @@ class CutiImportTest extends TestCase
 {
     public function test_cuti_csv_import_upserts_null_values_as_zero(): void
     {
+        $this->authenticateUser();
         $nik = 'TEST-IMPORT-CUTI';
         $csv = implode("\n", [
             'nik,nama,jabatan,tmk,tahun,hak_cuti,sisa_hak_cuti_carryover,cuti_diambil,jan,feb,mar,apr,mei,jun,jul,agu,sep,okt,nov,des,keterangan',

@@ -12,6 +12,7 @@
         <p class="text-sm text-[#71717A] mt-0.5">Laporan Pengeluaran & Anggaran Bulanan dengan Agregasi Otomatis (VRA, Capex, Rekruit)</p>
     </div>
     <div class="flex flex-wrap items-center gap-2">
+        @can('edit_cost')
         {{-- Sync Auto-Agregasi Button --}}
         <form method="POST" action="{{ route('administrasi.cost.sync', ['year' => $selectedYear, 'month' => $selectedMonth]) }}" class="inline">
             @csrf
@@ -29,6 +30,7 @@
             <i data-lucide="upload" class="w-4 h-4 text-[#4B6A34]"></i>
             <span>Import CSV</span>
         </button>
+        @endcan
 
         {{-- Download Template CSV --}}
         <a href="{{ route('administrasi.cost.template') }}"
@@ -45,6 +47,7 @@
             <span>Export Excel</span>
         </a>
 
+        @can('edit_cost')
         {{-- Hapus Semua Data Button --}}
         <button onclick="openDeleteAllModal()"
                 class="flex items-center gap-2 px-3.5 py-2 bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-semibold rounded-lg hover:bg-red-100 hover:border-red-300 transition-all shadow-sm"
@@ -59,6 +62,7 @@
             <i data-lucide="plus" class="w-4 h-4"></i>
             <span>Tambah Cost</span>
         </button>
+        @endcan
     </div>
 </div>
 
@@ -95,6 +99,7 @@
         </div>
 
         {{-- Tambah Tahun Button --}}
+        @can('edit_cost')
         <div class="shrink-0 flex items-center gap-2">
             <button type="button" onclick="openTambahTahunModal()"
                     class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#4B6A34] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center gap-1.5 transition-colors shadow-2xs">
@@ -102,6 +107,7 @@
                 <span>+ Tambah Tahun</span>
             </button>
         </div>
+        @endcan
     </div>
 
     {{-- Row 2: Month Navigation Tabs + Category Filter & Search --}}
@@ -265,7 +271,9 @@
                     <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider text-right">Budget Tahunan (Rp)</th>
                     <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider text-center">% Realisasi</th>
                     @endif
+                    @can('edit_cost')
                     <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider text-center w-24">Aksi</th>
+                    @endcan
                 </tr>
             </thead>
             <tbody class="divide-y divide-[#F4F4F5]">
@@ -276,7 +284,7 @@
 
                 {{-- ================= CATEGORY HEADER ================= --}}
                 <tr class="bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
-                    <td colspan="{{ $selectedMonth === 'all' ? 8 : 6 }}" class="px-4 py-2.5">
+                    <td colspan="{{ $selectedMonth === 'all' ? (auth()->user()?->can('edit_cost') ? 8 : 7) : (auth()->user()?->can('edit_cost') ? 6 : 5) }}" class="px-4 py-2.5">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-sm bg-[#4B6A34]"></span>
@@ -367,6 +375,7 @@
                     </td>
                     @endif
 
+                    @can('edit_cost')
                     {{-- Aksi --}}
                     <td class="px-4 py-3 text-center">
                         <div class="flex items-center justify-center gap-1">
@@ -382,6 +391,7 @@
                             </button>
                         </div>
                     </td>
+                    @endcan
                 </tr>
                 @endforeach
 
@@ -461,6 +471,7 @@
      MODALS SECTION
 ================================================================ --}}
 
+@can('edit_cost')
 {{-- ---------------- MODAL: IMPORT CSV ---------------- --}}
 <div id="modalImport" class="hidden fixed inset-0 z-50 flex items-center justify-center">
     <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" onclick="closeImportModal()"></div>
@@ -765,7 +776,7 @@
         </div>
     </div>
 </div>
-
+@endcan
 {{-- Modal Tambah Tahun --}}
 <div id="modalTambahTahun" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs hidden p-4">
     <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-[#E5E7EB] animate-in fade-in zoom-in-95 duration-150">
@@ -803,8 +814,6 @@
         </form>
     </div>
 </div>
-
-</x-admin-layout>
 
 @push('scripts')
 <script>
@@ -897,3 +906,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 @endpush
+</x-admin-layout>

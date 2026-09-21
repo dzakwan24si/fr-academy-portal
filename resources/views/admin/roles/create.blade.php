@@ -37,14 +37,32 @@
                             <label class="block text-sm font-medium text-gray-700 mb-3">Default Permissions untuk Role ini</label>
                             <p class="text-xs text-gray-500 mb-4">Setiap user yang ditetapkan sebagai Role ini akan otomatis memiliki hak akses berikut.</p>
                             
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            @php
+                                $permDetails = [
+                                    'access_administrasi' => ['title' => 'Akses Modul Administrasi', 'desc' => 'Akses ke dashboard, program, monitoring, mpp, cuti, rekrutmen & inventaris.'],
+                                    'view_cost'           => ['title' => 'Lihat Modul Cost (Read-Only)', 'desc' => 'Melihat & mengunduh laporan Cost, VRA, CAPEX, & Biaya Rekruit.'],
+                                    'edit_cost'           => ['title' => 'Edit Modul Cost (Full Write)', 'desc' => 'Menambah, mengedit, menghapus, & mengimpor data modul Cost.'],
+                                    'manage_articles'     => ['title' => 'Manajemen Artikel', 'desc' => 'Mengelola artikel & publikasi berita.'],
+                                    'manage_users'        => ['title' => 'Manajemen User', 'desc' => 'Mengelola akun pengguna sistem.'],
+                                    'manage_tv_display'   => ['title' => 'Manajemen TV Display', 'desc' => 'Mengelola playlist & layar TV.'],
+                                    'manage_events'       => ['title' => 'Manajemen Tema Event', 'desc' => 'Mengelola event & banner di homepage.'],
+                                    'manage_roles'        => ['title' => 'Manajemen Role & Akses', 'desc' => 'Mengelola peran & hak akses (permissions).'],
+                                ];
+                            @endphp
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 @forelse($permissions as $permission)
+                                    @php
+                                        $info = $permDetails[$permission->name] ?? ['title' => $permission->name, 'desc' => 'Izin sistem.'];
+                                    @endphp
                                     <label class="relative flex items-start border border-gray-200 rounded-xl p-4 cursor-pointer hover:bg-gray-50 transition-colors">
                                         <div class="flex items-center h-5">
                                             <input type="checkbox" name="permissions[]" value="{{ $permission->name }}" class="focus:ring-[#509c38] h-4 w-4 text-[#509c38] border-gray-300 rounded" {{ (is_array(old('permissions')) && in_array($permission->name, old('permissions'))) ? 'checked' : '' }}>
                                         </div>
                                         <div class="ml-3 text-sm">
-                                            <span class="font-medium text-gray-900">{{ $permission->name }}</span>
+                                            <span class="font-bold text-gray-900 block">{{ $info['title'] }}</span>
+                                            <span class="text-xs text-gray-500 font-mono block mt-0.5">{{ $permission->name }}</span>
+                                            <span class="text-xs text-gray-500 mt-1 block">{{ $info['desc'] }}</span>
                                         </div>
                                     </label>
                                 @empty

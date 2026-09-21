@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Cost;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Cost\BiayaRekruit;
 use App\Traits\HandlesCsvImports;
 use Carbon\Carbon;
@@ -351,8 +352,14 @@ class BiayaRekruitController extends Controller
         }
         $msg .= ".";
 
-        return redirect()->route('administrasi.biaya-rekruit.index')
-            ->with('success', $msg);
+        ActivityLog::log(
+            'Import',
+            'Biaya Rekruit',
+            "Mengimport data Biaya Rekruit dari file " . $file->getClientOriginalName() . " ({$insertedCount} baru, {$updatedCount} diperbarui)",
+            ['filename' => $file->getClientOriginalName(), 'inserted' => $insertedCount, 'updated' => $updatedCount]
+        );
+
+        return redirect()->route('administrasi.biaya-rekruit.index')->with('success', $msg);
     }
 
     /**
@@ -437,6 +444,10 @@ class BiayaRekruitController extends Controller
         $deleted = BiayaRekruit::query()->delete();
 
         (new CostController())->syncAggregatedCosts((int)date('Y'));
+
+        ActivityLog::log('Hapus', 'Biaya Rekruit', "Seluruh data Biaya Rekruit ({$deleted} data) berhasil dihapus.", [
+            'count' => $deleted,
+        ]);
 
         if ($request->wantsJson()) {
             return response()->json([

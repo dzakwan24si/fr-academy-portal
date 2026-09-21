@@ -19,7 +19,10 @@ class RoleSeeder extends Seeder
             'manage_users',
             'manage_tv_display',
             'manage_events',
-            'manage_roles'
+            'manage_roles',
+            'access_administrasi',
+            'view_cost',
+            'edit_cost',
         ];
 
         foreach ($permissions as $permission) {
@@ -35,12 +38,22 @@ class RoleSeeder extends Seeder
         $adminInfoRole = Role::firstOrCreate(['name' => 'Admin E-Information']);
         $adminInfoRole->syncPermissions(['manage_articles', 'manage_tv_display', 'manage_events']);
 
+        // Administrasi role gets full access to Administrasi & Cost
+        $administrasiRole = Role::firstOrCreate(['name' => 'Administrasi']);
+        $administrasiRole->syncPermissions(['access_administrasi', 'view_cost', 'edit_cost']);
+
+        // Staff role gets access to Administrasi and read-only access to Cost
+        $staffRole = Role::firstOrCreate(['name' => 'Staff']);
+        $staffRole->syncPermissions(['access_administrasi', 'view_cost']);
+
+        // Top Management role gets full access to Administrasi & Cost
+        $topMgmtRole = Role::firstOrCreate(['name' => 'Top Management']);
+        $topMgmtRole->syncPermissions(['access_administrasi', 'view_cost', 'edit_cost']);
+
         // Other generic roles
         $otherRoles = [
-            'Administrasi',
             'Koordinator Mess',
             'Kepala TU',
-            'Staff',
             'Atasan',
             'Trainer',
         ];

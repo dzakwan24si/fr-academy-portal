@@ -2,10 +2,14 @@
 
 namespace App\Models\Program;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
 class ProgramReguler extends Model
 {
+    use LogsActivity;
+
+    protected static $logModuleName = 'Program Reguler';
     protected $table = 'program_reguler';
     protected $primaryKey = 'Program_reguler_id';
     protected $guarded = [];

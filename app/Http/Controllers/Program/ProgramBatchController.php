@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Program;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Program\ProgramNonReguler;
 use App\Models\Program\ProgramReguler;
 use App\Models\Program\RealisasiVsBatch;
@@ -281,13 +282,16 @@ class ProgramBatchController extends Controller
         $type = $request->input('type'); // 'reguler', 'non_reguler', or null/all
         if ($type === 'reguler') {
             ProgramReguler::truncate();
+            ActivityLog::log('Hapus', 'Program Batch', "Menghapus seluruh data Program Reguler");
             return response()->json(['message' => 'Seluruh data Program Reguler berhasil dihapus.']);
         } elseif ($type === 'non_reguler') {
             ProgramNonReguler::truncate();
+            ActivityLog::log('Hapus', 'Program Batch', "Menghapus seluruh data Program Non Reguler");
             return response()->json(['message' => 'Seluruh data Program Non Reguler berhasil dihapus.']);
         } else {
             ProgramReguler::truncate();
             ProgramNonReguler::truncate();
+            ActivityLog::log('Hapus', 'Program Batch', "Menghapus seluruh data Program Batch (Reguler & Non Reguler)");
             return response()->json(['message' => 'Seluruh data Program Batch (Reguler & Non Reguler) berhasil dihapus.']);
         }
     }
@@ -351,6 +355,13 @@ class ProgramBatchController extends Controller
                 if ($stored) $imported++;
             }
         });
+
+        ActivityLog::log(
+            'Import',
+            'Program Batch',
+            "Mengimport {$imported} data program batch dari file " . $file->getClientOriginalName(),
+            ['filename' => $file->getClientOriginalName(), 'count' => $imported]
+        );
 
         $message = "{$imported} data program batch berhasil diimpor.";
         if ($request->wantsJson() || $request->ajax() || $request->isJson()) {

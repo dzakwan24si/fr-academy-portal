@@ -9,6 +9,12 @@ use Tests\TestCase;
 
 class ProgramBatchImportTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticateUser();
+    }
+
     public function test_regular_csv_accepts_null_numeric_values(): void
     {
         $csv = implode("\n", [

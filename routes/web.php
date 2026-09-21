@@ -158,6 +158,7 @@ use App\Http\Controllers\Cost\CostController;
 use App\Http\Controllers\Cost\VraController;
 
 // Administrasi Controllers
+use App\Http\Controllers\Administrasi\ActivityLogController;
 use App\Http\Controllers\Administrasi\CutiController;
 use App\Http\Controllers\Administrasi\MppController;
 use App\Http\Controllers\Administrasi\RekrutmenController;
@@ -172,372 +173,405 @@ use App\Http\Controllers\Inventaris\InventarisSummaryController;
 
 use App\Http\Controllers\DashboardController;
 
-// Mengamankan rute dashboard agar tidak bentrok dengan portal utama
-Route::get('/internal-dashboard', [DashboardController::class, 'index'])->name('dashboard');
-Route::get('/administrasi/dashboard-realisasi', [DashboardRealisasiController::class, 'index'])->name('administrasi.dashboard-realisasi.index');
-Route::get('/administrasi/dashboard-monitoring-tahunan', [DashboardMonitoringTahunanController::class, 'index'])->name('administrasi.dashboard-monitoring-tahunan.index');
+// Mengamankan rute dashboard & administrasi agar memerlukan auth dan permission access_administrasi
+Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
+    Route::get('/internal-dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/administrasi/dashboard-realisasi', [DashboardRealisasiController::class, 'index'])->name('administrasi.dashboard-realisasi.index');
+    Route::get('/administrasi/dashboard-monitoring-tahunan', [DashboardMonitoringTahunanController::class, 'index'])->name('administrasi.dashboard-monitoring-tahunan.index');
 
-Route::prefix('administrasi/program-batch')->name('administrasi.program-batch.')->group(function () {
-    Route::get('/', [ProgramBatchController::class, 'index'])->name('index');
-    Route::get('/data', [ProgramBatchController::class, 'data'])->name('data');
-    Route::post('/import', [ProgramBatchController::class, 'import'])->name('import');
-    Route::delete('/destroy-all', [ProgramBatchController::class, 'destroyAll'])->name('destroy-all');
-    Route::post('/{type}', [ProgramBatchController::class, 'store'])->whereIn('type', ['reguler', 'non_reguler'])->name('store');
-    Route::put('/{type}/{id}', [ProgramBatchController::class, 'update'])->whereIn('type', ['reguler', 'non_reguler'])->name('update');
-    Route::delete('/{type}/{id}', [ProgramBatchController::class, 'destroy'])->whereIn('type', ['reguler', 'non_reguler'])->name('destroy');
-});
-
-Route::prefix('administrasi/program')->name('administrasi.program.')->group(function () {
-    Route::get('/', [ProgramBatchController::class, 'programIndex'])->name('index');
-    Route::get('/{type}/{name}', [ProgramBatchController::class, 'programShow'])->whereIn('type', ['reguler', 'non_reguler'])->name('show');
-});
-
-Route::prefix('administrasi/realisasi-vs-batch')->name('administrasi.realisasi-vs-batch.')->group(function () {
-    Route::get('/', [RealisasiVsBatchController::class, 'index'])->name('index');
-    Route::post('/', [RealisasiVsBatchController::class, 'store'])->name('store');
-    Route::post('/import', [RealisasiVsBatchController::class, 'import'])->name('import');
-    Route::get('/export', [RealisasiVsBatchController::class, 'export'])->name('export');
-    Route::delete('/destroy-all', [RealisasiVsBatchController::class, 'destroyAll'])->name('destroy-all');
-    Route::delete('/{id}', [RealisasiVsBatchController::class, 'destroy'])->name('destroy');
-});
-
-Route::prefix('administrasi/training-record')->name('administrasi.training-record.')->group(function () {
-    Route::get('/', [TrainingRecordController::class, 'index'])->name('index');
-    Route::post('/', [TrainingRecordController::class, 'store'])->name('store');
-    Route::post('/import', [TrainingRecordController::class, 'import'])->name('import');
-    Route::get('/export', [TrainingRecordController::class, 'export'])->name('export');
-    Route::get('/template', [TrainingRecordController::class, 'template'])->name('template');
-    Route::delete('/destroy-all', [TrainingRecordController::class, 'destroyAll'])->name('destroy-all');
-    Route::get('/{trainingRecord}', [TrainingRecordController::class, 'show'])->name('show');
-    Route::put('/{trainingRecord}', [TrainingRecordController::class, 'update'])->name('update');
-    Route::delete('/{trainingRecord}', [TrainingRecordController::class, 'destroy'])->name('destroy');
-});
-
-// Administrasi - MPP Jabatan Routes
-Route::prefix('administrasi/mpp')->name('administrasi.mpp.')->group(function () {
-    Route::get('/', [MppController::class, 'index'])->name('index');
-    Route::post('/', [MppController::class, 'store'])->name('store');
-    Route::post('/import', [MppController::class, 'importCsv'])->name('import');
-    Route::get('/template/download', [MppController::class, 'downloadTemplate'])->name('template');
-    Route::get('/export/report', [MppController::class, 'export'])->name('export');
-    Route::get('/get-by-jabatan', [MppController::class, 'showByJabatan'])->name('showByJabatan');
-    Route::put('/update-jabatan', [MppController::class, 'updateJabatan'])->name('updateJabatan');
-    Route::delete('/destroy-jabatan', [MppController::class, 'destroyJabatan'])->name('destroyJabatan');
-});
-
-// Administrasi - Schedule Bulanan Route
-Route::view('/administrasi/schedule', 'Administrasi.Pages.Program.schedule')->name('administrasi.schedule.index');
-
-// Administrasi - Cuti (Employee Leave Management) Routes
-Route::prefix('administrasi/cuti')->name('administrasi.cuti.')->group(function () {
-    Route::get('/', [CutiController::class, 'index'])->name('index');
-    Route::post('/', [CutiController::class, 'store'])->name('store');
-    Route::post('/import', [CutiController::class, 'import'])->name('import');
-    Route::get('/template/download', [CutiController::class, 'downloadTemplate'])->name('template');
-    Route::post('/year', [CutiController::class, 'storeYear'])->name('year');
-    Route::get('/export/report', [CutiController::class, 'export'])->name('export');
-    Route::get('/{id}', [CutiController::class, 'show'])->name('show');
-    Route::put('/{id}', [CutiController::class, 'update'])->name('update');
-    Route::delete('/{id}', [CutiController::class, 'destroy'])->name('destroy');
-});
-
-// Administrasi - VRA (Vehicle Running Account) Routes
-Route::prefix('administrasi/vra')->name('administrasi.vra.')->group(function () {
-    Route::get('/', [VraController::class, 'index'])->name('index');
-    Route::post('/', [VraController::class, 'store'])->name('store');
-    Route::post('/import', [VraController::class, 'importCsv'])->name('import');
-    Route::get('/template/download', [VraController::class, 'downloadTemplate'])->name('template');
-    Route::get('/export/report', [VraController::class, 'export'])->name('export');
-    Route::delete('/destroy-all', [VraController::class, 'destroyAll'])->name('destroyAll');
-    Route::get('/{id}', [VraController::class, 'show'])->name('show');
-    Route::put('/{id}', [VraController::class, 'update'])->name('update');
-    Route::delete('/{id}', [VraController::class, 'destroy'])->name('destroy');
-});
-
-// Administrasi - Rekrutmen Karyawan Routes
-Route::prefix('administrasi/rekrutmen')->name('administrasi.rekrutmen.')->group(function () {
-    Route::get('/', [RekrutmenController::class, 'index'])->name('index');
-    Route::get('/api/data', [RekrutmenController::class, 'getData'])->name('api.data');
-    Route::post('/api/store', [RekrutmenController::class, 'store'])->name('api.store');
-    Route::put('/api/{id}', [RekrutmenController::class, 'update'])->name('api.update');
-    Route::delete('/api/destroy-all', [RekrutmenController::class, 'destroyAll'])->name('api.destroyAll');
-    Route::delete('/api/{id}', [RekrutmenController::class, 'destroy'])->name('api.destroy');
-    Route::post('/api/import', [RekrutmenController::class, 'importCsv'])->name('api.import');
-    Route::get('/api/export', [RekrutmenController::class, 'exportCsv'])->name('api.export');
-});
-
-// Administrasi - Database Asisten Routes
-Route::prefix('administrasi/asisten')->name('administrasi.asisten.')->group(function () {
-    Route::get('/', [AsistenController::class, 'index'])->name('index');
-    Route::get('/api/data', [AsistenController::class, 'getData'])->name('api.data');
-    Route::get('/api/{id}', [AsistenController::class, 'show'])->name('api.show');
-    Route::post('/api/store', [AsistenController::class, 'store'])->name('api.store');
-    Route::put('/api/{id}', [AsistenController::class, 'update'])->name('api.update');
-    Route::delete('/api/destroy-all', [AsistenController::class, 'destroyAll'])->name('api.destroyAll');
-    Route::delete('/api/{id}', [AsistenController::class, 'destroy'])->name('api.destroy');
-    Route::post('/api/import', [AsistenController::class, 'importCsv'])->name('api.import');
-    Route::get('/api/export', [AsistenController::class, 'exportCsv'])->name('api.export');
-
-    // Monitoring Program & Angkatan endpoints (backward compatibility)
-    Route::get('/api/monitoring-program/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.monitoring-program.data');
-    Route::post('/api/monitoring-program/store', [AsistenController::class, 'storeMonitoringProgram'])->name('api.monitoring-program.store');
-    Route::put('/api/monitoring-program/{id}', [AsistenController::class, 'updateMonitoringProgram'])->name('api.monitoring-program.update');
-    Route::delete('/api/monitoring-program/{id}', [AsistenController::class, 'destroyMonitoringProgram'])->name('api.monitoring-program.destroy');
-    Route::get('/api/monitoring-program/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.monitoring-program.drilldown');
-    Route::post('/api/monitoring-program/import', [AsistenController::class, 'importMonitoringProgramCsv'])->name('api.monitoring-program.import');
-    Route::get('/api/monitoring-program/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.monitoring-program.export');
-});
-
-// Administrasi - Monitoring Summarized Routes (Agregasi Per Program & Tahun)
-Route::prefix('administrasi/monitoring-summarized')->name('administrasi.monitoring-summarized.')->group(function () {
-    Route::get('/', [AsistenController::class, 'indexMonitoringSummarized'])->name('index');
-    Route::get('/api/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.data');
-    Route::get('/api/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.drilldown');
-    Route::get('/api/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.export');
-});
-
-// Administrasi - Monitoring Alumni Routes (Detail Per Gelombang / Batch)
-Route::prefix('administrasi/monitoring-alumni')->name('administrasi.monitoring-alumni.')->group(function () {
-    Route::get('/', [AsistenController::class, 'indexMonitoringAlumni'])->name('index');
-    Route::get('/api/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.data');
-    Route::get('/api/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.drilldown');
-    Route::get('/api/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.export');
-});
-
-// Administrasi - Monitoring Lulusan Alumni Routes (backward compatible)
-Route::prefix('administrasi/monitoring-lulusan')->name('administrasi.monitoring-lulusan.')->group(function () {
-    Route::get('/', [AsistenController::class, 'indexMonitoringAlumni'])->name('index');
-    Route::get('/api/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.data');
-    Route::post('/api/store', [AsistenController::class, 'storeMonitoringProgram'])->name('api.store');
-    Route::put('/api/{id}', [AsistenController::class, 'updateMonitoringProgram'])->name('api.update');
-    Route::delete('/api/{id}', [AsistenController::class, 'destroyMonitoringProgram'])->name('api.destroy');
-    Route::get('/api/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.drilldown');
-    Route::post('/api/import', [AsistenController::class, 'importMonitoringProgramCsv'])->name('api.import');
-    Route::get('/api/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.export');
-});
-
-// Administrasi - Monitoring Talent Routes
-Route::prefix('administrasi/monitoring-talent')->name('administrasi.monitoring-talent.')->group(function () {
-    Route::get('/', [MonitoringTalentController::class, 'index'])->name('index');
-    Route::post('/store', [MonitoringTalentController::class, 'store'])->name('store');
-    Route::put('/{id}', [MonitoringTalentController::class, 'update'])->name('update');
-    Route::delete('/destroy-all', [MonitoringTalentController::class, 'destroyAll'])->name('destroyAll');
-    Route::delete('/{id}', [MonitoringTalentController::class, 'destroy'])->name('destroy');
-    Route::post('/import', [MonitoringTalentController::class, 'import'])->name('import');
-    Route::get('/export', [MonitoringTalentController::class, 'export'])->name('export');
-    Route::get('/template', [MonitoringTalentController::class, 'template'])->name('template');
-});
-
-// Administrasi - Biaya Rekruit Routes
-Route::prefix('administrasi/biaya-rekruit')->name('administrasi.biaya-rekruit.')->group(function () {
-    Route::get('/', [BiayaRekruitController::class, 'index'])->name('index');
-    Route::post('/', [BiayaRekruitController::class, 'store'])->name('store');
-    Route::post('/import', [BiayaRekruitController::class, 'importCsv'])->name('import');
-    Route::get('/template/download', [BiayaRekruitController::class, 'downloadTemplate'])->name('template');
-    Route::get('/export/report', [BiayaRekruitController::class, 'export'])->name('export');
-    Route::delete('/destroy-all', [BiayaRekruitController::class, 'destroyAll'])->name('destroyAll');
-    Route::get('/{id}', [BiayaRekruitController::class, 'show'])->name('show');
-    Route::put('/{id}', [BiayaRekruitController::class, 'update'])->name('update');
-    Route::delete('/{id}', [BiayaRekruitController::class, 'destroy'])->name('destroy');
-});
-
-// Administrasi - CAPEX (Capital Expenditure) Routes
-Route::prefix('administrasi/capex')->name('administrasi.capex.')->group(function () {
-    Route::get('/', [CapexController::class, 'index'])->name('index');
-    Route::post('/rab', [CapexController::class, 'storeRab'])->name('rab.store');
-    Route::post('/realisasi', [CapexController::class, 'storeRealisasi'])->name('realisasi.store');
-    Route::get('/rab/{id}', [CapexController::class, 'showRab'])->name('rab.show');
-    Route::get('/realisasi/{id}', [CapexController::class, 'showRealisasi'])->name('realisasi.show');
-    Route::put('/rab/{id}', [CapexController::class, 'updateRab'])->name('rab.update');
-    Route::put('/realisasi/{id}', [CapexController::class, 'updateRealisasi'])->name('realisasi.update');
-    Route::delete('/rab/{id}', [CapexController::class, 'destroyRab'])->name('rab.destroy');
-    Route::delete('/realisasi/{id}', [CapexController::class, 'destroyRealisasi'])->name('realisasi.destroy');
-    Route::post('/import', [CapexController::class, 'importCsv'])->name('import');
-    Route::get('/template/download', [CapexController::class, 'downloadTemplate'])->name('template');
-    Route::get('/export/report', [CapexController::class, 'export'])->name('export');
-    Route::delete('/destroy-all', [CapexController::class, 'destroyAll'])->name('destroyAll');
-});
-
-// Administrasi - Cost Routes
-Route::prefix('administrasi/cost')->name('administrasi.cost.')->group(function () {
-    Route::get('/', [CostController::class, 'index'])->name('index');
-    Route::post('/', [CostController::class, 'store'])->name('store');
-    Route::post('/import', [CostController::class, 'importCsv'])->name('import');
-    Route::get('/template/download', [CostController::class, 'downloadTemplate'])->name('template');
-    Route::post('/sync', [CostController::class, 'sync'])->name('sync');
-    Route::get('/export/report', [CostController::class, 'export'])->name('export');
-    Route::delete('/destroy-all', [CostController::class, 'destroyAll'])->name('destroyAll');
-    Route::get('/{id}', [CostController::class, 'show'])->name('show');
-    Route::put('/{id}', [CostController::class, 'update'])->name('update');
-    Route::delete('/{id}', [CostController::class, 'destroy'])->name('destroy');
-});
-
-// Administrasi - Inventaris Routes
-Route::prefix('administrasi/inventaris')->name('administrasi.inventaris.')->group(function () {
-    // Dashboard & Summary Overview Pages
-    Route::get('/', [InventarisDashboardController::class, 'index'])->name('index');
-    Route::get('/dashboard', [InventarisDashboardController::class, 'index'])->name('dashboard');
-    Route::get('/summary', [InventarisSummaryController::class, 'index'])->name('summary');
-
-    // Unified Routes (Single Controller)
-    Route::get('/barang', [InventarisController::class, 'barangIndex'])->name('barang');
-    Route::get('/barang/template', [InventarisController::class, 'barangTemplate'])->name('barang.template');
-    Route::post('/barang/import', [InventarisController::class, 'barangImport'])->name('barang.import');
-    Route::post('/barang', [InventarisController::class, 'barangStore'])->name('barang.store');
-    Route::put('/barang/{id}', [InventarisController::class, 'barangUpdate'])->name('barang.update');
-    Route::delete('/barang/{id}', [InventarisController::class, 'barangDestroy'])->name('barang.destroy');
-
-    Route::get('/pembelian', [InventarisController::class, 'pembelianIndex'])->name('pembelian');
-    Route::get('/pembelian/template', [InventarisController::class, 'pembelianTemplate'])->name('pembelian.template');
-    Route::post('/pembelian/import', [InventarisController::class, 'pembelianImport'])->name('pembelian.import');
-    Route::post('/pembelian', [InventarisController::class, 'pembelianStore'])->name('pembelian.store');
-    Route::put('/pembelian/{id}', [InventarisController::class, 'pembelianUpdate'])->name('pembelian.update');
-    Route::delete('/pembelian/{id}', [InventarisController::class, 'pembelianDestroy'])->name('pembelian.destroy');
-
-    Route::get('/stock-opname', [InventarisController::class, 'stockOpnameIndex'])->name('stock-opname');
-    Route::get('/stock-opname/template', [InventarisController::class, 'stockOpnameTemplate'])->name('stock-opname.template');
-    Route::post('/stock-opname/import', [InventarisController::class, 'stockOpnameImport'])->name('stock-opname.import');
-    Route::post('/stock-opname/session', [InventarisController::class, 'stockOpnameSessionStore'])->name('stock-opname.session.store');
-    Route::put('/stock-opname/session/{date}', [InventarisController::class, 'stockOpnameSessionUpdate'])->name('stock-opname.session.update');
-    Route::delete('/stock-opname/session/{date}', [InventarisController::class, 'stockOpnameSessionDestroy'])->name('stock-opname.session.destroy');
-
-    Route::get('/stock-opname/{date}', [InventarisController::class, 'stockOpnameDetail'])->name('stock-opname.detail');
-    Route::get('/stock-opname/{date}/export', [InventarisController::class, 'stockOpnameExport'])->name('stock-opname.export');
-    Route::post('/stock-opname/{date}/item', [InventarisController::class, 'stockOpnameItemStore'])->name('stock-opname.item.store');
-    Route::put('/stock-opname/item/{id}', [InventarisController::class, 'stockOpnameItemUpdate'])->name('stock-opname.item.update');
-    Route::delete('/stock-opname/item/{id}', [InventarisController::class, 'stockOpnameItemDestroy'])->name('stock-opname.item.destroy');
-
-    // Gudang Subsystem (Aliases to InventarisController)
-    Route::prefix('gudang')->name('gudang.')->group(function () {
-        Route::get('/barang', [InventarisGudangController::class, 'barangIndex'])->name('barang');
-        Route::get('/barang/template', [InventarisGudangController::class, 'barangTemplate'])->name('barang.template');
-        Route::post('/barang/import', [InventarisGudangController::class, 'barangImport'])->name('barang.import');
-        Route::post('/barang', [InventarisGudangController::class, 'barangStore'])->name('barang.store');
-        Route::put('/barang/{id}', [InventarisGudangController::class, 'barangUpdate'])->name('barang.update');
-        Route::delete('/barang/{id}', [InventarisGudangController::class, 'barangDestroy'])->name('barang.destroy');
-
-        Route::get('/pembelian', [InventarisGudangController::class, 'pembelianIndex'])->name('pembelian');
-        Route::get('/pembelian/template', [InventarisGudangController::class, 'pembelianTemplate'])->name('pembelian.template');
-        Route::post('/pembelian/import', [InventarisGudangController::class, 'pembelianImport'])->name('pembelian.import');
-        Route::post('/pembelian', [InventarisGudangController::class, 'pembelianStore'])->name('pembelian.store');
-        Route::put('/pembelian/{id}', [InventarisGudangController::class, 'pembelianUpdate'])->name('pembelian.update');
-        Route::delete('/pembelian/{id}', [InventarisGudangController::class, 'pembelianDestroy'])->name('pembelian.destroy');
-
-        Route::get('/stock-opname', [InventarisGudangController::class, 'stockOpnameIndex'])->name('stock-opname');
-        Route::get('/stock-opname/template', [InventarisGudangController::class, 'stockOpnameTemplate'])->name('stock-opname.template');
-        Route::post('/stock-opname/import', [InventarisGudangController::class, 'stockOpnameImport'])->name('stock-opname.import');
-        Route::post('/stock-opname/session', [InventarisGudangController::class, 'stockOpnameSessionStore'])->name('stock-opname.session.store');
-        Route::put('/stock-opname/session/{date}', [InventarisGudangController::class, 'stockOpnameSessionUpdate'])->name('stock-opname.session.update');
-        Route::delete('/stock-opname/session/{date}', [InventarisGudangController::class, 'stockOpnameSessionDestroy'])->name('stock-opname.session.destroy');
-
-        Route::get('/stock-opname/{date}', [InventarisGudangController::class, 'stockOpnameDetail'])->name('stock-opname.detail');
-        Route::get('/stock-opname/{date}/export', [InventarisGudangController::class, 'stockOpnameExport'])->name('stock-opname.export');
-        Route::post('/stock-opname/{date}/item', [InventarisGudangController::class, 'stockOpnameItemStore'])->name('stock-opname.item.store');
-        Route::put('/stock-opname/item/{id}', [InventarisGudangController::class, 'stockOpnameItemUpdate'])->name('stock-opname.item.update');
-        Route::delete('/stock-opname/item/{id}', [InventarisGudangController::class, 'stockOpnameItemDestroy'])->name('stock-opname.item.destroy');
+    Route::prefix('administrasi/program-batch')->name('administrasi.program-batch.')->group(function () {
+        Route::get('/', [ProgramBatchController::class, 'index'])->name('index');
+        Route::get('/data', [ProgramBatchController::class, 'data'])->name('data');
+        Route::post('/import', [ProgramBatchController::class, 'import'])->name('import');
+        Route::delete('/destroy-all', [ProgramBatchController::class, 'destroyAll'])->name('destroy-all');
+        Route::post('/{type}', [ProgramBatchController::class, 'store'])->whereIn('type', ['reguler', 'non_reguler'])->name('store');
+        Route::put('/{type}/{id}', [ProgramBatchController::class, 'update'])->whereIn('type', ['reguler', 'non_reguler'])->name('update');
+        Route::delete('/{type}/{id}', [ProgramBatchController::class, 'destroy'])->whereIn('type', ['reguler', 'non_reguler'])->name('destroy');
     });
 
-    // Kantor Subsystem (Aliases to InventarisController)
-    Route::prefix('kantor')->name('kantor.')->group(function () {
-        Route::get('/barang', [InventarisKantorController::class, 'barangIndex'])->name('barang');
-        Route::get('/barang/template', [InventarisKantorController::class, 'barangTemplate'])->name('barang.template');
-        Route::post('/barang/import', [InventarisKantorController::class, 'barangImport'])->name('barang.import');
-        Route::post('/barang', [InventarisKantorController::class, 'barangStore'])->name('barang.store');
-        Route::put('/barang/{id}', [InventarisKantorController::class, 'barangUpdate'])->name('barang.update');
-        Route::delete('/barang/{id}', [InventarisKantorController::class, 'barangDestroy'])->name('barang.destroy');
+    Route::prefix('administrasi/program')->name('administrasi.program.')->group(function () {
+        Route::get('/', [ProgramBatchController::class, 'programIndex'])->name('index');
+        Route::get('/{type}/{name}', [ProgramBatchController::class, 'programShow'])->whereIn('type', ['reguler', 'non_reguler'])->name('show');
+    });
 
-        Route::get('/pembelian', [InventarisKantorController::class, 'pembelianIndex'])->name('pembelian');
-        Route::get('/pembelian/template', [InventarisKantorController::class, 'pembelianTemplate'])->name('pembelian.template');
-        Route::post('/pembelian/import', [InventarisKantorController::class, 'pembelianImport'])->name('pembelian.import');
-        Route::post('/pembelian', [InventarisKantorController::class, 'pembelianStore'])->name('pembelian.store');
-        Route::put('/pembelian/{id}', [InventarisKantorController::class, 'pembelianUpdate'])->name('pembelian.update');
-        Route::delete('/pembelian/{id}', [InventarisKantorController::class, 'pembelianDestroy'])->name('pembelian.destroy');
+    Route::prefix('administrasi/realisasi-vs-batch')->name('administrasi.realisasi-vs-batch.')->group(function () {
+        Route::get('/', [RealisasiVsBatchController::class, 'index'])->name('index');
+        Route::post('/', [RealisasiVsBatchController::class, 'store'])->name('store');
+        Route::post('/import', [RealisasiVsBatchController::class, 'import'])->name('import');
+        Route::get('/export', [RealisasiVsBatchController::class, 'export'])->name('export');
+        Route::delete('/destroy-all', [RealisasiVsBatchController::class, 'destroyAll'])->name('destroy-all');
+        Route::delete('/{id}', [RealisasiVsBatchController::class, 'destroy'])->name('destroy');
+    });
 
-        Route::get('/stock-opname', [InventarisKantorController::class, 'stockOpnameIndex'])->name('stock-opname');
+    Route::prefix('administrasi/training-record')->name('administrasi.training-record.')->group(function () {
+        Route::get('/', [TrainingRecordController::class, 'index'])->name('index');
+        Route::post('/', [TrainingRecordController::class, 'store'])->name('store');
+        Route::post('/import', [TrainingRecordController::class, 'import'])->name('import');
+        Route::get('/export', [TrainingRecordController::class, 'export'])->name('export');
+        Route::get('/template', [TrainingRecordController::class, 'template'])->name('template');
+        Route::delete('/destroy-all', [TrainingRecordController::class, 'destroyAll'])->name('destroy-all');
+        Route::get('/{trainingRecord}', [TrainingRecordController::class, 'show'])->name('show');
+        Route::put('/{trainingRecord}', [TrainingRecordController::class, 'update'])->name('update');
+        Route::delete('/{trainingRecord}', [TrainingRecordController::class, 'destroy'])->name('destroy');
+    });
+
+    // Administrasi - MPP Jabatan Routes
+    Route::prefix('administrasi/mpp')->name('administrasi.mpp.')->group(function () {
+        Route::get('/', [MppController::class, 'index'])->name('index');
+        Route::post('/', [MppController::class, 'store'])->name('store');
+        Route::post('/import', [MppController::class, 'importCsv'])->name('import');
+        Route::get('/template/download', [MppController::class, 'downloadTemplate'])->name('template');
+        Route::get('/export/report', [MppController::class, 'export'])->name('export');
+        Route::get('/get-by-jabatan', [MppController::class, 'showByJabatan'])->name('showByJabatan');
+        Route::put('/update-jabatan', [MppController::class, 'updateJabatan'])->name('updateJabatan');
+        Route::delete('/destroy-jabatan', [MppController::class, 'destroyJabatan'])->name('destroyJabatan');
+    });
+
+    // Administrasi - Schedule Bulanan Route
+    Route::view('/administrasi/schedule', 'Administrasi.Pages.Program.schedule')->name('administrasi.schedule.index');
+
+    // Administrasi - Cuti (Employee Leave Management) Routes
+    Route::prefix('administrasi/cuti')->name('administrasi.cuti.')->group(function () {
+        Route::get('/', [CutiController::class, 'index'])->name('index');
+        Route::post('/', [CutiController::class, 'store'])->name('store');
+        Route::post('/import', [CutiController::class, 'import'])->name('import');
+        Route::get('/template/download', [CutiController::class, 'downloadTemplate'])->name('template');
+        Route::post('/year', [CutiController::class, 'storeYear'])->name('year');
+        Route::get('/export/report', [CutiController::class, 'export'])->name('export');
+        Route::get('/{id}', [CutiController::class, 'show'])->name('show');
+        Route::put('/{id}', [CutiController::class, 'update'])->name('update');
+        Route::delete('/{id}', [CutiController::class, 'destroy'])->name('destroy');
+    });
+
+    // Administrasi - VRA (Vehicle Running Account) Routes (Read: view_cost, Write: edit_cost)
+    Route::prefix('administrasi/vra')->name('administrasi.vra.')->middleware('can:view_cost')->group(function () {
+        Route::get('/', [VraController::class, 'index'])->name('index');
+        Route::get('/template/download', [VraController::class, 'downloadTemplate'])->name('template');
+        Route::get('/export/report', [VraController::class, 'export'])->name('export');
+        Route::get('/{id}', [VraController::class, 'show'])->name('show');
+
+        Route::middleware('can:edit_cost')->group(function () {
+            Route::post('/', [VraController::class, 'store'])->name('store');
+            Route::post('/import', [VraController::class, 'importCsv'])->name('import');
+            Route::delete('/destroy-all', [VraController::class, 'destroyAll'])->name('destroyAll');
+            Route::put('/{id}', [VraController::class, 'update'])->name('update');
+            Route::delete('/{id}', [VraController::class, 'destroy'])->name('destroy');
+        });
+    });
+
+    // Administrasi - Rekrutmen Karyawan Routes
+    Route::prefix('administrasi/rekrutmen')->name('administrasi.rekrutmen.')->group(function () {
+        Route::get('/', [RekrutmenController::class, 'index'])->name('index');
+        Route::get('/api/data', [RekrutmenController::class, 'getData'])->name('api.data');
+        Route::post('/api/store', [RekrutmenController::class, 'store'])->name('api.store');
+        Route::put('/api/{id}', [RekrutmenController::class, 'update'])->name('api.update');
+        Route::delete('/api/destroy-all', [RekrutmenController::class, 'destroyAll'])->name('api.destroyAll');
+        Route::delete('/api/{id}', [RekrutmenController::class, 'destroy'])->name('api.destroy');
+        Route::post('/api/import', [RekrutmenController::class, 'importCsv'])->name('api.import');
+        Route::get('/api/export', [RekrutmenController::class, 'exportCsv'])->name('api.export');
+    });
+
+    // Administrasi - Database Asisten Routes
+    Route::prefix('administrasi/asisten')->name('administrasi.asisten.')->group(function () {
+        Route::get('/', [AsistenController::class, 'index'])->name('index');
+        Route::get('/api/data', [AsistenController::class, 'getData'])->name('api.data');
+        Route::get('/api/{id}', [AsistenController::class, 'show'])->name('api.show');
+        Route::post('/api/store', [AsistenController::class, 'store'])->name('api.store');
+        Route::put('/api/{id}', [AsistenController::class, 'update'])->name('api.update');
+        Route::delete('/api/destroy-all', [AsistenController::class, 'destroyAll'])->name('api.destroyAll');
+        Route::delete('/api/{id}', [AsistenController::class, 'destroy'])->name('api.destroy');
+        Route::post('/api/import', [AsistenController::class, 'importCsv'])->name('api.import');
+        Route::get('/api/export', [AsistenController::class, 'exportCsv'])->name('api.export');
+
+        // Monitoring Program & Angkatan endpoints (backward compatibility)
+        Route::get('/api/monitoring-program/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.monitoring-program.data');
+        Route::post('/api/monitoring-program/store', [AsistenController::class, 'storeMonitoringProgram'])->name('api.monitoring-program.store');
+        Route::put('/api/monitoring-program/{id}', [AsistenController::class, 'updateMonitoringProgram'])->name('api.monitoring-program.update');
+        Route::delete('/api/monitoring-program/{id}', [AsistenController::class, 'destroyMonitoringProgram'])->name('api.monitoring-program.destroy');
+        Route::get('/api/monitoring-program/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.monitoring-program.drilldown');
+        Route::post('/api/monitoring-program/import', [AsistenController::class, 'importMonitoringProgramCsv'])->name('api.monitoring-program.import');
+        Route::get('/api/monitoring-program/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.monitoring-program.export');
+    });
+
+    // Administrasi - Monitoring Summarized Routes (Agregasi Per Program & Tahun)
+    Route::prefix('administrasi/monitoring-summarized')->name('administrasi.monitoring-summarized.')->group(function () {
+        Route::get('/', [AsistenController::class, 'indexMonitoringSummarized'])->name('index');
+        Route::get('/api/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.data');
+        Route::get('/api/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.drilldown');
+        Route::get('/api/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.export');
+    });
+
+    // Administrasi - Monitoring Alumni Routes (Detail Per Gelombang / Batch)
+    Route::prefix('administrasi/monitoring-alumni')->name('administrasi.monitoring-alumni.')->group(function () {
+        Route::get('/', [AsistenController::class, 'indexMonitoringAlumni'])->name('index');
+        Route::get('/api/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.data');
+        Route::post('/api/store', [AsistenController::class, 'storeMonitoringProgram'])->name('api.store');
+        Route::put('/api/{id}', [AsistenController::class, 'updateMonitoringProgram'])->name('api.update');
+        Route::delete('/api/{id}', [AsistenController::class, 'destroyMonitoringProgram'])->name('api.destroy');
+        Route::get('/api/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.drilldown');
+        Route::get('/api/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.export');
+    });
+
+    // Administrasi - Monitoring Lulusan Alumni Routes (backward compatible)
+    Route::prefix('administrasi/monitoring-lulusan')->name('administrasi.monitoring-lulusan.')->group(function () {
+        Route::get('/', [AsistenController::class, 'indexMonitoringAlumni'])->name('index');
+        Route::get('/api/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.data');
+        Route::post('/api/store', [AsistenController::class, 'storeMonitoringProgram'])->name('api.store');
+        Route::put('/api/{id}', [AsistenController::class, 'updateMonitoringProgram'])->name('api.update');
+        Route::delete('/api/{id}', [AsistenController::class, 'destroyMonitoringProgram'])->name('api.destroy');
+        Route::get('/api/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.drilldown');
+        Route::post('/api/import', [AsistenController::class, 'importMonitoringProgramCsv'])->name('api.import');
+        Route::get('/api/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.export');
+    });
+
+    // Administrasi - Monitoring Talent Routes
+    Route::prefix('administrasi/monitoring-talent')->name('administrasi.monitoring-talent.')->group(function () {
+        Route::get('/', [MonitoringTalentController::class, 'index'])->name('index');
+        Route::post('/store', [MonitoringTalentController::class, 'store'])->name('store');
+        Route::post('/update-progress-materi', [MonitoringTalentController::class, 'updateProgressMateri'])->name('update-progress-materi');
+        Route::put('/{id}', [MonitoringTalentController::class, 'update'])->name('update');
+        Route::delete('/destroy-all', [MonitoringTalentController::class, 'destroyAll'])->name('destroyAll');
+        Route::delete('/{id}', [MonitoringTalentController::class, 'destroy'])->name('destroy');
+        Route::post('/import', [MonitoringTalentController::class, 'import'])->name('import');
+        Route::get('/export', [MonitoringTalentController::class, 'export'])->name('export');
+        Route::get('/template', [MonitoringTalentController::class, 'template'])->name('template');
+    });
+
+    // Administrasi - Biaya Rekruit Routes (Read: view_cost, Write: edit_cost)
+    Route::prefix('administrasi/biaya-rekruit')->name('administrasi.biaya-rekruit.')->middleware('can:view_cost')->group(function () {
+        Route::get('/', [BiayaRekruitController::class, 'index'])->name('index');
+        Route::get('/template/download', [BiayaRekruitController::class, 'downloadTemplate'])->name('template');
+        Route::get('/export/report', [BiayaRekruitController::class, 'export'])->name('export');
+        Route::get('/{id}', [BiayaRekruitController::class, 'show'])->name('show');
+
+        Route::middleware('can:edit_cost')->group(function () {
+            Route::post('/', [BiayaRekruitController::class, 'store'])->name('store');
+            Route::post('/import', [BiayaRekruitController::class, 'importCsv'])->name('import');
+            Route::delete('/destroy-all', [BiayaRekruitController::class, 'destroyAll'])->name('destroyAll');
+            Route::put('/{id}', [BiayaRekruitController::class, 'update'])->name('update');
+            Route::delete('/{id}', [BiayaRekruitController::class, 'destroy'])->name('destroy');
+        });
+    });
+
+    // Administrasi - CAPEX (Capital Expenditure) Routes (Read: view_cost, Write: edit_cost)
+    Route::prefix('administrasi/capex')->name('administrasi.capex.')->middleware('can:view_cost')->group(function () {
+        Route::get('/', [CapexController::class, 'index'])->name('index');
+        Route::get('/rab/{id}', [CapexController::class, 'showRab'])->name('rab.show');
+        Route::get('/realisasi/{id}', [CapexController::class, 'showRealisasi'])->name('realisasi.show');
+        Route::get('/template/download', [CapexController::class, 'downloadTemplate'])->name('template');
+        Route::get('/export/report', [CapexController::class, 'export'])->name('export');
+
+        Route::middleware('can:edit_cost')->group(function () {
+            Route::post('/rab', [CapexController::class, 'storeRab'])->name('rab.store');
+            Route::post('/realisasi', [CapexController::class, 'storeRealisasi'])->name('realisasi.store');
+            Route::put('/rab/{id}', [CapexController::class, 'updateRab'])->name('rab.update');
+            Route::put('/realisasi/{id}', [CapexController::class, 'updateRealisasi'])->name('realisasi.update');
+            Route::delete('/rab/{id}', [CapexController::class, 'destroyRab'])->name('rab.destroy');
+            Route::delete('/realisasi/{id}', [CapexController::class, 'destroyRealisasi'])->name('realisasi.destroy');
+            Route::post('/import', [CapexController::class, 'importCsv'])->name('import');
+            Route::delete('/destroy-all', [CapexController::class, 'destroyAll'])->name('destroyAll');
+        });
+    });
+
+    // Administrasi - Cost Routes (Read: view_cost, Write: edit_cost)
+    Route::prefix('administrasi/cost')->name('administrasi.cost.')->middleware('can:view_cost')->group(function () {
+        Route::get('/', [CostController::class, 'index'])->name('index');
+        Route::get('/template/download', [CostController::class, 'downloadTemplate'])->name('template');
+        Route::get('/export/report', [CostController::class, 'export'])->name('export');
+        Route::get('/{id}', [CostController::class, 'show'])->name('show');
+
+        Route::middleware('can:edit_cost')->group(function () {
+            Route::post('/', [CostController::class, 'store'])->name('store');
+            Route::post('/import', [CostController::class, 'importCsv'])->name('import');
+            Route::post('/sync', [CostController::class, 'sync'])->name('sync');
+            Route::delete('/destroy-all', [CostController::class, 'destroyAll'])->name('destroyAll');
+            Route::put('/{id}', [CostController::class, 'update'])->name('update');
+            Route::delete('/{id}', [CostController::class, 'destroy'])->name('destroy');
+        });
+    });
+
+    // Histori Aktivitas / Audit Log Routes
+    Route::prefix('administrasi/activity-logs')->name('administrasi.activity-logs.')->group(function () {
+        Route::get('/', [ActivityLogController::class, 'index'])->name('index');
+        Route::get('/{id}', [ActivityLogController::class, 'show'])->name('show');
+    });
+
+    // Administrasi - Inventaris Routes
+    Route::prefix('administrasi/inventaris')->name('administrasi.inventaris.')->group(function () {
+        // Dashboard & Summary Overview Pages
+        Route::get('/', [InventarisDashboardController::class, 'index'])->name('index');
+        Route::get('/dashboard', [InventarisDashboardController::class, 'index'])->name('dashboard');
+        Route::get('/summary', [InventarisSummaryController::class, 'index'])->name('summary');
+
+        // Unified Routes (Single Controller)
+        Route::delete('/barang/destroy-all', [InventarisController::class, 'barangDestroyAll'])->name('barang.destroyAll');
+        Route::get('/barang', [InventarisController::class, 'barangIndex'])->name('barang');
+        Route::get('/barang/template', [InventarisController::class, 'barangTemplate'])->name('barang.template');
+        Route::post('/barang/import', [InventarisController::class, 'barangImport'])->name('barang.import');
+        Route::post('/barang', [InventarisController::class, 'barangStore'])->name('barang.store');
+        Route::put('/barang/{id}', [InventarisController::class, 'barangUpdate'])->name('barang.update');
+        Route::delete('/barang/{id}', [InventarisController::class, 'barangDestroy'])->name('barang.destroy');
+
+        Route::delete('/pembelian/destroy-all', [InventarisController::class, 'pembelianDestroyAll'])->name('pembelian.destroyAll');
+        Route::get('/pembelian', [InventarisController::class, 'pembelianIndex'])->name('pembelian');
+        Route::get('/pembelian/template', [InventarisController::class, 'pembelianTemplate'])->name('pembelian.template');
+        Route::post('/pembelian/import', [InventarisController::class, 'pembelianImport'])->name('pembelian.import');
+        Route::post('/pembelian', [InventarisController::class, 'pembelianStore'])->name('pembelian.store');
+        Route::put('/pembelian/{id}', [InventarisController::class, 'pembelianUpdate'])->name('pembelian.update');
+        Route::delete('/pembelian/{id}', [InventarisController::class, 'pembelianDestroy'])->name('pembelian.destroy');
+
+        Route::delete('/stock-opname/destroy-all', [InventarisController::class, 'stockOpnameDestroyAll'])->name('stock-opname.destroyAll');
+        Route::get('/stock-opname', [InventarisController::class, 'stockOpnameIndex'])->name('stock-opname');
         Route::get('/stock-opname/template', [InventarisController::class, 'stockOpnameTemplate'])->name('stock-opname.template');
         Route::post('/stock-opname/import', [InventarisController::class, 'stockOpnameImport'])->name('stock-opname.import');
-        Route::post('/stock-opname/session', [InventarisKantorController::class, 'stockOpnameSessionStore'])->name('stock-opname.session.store');
-        Route::put('/stock-opname/session/{date}', [InventarisKantorController::class, 'stockOpnameSessionUpdate'])->name('stock-opname.session.update');
-        Route::delete('/stock-opname/session/{date}', [InventarisKantorController::class, 'stockOpnameSessionDestroy'])->name('stock-opname.session.destroy');
+        Route::post('/stock-opname/session', [InventarisController::class, 'stockOpnameSessionStore'])->name('stock-opname.session.store');
+        Route::put('/stock-opname/session/{date}', [InventarisController::class, 'stockOpnameSessionUpdate'])->name('stock-opname.session.update');
+        Route::delete('/stock-opname/session/{date}', [InventarisController::class, 'stockOpnameSessionDestroy'])->name('stock-opname.session.destroy');
 
-        Route::get('/stock-opname/{date}', [InventarisKantorController::class, 'stockOpnameDetail'])->name('stock-opname.detail');
-        Route::get('/stock-opname/{date}/export', [InventarisKantorController::class, 'stockOpnameExport'])->name('stock-opname.export');
-        Route::post('/stock-opname/{date}/item', [InventarisKantorController::class, 'stockOpnameItemStore'])->name('stock-opname.item.store');
-        Route::put('/stock-opname/item/{id}', [InventarisKantorController::class, 'stockOpnameItemUpdate'])->name('stock-opname.item.update');
-        Route::delete('/stock-opname/item/{id}', [InventarisKantorController::class, 'stockOpnameItemDestroy'])->name('stock-opname.item.destroy');
+        Route::get('/stock-opname/{date}', [InventarisController::class, 'stockOpnameDetail'])->name('stock-opname.detail');
+        Route::get('/stock-opname/{date}/export', [InventarisController::class, 'stockOpnameExport'])->name('stock-opname.export');
+        Route::post('/stock-opname/{date}/item', [InventarisController::class, 'stockOpnameItemStore'])->name('stock-opname.item.store');
+        Route::put('/stock-opname/item/{id}', [InventarisController::class, 'stockOpnameItemUpdate'])->name('stock-opname.item.update');
+        Route::delete('/stock-opname/item/{id}', [InventarisController::class, 'stockOpnameItemDestroy'])->name('stock-opname.item.destroy');
+
+        // Gudang Subsystem (Aliases to InventarisController)
+        Route::prefix('gudang')->name('gudang.')->group(function () {
+            Route::delete('/barang/destroy-all', [InventarisGudangController::class, 'barangDestroyAll'])->name('barang.destroyAll');
+            Route::get('/barang', [InventarisGudangController::class, 'barangIndex'])->name('barang');
+            Route::get('/barang/template', [InventarisGudangController::class, 'barangTemplate'])->name('barang.template');
+            Route::post('/barang/import', [InventarisGudangController::class, 'barangImport'])->name('barang.import');
+            Route::post('/barang', [InventarisGudangController::class, 'barangStore'])->name('barang.store');
+            Route::put('/barang/{id}', [InventarisGudangController::class, 'barangUpdate'])->name('barang.update');
+            Route::delete('/barang/{id}', [InventarisGudangController::class, 'barangDestroy'])->name('barang.destroy');
+
+            Route::delete('/pembelian/destroy-all', [InventarisGudangController::class, 'pembelianDestroyAll'])->name('pembelian.destroyAll');
+            Route::get('/pembelian', [InventarisGudangController::class, 'pembelianIndex'])->name('pembelian');
+            Route::get('/pembelian/template', [InventarisGudangController::class, 'pembelianTemplate'])->name('pembelian.template');
+            Route::post('/pembelian/import', [InventarisGudangController::class, 'pembelianImport'])->name('pembelian.import');
+            Route::post('/pembelian', [InventarisGudangController::class, 'pembelianStore'])->name('pembelian.store');
+            Route::put('/pembelian/{id}', [InventarisGudangController::class, 'pembelianUpdate'])->name('pembelian.update');
+            Route::delete('/pembelian/{id}', [InventarisGudangController::class, 'pembelianDestroy'])->name('pembelian.destroy');
+
+            Route::delete('/stock-opname/destroy-all', [InventarisGudangController::class, 'stockOpnameDestroyAll'])->name('stock-opname.destroyAll');
+            Route::get('/stock-opname', [InventarisGudangController::class, 'stockOpnameIndex'])->name('stock-opname');
+            Route::get('/stock-opname/template', [InventarisGudangController::class, 'stockOpnameTemplate'])->name('stock-opname.template');
+            Route::post('/stock-opname/import', [InventarisGudangController::class, 'stockOpnameImport'])->name('stock-opname.import');
+            Route::post('/stock-opname/session', [InventarisGudangController::class, 'stockOpnameSessionStore'])->name('stock-opname.session.store');
+            Route::put('/stock-opname/session/{date}', [InventarisGudangController::class, 'stockOpnameSessionUpdate'])->name('stock-opname.session.update');
+            Route::delete('/stock-opname/session/{date}', [InventarisGudangController::class, 'stockOpnameSessionDestroy'])->name('stock-opname.session.destroy');
+
+            Route::get('/stock-opname/{date}', [InventarisGudangController::class, 'stockOpnameDetail'])->name('stock-opname.detail');
+            Route::get('/stock-opname/{date}/export', [InventarisGudangController::class, 'stockOpnameExport'])->name('stock-opname.export');
+            Route::post('/stock-opname/{date}/item', [InventarisGudangController::class, 'stockOpnameItemStore'])->name('stock-opname.item.store');
+            Route::put('/stock-opname/item/{id}', [InventarisGudangController::class, 'stockOpnameItemUpdate'])->name('stock-opname.item.update');
+            Route::delete('/stock-opname/item/{id}', [InventarisGudangController::class, 'stockOpnameItemDestroy'])->name('stock-opname.item.destroy');
+        });
+
+        // Kantor Subsystem (Aliases to InventarisController)
+        Route::prefix('kantor')->name('kantor.')->group(function () {
+            Route::delete('/barang/destroy-all', [InventarisKantorController::class, 'barangDestroyAll'])->name('barang.destroyAll');
+            Route::get('/barang', [InventarisKantorController::class, 'barangIndex'])->name('barang');
+            Route::get('/barang/template', [InventarisKantorController::class, 'barangTemplate'])->name('barang.template');
+            Route::post('/barang/import', [InventarisKantorController::class, 'barangImport'])->name('barang.import');
+            Route::post('/barang', [InventarisKantorController::class, 'barangStore'])->name('barang.store');
+            Route::put('/barang/{id}', [InventarisKantorController::class, 'barangUpdate'])->name('barang.update');
+            Route::delete('/barang/{id}', [InventarisKantorController::class, 'barangDestroy'])->name('barang.destroy');
+
+            Route::delete('/pembelian/destroy-all', [InventarisKantorController::class, 'pembelianDestroyAll'])->name('pembelian.destroyAll');
+            Route::get('/pembelian', [InventarisKantorController::class, 'pembelianIndex'])->name('pembelian');
+            Route::get('/pembelian/template', [InventarisKantorController::class, 'pembelianTemplate'])->name('pembelian.template');
+            Route::post('/pembelian/import', [InventarisKantorController::class, 'pembelianImport'])->name('pembelian.import');
+            Route::post('/pembelian', [InventarisKantorController::class, 'pembelianStore'])->name('pembelian.store');
+            Route::put('/pembelian/{id}', [InventarisKantorController::class, 'pembelianUpdate'])->name('pembelian.update');
+            Route::delete('/pembelian/{id}', [InventarisKantorController::class, 'pembelianDestroy'])->name('pembelian.destroy');
+
+            Route::delete('/stock-opname/destroy-all', [InventarisKantorController::class, 'stockOpnameDestroyAll'])->name('stock-opname.destroyAll');
+            Route::get('/stock-opname', [InventarisKantorController::class, 'stockOpnameIndex'])->name('stock-opname');
+            Route::get('/stock-opname/template', [InventarisController::class, 'stockOpnameTemplate'])->name('stock-opname.template');
+            Route::post('/stock-opname/import', [InventarisController::class, 'stockOpnameImport'])->name('stock-opname.import');
+            Route::post('/stock-opname/session', [InventarisKantorController::class, 'stockOpnameSessionStore'])->name('stock-opname.session.store');
+            Route::put('/stock-opname/session/{date}', [InventarisKantorController::class, 'stockOpnameSessionUpdate'])->name('stock-opname.session.update');
+            Route::delete('/stock-opname/session/{date}', [InventarisKantorController::class, 'stockOpnameSessionDestroy'])->name('stock-opname.session.destroy');
+
+            Route::get('/stock-opname/{date}', [InventarisKantorController::class, 'stockOpnameDetail'])->name('stock-opname.detail');
+            Route::get('/stock-opname/{date}/export', [InventarisKantorController::class, 'stockOpnameExport'])->name('stock-opname.export');
+            Route::post('/stock-opname/{date}/item', [InventarisKantorController::class, 'stockOpnameItemStore'])->name('stock-opname.item.store');
+            Route::put('/stock-opname/item/{id}', [InventarisKantorController::class, 'stockOpnameItemUpdate'])->name('stock-opname.item.update');
+            Route::delete('/stock-opname/item/{id}', [InventarisKantorController::class, 'stockOpnameItemDestroy'])->name('stock-opname.item.destroy');
+        });
+
+        // Mess Subsystem (Read-Only)
+        Route::prefix('mess')->name('mess.')->group(function () {
+            // Tab 1: Barang
+            Route::get('/barang', [InventarisMessController::class, 'barangIndex'])->name('barang');
+
+            // Tab 2: Pembelian
+            Route::get('/pembelian', [InventarisMessController::class, 'pembelianIndex'])->name('pembelian');
+
+            // Tab 3: Stock Opname Sessions
+            Route::get('/stock-opname', [InventarisMessController::class, 'stockOpnameIndex'])->name('stock-opname');
+
+            // Tab 4: Stock Opname Detail
+            Route::get('/stock-opname/{date}', [InventarisMessController::class, 'stockOpnameDetail'])->name('stock-opname.detail');
+            Route::get('/stock-opname/{date}/export', [InventarisMessController::class, 'stockOpnameExport'])->name('stock-opname.export');
+        });
     });
 
-    // Mess Subsystem (Read-Only)
-    Route::prefix('mess')->name('mess.')->group(function () {
-        // Tab 1: Barang
-        Route::get('/barang', [InventarisMessController::class, 'barangIndex'])->name('barang');
+    // Top Management Module (React SPA) Routes
+    Route::get('/Top_Management/{any?}', function () {
+        return view('Top_Management.index');
+    })->where('any', '.*')->name('Top_Management.index');
 
-        // Tab 2: Pembelian
-        Route::get('/pembelian', [InventarisMessController::class, 'pembelianIndex'])->name('pembelian');
+    Route::get('/top-management/{any?}', function () {
+        return view('Top_Management.index');
+    })->where('any', '.*')->name('top-management');
 
-        // Tab 3: Stock Opname Sessions
-        Route::get('/stock-opname', [InventarisMessController::class, 'stockOpnameIndex'])->name('stock-opname');
+    // Administrasi - Monitoring Karyawan (Detailed) Backend API Routes
+    Route::prefix('administrasi/monitoring/api')->name('administrasi.monitoring.api.')->group(function () {
+        // Employees API
+        Route::get('/employees', [MonitoringDashboardController::class, 'getEmployees'])->name('employees.index');
+        Route::post('/employees', [MonitoringDashboardController::class, 'storeEmployee'])->name('employees.store');
+        Route::post('/employees/import', [MonitoringDashboardController::class, 'importEmployees'])->name('employees.import');
+        Route::get('/employees/export', [MonitoringDashboardController::class, 'exportEmployees'])->name('employees.export');
+        Route::get('/employees/template', [MonitoringDashboardController::class, 'templateEmployees'])->name('employees.template');
+        Route::delete('/employees/destroy-all', [MonitoringDashboardController::class, 'destroyAllEmployees'])->name('employees.destroyAll');
+        Route::put('/employees/{id}', [MonitoringDashboardController::class, 'updateEmployee'])->name('employees.update');
+        Route::delete('/employees/{id}', [MonitoringDashboardController::class, 'destroyEmployee'])->name('employees.destroy');
 
-        // Tab 4: Stock Opname Detail
-        Route::get('/stock-opname/{date}', [InventarisMessController::class, 'stockOpnameDetail'])->name('stock-opname.detail');
-        Route::get('/stock-opname/{date}/export', [InventarisMessController::class, 'stockOpnameExport'])->name('stock-opname.export');
+        // Angkatan API
+        Route::get('/angkatan', [MonitoringDashboardController::class, 'getAngkatan'])->name('angkatan.index');
+        Route::post('/angkatan', [MonitoringDashboardController::class, 'storeAngkatan'])->name('angkatan.store');
+        Route::post('/angkatan/import', [MonitoringDashboardController::class, 'importAngkatan'])->name('angkatan.import');
+        Route::get('/angkatan/export', [MonitoringDashboardController::class, 'exportAngkatan'])->name('angkatan.export');
+        Route::get('/angkatan/template', [MonitoringDashboardController::class, 'templateAngkatan'])->name('angkatan.template');
+        Route::delete('/angkatan/destroy-all', [MonitoringDashboardController::class, 'destroyAllAngkatan'])->name('angkatan.destroyAll');
+        Route::put('/angkatan/{id}', [MonitoringDashboardController::class, 'updateAngkatan'])->name('angkatan.update');
+        Route::delete('/angkatan/{id}', [MonitoringDashboardController::class, 'destroyAngkatan'])->name('angkatan.destroy');
+
+        // Culled API
+        Route::get('/culled', [MonitoringDashboardController::class, 'getCulled'])->name('culled.index');
+        Route::post('/culled', [MonitoringDashboardController::class, 'storeCulled'])->name('culled.store');
+        Route::post('/culled/import', [MonitoringDashboardController::class, 'importCulled'])->name('culled.import');
+        Route::get('/culled/export', [MonitoringDashboardController::class, 'exportCulled'])->name('culled.export');
+        Route::get('/culled/template', [MonitoringDashboardController::class, 'templateCulled'])->name('culled.template');
+        Route::delete('/culled/destroy-all', [MonitoringDashboardController::class, 'destroyAllCulled'])->name('culled.destroyAll');
+        Route::put('/culled/{id}', [MonitoringDashboardController::class, 'updateCulled'])->name('culled.update');
+        Route::delete('/culled/{id}', [MonitoringDashboardController::class, 'destroyCulled'])->name('culled.destroy');
+
+        // Afdeling API
+        Route::get('/afdeling', [MonitoringDashboardController::class, 'getAfdeling'])->name('afdeling.index');
+        Route::put('/afdeling', [MonitoringDashboardController::class, 'updateAfdeling'])->name('afdeling.update');
+
+        // Reset Data to CSV Seed
+        Route::post('/reset-data', [MonitoringDashboardController::class, 'resetData'])->name('reset-data');
     });
+
+    // Administrasi - Monitoring Karyawan (React SPA) Routes
+    Route::get('/administrasi/monitoring/{any?}', function () {
+        return view('Administrasi.Pages.Monitoring_Spesifik.index');
+    })->where('any', '.*')->name('administrasi.monitoring.index');
+
+    Route::get('/Administrasi/Monitoring/{any?}', function () {
+        return view('Administrasi.Pages.Monitoring_Spesifik.index');
+    })->where('any', '.*');
 });
-
-// Top Management Module (React SPA) Routes
-Route::get('/Top_Management/{any?}', function () {
-    return view('Top_Management.index');
-})->where('any', '.*')->name('Top_Management.index');
-
-Route::get('/top-management/{any?}', function () {
-    return view('Top_Management.index');
-})->where('any', '.*')->name('top-management');
-
-// Administrasi - Monitoring Karyawan (Detailed) Backend API Routes
-Route::prefix('administrasi/monitoring/api')->name('administrasi.monitoring.api.')->group(function () {
-    // Employees API
-    Route::get('/employees', [MonitoringDashboardController::class, 'getEmployees'])->name('employees.index');
-    Route::post('/employees', [MonitoringDashboardController::class, 'storeEmployee'])->name('employees.store');
-    Route::post('/employees/import', [MonitoringDashboardController::class, 'importEmployees'])->name('employees.import');
-    Route::get('/employees/export', [MonitoringDashboardController::class, 'exportEmployees'])->name('employees.export');
-    Route::get('/employees/template', [MonitoringDashboardController::class, 'templateEmployees'])->name('employees.template');
-    Route::delete('/employees/destroy-all', [MonitoringDashboardController::class, 'destroyAllEmployees'])->name('employees.destroyAll');
-    Route::put('/employees/{id}', [MonitoringDashboardController::class, 'updateEmployee'])->name('employees.update');
-    Route::delete('/employees/{id}', [MonitoringDashboardController::class, 'destroyEmployee'])->name('employees.destroy');
-
-    // Angkatan API
-    Route::get('/angkatan', [MonitoringDashboardController::class, 'getAngkatan'])->name('angkatan.index');
-    Route::post('/angkatan', [MonitoringDashboardController::class, 'storeAngkatan'])->name('angkatan.store');
-    Route::post('/angkatan/import', [MonitoringDashboardController::class, 'importAngkatan'])->name('angkatan.import');
-    Route::get('/angkatan/export', [MonitoringDashboardController::class, 'exportAngkatan'])->name('angkatan.export');
-    Route::get('/angkatan/template', [MonitoringDashboardController::class, 'templateAngkatan'])->name('angkatan.template');
-    Route::delete('/angkatan/destroy-all', [MonitoringDashboardController::class, 'destroyAllAngkatan'])->name('angkatan.destroyAll');
-    Route::put('/angkatan/{id}', [MonitoringDashboardController::class, 'updateAngkatan'])->name('angkatan.update');
-    Route::delete('/angkatan/{id}', [MonitoringDashboardController::class, 'destroyAngkatan'])->name('angkatan.destroy');
-
-    // Culled API
-    Route::get('/culled', [MonitoringDashboardController::class, 'getCulled'])->name('culled.index');
-    Route::post('/culled', [MonitoringDashboardController::class, 'storeCulled'])->name('culled.store');
-    Route::post('/culled/import', [MonitoringDashboardController::class, 'importCulled'])->name('culled.import');
-    Route::get('/culled/export', [MonitoringDashboardController::class, 'exportCulled'])->name('culled.export');
-    Route::get('/culled/template', [MonitoringDashboardController::class, 'templateCulled'])->name('culled.template');
-    Route::delete('/culled/destroy-all', [MonitoringDashboardController::class, 'destroyAllCulled'])->name('culled.destroyAll');
-    Route::put('/culled/{id}', [MonitoringDashboardController::class, 'updateCulled'])->name('culled.update');
-    Route::delete('/culled/{id}', [MonitoringDashboardController::class, 'destroyCulled'])->name('culled.destroy');
-
-    // Afdeling API
-    Route::get('/afdeling', [MonitoringDashboardController::class, 'getAfdeling'])->name('afdeling.index');
-    Route::put('/afdeling', [MonitoringDashboardController::class, 'updateAfdeling'])->name('afdeling.update');
-
-    // Reset Data to CSV Seed
-    Route::post('/reset-data', [MonitoringDashboardController::class, 'resetData'])->name('reset-data');
-});
-
-// Administrasi - Monitoring Karyawan (React SPA) Routes
-Route::get('/administrasi/monitoring/{any?}', function () {
-    return view('Administrasi.Pages.Monitoring_Spesifik.index');
-})->where('any', '.*')->name('administrasi.monitoring.index');
-
-Route::get('/Administrasi/Monitoring/{any?}', function () {
-    return view('Administrasi.Pages.Monitoring_Spesifik.index');
-})->where('any', '.*');

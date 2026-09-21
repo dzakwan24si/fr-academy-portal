@@ -40,6 +40,11 @@
             <i data-lucide="plus" class="w-4 h-4"></i>
             <span>Tambah Stock Opname</span>
         </button>
+        <button type="button" onclick="document.getElementById('modalDeleteAllStockOpname').classList.remove('hidden')"
+                class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-100 text-xs font-semibold rounded-xl transition-all shadow-sm">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+            <span>Hapus Semua Data</span>
+        </button>
     </div>
 </div>
 
@@ -170,6 +175,35 @@
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+{{-- ============================== MODAL HAPUS SEMUA DATA STOCK OPNAME KANTOR ============================== --}}
+<div id="modalDeleteAllStockOpname" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-xs hidden">
+    <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl border border-[#E5E7EB] text-center">
+        <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-4">
+            <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+        </div>
+        <h3 class="text-lg font-bold text-[#18181B] mb-1">Hapus Semua Data Stock Opname Kantor?</h3>
+        <p class="text-xs text-[#71717A] mb-4">
+            Tindakan ini akan menghapus seluruh data catatan stock opname inventaris lokasi <strong class="text-rose-600">Kantor</strong>.
+        </p>
+        <div class="bg-rose-50 border border-rose-200 rounded-xl p-3 text-[11px] text-rose-800 text-left mb-5">
+            <p class="font-bold flex items-center gap-1"><i data-lucide="info" class="w-3.5 h-3.5"></i> Perhatian:</p>
+            <p class="mt-0.5">Seluruh sesi dan catatan pemeriksaan stock opname Kantor akan dihapus permanen. Data master barang tidak akan terhapus. Tindakan ini tidak dapat dibatalkan.</p>
+        </div>
+        <div class="flex gap-3">
+            <button type="button" onclick="document.getElementById('modalDeleteAllStockOpname').classList.add('hidden')"
+                    class="flex-1 px-4 py-2.5 text-xs font-semibold text-[#374151] bg-white border border-[#E5E7EB] rounded-xl hover:bg-[#F9FAFB]">
+                Batal
+            </button>
+            <form method="POST" action="{{ route('administrasi.inventaris.kantor.stock-opname.destroyAll') }}" class="flex-1">
+                @csrf @method('DELETE')
+                <button type="submit" class="w-full px-4 py-2.5 text-xs font-semibold text-white bg-rose-600 rounded-xl hover:bg-rose-700 shadow-sm">
+                    Ya, Hapus Semua
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 

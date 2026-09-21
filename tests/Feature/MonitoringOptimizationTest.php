@@ -7,6 +7,12 @@ use App\Models\Monitoring\MonitoringTalent;
 
 class MonitoringOptimizationTest extends TestCase
 {
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticateUser();
+    }
+
     public function test_main_dashboard_and_dashboard_realisasi_loads_successfully()
     {
         $mainResponse = $this->get('/');

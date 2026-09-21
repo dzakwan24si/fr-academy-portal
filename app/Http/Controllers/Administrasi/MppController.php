@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Administrasi;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Administrasi\Mpp;
 use App\Services\ExcelExporter;
 use Illuminate\Http\Request;
@@ -577,6 +578,13 @@ class MppController extends Controller
             $msg .= ", {$updatedCount} data diperbarui";
         }
         $msg .= ".";
+
+        ActivityLog::log(
+            'Import',
+            'MPP',
+            "Mengimport data MPP Jabatan dari file " . $file->getClientOriginalName() . " ({$insertedCount} baru, {$updatedCount} diperbarui)",
+            ['filename' => $file->getClientOriginalName(), 'inserted' => $insertedCount, 'updated' => $updatedCount]
+        );
 
         return redirect()->route('administrasi.mpp.index', [
             'year' => $fallbackYear,

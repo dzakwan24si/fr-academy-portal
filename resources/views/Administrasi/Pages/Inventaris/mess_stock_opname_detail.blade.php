@@ -189,7 +189,7 @@
     </div>
 </div>
 
-</x-admin-layout>
+
 
 @push('scripts')
 <script>
@@ -204,3 +204,5 @@
     }
 </script>
 @endpush
+
+</x-admin-layout>

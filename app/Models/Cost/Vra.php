@@ -2,12 +2,15 @@
 
 namespace App\Models\Cost;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Vra extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected static $logModuleName = 'VRA';
 
     protected $table = 'vra';
     protected $primaryKey = 'vra_id';

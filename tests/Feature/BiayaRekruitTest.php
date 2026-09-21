@@ -12,6 +12,7 @@ class BiayaRekruitTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->authenticateUser();
         BiayaRekruit::query()->delete();
 
         BiayaRekruit::create([

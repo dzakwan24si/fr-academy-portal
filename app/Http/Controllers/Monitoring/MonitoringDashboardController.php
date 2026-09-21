@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Monitoring;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Monitoring\MonitoringAfdeling;
 use App\Models\Monitoring\MonitoringAngkatan;
 use App\Models\Monitoring\MonitoringCulled;
@@ -130,9 +131,17 @@ class MonitoringDashboardController extends Controller
 
     public function destroyAllEmployees()
     {
+        $count = DB::table('monitoring_employees')->count();
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DB::table('monitoring_employees')->truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        ActivityLog::log(
+            'Hapus',
+            'Monitoring Alumni',
+            "Menghapus seluruh data karyawan alumni ({$count} data)",
+            ['count' => $count]
+        );
 
         return response()->json([
             'status' => 'success',
@@ -230,9 +239,17 @@ class MonitoringDashboardController extends Controller
 
     public function destroyAllAngkatan()
     {
+        $count = DB::table('monitoring_angkatan')->count();
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DB::table('monitoring_angkatan')->truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        ActivityLog::log(
+            'Hapus',
+            'Monitoring Alumni',
+            "Menghapus seluruh data angkatan alumni ({$count} data)",
+            ['count' => $count]
+        );
 
         return response()->json([
             'status' => 'success',
@@ -305,9 +322,17 @@ class MonitoringDashboardController extends Controller
 
     public function destroyAllCulled()
     {
+        $count = DB::table('monitoring_culled')->count();
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         DB::table('monitoring_culled')->truncate();
         DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        ActivityLog::log(
+            'Hapus',
+            'Monitoring Alumni',
+            "Menghapus seluruh data peserta culled ({$count} data)",
+            ['count' => $count]
+        );
 
         return response()->json([
             'status' => 'success',
@@ -428,6 +453,13 @@ class MonitoringDashboardController extends Controller
             $insertedCount += count($batch);
         }
 
+        ActivityLog::log(
+            'Import',
+            'Monitoring Alumni',
+            "Mengimport {$insertedCount} data karyawan alumni",
+            ['count' => $insertedCount, 'mode' => $mode]
+        );
+
         return response()->json([
             'status' => 'success',
             'message' => "Berhasil mengimport {$insertedCount} data karyawan.",
@@ -515,6 +547,13 @@ class MonitoringDashboardController extends Controller
             DB::table('monitoring_angkatan')->insert($batch);
             $insertedCount += count($batch);
         }
+
+        ActivityLog::log(
+            'Import',
+            'Monitoring Alumni',
+            "Mengimport {$insertedCount} data angkatan",
+            ['count' => $insertedCount, 'mode' => $mode]
+        );
 
         return response()->json([
             'status' => 'success',
@@ -623,6 +662,13 @@ class MonitoringDashboardController extends Controller
             DB::table('monitoring_culled')->insert($batch);
             $insertedCount += count($batch);
         }
+
+        ActivityLog::log(
+            'Import',
+            'Monitoring Alumni',
+            "Mengimport {$insertedCount} data peserta culled",
+            ['count' => $insertedCount, 'mode' => $mode]
+        );
 
         return response()->json([
             'status' => 'success',

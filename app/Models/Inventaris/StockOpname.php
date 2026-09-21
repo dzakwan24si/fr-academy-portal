@@ -2,12 +2,15 @@
 
 namespace App\Models\Inventaris;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class StockOpname extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected static $logModuleName = 'Inventaris Stock Opname';
 
     protected $table = 'stock_opname';
 

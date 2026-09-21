@@ -2,12 +2,15 @@
 
 namespace App\Models\Monitoring;
 
+use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class MonitoringTalent extends Model
 {
-    use HasFactory;
+    use HasFactory, LogsActivity;
+
+    protected static $logModuleName = 'Monitoring Talent';
 
     protected $table = 'monitoring_talents';
 

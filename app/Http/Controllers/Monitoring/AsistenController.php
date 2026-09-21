@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Monitoring;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\Monitoring\Asisten;
 use App\Models\Monitoring\AsistenProgramMonitoring;
 use App\Services\SpreadsheetReader;
@@ -306,7 +307,15 @@ class AsistenController extends Controller
      */
     public function destroyAll()
     {
+        $count = Asisten::count();
         Asisten::truncate();
+
+        ActivityLog::log(
+            'Hapus',
+            'Database Asisten',
+            "Menghapus semua data asisten ({$count} data)",
+            ['count' => $count]
+        );
 
         return response()->json([
             'status' => 'success',
@@ -560,6 +569,13 @@ class AsistenController extends Controller
 
             DB::commit();
 
+            ActivityLog::log(
+                'Import',
+                'Database Asisten',
+                "Mengimport " . count($rowsToInsert) . " data asisten dari file " . $file->getClientOriginalName(),
+                ['filename' => $file->getClientOriginalName(), 'count' => count($rowsToInsert), 'mode' => $mode]
+            );
+
             return response()->json([
                 'status' => 'success',
                 'message' => "Import CSV berhasil! {$mode} " . count($rowsToInsert) . " data.",
@@ -778,13 +794,21 @@ class AsistenController extends Controller
 
         $programs = $query->orderBy('kode_kategori', 'asc')->orderBy('no', 'asc')->get();
 
-        // Pre-fetch Asisten counts grouped by program & status & jabatan for instant performance
-        $asistenRecords = Asisten::select(['program', 'keterangan', 'jabatan_terakhir', 'status_karyawan'])
+        // Pre-fetch Asisten records grouped by program & status & jabatan for instant performance
+        $asistenRecords = Asisten::select(['program', 'keterangan', 'status_kelulusan', 'status_resign', 'jabatan_terakhir', 'status_karyawan'])
             ->whereNotNull('program')
             ->get();
 
-        // Helper normalizer for program strings
-        $norm = fn($s) => strtolower(preg_replace('/[^a-zA-Z0-9]/', '', (string) $s));
+        // Helper normalizer for program strings (handles acronyms like FAT <-> Field Assistant)
+        $norm = function ($s) {
+            $str = strtolower((string) $s);
+            $str = str_replace(['field assistant', 'fat'], 'fat', $str);
+            $str = str_replace(['mill assistant', 'mat'], 'mat', $str);
+            $str = str_replace(['admin assistant', 'aat'], 'aat', $str);
+            $str = str_replace(['traction assistant', 'tat'], 'tat', $str);
+            $str = str_replace(['downstream management', 'dmt'], 'dmt', $str);
+            return preg_replace('/[^a-zA-Z0-9]/', '', $str);
+        };
 
         // Group asisten by normalized program name
         $asistenByNormProgram = [];
@@ -812,7 +836,7 @@ class AsistenController extends Controller
             $normKey = $norm($prog->nama_program);
             $matchingAsisten = $asistenByNormProgram[$normKey] ?? [];
 
-            // If no exact norm match, try prefix/suffix match (e.g. "FAT I 2002" vs "Field Assistant - I/2002")
+            // If no exact norm match, try prefix/suffix match
             if (empty($matchingAsisten)) {
                 foreach ($asistenByNormProgram as $k => $list) {
                     if (str_contains($k, $normKey) || str_contains($normKey, $k)) {
@@ -821,12 +845,8 @@ class AsistenController extends Controller
                 }
             }
 
-            // Calculations
-            $trainee = (int) $prog->jumlah_trainee;
-            $culled = (int) $prog->jumlah_culled;
-            $passed = max(0, $trainee - $culled);
-
-            // Live counts from Database Asisten
+            // Live counts from Database Asisten (tab Monitoring Asisten)
+            $culledCountFromDb = 0;
             $resignCount = 0;
             $eksisCount = 0;
             $posPC = 0;
@@ -837,9 +857,12 @@ class AsistenController extends Controller
 
             foreach ($matchingAsisten as $m) {
                 $ket = strtolower(trim((string) $m->keterangan));
+                $statusKel = strtolower(trim((string) $m->status_kelulusan));
                 $jab = strtoupper(trim((string) $m->jabatan_terakhir));
 
-                if (str_contains($ket, 'resign') || str_contains($ket, 'phk')) {
+                if (str_contains($ket, 'gagal') || str_contains($statusKel, 'gagal')) {
+                    $culledCountFromDb++;
+                } elseif (str_contains($ket, 'resign') || str_contains($ket, 'phk') || str_contains(strtolower($m->status_resign ?? ''), 'resign')) {
                     $resignCount++;
                 } else {
                     $eksisCount++;
@@ -858,6 +881,18 @@ class AsistenController extends Controller
                     }
                 }
             }
+
+            // Derive Trainee & Culled: If records exist in tab Monitoring Asisten, take counts from DB Asisten dynamically
+            $asistenCountInDb = count($matchingAsisten);
+            if ($asistenCountInDb > 0) {
+                $trainee = max((int) $prog->jumlah_trainee, $asistenCountInDb);
+                $culled = $culledCountFromDb > 0 ? $culledCountFromDb : (int) $prog->jumlah_culled;
+            } else {
+                $trainee = (int) $prog->jumlah_trainee;
+                $culled = (int) $prog->jumlah_culled;
+            }
+
+            $passed = max(0, $trainee - $culled);
 
             // Percentages (All calculated against Jumlah Trainee)
             $pctCulled = $trainee > 0 ? round(($culled / $trainee) * 100, 2) : 0;
@@ -1137,9 +1172,13 @@ class AsistenController extends Controller
             'nama_program' => 'required|string|max:255',
             'kategori_program' => 'nullable|string|max:150',
             'kode_kategori' => 'nullable|string|max:10',
+            'tahun' => 'nullable|integer',
+            'tahun_rekrut' => 'nullable|integer',
             'tahun_training' => 'nullable|integer',
+            'tahun_lulus' => 'nullable|integer',
             'jumlah_trainee' => 'nullable|integer|min:0',
             'jumlah_culled' => 'nullable|integer|min:0',
+            'catatan' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
@@ -1150,7 +1189,33 @@ class AsistenController extends Controller
             ], 422);
         }
 
-        $record = AsistenProgramMonitoring::create($request->all());
+        $data = $request->all();
+        if (empty($data['no'])) {
+            $data['no'] = ((int) AsistenProgramMonitoring::max('no')) + 1;
+        }
+
+        // Fill years if simplified single 'tahun' is sent
+        if (!empty($data['tahun'])) {
+            $data['tahun_training'] = $data['tahun_training'] ?? (int) $data['tahun'];
+            $data['tahun_lulus'] = $data['tahun_lulus'] ?? (int) $data['tahun'];
+            $data['tahun_rekrut'] = $data['tahun_rekrut'] ?? (int) $data['tahun'];
+        }
+
+        if (empty($data['kategori_program']) && !empty($data['kode_kategori'])) {
+            $data['kategori_program'] = match($data['kode_kategori']) {
+                'A' => 'Field Assistant Training',
+                'B' => 'Mill Assistant Training',
+                'C' => 'Admin Assistant Training',
+                'D' => 'Traction Assistant Training',
+                'E' => 'Downstream Management Training',
+                default => 'Program Training'
+            };
+        }
+
+        $data['jumlah_trainee'] = (int) ($data['jumlah_trainee'] ?? 0);
+        $data['jumlah_culled'] = (int) ($data['jumlah_culled'] ?? 0);
+
+        $record = AsistenProgramMonitoring::create($data);
 
         return response()->json([
             'status' => 'success',
@@ -1165,7 +1230,47 @@ class AsistenController extends Controller
     public function updateMonitoringProgram(Request $request, $id)
     {
         $record = AsistenProgramMonitoring::findOrFail($id);
-        $record->update($request->all());
+
+        $validator = Validator::make($request->all(), [
+            'nama_program' => 'required|string|max:255',
+            'kategori_program' => 'nullable|string|max:150',
+            'kode_kategori' => 'nullable|string|max:10',
+            'tahun' => 'nullable|integer',
+            'tahun_rekrut' => 'nullable|integer',
+            'tahun_training' => 'nullable|integer',
+            'tahun_lulus' => 'nullable|integer',
+            'jumlah_trainee' => 'nullable|integer|min:0',
+            'jumlah_culled' => 'nullable|integer|min:0',
+            'catatan' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Validasi data gagal.',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $data = $request->all();
+        if (!empty($data['tahun'])) {
+            $data['tahun_training'] = $data['tahun_training'] ?? (int) $data['tahun'];
+            $data['tahun_lulus'] = $data['tahun_lulus'] ?? (int) $data['tahun'];
+            $data['tahun_rekrut'] = $data['tahun_rekrut'] ?? (int) $data['tahun'];
+        }
+
+        if (empty($data['kategori_program']) && !empty($data['kode_kategori'])) {
+            $data['kategori_program'] = match($data['kode_kategori']) {
+                'A' => 'Field Assistant Training',
+                'B' => 'Mill Assistant Training',
+                'C' => 'Admin Assistant Training',
+                'D' => 'Traction Assistant Training',
+                'E' => 'Downstream Management Training',
+                default => $record->kategori_program ?? 'Program Training'
+            };
+        }
+
+        $record->update($data);
 
         return response()->json([
             'status' => 'success',
@@ -1316,6 +1421,13 @@ class AsistenController extends Controller
         foreach (array_chunk($rows, 50) as $chunk) {
             AsistenProgramMonitoring::insert($chunk);
         }
+
+        ActivityLog::log(
+            'Import',
+            'Monitoring Alumni',
+            "Mengimport " . count($rows) . " data batch program dari file " . $file->getClientOriginalName(),
+            ['filename' => $file->getClientOriginalName(), 'count' => count($rows), 'mode' => $mode]
+        );
 
         return response()->json([
             'status' => 'success',

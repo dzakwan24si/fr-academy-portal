@@ -13,6 +13,12 @@ class RealisasiVsBatchTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->authenticateUser();
+    }
+
     public function test_realization_uses_training_records_and_prevents_duplicates(): void
     {
         ProgramReguler::create([
