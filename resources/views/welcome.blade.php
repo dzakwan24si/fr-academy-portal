@@ -156,51 +156,66 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <!-- Card 1 -->
-                <div class="bg-orange-50/50 dark:bg-gray-700 rounded-2xl p-8 transition-transform hover:-translate-y-2 duration-300 border border-orange-100 dark:border-gray-600 shadow-sm" data-aos="fade-up" data-aos-delay="100">
-                    <div class="w-24 h-24 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-8 shadow-md overflow-hidden">
-                        <img src="{{ asset('images/reguler.png') }}" alt="Reguler Icon" class="w-full h-full object-contain p-2">
+                <div class="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700 flex flex-col" data-aos="fade-up" data-aos-delay="100">
+                    <div class="relative h-56 overflow-hidden">
+                        <img src="{{ asset('images/slide3.png') }}" alt="Agronomi" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        <div class="absolute -bottom-8 right-8">
+                            <div class="w-24 h-24 bg-white dark:bg-gray-800 rounded-2xl p-1.5 shadow-xl flex items-center justify-center border border-gray-100 dark:border-gray-700 transform group-hover:-translate-y-2 transition-transform duration-500 z-20">
+                                <img src="{{ asset('images/reguler.png') }}" alt="Reguler Icon" class="w-full h-full object-contain drop-shadow-sm">
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Regular Training Program</h3>
-                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Program pengembangan berkesinambungan selama enam bulan dengan pendampingan mentoring untuk menyiapkan calon staf dan asisten perkebunan.</p>
-                    
-                    <div class="rounded-xl overflow-hidden h-40 mb-4">
-                        <img src="{{ asset('images/slide3.png') }}" alt="Agronomi" class="w-full h-full object-cover">
+                    <div class="p-8 pt-10 flex flex-col flex-grow">
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Regular Training Program</h3>
+                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-6 flex-grow">Program pengembangan berkesinambungan selama enam bulan dengan pendampingan mentoring untuk menyiapkan calon staf dan asisten perkebunan.</p>
+                        <a href="/program#reguler" class="inline-flex items-center text-sm font-bold text-teal-600 dark:text-teal-400 group-hover:text-green-accent transition-colors">
+                            Pelajari lebih lanjut 
+                            <svg class="ml-2 w-5 h-5 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                        </a>
                     </div>
-                    <a href="/program#reguler" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
-                        Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                    </a>
                 </div>
 
                 <!-- Card 2 -->
-                <div class="bg-blue-50/50 dark:bg-gray-700 rounded-2xl p-8 transition-transform hover:-translate-y-2 duration-300 border border-blue-100 dark:border-gray-600 shadow-sm" data-aos="fade-up" data-aos-delay="200">
-                    <div class="w-24 h-24 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-8 shadow-md overflow-hidden">
-                        <img src="{{ asset('images/nonreguler.png') }}" alt="Non-Reguler Icon" class="w-full h-full object-contain p-2">
+                <div class="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700 flex flex-col" data-aos="fade-up" data-aos-delay="200">
+                    <div class="relative h-56 overflow-hidden">
+                        <img src="https://i.ibb.co.com/3mg5bHQN/image-14.png" alt="Pabrik" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        <div class="absolute -bottom-8 right-8">
+                            <div class="w-24 h-24 bg-white dark:bg-gray-800 rounded-2xl p-1.5 shadow-xl flex items-center justify-center border border-gray-100 dark:border-gray-700 transform group-hover:-translate-y-2 transition-transform duration-500 z-20">
+                                <img src="{{ asset('images/nonreguler.png') }}" alt="Non-Reguler Icon" class="w-full h-full object-contain drop-shadow-sm">
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Non-Regular Training Program</h3>
-                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Pelatihan berdurasi singkat untuk meningkatkan kompetensi teknis dan manajerial staf operasional di Kebun, Pabrik (Mill), Traksi, hingga Administrasi.</p>
-                    
-                    <div class="rounded-xl overflow-hidden h-40 mb-4">
-                        <img src="https://i.ibb.co.com/3mg5bHQN/image-14.png" alt="Pabrik" class="w-full h-full object-cover">
+                    <div class="p-8 pt-10 flex flex-col flex-grow">
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Non-Regular Training Program</h3>
+                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-6 flex-grow">Pelatihan berdurasi singkat untuk meningkatkan kompetensi teknis dan manajerial staf operasional di Kebun, Pabrik (Mill), Traksi, hingga Administrasi.</p>
+                        <a href="/program#non-reguler" class="inline-flex items-center text-sm font-bold text-teal-600 dark:text-teal-400 group-hover:text-green-accent transition-colors">
+                            Pelajari lebih lanjut 
+                            <svg class="ml-2 w-5 h-5 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                        </a>
                     </div>
-                    <a href="/program#non-reguler" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
-                        Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                    </a>
                 </div>
 
                 <!-- Card 3 -->
-                <div class="bg-teal-50/50 dark:bg-gray-700 rounded-2xl p-8 transition-transform hover:-translate-y-2 duration-300 border border-teal-100 dark:border-gray-600 shadow-sm" data-aos="fade-up" data-aos-delay="300">
-                    <div class="w-24 h-24 bg-white dark:bg-gray-800 rounded-2xl flex items-center justify-center mb-8 shadow-md overflow-hidden">
-                        <img src="{{ asset('images/talent.png') }}" alt="Talent Icon" class="w-full h-full object-contain p-2">
+                <div class="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700 flex flex-col" data-aos="fade-up" data-aos-delay="300">
+                    <div class="relative h-56 overflow-hidden">
+                        <img src="https://i.ibb.co.com/XrLSNbzC/image-13.png" alt="Kepemimpinan" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        <div class="absolute -bottom-8 right-8">
+                            <div class="w-24 h-24 bg-white dark:bg-gray-800 rounded-2xl p-1.5 shadow-xl flex items-center justify-center border border-gray-100 dark:border-gray-700 transform group-hover:-translate-y-2 transition-transform duration-500 z-20">
+                                <img src="{{ asset('images/talent.png') }}" alt="Talent Icon" class="w-full h-full object-contain drop-shadow-sm">
+                            </div>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">Talent Management Program</h3>
-                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">Program akselerasi terstruktur yang dirancang khusus untuk mempersiapkan staf berpotensi (high talent) menjadi pemimpin masa depan perusahaan.</p>
-                    
-                    <div class="rounded-xl overflow-hidden h-40 mb-4">
-                        <img src="https://i.ibb.co.com/XrLSNbzC/image-13.png" alt="Kepemimpinan" class="w-full h-full object-cover">
+                    <div class="p-8 pt-10 flex flex-col flex-grow">
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Talent Management Program</h3>
+                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-6 flex-grow">Program akselerasi terstruktur yang dirancang khusus untuk mempersiapkan staf berpotensi (high talent) menjadi pemimpin masa depan perusahaan.</p>
+                        <a href="/program#talent" class="inline-flex items-center text-sm font-bold text-teal-600 dark:text-teal-400 group-hover:text-green-accent transition-colors">
+                            Pelajari lebih lanjut 
+                            <svg class="ml-2 w-5 h-5 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                        </a>
                     </div>
-                    <a href="/program#talent" class="text-sm font-semibold text-teal-primary dark:text-teal-400 flex items-center hover:text-green-accent transition">
-                        Pelajari lebih lanjut <svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                    </a>
                 </div>
             </div>
         </div>
