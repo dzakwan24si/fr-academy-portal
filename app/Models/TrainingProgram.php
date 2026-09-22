@@ -9,7 +9,14 @@ class TrainingProgram extends Model
 {
     use HasFactory;
 
-    protected $guarded = ['id'];
+    protected $fillable = [
+        'name',
+        'year',
+        'description',
+        'status',
+        'quote',
+        'type',
+    ];
 
     public function trainees()
     {
@@ -24,5 +31,10 @@ class TrainingProgram extends Model
     public function moas()
     {
         return $this->hasMany(Moa::class);
+    }
+
+    public function dailyClasses()
+    {
+        return $this->hasMany(DailyClass::class);
     }
 }

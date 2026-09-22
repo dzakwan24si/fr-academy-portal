@@ -11,9 +11,9 @@ class Attendance extends Model
 
     protected $guarded = ['id'];
 
-    public function weeklyReport()
+    public function dailyClass()
     {
-        return $this->belongsTo(WeeklyReport::class);
+        return $this->belongsTo(DailyClass::class);
     }
 
     public function trainee()

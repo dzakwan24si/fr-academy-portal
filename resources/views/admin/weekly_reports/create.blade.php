@@ -54,11 +54,18 @@
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Tanggal Selesai (Minggu Ini)</label>
                     <input type="date" name="week_end_date" value="{{ old('week_end_date') }}" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-green-500" required>
                 </div>
+                    <div class="md:col-span-2 mt-4">
+                        <label class="block text-sm font-semibold text-gray-600 mb-1.5">Tema Laporan</label>
+                        <select name="theme" class="w-full px-4 py-2.5 text-sm border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#28844b]/30 focus:border-[#28844b] outline-none transition bg-gray-50 hover:bg-white cursor-pointer">
+                            <option value="reguler" >Tema Reguler (Biru)</option>
+                            <option value="kemerdekaan" >Tema Kemerdekaan (Merah Putih)</option>
+                        </select>
+                    </div>
 
                 <!-- Training Purpose -->
                 <div class="col-span-1 md:col-span-2">
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Tujuan Pelatihan (Minggu Ini)</label>
-                    <textarea name="training_purpose" rows="3" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-green-500" required placeholder="Jelaskan tujuan atau ringkasan aktivitas minggu ini...">{{ old('training_purpose') }}</textarea>
+                    <textarea name="training_purpose" rows="3" onkeydown="if(window.handleAutoNumbering) window.handleAutoNumbering(event)" onfocus="if(window.handleAutoNumberingFocus) window.handleAutoNumberingFocus(event)" class="w-full border-gray-300 rounded-lg shadow-sm focus:border-green-500 focus:ring-green-500" required placeholder="Jelaskan tujuan atau ringkasan aktivitas minggu ini...">{{ old('training_purpose') }}</textarea>
                 </div>
 
                 <!-- Quote (Optional) -->
@@ -156,5 +163,54 @@
                 }
             }))
         })
+
+        window.handleAutoNumbering = function(e) {
+            if (e.key === 'Enter') {
+                const el = e.target;
+                const start = el.selectionStart;
+                const end = el.selectionEnd;
+                const text = el.value;
+                const lines = text.substr(0, start).split('\n');
+                const lastLine = lines[lines.length - 1];
+                
+                const matchNum = lastLine.match(/^\s*(\d+)([\.\)]?\s+)(.*)/);
+                const matchBul = lastLine.match(/^\s*([-*•])(\s+)(.*)/);
+
+                if (matchNum) {
+                    e.preventDefault();
+                    if (matchNum[3].trim() === '') {
+                        const newText = text.substring(0, start - lastLine.length) + text.substring(end);
+                        el.value = newText;
+                        el.selectionStart = el.selectionEnd = start - lastLine.length;
+                    } else {
+                        const nextNum = parseInt(matchNum[1]) + 1;
+                        const insertText = '\n' + nextNum + matchNum[2];
+                        el.value = text.substring(0, start) + insertText + text.substring(end);
+                        el.selectionStart = el.selectionEnd = start + insertText.length;
+                    }
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                } else if (matchBul) {
+                    e.preventDefault();
+                    if (matchBul[3].trim() === '') {
+                        const newText = text.substring(0, start - lastLine.length) + text.substring(end);
+                        el.value = newText;
+                        el.selectionStart = el.selectionEnd = start - lastLine.length;
+                    } else {
+                        const insertText = '\n' + matchBul[1] + matchBul[2];
+                        el.value = text.substring(0, start) + insertText + text.substring(end);
+                        el.selectionStart = el.selectionEnd = start + insertText.length;
+                    }
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+            }
+        };
+
+        window.handleAutoNumberingFocus = function(e) {
+            const el = e.target;
+            if (el.value.trim() === '') {
+                el.value = '1. ';
+                el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+        };
     </script>
 </x-admin-layout>

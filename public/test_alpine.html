@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body>
+    <div x-data="{
+        sessions: [
+            { id: 1, title: 'Session A', date_start: '2026-09-11' },
+            { id: 2, title: 'Session B', date_start: '2026-10-10' }
+        ]
+    }">
+        <template x-for="(session, index) in sessions" :key="session.id">
+            <div>
+                <input type="text" x-model="sessions[index].title">
+                <input type="date" x-model="sessions[index].date_start">
+            </div>
+        </template>
+        <button @click="console.log(sessions)">Log</button>
+    </div>
+</body>
+</html>
