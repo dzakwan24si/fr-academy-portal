@@ -1,0 +1,1 @@
+import{c as e,m as t,o as n,t as r}from"./jsx-runtime-3TZbtwuS.js";import{t as i}from"./MonitoringAlumniTab-2WpfBu43.js";var a=t(e(),1),o=n(),s=r(),c=()=>(0,s.jsx)(i,{}),l=document.getElementById(`monitoring-lulusan-root`);l&&(0,o.createRoot)(l).render((0,s.jsx)(a.StrictMode,{children:(0,s.jsx)(c,{})}));
