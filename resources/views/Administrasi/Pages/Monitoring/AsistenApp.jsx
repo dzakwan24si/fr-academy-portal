@@ -162,6 +162,7 @@ export default function AsistenApp() {
         program: [],
         region_saat_ini: [],
         status_karyawan: [],
+        level_jabatan: [],
         keterangan: []
     });
 
@@ -170,6 +171,7 @@ export default function AsistenApp() {
     const [selectedProgram, setSelectedProgram] = useState('all');
     const [selectedRegion, setSelectedRegion] = useState('all');
     const [selectedStatus, setSelectedStatus] = useState('all');
+    const [selectedLevel, setSelectedLevel] = useState('all');
     const [selectedKeterangan, setSelectedKeterangan] = useState('all');
     const [searchQuery, setSearchQuery] = useState('');
 
@@ -218,6 +220,7 @@ export default function AsistenApp() {
                 program: selectedProgram,
                 region_saat_ini: selectedRegion,
                 status_karyawan: selectedStatus,
+                level_jabatan: selectedLevel,
                 keterangan: selectedKeterangan,
                 search: searchQuery
             });
@@ -234,6 +237,7 @@ export default function AsistenApp() {
                     program: [],
                     region_saat_ini: [],
                     status_karyawan: [],
+                    level_jabatan: [],
                     keterangan: []
                 });
             }
@@ -246,7 +250,7 @@ export default function AsistenApp() {
 
     useEffect(() => {
         fetchData();
-    }, [currentPage, perPage, sortBy, sortOrder, selectedAsal, selectedProgram, selectedRegion, selectedStatus, selectedKeterangan]);
+    }, [currentPage, perPage, sortBy, sortOrder, selectedAsal, selectedProgram, selectedRegion, selectedStatus, selectedLevel, selectedKeterangan]);
 
     // Handle search with debounce / enter
     const handleSearchSubmit = (e) => {
@@ -260,6 +264,7 @@ export default function AsistenApp() {
         setSelectedProgram('all');
         setSelectedRegion('all');
         setSelectedStatus('all');
+        setSelectedLevel('all');
         setSelectedKeterangan('all');
         setSearchQuery('');
         setCurrentPage(1);
@@ -443,6 +448,8 @@ export default function AsistenApp() {
             asal_rekrut: selectedAsal,
             program: selectedProgram,
             region_saat_ini: selectedRegion,
+            status_karyawan: selectedStatus,
+            level_jabatan: selectedLevel,
             search: searchQuery
         });
         window.location.href = `/administrasi/asisten/api/export?${params.toString()}`;
@@ -616,7 +623,7 @@ export default function AsistenApp() {
                 </form>
 
                 {/* Filter Dropdowns */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2 border-t border-gray-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 pt-2 border-t border-gray-100">
                     <div>
                         <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Asal Rekrut</label>
                         <select
@@ -669,6 +676,20 @@ export default function AsistenApp() {
                             <option value="all">Semua Status ({filterOptions.status_karyawan?.length || 0})</option>
                             {filterOptions.status_karyawan?.map((st) => (
                                 <option key={st} value={st}>{st}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Level / Jabatan</label>
+                        <select
+                            value={selectedLevel}
+                            onChange={(e) => { setSelectedLevel(e.target.value); setCurrentPage(1); }}
+                            className="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-[#4B6A34] focus:outline-none"
+                        >
+                            <option value="all">Semua Level ({filterOptions.level_jabatan?.length || 0})</option>
+                            {filterOptions.level_jabatan?.map((lvl) => (
+                                <option key={lvl} value={lvl}>{lvl}</option>
                             ))}
                         </select>
                     </div>

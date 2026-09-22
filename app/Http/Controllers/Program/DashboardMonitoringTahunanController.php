@@ -316,14 +316,12 @@ class DashboardMonitoringTahunanController extends Controller
                     $actualParticipants = $matchedRecords->count();
                 }
 
-                $distinctBatchCount = $matchedRecords->map(function ($r) {
-                    if (!empty($r->periode)) return $r->periode;
-                    if (!empty($r->training_date)) return is_object($r->training_date) ? $r->training_date->format('Y-m-d') : (string) $r->training_date;
-                    if (!empty($r->batch)) return $r->batch;
-                    return 'default';
-                })->filter()->unique()->count();
-
-                $realizedBatch = $actualParticipants > 0 ? max(1, $distinctBatchCount) : 0;
+                if ($tab === 'reguler') {
+                    $realizedBatch = $actualParticipants > 0 ? 1 : 0;
+                } else {
+                    $explicitBatch = (int) ($batch['model']->realisasi_batch ?? $batch['model']->total_batch ?? 0);
+                    $realizedBatch = $explicitBatch > 0 ? $explicitBatch : ($actualParticipants > 0 ? 1 : 0);
+                }
 
                 $periodStr = '- - -';
                 if ($batch['start']) {

@@ -203,19 +203,36 @@ class RealisasiVsBatchController extends Controller
                 });
 
             $realizedParticipants = $matchingRecords->count();
-            $distinctBatchCount = $matchingRecords->map(function ($r) {
-                if (!empty($r->periode)) return $r->periode;
-                if (!empty($r->training_date)) return is_object($r->training_date) ? $r->training_date->format('Y-m-d') : (string) $r->training_date;
-                if (!empty($r->batch)) return $r->batch;
-                return 'default';
-            })->filter()->unique()->count();
+            if ($program['program_type'] === 'reguler') {
+                $realizedBatch = $realizedParticipants > 0 ? 1 : 0;
+            } else {
+                $explicitBatch = (int) ($program['realisasi_batch'] ?? $program['total_batch'] ?? 0);
+                $realizedBatch = $explicitBatch > 0 ? $explicitBatch : ($realizedParticipants > 0 ? 1 : 0);
+            }
 
-            $realizedBatch = $realizedParticipants > 0 ? max(1, $distinctBatchCount) : 0;
             $row = (object) array_merge($program, ['realisasi_id' => null, 'realized_batch' => $realizedBatch, 'realized_participants' => $realizedParticipants]);
             $row->batch_percent = $this->percent($row->realized_batch, $row->planned_batch);
             $row->participant_percent = $this->percent($row->realized_participants, $row->planned_participants);
             return $row;
         })->values();
+    }
+
+    public function updateBatch(Request $request)
+    {
+        $request->validate([
+            'program_type' => 'required|in:non_reguler',
+            'program_id' => 'required|integer',
+            'realisasi_batch' => 'required|integer|min:0',
+        ]);
+
+        $id = $request->input('program_id');
+        $val = (int) $request->input('realisasi_batch');
+
+        $program = ProgramNonReguler::findOrFail($id);
+        $program->update(['realisasi_batch' => $val]);
+        ActivityLog::log('Edit', 'Realisasi Vs Target', "Mengubah realisasi batch program non-reguler '{$program->jenis_pelatihan}' menjadi {$val}");
+
+        return response()->json(['message' => 'Realisasi batch berhasil diperbarui.', 'realisasi_batch' => $val]);
     }
 
     private function programData($program, string $type, int $year, int $month): ?array
@@ -260,7 +277,8 @@ class RealisasiVsBatchController extends Controller
             'batch_id' => $program->getKey(),
             'program_name' => $type === 'reguler' ? $program->Training_Program : $program->jenis_pelatihan,
             'region' => $type === 'reguler' ? $program->Region : $program->region,
-            'planned_batch' => $type === 'reguler' ? 1 : (int) ($program->TARGET_BATCH ?? $program->total_batch ?? 0),
+            'planned_batch' => $type === 'reguler' ? 1 : (int) ($program->TARGET_BATCH ?? $program->realisasi_batch ?? $program->total_batch ?? 0),
+            'realisasi_batch' => $type === 'reguler' ? (int) ($program->Batch ?? 1) : (int) ($program->realisasi_batch ?? $program->total_batch ?? 0),
             'planned_participants' => $type === 'reguler' ? (int) $program->target_peserta : (int) ($program->TARGET_PESERTA ?? $program->target_total ?? 0)
         ];
     }

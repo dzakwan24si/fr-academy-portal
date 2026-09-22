@@ -19,6 +19,16 @@ class ProgramNonReguler extends Model
         'end_date' => 'date:Y-m-d',
     ];
 
+    public function getTotalBatchAttribute()
+    {
+        return $this->attributes['realisasi_batch'] ?? $this->attributes['total_batch'] ?? 0;
+    }
+
+    public function setTotalBatchAttribute($value)
+    {
+        $this->attributes['realisasi_batch'] = $value;
+    }
+
     public function trainingRecords()
     {
         return $this->hasMany(TrainingRecord::class, 'program_id', 'id_nonreguler')

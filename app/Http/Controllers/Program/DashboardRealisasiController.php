@@ -638,14 +638,11 @@ class DashboardRealisasiController extends Controller
 
                 $count = $pRecords->count();
                 $realPeserta += $count;
-                if ($count > 0) {
-                    $distinctBatches = $pRecords->map(function ($r) {
-                        if (!empty($r->periode)) return $r->periode;
-                        if (!empty($r->training_date)) return is_object($r->training_date) ? $r->training_date->format('Y-m-d') : (string) $r->training_date;
-                        if (!empty($r->batch)) return $r->batch;
-                        return 'default';
-                    })->filter()->unique()->count();
-                    $realBatch += max(1, $distinctBatches);
+                $explicitBatch = (int) ($p->realisasi_batch ?? $p->total_batch ?? 0);
+                if ($explicitBatch > 0) {
+                    $realBatch += $explicitBatch;
+                } elseif ($count > 0) {
+                    $realBatch += 1;
                 }
             }
 

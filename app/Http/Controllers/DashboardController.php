@@ -237,7 +237,12 @@ class DashboardController extends Controller
             return $softPrograms->contains('id_nonreguler', $r->program_id);
         });
         $softRealPart = (int) $softRecords->count();
-        $softRealBatch = (int) $softRecords->pluck('periode')->filter()->unique()->count() ?: ($softRealPart > 0 ? count($softPrograms) : 0);
+        $softRealBatch = (int) $softPrograms->sum(function($p) use ($softRecords) {
+            $explicitBatch = (int) ($p->realisasi_batch ?? $p->total_batch ?? 0);
+            if ($explicitBatch > 0) return $explicitBatch;
+            $hasRecords = $softRecords->contains('program_id', $p->id_nonreguler);
+            return $hasRecords ? 1 : 0;
+        });
         $softPctBatch = $softPlanBatch > 0 ? round(($softRealBatch / $softPlanBatch) * 100) : 0;
         $softPctPart = $softPlanPart > 0 ? round(($softRealPart / $softPlanPart) * 100) : 0;
 
@@ -248,7 +253,12 @@ class DashboardController extends Controller
             return $tekPrograms->contains('id_nonreguler', $r->program_id);
         });
         $tekRealPart = (int) $tekRecords->count();
-        $tekRealBatch = (int) $tekRecords->pluck('periode')->filter()->unique()->count() ?: ($tekRealPart > 0 ? count($tekPrograms) : 0);
+        $tekRealBatch = (int) $tekPrograms->sum(function($p) use ($tekRecords) {
+            $explicitBatch = (int) ($p->realisasi_batch ?? $p->total_batch ?? 0);
+            if ($explicitBatch > 0) return $explicitBatch;
+            $hasRecords = $tekRecords->contains('program_id', $p->id_nonreguler);
+            return $hasRecords ? 1 : 0;
+        });
         $tekPctBatch = $tekPlanBatch > 0 ? round(($tekRealBatch / $tekPlanBatch) * 100) : 0;
         $tekPctPart = $tekPlanPart > 0 ? round(($tekRealPart / $tekPlanPart) * 100) : 0;
 
@@ -439,11 +449,14 @@ class DashboardController extends Controller
             $pc = 0; $gm = 0; $mk = 0; $askep = 0; $asst = 0;
 
             foreach ($progAsisten as $a) {
-                $jab = strtoupper(trim((string)($a->jabatan_terakhir ?: $a->jabatan_awal ?: '')));
-                if (str_contains($jab, 'PC') || str_contains($jab, 'CONTROLLER')) $pc++;
-                elseif (str_contains($jab, 'GM') || str_contains($jab, 'GENERAL MANAGER')) $gm++;
-                elseif (str_contains($jab, 'MK') || str_contains($jab, 'MM') || str_contains($jab, 'MANAGER') || str_contains($jab, 'KASIE') || str_contains($jab, 'KTU')) $mk++;
-                elseif (str_contains($jab, 'ASKEP')) $askep++;
+                $lvl = strtoupper(trim((string)($a->level_jabatan ?: '')));
+                if ($lvl === '') {
+                    $lvl = strtoupper(trim((string)($a->jabatan_terakhir ?: $a->jabatan_awal ?: '')));
+                }
+                if (str_contains($lvl, 'PC') || str_contains($lvl, 'CONTROLLER')) $pc++;
+                elseif (str_contains($lvl, 'GM') || str_contains($lvl, 'GENERAL MANAGER')) $gm++;
+                elseif (str_contains($lvl, 'MK') || str_contains($lvl, 'MM') || str_contains($lvl, 'MANAGER') || str_contains($lvl, 'KASIE')) $mk++;
+                elseif (str_contains($lvl, 'ASKEP') || str_contains($lvl, 'KTU')) $askep++;
                 else $asst++;
             }
 
@@ -551,7 +564,12 @@ class DashboardController extends Controller
                 return $matchingProgs->contains('id_nonreguler', $r->program_id) || str_contains(strtolower((string)$r->region), $regKey);
             });
             $realPart = (int) $matchingRecs->count();
-            $realBatch = (int) $matchingRecs->pluck('periode')->filter()->unique()->count() ?: ($realPart > 0 ? count($matchingProgs) : 0);
+            $realBatch = (int) $matchingProgs->sum(function($p) use ($matchingRecs) {
+                $explicitBatch = (int) ($p->realisasi_batch ?? $p->total_batch ?? 0);
+                if ($explicitBatch > 0) return $explicitBatch;
+                $hasRecords = $matchingRecs->contains('program_id', $p->id_nonreguler);
+                return $hasRecords ? 1 : 0;
+            });
 
             $pctB = $planBatch > 0 ? round(($realBatch / $planBatch) * 100) : 0;
             $pctP = $planPart > 0 ? round(($realPart / $planPart) * 100) : 0;
@@ -604,19 +622,46 @@ class DashboardController extends Controller
             $catProgs = $nonReg->filter(function($p) use ($catKey) {
                 $haystack = strtolower(($p->kategori_pelatihan ?? '') . ' ' . ($p->sub_kategori ?? '') . ' ' . ($p->jenis_pelatihan ?? ''));
                 if ($catKey === 'estate') {
-                    return str_contains($haystack, 'estate') || str_contains($haystack, 'tanaman') || str_contains($haystack, 'agronomi') || (!str_contains($haystack, 'mill') && !str_contains($haystack, 'traksi') && !str_contains($haystack, 'downstream') && !str_contains($haystack, 'administrasi'));
+                    return str_contains($haystack, 'estate') || str_contains($haystack, 'tanaman') || str_contains($haystack, 'agronomi') || str_contains($haystack, 'kebun')
+                        || (!str_contains($haystack, 'mill') && !str_contains($haystack, 'pabrik') && !str_contains($haystack, 'traction') && !str_contains($haystack, 'traksi') && !str_contains($haystack, 'downstream') && !str_contains($haystack, 'administrasi') && !str_contains($haystack, 'admin'));
                 }
-                return str_contains($haystack, $catKey);
+                if ($catKey === 'mill') {
+                    return str_contains($haystack, 'mill') || str_contains($haystack, 'pabrik') || str_contains($haystack, 'processing');
+                }
+                if ($catKey === 'traction') {
+                    return str_contains($haystack, 'traction') || str_contains($haystack, 'traksi') || str_contains($haystack, 'bengkel') || str_contains($haystack, 'workshop');
+                }
+                if ($catKey === 'downstream') {
+                    return str_contains($haystack, 'downstream') || str_contains($haystack, 'refinery') || str_contains($haystack, 'biodiesel');
+                }
+                if ($catKey === 'administrasi') {
+                    return str_contains($haystack, 'administrasi') || str_contains($haystack, 'admin') || str_contains($haystack, 'finance') || str_contains($haystack, 'accounting') || str_contains($haystack, 'hrd') || str_contains($haystack, 'ktu');
+                }
+                return false;
             });
 
             $planB = (int) $catProgs->sum(fn($p) => (int)($p->TARGET_BATCH ?? $p->total_batch ?? 0));
             $planP = (int) $catProgs->sum(fn($p) => (int)($p->TARGET_PESERTA ?? $p->target_total ?? 0));
 
             $catRecs = $records->filter(function($r) use ($catProgs, $catKey) {
-                return $catProgs->contains('id_nonreguler', $r->program_id) || str_contains(strtolower((string)$r->notes), $catKey);
+                if ($r->program_id) {
+                    return $catProgs->contains('id_nonreguler', $r->program_id);
+                }
+                $notes = strtolower((string)$r->notes);
+                if ($catKey === 'estate') return str_contains($notes, 'estate') || str_contains($notes, 'tanaman') || str_contains($notes, 'agronomi');
+                if ($catKey === 'mill') return str_contains($notes, 'mill') || str_contains($notes, 'pabrik');
+                if ($catKey === 'traction') return str_contains($notes, 'traction') || str_contains($notes, 'traksi') || str_contains($notes, 'bengkel');
+                if ($catKey === 'downstream') return str_contains($notes, 'downstream');
+                if ($catKey === 'administrasi') return str_contains($notes, 'administrasi') || str_contains($notes, 'admin');
+                return false;
             });
             $realP = (int) $catRecs->count();
-            $realB = (int) $catRecs->pluck('periode')->filter()->unique()->count() ?: ($realP > 0 ? max(1, count($catProgs)) : 0);
+            $realB = (int) $catProgs->sum(function($p) use ($catRecs) {
+                $explicitBatch = (int) ($p->realisasi_batch ?? $p->total_batch ?? 0);
+                if ($explicitBatch > 0) return $explicitBatch;
+                $hasRecords = $catRecs->contains('program_id', $p->id_nonreguler);
+                return $hasRecords ? 1 : 0;
+            });
 
             $pctB = $planB > 0 ? round(($realB / $planB) * 100) : 0;
             $pctP = $planP > 0 ? round(($realP / $planP) * 100) : 0;
@@ -631,7 +676,12 @@ class DashboardController extends Controller
 
                     $rRecs = $catRecs->filter(fn($r) => str_contains(strtolower((string)$r->region), $regKey));
                     $rRealP = (int) $rRecs->count();
-                    $rRealB = (int) $rRecs->pluck('periode')->filter()->unique()->count() ?: ($rRealP > 0 ? max(1, count($regProgs)) : 0);
+                    $rRealB = (int) $regProgs->sum(function($p) use ($rRecs) {
+                        $explicitBatch = (int) ($p->realisasi_batch ?? $p->total_batch ?? 0);
+                        if ($explicitBatch > 0) return $explicitBatch;
+                        $hasRecords = $rRecs->contains('program_id', $p->id_nonreguler);
+                        return $hasRecords ? 1 : 0;
+                    });
 
                     $items[] = [
                         'name' => "{$cat} - {$reg}",

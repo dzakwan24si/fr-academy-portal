@@ -74,7 +74,32 @@ class AsistenController extends Controller
             $query->where('status_karyawan', $request->input('status_karyawan'));
         }
 
-        // 5. Filter Keterangan
+        // 5. Filter Level / Jabatan
+        if ($request->filled('level_jabatan') && $request->input('level_jabatan') !== 'all') {
+            $lvl = trim((string)$request->input('level_jabatan'));
+            $query->where(function($q) use ($lvl) {
+                if (strcasecmp($lvl, 'GM') === 0 || strcasecmp($lvl, 'General Manager') === 0) {
+                    $q->where('level_jabatan', 'like', '%GM%');
+                } elseif (strcasecmp($lvl, 'PC') === 0) {
+                    $q->where('level_jabatan', 'like', '%PC%');
+                } elseif (strcasecmp($lvl, 'Askep') === 0 || strcasecmp($lvl, 'Askep / KTU') === 0) {
+                    $q->where('level_jabatan', 'like', '%Askep%')
+                      ->orWhere('level_jabatan', 'like', '%KTU%');
+                } elseif (strcasecmp($lvl, 'MK / MM') === 0 || strcasecmp($lvl, 'Manager') === 0) {
+                    $q->where('level_jabatan', 'like', '%MK%')
+                      ->orWhere('level_jabatan', 'like', '%MM%')
+                      ->orWhere('level_jabatan', 'like', '%Manager%');
+                } elseif (strcasecmp($lvl, 'Asisten / Staff') === 0 || strcasecmp($lvl, 'Asisten') === 0) {
+                    $q->where('level_jabatan', 'like', '%Asisten%')
+                      ->orWhere('level_jabatan', 'like', '%Staff%')
+                      ->orWhere('level_jabatan', 'like', '%ASST%');
+                } else {
+                    $q->where('level_jabatan', 'like', "%{$lvl}%");
+                }
+            });
+        }
+
+        // 6. Filter Keterangan
         if ($request->filled('keterangan') && $request->input('keterangan') !== 'all') {
             $ket = $request->input('keterangan');
             if ($ket === 'Aktif') {
@@ -98,7 +123,7 @@ class AsistenController extends Controller
             }
         }
 
-        // 6. Search Nama (or NIK / Program / Unit Kerja)
+        // 7. Search Nama (or NIK / Program / Unit Kerja)
         if ($request->filled('search')) {
             $search = trim($request->input('search'));
             $query->where(function ($q) use ($search) {
@@ -170,6 +195,16 @@ class AsistenController extends Controller
         $programList = Asisten::whereNotNull('program')->where('program', '!=', '')->distinct()->orderBy('program')->pluck('program');
         $regionList = Asisten::whereNotNull('region_saat_ini')->where('region_saat_ini', '!=', '')->distinct()->orderBy('region_saat_ini')->pluck('region_saat_ini');
         $statusList = Asisten::whereNotNull('status_karyawan')->where('status_karyawan', '!=', '')->distinct()->orderBy('status_karyawan')->pluck('status_karyawan');
+        
+        $dbLevels = Asisten::whereNotNull('level_jabatan')->where('level_jabatan', '!=', '')->distinct()->orderBy('level_jabatan')->pluck('level_jabatan');
+        
+        $levelList = collect(['GM', 'Askep / KTU', 'MK / MM', 'PC', 'Asisten / Staff'])
+            ->merge($dbLevels)
+            ->filter()
+            ->unique()
+            ->values()
+            ->all();
+
         $keteranganList = ['Aktif', 'Resign', 'Gagal'];
 
         return response()->json([
@@ -187,6 +222,7 @@ class AsistenController extends Controller
                 'program' => $programList,
                 'region_saat_ini' => $regionList,
                 'status_karyawan' => $statusList,
+                'level_jabatan' => $levelList,
                 'keterangan' => $keteranganList,
             ],
         ]);
@@ -336,6 +372,12 @@ class AsistenController extends Controller
         $file = $request->file('file');
         $mode = $request->input('mode', 'append');
 
+        // Auto-detect delimiter (semicolon vs comma)
+        $sampleHandle = fopen($file->getRealPath(), 'r');
+        $firstLine = fgets($sampleHandle);
+        fclose($sampleHandle);
+        $delimiter = (str_contains($firstLine, ';')) ? ';' : ',';
+
         $handle = fopen($file->getRealPath(), 'r');
         if (!$handle) {
             return response()->json([
@@ -344,7 +386,7 @@ class AsistenController extends Controller
             ], 400);
         }
 
-        $header = fgetcsv($handle, 10000, ',');
+        $header = fgetcsv($handle, 10000, $delimiter);
         if (!$header) {
             fclose($handle);
             return response()->json([
@@ -361,74 +403,95 @@ class AsistenController extends Controller
             return $str;
         }, $header);
 
-        // Header mapping dictionary
+        // Header mapping dictionary for all 56 fields
         $headerMap = [
             'no' => ['no', 'nomor', 'nourut'],
-            'nik' => ['nik', 'nokaryawan', 'idkaryawan'],
+            'nik' => ['niktraineektp', 'niktrainee', 'nik', 'nokaryawan', 'idkaryawan'],
             'nama' => ['nama', 'namalengkap', 'namakaryawan', 'namapeserta'],
             'jenis_kelamin' => ['jeniskelamin', 'jk', 'gender', 'sex'],
             'tempat_lahir' => ['tempatlahir', 'tmplahir', 'pob'],
             'tanggal_lahir' => ['tanggallahir', 'tgllahir', 'dob', 'birthdate'],
             'usia' => ['usia', 'umur', 'age'],
+            'status_pernikahan' => ['status', 'statuspernikahan', 'statusperkawinan', 'maritalstatus'],
+            'suku' => ['suku', 'ethnic', 'ethnicity'],
             'agama' => ['agama', 'religion'],
-            'status_pernikahan' => ['statuspernikahan', 'statusperkawinan', 'maritalstatus'],
-            'no_hp' => ['nohp', 'telepon', 'hp', 'phone', 'notelepon'],
-            'email' => ['email', 'surel', 'emailaddress'],
-            'alamat_domisili' => ['alamatdomisili', 'alamat', 'domisili', 'address'],
-            'no_ktp' => ['noktp', 'ktp', 'nikktp', 'noidentitas'],
-            'jenjang_pendidikan' => ['jenjangpendidikan', 'jenjang', 'tingkatpendidikan', 'strata'],
-            'universitas' => ['universitas', 'institusi', 'kampus', 'perguruantinggi'],
+            'latar_belakang_ortu' => ['latarbelakangayahibu', 'latarbelakangorangtua', 'latarbelakangortu', 'backgroundortu'],
+            'universitas' => ['alumni', 'universitas', 'institusi', 'kampus', 'perguruantinggi'],
             'fakultas' => ['fakultas'],
             'jurusan' => ['jurusan', 'programstudi', 'prodi'],
-            'ipk' => ['ipk', 'gpa'],
-            'tahun_lulus' => ['tahunlulus', 'thnlulus'],
+            'ipk' => ['ipkkampus', 'ipk', 'gpa'],
+            'tahun_lulus' => ['tahunluluskampus', 'tahunlulus', 'thnlulus'],
+            'tahun_angkatan' => ['tahuntraining', 'tahunangkatan', 'angkatan', 'tahun'],
+            'jenjang_pendidikan' => ['jenjangpendidikan', 'jenjang', 'tingkatpendidikan', 'strata'],
+            'no_ijazah' => ['noijazah', 'nomorijazah'],
             'asal_rekrut' => ['asalrekrut', 'lokasirekrut', 'kotarekrut', 'rekrutdari'],
-            'jalur_rekrutmen' => ['jalurrekrutmen', 'jalur', 'channelrekrutmen'],
+            'alamat_domisili' => ['domisili', 'alamatdomisili', 'alamat', 'address'],
+            'no_ktp' => ['alamatktp', 'noktp', 'ktp', 'nikktp', 'noidentitas'],
             'program' => ['program', 'programtraining', 'namaprogram'],
-            'batch' => ['batch', 'gelombang', 'batchtraining'],
-            'tanggal_mulai_training' => ['tanggalmulaitraining', 'tglmulaitraining', 'starttraining', 'mulaitraining'],
-            'tanggal_selesai_training' => ['tanggalselesaitraining', 'tglselesaitraining', 'endtraining', 'selesaitraining'],
-            'tahun_angkatan' => ['tahunangkatan', 'angkatan', 'tahun'],
-            'nilai_psikotest' => ['nilaipsikotest', 'psikotest', 'skorpsikotest'],
-            'nilai_interview_hr' => ['nilaiinterviewhr', 'interviewhr', 'inthr'],
-            'nilai_interview_user' => ['nilaiinterviewuser', 'interviewuser', 'intuser'],
-            'status_mcu' => ['statusmcu', 'mcu', 'hasilmcu'],
-            'ranking_seleksi' => ['rankingseleksi', 'ranking', 'peringkat'],
-            'nilai_akademik' => ['nilaiakademik', 'nilaiteori', 'akademik'],
-            'nilai_praktek' => ['nilaipraktek', 'nilaipraktik', 'praktek', 'lapangan'],
-            'nilai_sikap' => ['nilaisikap', 'nilaiperilaku', 'sikap', 'attitude'],
-            'nilai_akhir_training' => ['nilaiakhirtraining', 'nilaiakhir', 'finalscore'],
-            'status_kelulusan' => ['statuskelulusan', 'kelulusan', 'statuslulus'],
+            'periode_pelatihan' => ['periodepelatihan', 'periode'],
+            'batch' => ['prog', 'batch', 'gelombang', 'batchtraining'],
+            'nilai_krepelin' => ['nilaikrepelinculturefit', 'nilaikrepelin', 'krepelin', 'culturefit'],
+            'nilai_ist' => ['nilaiistintelektualaq', 'nilaiist', 'ist'],
+            'nilai_disc' => ['nilaidisckepribadian', 'nilaidisc', 'disc'],
+            'catatan_interview' => ['catataninterview', 'interviewnotes'],
+            'tanggal_mulai_training' => ['joindatetraining', 'tanggalmulaitraining', 'tglmulaitraining', 'starttraining', 'mulaitraining'],
+            'disiplin' => ['disiplin'],
+            'keaktifan' => ['keaktifan'],
+            'catatan_trainer' => ['catatantrainer', 'trainernotes'],
+            'nilai_akademik' => ['rataratanilaiujian', 'nilaiakademik', 'nilaiteori', 'akademik'],
             'tanggal_kelulusan' => ['tanggalkelulusan', 'tglkelulusan', 'tgllulus'],
-            'jabatan_awal' => ['jabatan', 'jabatanawal', 'posisiawal', 'penempatanposisi'],
+            'tahun_lulus_training' => ['tahunlulustraining'],
+            'nilai_akhir_training' => ['ipktraining', 'nilaiakhirtraining', 'nilaiakhir', 'finalscore'],
+            'ranking_seleksi' => ['rankingkelulusan', 'rankingseleksi', 'ranking', 'peringkat'],
             'pt_penempatan' => ['penempatanpt', 'ptpenempatan', 'pt', 'perusahaan'],
-            'regional_penempatan_training' => ['regionalpenempatantraining', 'regionalpenempatan', 'regionaltraining', 'regiontraining'],
-            'unit_kerja_penempatan_training' => ['unitkerjapenempatantraining', 'unitkerjatraining', 'unitpenempatantraining'],
-            'tanggal_sk_awal' => ['tanggalskawal', 'tglskawal', 'tanggalsk'],
-            'status_karyawan' => ['statuskaryawan', 'statuskepegawaian', 'status'],
+            'jabatan_awal' => ['jabatan', 'jabatanawal', 'posisiawal', 'penempatanposisi'],
+            'golongan_awal' => ['gol', 'golonganawal'],
+            'regional_penempatan_training' => ['regional', 'regionalpenempatantraining', 'regionalpenempatan', 'regionaltraining', 'regiontraining'],
+            'unit_kerja_penempatan_training' => ['unitkerja', 'unitkerjapenempatantraining', 'unitkerjatraining', 'unitpenempatantraining'],
+            'nik_employee' => ['nikemployee', 'nikkaryawan'],
             'jabatan_terakhir' => ['jabatanterakhir', 'jabatansaatini', 'posisiterakhir', 'posisisaatini'],
-            'level_jabatan' => ['leveljabatan', 'level', 'golongan'],
-            'region_saat_ini' => ['regionkepegawaiansaatini', 'regionsaatini', 'region'],
-            'unit_kerja_saat_ini' => ['unitkerjakepegawaiansaatini', 'unitkerjasaatini'],
-            'atasan_langsung' => ['atasanlangsung', 'atasan', 'manager'],
-            'tanggal_pengangkatan' => ['tanggalpengangkatan', 'tglpengangkatan', 'tglkaryawantetap'],
-            'status_resign' => ['statusresign', 'resignstatus'],
+            'level_jabatan' => ['lvl', 'leveljabatan', 'level'],
+            'golongan_terakhir' => ['golonganterakhir'],
+            'unit_kerja_saat_ini' => ['unitkerja', 'unitkerjakepegawaiansaatini', 'unitkerjasaatini'],
+            'region_saat_ini' => ['region', 'regionkepegawaiansaatini', 'regionsaatini'],
+            'alasan_resign' => ['keteranganresign', 'alasanresign'],
             'tanggal_resign' => ['tanggalresign', 'tglresign'],
-            'alasan_resign' => ['alasanresign', 'keteranganresign'],
-            'status_ijazah' => ['statusijazah', 'ijazah'],
-            'tanggal_pengambilan_ijazah' => ['tanggalpengambilanijazah', 'tglpengambilanijazah', 'tglambilijazah'],
+            'tanggal_pengambilan_ijazah' => ['tanggalpengembalianijazah', 'tanggalpengambilanijazah', 'tglpengambilanijazah', 'tglambilijazah'],
+            'penerima_ijazah' => ['penerimaijazah'],
             'no_tanda_terima_ijazah' => ['notandaterimaijazah', 'tandaterimaijazah', 'notandaterima'],
-            'no_bpjs_tk' => ['nobpjstk', 'bpjstk', 'bpjsketenagakerjaan'],
-            'no_bpjs_kes' => ['nobpjskes', 'bpjskes', 'bpjskesehatan'],
-            'npwp' => ['npwp', 'nonpwp'],
+            'no_hp' => ['notelp', 'nohp', 'telepon', 'hp', 'phone', 'notelepon'],
             'keterangan' => ['keterangan', 'notes', 'catatan', 'remark'],
         ];
 
+        $seenUnitKerja = 0;
+        $seenRegion = 0;
         $columnIndices = [];
+
         foreach ($cleanHeaders as $colIdx => $colName) {
+            if ($colName === 'unitkerja') {
+                $seenUnitKerja++;
+                if ($seenUnitKerja === 1) {
+                    $columnIndices['unit_kerja_penempatan_training'] = $colIdx;
+                } else {
+                    $columnIndices['unit_kerja_saat_ini'] = $colIdx;
+                }
+                continue;
+            }
+            if ($colName === 'regional' || $colName === 'region') {
+                $seenRegion++;
+                if ($seenRegion === 1) {
+                    $columnIndices['regional_penempatan_training'] = $colIdx;
+                } else {
+                    $columnIndices['region_saat_ini'] = $colIdx;
+                }
+                continue;
+            }
+
             foreach ($headerMap as $field => $aliases) {
                 if (in_array($colName, $aliases)) {
-                    $columnIndices[$field] = $colIdx;
+                    if (!isset($columnIndices[$field])) {
+                        $columnIndices[$field] = $colIdx;
+                    }
                 }
             }
         }
@@ -437,7 +500,7 @@ class AsistenController extends Controller
         $errors = [];
         $rowNumber = 1;
 
-        while (($row = fgetcsv($handle, 10000, ',')) !== false) {
+        while (($row = fgetcsv($handle, 10000, $delimiter)) !== false) {
             $rowNumber++;
             if (empty(array_filter($row, fn($v) => trim($v) !== ''))) {
                 continue;
@@ -483,6 +546,8 @@ class AsistenController extends Controller
                 'usia' => $usia,
                 'agama' => trim($row[$columnIndices['agama'] ?? -1] ?? '') ?: null,
                 'status_pernikahan' => trim($row[$columnIndices['status_pernikahan'] ?? -1] ?? '') ?: null,
+                'suku' => trim($row[$columnIndices['suku'] ?? -1] ?? '') ?: null,
+                'latar_belakang_ortu' => trim($row[$columnIndices['latar_belakang_ortu'] ?? -1] ?? '') ?: null,
                 'no_hp' => trim($row[$columnIndices['no_hp'] ?? -1] ?? '') ?: null,
                 'email' => trim($row[$columnIndices['email'] ?? -1] ?? '') ?: null,
                 'alamat_domisili' => trim($row[$columnIndices['alamat_domisili'] ?? -1] ?? '') ?: null,
@@ -493,14 +558,20 @@ class AsistenController extends Controller
                 'jurusan' => trim($row[$columnIndices['jurusan'] ?? -1] ?? '') ?: null,
                 'ipk' => $ipk,
                 'tahun_lulus' => $tahunLulus,
+                'no_ijazah' => trim($row[$columnIndices['no_ijazah'] ?? -1] ?? '') ?: null,
                 'asal_rekrut' => trim($row[$columnIndices['asal_rekrut'] ?? -1] ?? '') ?: null,
                 'jalur_rekrutmen' => trim($row[$columnIndices['jalur_rekrutmen'] ?? -1] ?? '') ?: null,
                 'program' => trim($row[$columnIndices['program'] ?? -1] ?? '') ?: null,
                 'batch' => trim($row[$columnIndices['batch'] ?? -1] ?? '') ?: null,
+                'periode_pelatihan' => trim($row[$columnIndices['periode_pelatihan'] ?? -1] ?? '') ?: null,
                 'tanggal_mulai_training' => $tglMulai,
                 'tanggal_selesai_training' => $tglSelesai,
                 'tahun_angkatan' => $tahunAngkatan,
                 'nilai_psikotest' => $nilaiPsikotest,
+                'nilai_krepelin' => trim($row[$columnIndices['nilai_krepelin'] ?? -1] ?? '') ?: null,
+                'nilai_ist' => trim($row[$columnIndices['nilai_ist'] ?? -1] ?? '') ?: null,
+                'nilai_disc' => trim($row[$columnIndices['nilai_disc'] ?? -1] ?? '') ?: null,
+                'catatan_interview' => trim($row[$columnIndices['catatan_interview'] ?? -1] ?? '') ?: null,
                 'nilai_interview_hr' => $nilaiInterviewHr,
                 'nilai_interview_user' => $nilaiInterviewUser,
                 'status_mcu' => trim($row[$columnIndices['status_mcu'] ?? -1] ?? '') ?: null,
@@ -508,17 +579,23 @@ class AsistenController extends Controller
                 'nilai_akademik' => $nilaiAkademik,
                 'nilai_praktek' => $nilaiPraktek,
                 'nilai_sikap' => $nilaiSikap,
+                'disiplin' => trim($row[$columnIndices['disiplin'] ?? -1] ?? '') ?: null,
+                'keaktifan' => trim($row[$columnIndices['keaktifan'] ?? -1] ?? '') ?: null,
+                'catatan_trainer' => trim($row[$columnIndices['catatan_trainer'] ?? -1] ?? '') ?: null,
                 'nilai_akhir_training' => $nilaiAkhir,
                 'status_kelulusan' => trim($row[$columnIndices['status_kelulusan'] ?? -1] ?? '') ?: null,
                 'tanggal_kelulusan' => $tglLulus,
                 'jabatan_awal' => trim($row[$columnIndices['jabatan_awal'] ?? -1] ?? '') ?: null,
+                'golongan_awal' => trim($row[$columnIndices['golongan_awal'] ?? -1] ?? '') ?: null,
                 'pt_penempatan' => trim($row[$columnIndices['pt_penempatan'] ?? -1] ?? '') ?: null,
                 'regional_penempatan_training' => trim($row[$columnIndices['regional_penempatan_training'] ?? -1] ?? '') ?: null,
                 'unit_kerja_penempatan_training' => trim($row[$columnIndices['unit_kerja_penempatan_training'] ?? -1] ?? '') ?: null,
+                'nik_employee' => trim($row[$columnIndices['nik_employee'] ?? -1] ?? '') ?: null,
                 'tanggal_sk_awal' => $tglSkAwal,
                 'status_karyawan' => trim($row[$columnIndices['status_karyawan'] ?? -1] ?? '') ?: null,
                 'jabatan_terakhir' => trim($row[$columnIndices['jabatan_terakhir'] ?? -1] ?? '') ?: null,
                 'level_jabatan' => trim($row[$columnIndices['level_jabatan'] ?? -1] ?? '') ?: null,
+                'golongan_terakhir' => trim($row[$columnIndices['golongan_terakhir'] ?? -1] ?? '') ?: null,
                 'region_saat_ini' => trim($row[$columnIndices['region_saat_ini'] ?? -1] ?? '') ?: null,
                 'unit_kerja_saat_ini' => trim($row[$columnIndices['unit_kerja_saat_ini'] ?? -1] ?? '') ?: null,
                 'atasan_langsung' => trim($row[$columnIndices['atasan_langsung'] ?? -1] ?? '') ?: null,
@@ -528,6 +605,7 @@ class AsistenController extends Controller
                 'alasan_resign' => trim($row[$columnIndices['alasan_resign'] ?? -1] ?? '') ?: null,
                 'status_ijazah' => trim($row[$columnIndices['status_ijazah'] ?? -1] ?? '') ?: null,
                 'tanggal_pengambilan_ijazah' => $tglAmbilIjazah,
+                'penerima_ijazah' => trim($row[$columnIndices['penerima_ijazah'] ?? -1] ?? '') ?: null,
                 'no_tanda_terima_ijazah' => trim($row[$columnIndices['no_tanda_terima_ijazah'] ?? -1] ?? '') ?: null,
                 'no_bpjs_tk' => trim($row[$columnIndices['no_bpjs_tk'] ?? -1] ?? '') ?: null,
                 'no_bpjs_kes' => trim($row[$columnIndices['no_bpjs_kes'] ?? -1] ?? '') ?: null,
@@ -631,7 +709,7 @@ class AsistenController extends Controller
             }
         }
 
-        return null;
+        return $v;
     }
 
     /**
@@ -672,6 +750,13 @@ class AsistenController extends Controller
         }
         if ($request->filled('region_saat_ini') && $request->input('region_saat_ini') !== 'all') {
             $query->where('region_saat_ini', $request->input('region_saat_ini'));
+        }
+        if ($request->filled('status_karyawan') && $request->input('status_karyawan') !== 'all') {
+            $query->where('status_karyawan', $request->input('status_karyawan'));
+        }
+        if ($request->filled('level_jabatan') && $request->input('level_jabatan') !== 'all') {
+            $lvl = trim((string)$request->input('level_jabatan'));
+            $query->where('level_jabatan', 'like', "%{$lvl}%");
         }
         if ($request->filled('search')) {
             $search = trim($request->input('search'));
@@ -1128,27 +1213,27 @@ class AsistenController extends Controller
         } elseif ($filterType === 'pc') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'Aktif')
-                  ->where(fn($sub) => $sub->where('jabatan_terakhir', 'like', '%PC%')->orWhere('level_jabatan', 'like', '%PC%'));
+                  ->where('level_jabatan', 'like', '%PC%');
             });
         } elseif ($filterType === 'gm') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'Aktif')
-                  ->where(fn($sub) => $sub->where('jabatan_terakhir', 'like', '%GM%')->orWhere('level_jabatan', 'like', '%GM%'));
+                  ->where('level_jabatan', 'like', '%GM%');
             });
         } elseif ($filterType === 'mgr') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'Aktif')
-                  ->where(fn($sub) => $sub->where('jabatan_terakhir', 'like', '%MGR%')->orWhere('jabatan_terakhir', 'like', '%Manager%')->orWhere('level_jabatan', 'like', '%MGR%'));
+                  ->where(fn($sub) => $sub->where('level_jabatan', 'like', '%MK%')->orWhere('level_jabatan', 'like', '%MM%')->orWhere('level_jabatan', 'like', '%MGR%')->orWhere('level_jabatan', 'like', '%Manager%'));
             });
         } elseif ($filterType === 'askep') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'Aktif')
-                  ->where(fn($sub) => $sub->where('jabatan_terakhir', 'like', '%ASKEP%')->orWhere('level_jabatan', 'like', '%ASKEP%'));
+                  ->where(fn($sub) => $sub->where('level_jabatan', 'like', '%ASKEP%')->orWhere('level_jabatan', 'like', '%KTU%'));
             });
         } elseif ($filterType === 'asisten') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'Aktif')
-                  ->where(fn($sub) => $sub->where('jabatan_terakhir', 'like', '%ASISTEN%')->orWhere('level_jabatan', 'like', '%ASISTEN%'));
+                  ->where(fn($sub) => $sub->where('level_jabatan', 'like', '%ASISTEN%')->orWhere('level_jabatan', 'like', '%ASST%')->orWhere('level_jabatan', 'like', '%Staff%'));
             });
         }
 

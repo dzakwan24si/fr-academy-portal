@@ -70,10 +70,46 @@
 
     <div class="overflow-hidden rounded-xl border border-[#E5E7EB] bg-white shadow-xs">
         <div class="border-b border-[#E5E7EB] px-5 py-4"><h2 class="text-sm font-bold text-[#18181B]">Daftar Realisasi Program vs Target Batch</h2><p class="text-xs text-[#71717A]">{{ count($rows) }} program akumulatif s/d {{ ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][$month] }} (s/d {{ $currentMonthCode }}) {{ $year }}</p></div>
-        <div class="overflow-x-auto"><table class="w-full text-xs"><thead class="bg-[#F9FAFB] text-left text-[10px] uppercase tracking-wider text-[#71717A]"><tr><th class="px-4 py-3">Program ID</th><th class="px-4 py-3">Nama Program</th><th class="px-4 py-3">Tipe</th><th class="px-4 py-3">Region</th><th class="px-4 py-3">Periode</th><th class="px-4 py-3">Realisasi Batch</th><th class="px-4 py-3">% Batch</th><th class="px-4 py-3">Realisasi Peserta</th><th class="px-4 py-3">% Peserta</th></tr></thead><tbody class="divide-y divide-[#F4F4F5]">
-        @forelse($rows as $row)<tr class="hover:bg-[#FAFAFA]"><td class="px-4 py-3 font-semibold text-[#52525B]">#{{ $row->batch_id }}</td><td class="px-4 py-3 font-medium text-[#18181B]">{{ $row->program_name }}</td><td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold {{ $row->program_type === 'reguler' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700' }}">{{ ucfirst(str_replace('_', ' ', $row->program_type)) }}</span></td><td class="px-4 py-3 text-[#52525B]">{{ $row->region ?: '-' }}</td><td class="px-4 py-3 font-semibold text-[#18181B]">s/d {{ $currentMonthCode }}</td><td class="px-4 py-3 font-medium">{{ $row->realized_batch }} / {{ $row->planned_batch }}</td><td class="px-4 py-3 font-semibold {{ $row->batch_percent >= 100 ? 'text-green-600' : 'text-[#18181B]' }}">{{ $row->batch_percent }}%</td><td class="px-4 py-3 font-medium">{{ $row->realized_participants }} / {{ $row->planned_participants }}</td><td class="px-4 py-3 font-semibold {{ $row->participant_percent >= 100 ? 'text-green-600' : 'text-[#18181B]' }}">{{ $row->participant_percent }}%</td></tr>@empty<tr><td colspan="9" class="px-4 py-10 text-center text-sm text-[#71717A]">Belum ada program pada periode ini.</td></tr>@endforelse
+        <div class="overflow-x-auto"><table class="w-full text-xs"><thead class="bg-[#F9FAFB] text-left text-[10px] uppercase tracking-wider text-[#71717A]"><tr><th class="px-4 py-3">Program ID</th><th class="px-4 py-3">Nama Program</th><th class="px-4 py-3">Tipe</th><th class="px-4 py-3">Region</th><th class="px-4 py-3">Periode</th><th class="px-4 py-3">Realisasi Batch</th><th class="px-4 py-3">% Batch</th><th class="px-4 py-3">Realisasi Peserta</th><th class="px-4 py-3">% Peserta</th><th class="px-4 py-3 text-right">Aksi</th></tr></thead><tbody class="divide-y divide-[#F4F4F5]">
+        @forelse($rows as $row)<tr class="hover:bg-[#FAFAFA]"><td class="px-4 py-3 font-semibold text-[#52525B]">#{{ $row->batch_id }}</td><td class="px-4 py-3 font-medium text-[#18181B]">{{ $row->program_name }}</td><td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold {{ $row->program_type === 'reguler' ? 'bg-blue-50 text-blue-700' : 'bg-purple-50 text-purple-700' }}">{{ ucfirst(str_replace('_', ' ', $row->program_type)) }}</span></td><td class="px-4 py-3 text-[#52525B]">{{ $row->region ?: '-' }}</td><td class="px-4 py-3 font-semibold text-[#18181B]">s/d {{ $currentMonthCode }}</td><td class="px-4 py-3 font-medium"><div class="flex items-center gap-1.5"><span>{{ $row->realized_batch }} / {{ $row->planned_batch }}</span></div></td><td class="px-4 py-3 font-semibold {{ $row->batch_percent >= 100 ? 'text-green-600' : 'text-[#18181B]' }}">{{ $row->batch_percent }}%</td><td class="px-4 py-3 font-medium">{{ $row->realized_participants }} / {{ $row->planned_participants }}</td><td class="px-4 py-3 font-semibold {{ $row->participant_percent >= 100 ? 'text-green-600' : 'text-[#18181B]' }}">{{ $row->participant_percent }}%</td><td class="px-4 py-3 text-right">@if($row->program_type === 'non_reguler')<button type="button" onclick="editRealisasiBatch('{{ $row->program_type }}', {{ $row->program_id }}, '{{ addslashes($row->program_name) }}', {{ $row->realized_batch }})" class="inline-flex items-center gap-1 font-semibold text-emerald-700 hover:text-emerald-800 hover:underline bg-emerald-50 hover:bg-emerald-100 px-2.5 py-1 rounded-md transition-colors cursor-pointer" title="Edit Realisasi Batch"><i data-lucide="pencil" class="w-3 h-3"></i><span>Edit Batch</span></button>@else<span class="inline-flex items-center gap-1 text-[10px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded" title="Realisasi batch reguler otomatis dihitung dari presensi Training Record"><i data-lucide="sparkles" class="w-3 h-3 text-slate-400"></i><span>Otomatis</span></span>@endif</td></tr>@empty<tr><td colspan="10" class="px-4 py-10 text-center text-sm text-[#71717A]">Belum ada program pada periode ini.</td></tr>@endforelse
         </tbody></table></div>
     </div>
 </div>
+
+<script>
+function editRealisasiBatch(programType, programId, programName, currentVal) {
+    const newVal = prompt(`Ubah Realisasi Batch untuk:\n"${programName}"`, currentVal);
+    if (newVal === null) return;
+    const numVal = parseInt(newVal);
+    if (isNaN(numVal) || numVal < 0) {
+        alert('Masukkan angka batch yang valid!');
+        return;
+    }
+
+    fetch('{{ route("administrasi.realisasi-vs-batch.update-batch") }}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        },
+        body: JSON.stringify({
+            program_type: programType,
+            program_id: programId,
+            realisasi_batch: numVal
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.message) {
+            window.location.reload();
+        } else {
+            alert(data.error || 'Gagal menyimpan realisasi batch.');
+        }
+    })
+    .catch(err => {
+        alert('Terjadi kesalahan saat meng-update realisasi batch.');
+    });
+}
+</script>
 </x-admin-layout>
 

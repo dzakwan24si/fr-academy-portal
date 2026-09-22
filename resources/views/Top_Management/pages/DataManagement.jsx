@@ -1458,7 +1458,11 @@ const DataManagement = () => {
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Target Batch</label>
-                        <input type="number" name="total_batch" value={formData.total_batch || ''} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
+                        <input type="number" name="TARGET_BATCH" value={formData.TARGET_BATCH !== undefined ? formData.TARGET_BATCH : ''} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Realisasi Batch</label>
+                        <input type="number" name="realisasi_batch" value={formData.realisasi_batch !== undefined ? formData.realisasi_batch : (formData.total_batch !== undefined ? formData.total_batch : '')} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
                       </div>
                       <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Total Hari</label>

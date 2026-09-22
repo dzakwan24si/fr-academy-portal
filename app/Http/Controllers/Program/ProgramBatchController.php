@@ -120,8 +120,12 @@ class ProgramBatchController extends Controller
                 $key = $batch['type'] . ':' . $batch['id'];
                 $actualRecords = $records->get($key, collect())->filter(fn ($record) => $this->recordInYear($record, $year));
                 $actualParticipants = $actualRecords->count();
-                $explicitBatch = (int) ($batch['model']->total_batch ?? 0);
-                $realizedBatch = $explicitBatch > 0 ? $explicitBatch : ($actualRecords->isNotEmpty() ? 1 : 0);
+                if ($batch['type'] === 'reguler') {
+                    $realizedBatch = $actualRecords->isNotEmpty() ? 1 : 0;
+                } else {
+                    $explicitBatch = (int) ($batch['model']->realisasi_batch ?? $batch['model']->total_batch ?? 0);
+                    $realizedBatch = $explicitBatch > 0 ? $explicitBatch : ($actualRecords->isNotEmpty() ? 1 : 0);
+                }
                 return $batch + ['actual_participants' => $actualParticipants, 'realized_batch' => $realizedBatch, 'period' => $this->period($batch)];
             });
             $targetBatch = $items->sum('batch');
@@ -446,7 +450,7 @@ class ProgramBatchController extends Controller
                 'td_total' => is_numeric($item['tdtotal'] ?? null) ? (int) $item['tdtotal'] : 0,
                 'start_date' => $this->dateValue($item['startdate'] ?? $item['mulaiprogram'] ?? $item['tglmulai'] ?? null),
                 'end_date' => $this->dateValue($item['enddate'] ?? $item['selesaiprogram'] ?? $item['tglselesai'] ?? null),
-                'total_batch' => is_numeric($item['totalbatch'] ?? null) ? (int) $item['totalbatch'] : 0,
+                'realisasi_batch' => is_numeric($item['realisasibatch'] ?? null) ? (int) $item['realisasibatch'] : (is_numeric($item['batch'] ?? null) ? (int) $item['batch'] : (is_numeric($item['totalbatch'] ?? null) ? (int) $item['totalbatch'] : 0)),
                 'lokasi_training' => $item['lokasitraining'] ?? $item['lokasi'] ?? null,
                 'deskripsi' => $item['deskripsi'] ?? $item['keterangan'] ?? null,
                 'sub_kategori' => $item['subkategori'] ?? null,
@@ -485,6 +489,10 @@ class ProgramBatchController extends Controller
             if (array_key_exists('Total_orang', $payload)) {
                 $payload['target_peserta'] = $payload['Total_orang'];
             }
+        } else {
+            if (array_key_exists('total_batch', $payload) && !array_key_exists('realisasi_batch', $payload)) {
+                $payload['realisasi_batch'] = $payload['total_batch'];
+            }
         }
 
         $dateFields = $type === 'reguler' ? ['Mulai_program', 'Selesai_program'] : ['start_date', 'end_date'];
@@ -493,13 +501,13 @@ class ProgramBatchController extends Controller
 
         $numericFields = $type === 'reguler'
             ? ['jumlah_bulan_training', 'jumlah_hari', 'Total_training_days', 'Promosi_mandor', 'Fresh_Graduate', 'target_peserta', 'tahun']
-            : ['total_jam', 'total_hari', 'peserta_non_staf', 'peserta_ast', 'peserta_askep', 'peserta_mgr', 'peserta_gm', 'peserta_head', 'target_staf', 'target_non_staf', 'target_total', 'training_staf', 'training_non_staf', 'training_total', 'td_staf', 'td_non_staf', 'td_total', 'total_batch', 'TARGET_BATCH', 'TARGET_PESERTA', 'tahun'];
+            : ['total_jam', 'total_hari', 'peserta_non_staf', 'peserta_ast', 'peserta_askep', 'peserta_mgr', 'peserta_gm', 'peserta_head', 'target_staf', 'target_non_staf', 'target_total', 'training_staf', 'training_non_staf', 'training_total', 'td_staf', 'td_non_staf', 'td_total', 'realisasi_batch', 'total_batch', 'TARGET_BATCH', 'TARGET_PESERTA', 'tahun'];
         foreach ($numericFields as $field) if (array_key_exists($field, $payload)) $payload[$field] = is_numeric($payload[$field]) ? (int) $payload[$field] : null;
         if ($type === 'reguler' && array_key_exists('Uang_saku', $payload)) $payload['Uang_saku'] = is_numeric($payload['Uang_saku']) ? (float) $payload['Uang_saku'] : 0;
 
         $allowedColumns = $type === 'reguler'
             ? ['Kategori_Program', 'Training_Program', 'Batch', 'Lokasi_training', 'Mulai_program', 'Selesai_program', 'jumlah_bulan_training', 'jumlah_hari', 'Total_training_days', 'Promosi_mandor', 'Fresh_Graduate', 'target_peserta', 'Uang_saku', 'jenis_program_reguler', 'Region', 'tanggal_pelaksanaan', 'tahun']
-            : ['kategori_pelatihan', 'jenis_pelatihan', 'region', 'trainer', 'type_training', 'total_jam', 'total_hari', 'peserta_non_staf', 'peserta_ast', 'peserta_askep', 'peserta_mgr', 'peserta_gm', 'peserta_head', 'target_staf', 'target_non_staf', 'target_total', 'training_staf', 'training_non_staf', 'training_total', 'td_staf', 'td_non_staf', 'td_total', 'start_date', 'end_date', 'total_batch', 'lokasi_training', 'deskripsi', 'sub_kategori', 'tanggal_pelaksanaan', 'TARGET_BATCH', 'TARGET_PESERTA', 'tahun'];
+            : ['kategori_pelatihan', 'jenis_pelatihan', 'region', 'trainer', 'type_training', 'total_jam', 'total_hari', 'peserta_non_staf', 'peserta_ast', 'peserta_askep', 'peserta_mgr', 'peserta_gm', 'peserta_head', 'target_staf', 'target_non_staf', 'target_total', 'training_staf', 'training_non_staf', 'training_total', 'td_staf', 'td_non_staf', 'td_total', 'start_date', 'end_date', 'realisasi_batch', 'total_batch', 'lokasi_training', 'deskripsi', 'sub_kategori', 'tanggal_pelaksanaan', 'TARGET_BATCH', 'TARGET_PESERTA', 'tahun'];
 
         return array_filter($payload, fn ($value, $key) => in_array($key, $allowedColumns, true), ARRAY_FILTER_USE_BOTH);
     }

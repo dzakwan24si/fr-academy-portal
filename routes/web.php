@@ -197,6 +197,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
     Route::prefix('administrasi/realisasi-vs-batch')->name('administrasi.realisasi-vs-batch.')->group(function () {
         Route::get('/', [RealisasiVsBatchController::class, 'index'])->name('index');
         Route::post('/', [RealisasiVsBatchController::class, 'store'])->name('store');
+        Route::post('/update-batch', [RealisasiVsBatchController::class, 'updateBatch'])->name('update-batch');
         Route::post('/import', [RealisasiVsBatchController::class, 'import'])->name('import');
         Route::get('/export', [RealisasiVsBatchController::class, 'export'])->name('export');
         Route::delete('/destroy-all', [RealisasiVsBatchController::class, 'destroyAll'])->name('destroy-all');
