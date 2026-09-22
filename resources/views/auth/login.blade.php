@@ -7,7 +7,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
     <!-- Script Cloudflare Turnstile -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <!-- <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script> -->
 </head>
 <body class="bg-white min-h-screen font-sans text-gray-900">
     <div class="flex min-h-screen">
@@ -86,7 +86,7 @@
                     </div>
 
                     <!-- Widget Cloudflare Turnstile -->
-                    <div class="cf-turnstile" data-sitekey="0x4AAAAAAEzPGJLBNyo86KAl" data-theme="light"></div>
+                    <!-- <div class="cf-turnstile" data-sitekey="0x4AAAAAAEzPGJLBNyo86KAl" data-theme="light"></div> -->
 
                     <!-- Options -->
                     <div class="flex items-center justify-between pt-2">

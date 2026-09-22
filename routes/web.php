@@ -47,8 +47,15 @@ Route::get('/tentang-kami', function () {
 })->name('about');
 
 Route::get('/career', function () {
-    return view('career.index');
+    $programs = \App\Models\CareerProgram::where('is_active', true)->get();
+    return view('career.index', compact('programs'));
 })->name('career.index');
+
+Route::get('/career-qr', function (\Illuminate\Http\Request $request) {
+    $url = $request->query('url', 'https://fr-academy.com');
+    $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(200)->generate($url);
+    return response($qrCode)->header('Content-Type', 'image/svg+xml');
+})->name('career.qr');
 
 Route::get('/tv-display', function () {
     $playlists = TvPlaylist::with('article.author', 'article.category')->orderBy('order')->get();
@@ -137,6 +144,10 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('tv', function () {
         return view('admin.tv.index');
     })->name('admin.tv.index')->middleware('can:manage_tv_display');
+
+    // Career Programs Management
+    Route::resource('career-programs', \App\Http\Controllers\Admin\CareerProgramController::class)
+        ->names('admin.career_programs');
 });
 
 // Monitoring Controllers
