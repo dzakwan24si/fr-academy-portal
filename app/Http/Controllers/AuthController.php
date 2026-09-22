@@ -19,11 +19,11 @@ class AuthController extends Controller
         $request->validate([
             'identifier' => ['required', 'string'],
             'password' => ['required', 'string'],
-            // 'cf-turnstile-response' => ['required', 'string'], 
+            'cf-turnstile-response' => ['required', 'string'], 
         ], [
             'cf-turnstile-response.required' => 'Harap selesaikan verifikasi keamanan Cloudflare.'
         ]);
-/* 
+
         // 2. Kirim token ke API Cloudflare untuk divalidasi keasliannya
         $http = Http::asForm();
         
@@ -43,7 +43,7 @@ class AuthController extends Controller
             return back()->withErrors([
                 'identifier' => 'Sistem mendeteksi aktivitas mencurigakan. Silakan refresh halaman dan coba lagi.',
             ])->onlyInput('identifier');
-        } */
+        }
 
         // 4. Jika Turnstile sukses, lanjutkan ke proses login asli milikmu
         $identifier = $request->input('identifier');
