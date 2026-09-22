@@ -269,8 +269,8 @@
             Rp {{ number_format($summary['totalRealisasi'], 0, ',', '.') }}
         </p>
         <div class="flex items-center justify-between text-xs text-[#71717A] mt-2 pt-2 border-t border-[#F4F4F5]">
-            <span>Realisasi Kantor: Rp {{ number_format($summary['realisasiKantorTotal'], 0, ',', '.') }}</span>
-            <span>Mess: Rp {{ number_format($summary['realisasiMessTotal'], 0, ',', '.') }}</span>
+            <span class="text-emerald-700 font-medium">Debit: Rp {{ number_format($summary['totalDebit'], 0, ',', '.') }}</span>
+            <span class="text-rose-600 font-medium">Kredit: Rp {{ number_format($summary['totalKredit'], 0, ',', '.') }}</span>
         </div>
     </div>
 
@@ -543,10 +543,16 @@
                             </tbody>
                             <tfoot>
                                 <tr class="bg-amber-50/70 border-t-2 border-amber-200">
-                                    <td colspan="7" class="px-3 py-3 text-xs font-bold text-amber-800 uppercase tracking-wider">
+                                    <td colspan="5" class="px-3 py-3 text-xs font-bold text-amber-800 uppercase tracking-wider">
                                         Total Realisasi Kantor
                                     </td>
-                                    <td class="px-3 py-3 text-right text-xs sm:text-sm font-bold text-amber-900 whitespace-nowrap">
+                                    <td class="px-3 py-3 text-right text-xs sm:text-sm font-bold text-emerald-700 whitespace-nowrap" title="Total Debit">
+                                        Rp {{ number_format($summary['debitKantorTotal'], 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-3 py-3 text-right text-xs sm:text-sm font-bold text-rose-700 whitespace-nowrap" title="Total Kredit">
+                                        Rp {{ number_format($summary['kreditKantorTotal'], 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-3 py-3 text-right text-xs sm:text-sm font-bold text-amber-900 whitespace-nowrap" title="Total Realisasi (Debit - Kredit)">
                                         Rp {{ number_format($summary['realisasiKantorTotal'], 0, ',', '.') }}
                                     </td>
                                     <td></td>
@@ -782,10 +788,16 @@
                             </tbody>
                             <tfoot>
                                 <tr class="bg-rose-50/70 border-t-2 border-rose-200">
-                                    <td colspan="7" class="px-3 py-3 text-xs font-bold text-rose-800 uppercase tracking-wider">
+                                    <td colspan="5" class="px-3 py-3 text-xs font-bold text-rose-800 uppercase tracking-wider">
                                         Total Realisasi Mess
                                     </td>
-                                    <td class="px-3 py-3 text-right text-xs sm:text-sm font-bold text-rose-900 whitespace-nowrap">
+                                    <td class="px-3 py-3 text-right text-xs sm:text-sm font-bold text-emerald-700 whitespace-nowrap" title="Total Debit">
+                                        Rp {{ number_format($summary['debitMessTotal'], 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-3 py-3 text-right text-xs sm:text-sm font-bold text-rose-700 whitespace-nowrap" title="Total Kredit">
+                                        Rp {{ number_format($summary['kreditMessTotal'], 0, ',', '.') }}
+                                    </td>
+                                    <td class="px-3 py-3 text-right text-xs sm:text-sm font-bold text-rose-900 whitespace-nowrap" title="Total Realisasi (Debit - Kredit)">
                                         Rp {{ number_format($summary['realisasiMessTotal'], 0, ',', '.') }}
                                     </td>
                                     <td></td>

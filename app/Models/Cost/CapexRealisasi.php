@@ -42,4 +42,11 @@ class CapexRealisasi extends Model
     {
         return $this->belongsTo(CapexRab::class, 'rab_id', 'rab_id');
     }
+
+    protected static function booted()
+    {
+        static::saving(function ($model) {
+            $model->total_rp = (float) $model->debit - (float) $model->kredit;
+        });
+    }
 }

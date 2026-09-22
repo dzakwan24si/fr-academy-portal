@@ -86,19 +86,32 @@ class CapexController extends Controller
             $realMessQuery->whereMonth('tanggal', $monthInt);
         }
 
-        $realisasiKantorTotal = (float) $realKantorQuery->sum('total_rp');
-        $realisasiMessTotal   = (float) $realMessQuery->sum('total_rp');
+        $debitKantorTotal     = (float) (clone $realKantorQuery)->sum('debit');
+        $kreditKantorTotal    = (float) (clone $realKantorQuery)->sum('kredit');
+        $realisasiKantorTotal = (float) (clone $realKantorQuery)->sum('total_rp');
+
+        $debitMessTotal       = (float) (clone $realMessQuery)->sum('debit');
+        $kreditMessTotal      = (float) (clone $realMessQuery)->sum('kredit');
+        $realisasiMessTotal   = (float) (clone $realMessQuery)->sum('total_rp');
 
         $totalRab       = $rabKantorTotal + $rabMessTotal;
+        $totalDebit     = $debitKantorTotal + $debitMessTotal;
+        $totalKredit    = $kreditKantorTotal + $kreditMessTotal;
         $totalRealisasi = $realisasiKantorTotal + $realisasiMessTotal;
         $sisaRab        = $totalRab - $totalRealisasi;
 
         $summary = compact(
             'rabKantorTotal',
             'rabMessTotal',
+            'debitKantorTotal',
+            'kreditKantorTotal',
             'realisasiKantorTotal',
+            'debitMessTotal',
+            'kreditMessTotal',
             'realisasiMessTotal',
             'totalRab',
+            'totalDebit',
+            'totalKredit',
             'totalRealisasi',
             'sisaRab'
         );
@@ -256,11 +269,7 @@ class CapexController extends Controller
 
         $debit  = (float) ($validated['debit'] ?? 0);
         $kredit = (float) ($validated['kredit'] ?? 0);
-        
-        // Calculate total_rp = debit - kredit (if not manually overridden)
-        if (!isset($validated['total_rp']) || $validated['total_rp'] === null || $validated['total_rp'] === '') {
-            $validated['total_rp'] = $debit - $kredit;
-        }
+        $validated['total_rp'] = $debit - $kredit;
 
         CapexRealisasi::create($validated);
         (new \App\Http\Controllers\Cost\CostController())->syncAggregatedCosts((int)$validated['tahun']);
@@ -311,10 +320,7 @@ class CapexController extends Controller
 
         $debit  = (float) ($validated['debit'] ?? 0);
         $kredit = (float) ($validated['kredit'] ?? 0);
-        
-        if (!isset($validated['total_rp']) || $validated['total_rp'] === null || $validated['total_rp'] === '') {
-            $validated['total_rp'] = $debit - $kredit;
-        }
+        $validated['total_rp'] = $debit - $kredit;
 
         $item->update($validated);
         (new \App\Http\Controllers\Cost\CostController())->syncAggregatedCosts((int)$item->tahun);
@@ -500,7 +506,7 @@ class CapexController extends Controller
                     $rawDate     = $getVal('tanggal');
                     $debit       = $this->cleanNumeric($getVal('debit', 0), 0);
                     $kredit      = $this->cleanNumeric($getVal('kredit', 0), 0);
-                    $totalRp     = $this->cleanNumeric($getVal('total_rp', $debit - $kredit), $debit - $kredit);
+                    $totalRp     = ($debit != 0 || $kredit != 0) ? ($debit - $kredit) : $this->cleanNumeric($getVal('total_rp', 0), 0);
 
                     // Parse Date / Month
                     $tanggal = null;
