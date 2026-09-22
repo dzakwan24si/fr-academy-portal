@@ -206,21 +206,36 @@ class CostController extends Controller
             // Update standard VRA accounts (Bus, Hilux, Fortuner)
             foreach ($standardMap as $catKey => $accountName) {
                 $totalVal = $vehicleTotals[$catKey];
-                $existingRow = Cost::where('tahun', $year)
+                $matchingRows = Cost::where('tahun', $year)
                     ->where(function ($q) use ($accountName, $catKey) {
                         $q->where('account_name', $accountName)
                           ->orWhere('account_name', 'like', "%Alokasi%{$catKey}%");
                     })
-                    ->first();
+                    ->orderBy('cost_id', 'asc')
+                    ->get();
 
-                if ($existingRow) {
-                    $existingRow->update([
-                        'account_name' => $accountName,
-                        'realisasi'    => $totalVal,
-                        'jenis_cost'   => 'BIAYA PERJALANAN DINAS',
-                        'bulan'        => null,
+                if ($matchingRows->isNotEmpty()) {
+                    $masterRow = $matchingRows->first();
+                    if ($matchingRows->count() > 1) {
+                        foreach ($matchingRows->slice(1) as $dup) {
+                            if ((float)$masterRow->budget == 0 && (float)$dup->budget > 0) {
+                                $masterRow->budget = $dup->budget;
+                            }
+                            if ((float)$masterRow->budget_tahunan == 0 && (float)$dup->budget_tahunan > 0) {
+                                $masterRow->budget_tahunan = $dup->budget_tahunan;
+                            }
+                            $dup->delete();
+                        }
+                    }
+
+                    $masterRow->update([
+                        'account_name'   => $accountName,
+                        'realisasi'      => $totalVal,
+                        'jenis_cost'     => 'BIAYA PERJALANAN DINAS',
+                        'budget'         => $masterRow->budget,
+                        'budget_tahunan' => $masterRow->budget_tahunan,
                     ]);
-                    $syncedVraAccountNames[] = $existingRow->account_name;
+                    $syncedVraAccountNames[] = $masterRow->account_name;
                 } else {
                     $newCost = Cost::create([
                         'tahun'          => $year,
@@ -238,17 +253,32 @@ class CostController extends Controller
 
             // Update custom VRA accounts if any
             foreach ($customVehicles as $cName => $totalVal) {
-                $existingRow = Cost::where('tahun', $year)
+                $matchingRows = Cost::where('tahun', $year)
                     ->where('account_name', "Alokasi {$cName}")
-                    ->first();
+                    ->orderBy('cost_id', 'asc')
+                    ->get();
 
-                if ($existingRow) {
-                    $existingRow->update([
-                        'realisasi'  => $totalVal,
-                        'jenis_cost' => 'BIAYA PERJALANAN DINAS',
-                        'bulan'      => null,
+                if ($matchingRows->isNotEmpty()) {
+                    $masterRow = $matchingRows->first();
+                    if ($matchingRows->count() > 1) {
+                        foreach ($matchingRows->slice(1) as $dup) {
+                            if ((float)$masterRow->budget == 0 && (float)$dup->budget > 0) {
+                                $masterRow->budget = $dup->budget;
+                            }
+                            if ((float)$masterRow->budget_tahunan == 0 && (float)$dup->budget_tahunan > 0) {
+                                $masterRow->budget_tahunan = $dup->budget_tahunan;
+                            }
+                            $dup->delete();
+                        }
+                    }
+
+                    $masterRow->update([
+                        'realisasi'      => $totalVal,
+                        'jenis_cost'     => 'BIAYA PERJALANAN DINAS',
+                        'budget'         => $masterRow->budget,
+                        'budget_tahunan' => $masterRow->budget_tahunan,
                     ]);
-                    $syncedVraAccountNames[] = $existingRow->account_name;
+                    $syncedVraAccountNames[] = $masterRow->account_name;
                 } else {
                     $newCost = Cost::create([
                         'tahun'          => $year,
@@ -288,19 +318,36 @@ class CostController extends Controller
                 }
                 $realTotal = (float) $realQuery->sum('total_rp');
 
-                $capexRow = Cost::where('tahun', $year)
+                $matchingRows = Cost::where('tahun', $year)
                     ->where(function ($q) use ($accName, $lokasi) {
                         $q->where('account_name', $accName)
                           ->orWhere('account_name', 'like', "%Capex%{$lokasi}%");
                     })
-                    ->first();
+                    ->orderBy('cost_id', 'asc')
+                    ->get();
 
-                if ($capexRow) {
-                    $capexRow->update([
-                        'budget_tahunan' => $rabTotal,
+                if ($matchingRows->isNotEmpty()) {
+                    $masterRow = $matchingRows->first();
+                    if ($matchingRows->count() > 1) {
+                        foreach ($matchingRows->slice(1) as $dup) {
+                            if ((float)$masterRow->budget == 0 && (float)$dup->budget > 0) {
+                                $masterRow->budget = $dup->budget;
+                            }
+                            if ((float)$masterRow->budget_tahunan == 0 && (float)$dup->budget_tahunan > 0) {
+                                $masterRow->budget_tahunan = $dup->budget_tahunan;
+                            }
+                            $dup->delete();
+                        }
+                    }
+
+                    $finalBudgetTahunan = $rabTotal > 0 ? $rabTotal : $masterRow->budget_tahunan;
+
+                    $masterRow->update([
+                        'account_name'   => $accName,
+                        'budget_tahunan' => $finalBudgetTahunan,
                         'realisasi'      => $realTotal,
                         'jenis_cost'     => 'CAPEX',
-                        'bulan'          => null,
+                        'budget'         => $masterRow->budget,
                     ]);
                 } else {
                     Cost::create([
@@ -329,18 +376,34 @@ class CostController extends Controller
             $totalRekruit = (float) $rekruitQuery->sum('total_biaya');
             $stats['rekruit'] = $totalRekruit;
 
-            $rekruitRow = Cost::where('tahun', $year)
+            $matchingRows = Cost::where('tahun', $year)
                 ->where(function ($q) {
                     $q->where('account_name', 'REKRUT')
                       ->orWhere('account_name', 'like', '%REKRUT%');
                 })
-                ->first();
+                ->orderBy('cost_id', 'asc')
+                ->get();
 
-            if ($rekruitRow) {
-                $rekruitRow->update([
-                    'realisasi'  => $totalRekruit,
-                    'jenis_cost' => 'REKRUT',
-                    'bulan'      => null,
+            if ($matchingRows->isNotEmpty()) {
+                $masterRow = $matchingRows->first();
+                if ($matchingRows->count() > 1) {
+                    foreach ($matchingRows->slice(1) as $dup) {
+                        if ((float)$masterRow->budget == 0 && (float)$dup->budget > 0) {
+                            $masterRow->budget = $dup->budget;
+                        }
+                        if ((float)$masterRow->budget_tahunan == 0 && (float)$dup->budget_tahunan > 0) {
+                            $masterRow->budget_tahunan = $dup->budget_tahunan;
+                        }
+                        $dup->delete();
+                    }
+                }
+
+                $masterRow->update([
+                    'account_name'   => 'REKRUT',
+                    'realisasi'      => $totalRekruit,
+                    'jenis_cost'     => 'REKRUT',
+                    'budget'         => $masterRow->budget,
+                    'budget_tahunan' => $masterRow->budget_tahunan,
                 ]);
             } else {
                 Cost::create([
@@ -466,8 +529,31 @@ class CostController extends Controller
                     'budget_tahunan' => $budgetTahunan,
                 ];
 
-                // Upsert strategy: by cost_id if present, else by (tahun, account_name, bulan)
-                if ($costId && is_numeric($costId)) {
+                $upperAcc = strtoupper(trim($accountName));
+                $isAutomated = (
+                    (str_contains($upperAcc, 'ALOKASI') && (str_contains($upperAcc, 'BUS') || str_contains($upperAcc, 'HILUX') || str_contains($upperAcc, 'FORTUNER'))) ||
+                    (str_contains($upperAcc, 'CAPEX') && (str_contains($upperAcc, 'KANTOR') || str_contains($upperAcc, 'MESS') || str_contains($upperAcc, 'MES'))) ||
+                    ($upperAcc === 'REKRUT' || str_contains($upperAcc, 'BIAYA REKRUIT') || str_contains($upperAcc, 'BIAYA REKRUT'))
+                );
+
+                if ($isAutomated) {
+                    $existing = $this->findExistingAutomatedCost($tahun, $accountName);
+                    if ($existing) {
+                        $existing->update([
+                            'GL_ACCOUNT'     => $glAccount ?: $existing->GL_ACCOUNT,
+                            'jenis_cost'     => $jenisCost ?: $existing->jenis_cost,
+                            'account_name'   => $accountName ?: $existing->account_name,
+                            'budget'         => $budget,
+                            'budget_tahunan' => $budgetTahunan > 0 ? $budgetTahunan : ($budget * 12),
+                            // Keep dynamic calculated realisasi if already non-zero, otherwise update
+                            'realisasi'      => (float)$existing->realisasi > 0 ? $existing->realisasi : $realisasi,
+                        ]);
+                        $updatedCount++;
+                    } else {
+                        Cost::create($data);
+                        $importedCount++;
+                    }
+                } elseif ($costId && is_numeric($costId)) {
                     $existing = Cost::find((int) $costId);
                     if ($existing) {
                         $existing->update($data);
@@ -682,5 +768,55 @@ class CostController extends Controller
 
         $filename = "Cost_Report_{$year}.xlsx";
         return \App\Services\ExcelExporter::download($filename, $headers, $dataRows, 'Cost Report');
+    }
+
+    /**
+     * Find existing automated cost record by account_name pattern matching.
+     */
+    protected function findExistingAutomatedCost(int $tahun, string $accountName): ?Cost
+    {
+        $upper = strtoupper(trim($accountName));
+
+        // VRA (Bus, Hilux, Fortuner)
+        if (str_contains($upper, 'ALOKASI') && (str_contains($upper, 'BUS') || str_contains($upper, 'HILUX') || str_contains($upper, 'FORTUNER'))) {
+            $keyword = match (true) {
+                str_contains($upper, 'BUS') => 'Bus',
+                str_contains($upper, 'HILUX') => 'Hilux',
+                str_contains($upper, 'FORTUNER') => 'Fortuner',
+                default => '',
+            };
+            return Cost::where('tahun', $tahun)
+                ->where(function ($q) use ($accountName, $keyword) {
+                    $q->where('account_name', $accountName)
+                      ->orWhere('account_name', 'like', "%Alokasi%{$keyword}%");
+                })
+                ->orderBy('cost_id', 'asc')
+                ->first();
+        }
+
+        // Capex (Kantor, Mess)
+        if (str_contains($upper, 'CAPEX') && (str_contains($upper, 'KANTOR') || str_contains($upper, 'MESS') || str_contains($upper, 'MES'))) {
+            $lokasi = (str_contains($upper, 'MESS') || str_contains($upper, 'MES')) ? 'mess' : 'kantor';
+            return Cost::where('tahun', $tahun)
+                ->where(function ($q) use ($accountName, $lokasi) {
+                    $q->where('account_name', $accountName)
+                      ->orWhere('account_name', 'like', "%Capex%{$lokasi}%");
+                })
+                ->orderBy('cost_id', 'asc')
+                ->first();
+        }
+
+        // Rekruit
+        if ($upper === 'REKRUT' || str_contains($upper, 'BIAYA REKRUIT') || str_contains($upper, 'BIAYA REKRUT') || str_contains($upper, 'REKRUTMEN')) {
+            return Cost::where('tahun', $tahun)
+                ->where(function ($q) {
+                    $q->where('account_name', 'REKRUT')
+                      ->orWhere('account_name', 'like', '%REKRUT%');
+                })
+                ->orderBy('cost_id', 'asc')
+                ->first();
+        }
+
+        return null;
     }
 }

@@ -159,7 +159,7 @@ class AsistenController extends Controller
         $sortOrder = $request->input('sort_order', 'asc');
         $validSortColumns = [
             'id', 'no', 'nama', 'asal_rekrut', 'program', 'jabatan_awal',
-            'pt_penempatan', 'region_saat_ini', 'keterangan', 'created_at'
+            'level_jabatan', 'jabatan_terakhir', 'pt_penempatan', 'region_saat_ini', 'keterangan', 'created_at'
         ];
 
         if (in_array($sortBy, $validSortColumns)) {

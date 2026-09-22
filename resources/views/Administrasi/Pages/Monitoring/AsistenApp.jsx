@@ -780,6 +780,24 @@ export default function AsistenApp() {
                                 </th>
                                 <th
                                     className="px-4 py-3.5 cursor-pointer hover:bg-gray-100 transition"
+                                    onClick={() => handleSort('level_jabatan')}
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Level Jabatan</span>
+                                        {sortBy === 'level_jabatan' && (sortOrder === 'asc' ? <ChevronUp className="w-3.5 h-3.5 text-[#4B6A34]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#4B6A34]" />)}
+                                    </div>
+                                </th>
+                                <th
+                                    className="px-4 py-3.5 cursor-pointer hover:bg-gray-100 transition"
+                                    onClick={() => handleSort('jabatan_terakhir')}
+                                >
+                                    <div className="flex items-center gap-1.5">
+                                        <span>Jabatan (Saat Ini)</span>
+                                        {sortBy === 'jabatan_terakhir' && (sortOrder === 'asc' ? <ChevronUp className="w-3.5 h-3.5 text-[#4B6A34]" /> : <ChevronDown className="w-3.5 h-3.5 text-[#4B6A34]" />)}
+                                    </div>
+                                </th>
+                                <th
+                                    className="px-4 py-3.5 cursor-pointer hover:bg-gray-100 transition"
                                     onClick={() => handleSort('pt_penempatan')}
                                 >
                                     <div className="flex items-center gap-1.5">
@@ -808,14 +826,14 @@ export default function AsistenApp() {
                         <tbody className="divide-y divide-gray-100">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={10} className="px-4 py-12 text-center text-gray-500">
+                                    <td colSpan={12} className="px-4 py-12 text-center text-gray-500">
                                         <RefreshCw className="w-6 h-6 text-[#4B6A34] animate-spin mx-auto mb-2" />
                                         <span>Memuat data asisten & trainee...</span>
                                     </td>
                                 </tr>
                             ) : data.length === 0 ? (
                                 <tr>
-                                    <td colSpan={10} className="px-4 py-12 text-center text-gray-400">
+                                    <td colSpan={12} className="px-4 py-12 text-center text-gray-400">
                                         <AlertCircle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                                         <p className="font-semibold text-gray-600">Tidak ada data asisten yang sesuai kriteria.</p>
                                         <p className="text-[11px] text-gray-400 mt-1">Coba sesuaikan kata kunci pencarian atau reset filter.</p>
@@ -849,6 +867,18 @@ export default function AsistenApp() {
                                             </td>
                                             <td className="px-4 py-3 text-gray-700">
                                                 {item.jabatan_awal || '-'}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {item.level_jabatan ? (
+                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-800 border border-slate-200">
+                                                        {item.level_jabatan}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-gray-400">-</span>
+                                                )}
+                                            </td>
+                                            <td className="px-4 py-3 text-gray-700 font-medium">
+                                                {item.jabatan_terakhir || '-'}
                                             </td>
                                             <td className="px-4 py-3 text-gray-700 font-medium">
                                                 {item.pt_penempatan || '-'}
