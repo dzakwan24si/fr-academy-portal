@@ -14,6 +14,7 @@ class ExcelExporter
 {
     /**
      * Download styled Excel (.xlsx) file matching the standard green header design.
+     * If ZipArchive is not installed on the server, automatically falls back to clean UTF-8 CSV.
      *
      * @param string $filename Output filename (e.g. "Template_Monitoring_Alumni.xlsx")
      * @param array $headers List of header column titles
@@ -23,6 +24,31 @@ class ExcelExporter
      */
     public static function download(string $filename, array $headers, array $dataRows = [], string $sheetTitle = 'Sheet1'): StreamedResponse
     {
+        // 1. Fallback to CSV if PHP zip extension (ZipArchive) is missing on hosting server
+        if (!class_exists('\ZipArchive')) {
+            $csvFilename = preg_replace('/\.[^.]+$/', '', $filename) . '.csv';
+            $responseHeaders = [
+                'Content-Type'        => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="' . $csvFilename . '"',
+                'Cache-Control'       => 'max-age=0, must-revalidate',
+                'Pragma'              => 'public',
+            ];
+
+            return new StreamedResponse(function () use ($headers, $dataRows) {
+                if (ob_get_length()) {
+                    @ob_end_clean();
+                }
+                $handle = fopen('php://output', 'w');
+                // UTF-8 BOM so Excel opens with proper characters
+                fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+                fputcsv($handle, $headers);
+                foreach ($dataRows as $row) {
+                    fputcsv($handle, (array)$row);
+                }
+                fclose($handle);
+            }, 200, $responseHeaders);
+        }
+
         $spreadsheet = new Spreadsheet();
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle(substr($sheetTitle, 0, 31)); // Max sheet name length
@@ -92,7 +118,7 @@ class ExcelExporter
         $rowIndex = 2;
         foreach ($dataRows as $row) {
             $colIndex = 1;
-            foreach ($row as $val) {
+            foreach ((array)$row as $val) {
                 $colLetter = Coordinate::stringFromColumnIndex($colIndex);
                 $sheet->getCell("{$colLetter}{$rowIndex}")->setValue($val);
                 $colIndex++;
@@ -117,11 +143,20 @@ class ExcelExporter
                 ->setHorizontal(Alignment::HORIZONTAL_RIGHT);
         }
 
-        // Auto-fit Column Widths
+        // Auto-fit Column Widths safely
+        $hasGd = extension_loaded('gd');
         $numCols = count($headers);
         for ($col = 1; $col <= $numCols; $col++) {
             $colLetter = Coordinate::stringFromColumnIndex($col);
-            $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+            if ($hasGd) {
+                try {
+                    $sheet->getColumnDimension($colLetter)->setAutoSize(true);
+                } catch (\Throwable $e) {
+                    $sheet->getColumnDimension($colLetter)->setWidth(20);
+                }
+            } else {
+                $sheet->getColumnDimension($colLetter)->setWidth(20);
+            }
         }
 
         // Ensure extension is .xlsx
@@ -130,12 +165,16 @@ class ExcelExporter
         }
 
         $responseHeaders = [
-            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Cache-Control' => 'max-age=0',
+            'Cache-Control'       => 'max-age=0, must-revalidate',
+            'Pragma'              => 'public',
         ];
 
         return new StreamedResponse(function () use ($spreadsheet) {
+            if (ob_get_length()) {
+                @ob_end_clean();
+            }
             $writer = new Xlsx($spreadsheet);
             $writer->save('php://output');
         }, 200, $responseHeaders);

@@ -10,12 +10,6 @@
             <h1 class="text-2xl font-bold text-[#18181B]">Realisasi Vs Batch</h1>
             <p class="mt-1 text-sm text-[#71717A]">Monitor realisasi batch dan peserta secara otomatis berdasarkan data program & training record.</p>
         </div>
-        <div class="flex flex-wrap items-center gap-2">
-            <a href="{{ route('administrasi.realisasi-vs-batch.export', ['year' => $year, 'month' => $month, 'type' => $type, 'region' => $region]) }}" class="flex items-center gap-2 rounded-lg border border-[#E5E7EB] bg-white px-3.5 py-2 text-xs font-semibold text-[#374151] hover:bg-[#F9FAFB] shadow-xs transition-colors">
-                <i data-lucide="download" class="w-4 h-4 text-[#71717A]"></i>
-                <span>Export Excel</span>
-            </a>
-        </div>
     </div>
 
     @if(session('success'))<div class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{{ session('success') }}</div>@endif
