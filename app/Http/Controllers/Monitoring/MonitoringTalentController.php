@@ -69,7 +69,7 @@ class MonitoringTalentController extends Controller
 
         // Filter Dropdown Lists
         $statuses = MonitoringTalent::distinct()->pluck('status')->filter()->values();
-        $regions = MonitoringTalent::distinct()->pluck('region')->filter()->values();
+        $regions = \App\Services\RegionHelper::getCanonicalRegions(MonitoringTalent::distinct()->pluck('region'));
         $talentToList = MonitoringTalent::distinct()->pluck('talent_to')->filter()->values();
 
         $perPage = (int) $request->input('per_page', 25);

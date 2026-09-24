@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import DatePickerModule from "react-multi-date-picker";
 import XLSX from 'xlsx-js-style';
 import {
-  Plus, Search, Edit2, Trash2, X, FileSpreadsheet, FileText, ChevronLeft, ChevronRight,
-  GraduationCap, Users, Award, Wrench, Layers, BookOpen, Calendar as CalendarIcon, ClipboardList, Download, AlertTriangle
+  Plus, Search, Edit2, Trash2, X, FileSpreadsheet, ChevronLeft, ChevronRight,
+  GraduationCap, Users, Award, Wrench, Layers, BookOpen, Calendar as CalendarIcon, ClipboardList, Download, AlertTriangle,
+  Upload, Check, RefreshCw, Info
 } from 'lucide-react';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -79,6 +80,52 @@ const DataManagement = () => {
 
   // Fitur Detail Modal State
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+
+  // Import Modal State
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importLoading, setImportLoading] = useState(false);
+  const [importMessage, setImportMessage] = useState(null);
+
+  const handleImportSubmit = async (e) => {
+    e.preventDefault();
+    if (!importFile) return;
+
+    setImportLoading(true);
+    setImportMessage(null);
+
+    try {
+      const form = new FormData();
+      form.append('file', importFile);
+
+      const response = await fetch('/administrasi/program-batch/import', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+          'Accept': 'application/json'
+        },
+        body: form
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (response.ok) {
+        setImportMessage({ type: 'success', text: result?.message || 'Data program batch berhasil diimpor.' });
+        setImportFile(null);
+        await fetchData();
+        setTimeout(() => {
+          setIsImportModalOpen(false);
+          setImportMessage(null);
+        }, 1500);
+      } else {
+        setImportMessage({ type: 'error', text: result?.message || 'Gagal mengimpor file. Pastikan format kolom sesuai.' });
+      }
+    } catch (err) {
+      setImportMessage({ type: 'error', text: 'Terjadi kesalahan saat mengunggah file.' });
+    } finally {
+      setImportLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (selectedProgram?.start && !isNaN(selectedProgram.start)) {
@@ -841,16 +888,22 @@ const DataManagement = () => {
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <button
+            type="button"
+            onClick={() => {
+              setImportFile(null);
+              setImportMessage(null);
+              setIsImportModalOpen(true);
+            }}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition shadow-2xs cursor-pointer"
+          >
+            <Upload size={17} className="text-[#4B6A34]" />
+            <span>Import Data</span>
+          </button>
+          <button
             onClick={exportAllToExcel}
             className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2 text-sm"
           >
             <FileSpreadsheet size={17} /> Export Excel
-          </button>
-          <button
-            onClick={exportAllToCsv}
-            className="bg-slate-700 hover:bg-slate-800 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2 text-sm"
-          >
-            <FileText size={17} /> Export Excel
           </button>
           <button
             onClick={openAddModal}
@@ -2102,6 +2155,90 @@ const DataManagement = () => {
                 Tutup Detail
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Excel / CSV Modal */}
+      {isImportModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl max-w-lg w-full border border-slate-200 shadow-2xl overflow-hidden">
+            <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-[#4B6A34] flex items-center justify-center">
+                  <Upload size={18} />
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900 text-sm">Import Data Program & Batch</h3>
+                  <p className="text-xs text-slate-500">Mendukung format file Excel (.xlsx) atau CSV (.csv)</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsImportModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center transition cursor-pointer"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <form onSubmit={handleImportSubmit} className="p-6 space-y-4">
+              {importMessage && (
+                <div className={`p-3.5 rounded-xl border text-xs font-medium flex items-center gap-2 ${
+                  importMessage.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-red-50 border-red-200 text-red-600'
+                }`}>
+                  {importMessage.type === 'success' ? <Check size={16} className="shrink-0" /> : <AlertTriangle size={16} className="shrink-0" />}
+                  <span>{importMessage.text}</span>
+                </div>
+              )}
+
+              {/* File Input */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Pilih File Excel / CSV <span className="text-red-500">*</span></label>
+                <div className="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-[#4B6A34] transition-colors bg-slate-50/50">
+                  <FileSpreadsheet size={32} className="text-slate-400 mx-auto mb-2" />
+                  <input
+                    type="file"
+                    accept=".csv,.xlsx,.txt"
+                    required
+                    onChange={(e) => {
+                      setImportFile(e.target.files[0] || null);
+                      setImportMessage(null);
+                    }}
+                    className="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-[#4B6A34] hover:file:bg-emerald-100 cursor-pointer"
+                  />
+                  <p className="text-[11px] text-slate-400 mt-2">Maksimal ukuran file: 20MB (.xlsx, .csv)</p>
+                </div>
+              </div>
+
+              {/* Info Format */}
+              <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5 flex items-start gap-3">
+                <Info size={16} className="text-[#4B6A34] shrink-0 mt-0.5" />
+                <div className="text-[11px] text-slate-600 space-y-1">
+                  <p className="font-semibold text-[#4B6A34]">Format Program Reguler & Non-Reguler:</p>
+                  <p className="text-slate-500">Sistem otomatis mendeteksi kolom program reguler (Batch, Mulai/Selesai Program, Promosi Mandor, Fresh Graduate) maupun non-reguler (Jenis Pelatihan, Total Batch, Trainer).</p>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsImportModalOpen(false)}
+                  className="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={importLoading || !importFile}
+                  className="px-5 py-2 text-xs font-bold text-white bg-[#4B6A34] rounded-xl hover:bg-[#3d572b] disabled:opacity-50 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer"
+                >
+                  {importLoading ? <RefreshCw size={14} className="animate-spin" /> : <Upload size={14} />}
+                  <span>{importLoading ? 'Mengimpor...' : 'Mulai Import Data'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

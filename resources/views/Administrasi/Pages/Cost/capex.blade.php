@@ -324,7 +324,7 @@
      2x2 COMPARISON GRID (SHARED PARENT HORIZONTAL SCROLL CONTAINER)
 ========================================================================= --}}
 <div class="w-full overflow-x-auto pb-4 scroll-smooth">
-    <div class="min-w-[1500px] space-y-8">
+    <div class="min-w-[1700px] space-y-8">
 
         {{-- ============================== SECTION: KANTOR ============================== --}}
         @if($selectedLocation === 'all' || $selectedLocation === 'kantor')
@@ -345,7 +345,7 @@
 
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
                 {{-- ============ RAB KANTOR TABLE ============ --}}
-                <div class="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden flex flex-col shadow-xs min-w-[720px]">
+                <div class="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden flex flex-col shadow-xs min-w-[750px]">
                     <div class="flex items-center justify-between px-4 py-3.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">
                         <div class="flex items-center gap-2">
                             <span class="w-2 h-4 rounded bg-blue-500"></span>
@@ -362,8 +362,8 @@
                         @endcan
                     </div>
 
-                    <div class="flex-1">
-                        <table class="w-full text-xs">
+                    <div class="flex-1 overflow-x-auto">
+                        <table class="w-full text-xs min-w-[720px]">
                             <thead>
                                 <tr class="bg-[#F9FAFB] border-b border-[#E5E7EB] text-[#71717A] uppercase text-[11px] tracking-wider">
                                     <th class="px-3 py-2.5 text-center w-8">No</th>
@@ -445,7 +445,7 @@
                 </div>
 
                 {{-- ============ REALISASI KANTOR TABLE ============ --}}
-                <div class="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden flex flex-col shadow-xs min-w-[720px]">
+                <div class="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden flex flex-col shadow-xs min-w-[850px]">
                     <div class="flex items-center justify-between px-4 py-3.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">
                         <div class="flex items-center gap-2">
                             <span class="w-2 h-4 rounded bg-amber-500"></span>
@@ -462,19 +462,19 @@
                         @endcan
                     </div>
 
-                    <div class="flex-1">
-                        <table class="w-full text-xs">
+                    <div class="flex-1 overflow-x-auto">
+                        <table class="w-full text-xs min-w-[820px]">
                             <thead>
                                 <tr class="bg-[#F9FAFB] border-b border-[#E5E7EB] text-[#71717A] uppercase text-[11px] tracking-wider">
                                     <th class="px-3 py-2.5 text-center w-8">No</th>
-                                    <th class="px-2 py-2.5 text-center">Tgl</th>
+                                    <th class="px-2.5 py-2.5 text-center whitespace-nowrap">Tgl</th>
                                     <th class="px-2 py-2.5 text-center w-10">Foto</th>
-                                    <th class="px-3 py-2.5 text-left">Kel. / Nama Barang</th>
-                                    <th class="px-3 py-2.5 text-left">Type</th>
-                                    <th class="px-3 py-2.5 text-right">Debit (Rp)</th>
-                                    <th class="px-3 py-2.5 text-right">Kredit (Rp)</th>
-                                    <th class="px-3 py-2.5 text-right">Total (Rp)</th>
-                                    <th class="px-2 py-2.5 text-center w-14">Aksi</th>
+                                    <th class="px-3.5 py-2.5 text-left min-w-[180px]">Kel. / Nama Barang</th>
+                                    <th class="px-3 py-2.5 text-left min-w-[90px]">Type</th>
+                                    <th class="px-3 py-2.5 text-right whitespace-nowrap">Debit (Rp)</th>
+                                    <th class="px-3 py-2.5 text-right whitespace-nowrap">Kredit (Rp)</th>
+                                    <th class="px-3.5 py-2.5 text-right whitespace-nowrap">Total (Rp)</th>
+                                    <th class="px-2.5 py-2.5 text-center w-14 whitespace-nowrap">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-[#F4F4F5]">
@@ -590,7 +590,7 @@
 
             <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 items-stretch">
                 {{-- ============ RAB MESS TABLE ============ --}}
-                <div class="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden flex flex-col shadow-xs min-w-[720px]">
+                <div class="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden flex flex-col shadow-xs min-w-[750px]">
                     <div class="flex items-center justify-between px-4 py-3.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">
                         <div class="flex items-center gap-2">
                             <span class="w-2 h-4 rounded bg-purple-500"></span>
@@ -607,8 +607,8 @@
                         @endcan
                     </div>
 
-                    <div class="flex-1">
-                        <table class="w-full text-xs">
+                    <div class="flex-1 overflow-x-auto">
+                        <table class="w-full text-xs min-w-[720px]">
                             <thead>
                                 <tr class="bg-[#F9FAFB] border-b border-[#E5E7EB] text-[#71717A] uppercase text-[11px] tracking-wider">
                                     <th class="px-3 py-2.5 text-center w-8">No</th>
@@ -690,7 +690,7 @@
                 </div>
 
                 {{-- ============ REALISASI MESS TABLE ============ --}}
-                <div class="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden flex flex-col shadow-xs min-w-[720px]">
+                <div class="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden flex flex-col shadow-xs min-w-[850px]">
                     <div class="flex items-center justify-between px-4 py-3.5 border-b border-[#E5E7EB] bg-[#F9FAFB]">
                         <div class="flex items-center gap-2">
                             <span class="w-2 h-4 rounded bg-rose-500"></span>
@@ -707,19 +707,19 @@
                         @endcan
                     </div>
 
-                    <div class="flex-1">
-                        <table class="w-full text-xs">
+                    <div class="flex-1 overflow-x-auto">
+                        <table class="w-full text-xs min-w-[820px]">
                             <thead>
                                 <tr class="bg-[#F9FAFB] border-b border-[#E5E7EB] text-[#71717A] uppercase text-[11px] tracking-wider">
                                     <th class="px-3 py-2.5 text-center w-8">No</th>
-                                    <th class="px-2 py-2.5 text-center">Tgl</th>
+                                    <th class="px-2.5 py-2.5 text-center whitespace-nowrap">Tgl</th>
                                     <th class="px-2 py-2.5 text-center w-10">Foto</th>
-                                    <th class="px-3 py-2.5 text-left">Kel. / Nama Barang</th>
-                                    <th class="px-3 py-2.5 text-left">Type</th>
-                                    <th class="px-3 py-2.5 text-right">Debit (Rp)</th>
-                                    <th class="px-3 py-2.5 text-right">Kredit (Rp)</th>
-                                    <th class="px-3 py-2.5 text-right">Total (Rp)</th>
-                                    <th class="px-2 py-2.5 text-center w-14">Aksi</th>
+                                    <th class="px-3.5 py-2.5 text-left min-w-[180px]">Kel. / Nama Barang</th>
+                                    <th class="px-3 py-2.5 text-left min-w-[90px]">Type</th>
+                                    <th class="px-3 py-2.5 text-right whitespace-nowrap">Debit (Rp)</th>
+                                    <th class="px-3 py-2.5 text-right whitespace-nowrap">Kredit (Rp)</th>
+                                    <th class="px-3.5 py-2.5 text-right whitespace-nowrap">Total (Rp)</th>
+                                    <th class="px-2.5 py-2.5 text-center w-14 whitespace-nowrap">Aksi</th>
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-[#F4F4F5]">

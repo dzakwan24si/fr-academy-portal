@@ -46,14 +46,11 @@ class MonitoringTalent extends Model
     }
 
     /**
-     * Scope filter by region.
+     * Scope filter by region keyword.
      */
     public function scopeRegion($query, $region)
     {
-        if (!empty($region) && $region !== 'all') {
-            return $query->where('region', $region);
-        }
-        return $query;
+        return \App\Services\RegionHelper::applyQueryFilter($query, 'region', $region);
     }
 
     /**

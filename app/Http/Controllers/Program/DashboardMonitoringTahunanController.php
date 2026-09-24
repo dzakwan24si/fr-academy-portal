@@ -108,18 +108,12 @@ class DashboardMonitoringTahunanController extends Controller
 
         $cleanStr = fn($str) => SpreadsheetReader::cleanString($str);
 
-        // Fetch List of Available Regions
+        // Fetch List of Available Regions (Standardized)
         $regRegions = ProgramReguler::pluck('Region');
         $nonRegRegions = ProgramNonReguler::pluck('region');
         $trRegions = TrainingRecord::pluck('region');
-        $regions = $regRegions->merge($nonRegRegions)->merge($trRegions)
-            ->filter()
-            ->map(fn($r) => trim((string)$r))
-            ->filter(fn($r) => $r !== '' && $r !== '-' && strtolower($r) !== 'all')
-            ->unique()
-            ->sort()
-            ->values()
-            ->all();
+        $rawRegions = $regRegions->merge($nonRegRegions)->merge($trRegions);
+        $regions = \App\Services\RegionHelper::getCanonicalRegions($rawRegions);
 
         // 1. Fetch Master Programs Filtered By Year
         $regulerAll = ProgramReguler::all()->filter(fn($p) => $this->resolveProgramRegulerYear($p) === $year);
@@ -206,12 +200,10 @@ class DashboardMonitoringTahunanController extends Controller
             ]);
         }
 
-        // Filter currentBatches by Region if selected
+        // Filter currentBatches by Region keyword if selected
         if ($selectedRegion !== 'all' && $selectedRegion !== '') {
             $currentBatches = $currentBatches->filter(function($b) use ($selectedRegion) {
-                $bReg = strtolower(trim((string) ($b['region'] ?? '')));
-                $sReg = strtolower($selectedRegion);
-                return $bReg === $sReg || str_contains($bReg, $sReg) || str_contains($sReg, $bReg);
+                return \App\Services\RegionHelper::matches($b['region'] ?? '', $selectedRegion);
             });
         }
 
@@ -223,12 +215,17 @@ class DashboardMonitoringTahunanController extends Controller
                 $matchedRecords = $trainingRecords->filter(function($r) use ($batch, $tab, $year, $selectedMonthNum, $selectedRegion) {
                     if ($r->program_type !== $tab) return false;
 
-                    // Match Region if specified
+                    // Match Region keyword if specified
                     if ($selectedRegion !== 'all' && $selectedRegion !== '') {
-                        $sReg = strtolower($selectedRegion);
-                        $rReg = strtolower(trim((string) ($r->region ?: '')));
-                        $bReg = strtolower(trim((string) ($batch['region'] ?? '')));
-                        if ($rReg !== '' && !str_contains($rReg, $sReg) && !str_contains($sReg, $rReg) && $bReg !== '' && !str_contains($bReg, $sReg) && !str_contains($sReg, $bReg)) {
+                        $rReg = (string) ($r->region ?: '');
+                        $bReg = (string) ($batch['region'] ?? '');
+                        $rMatches = \App\Services\RegionHelper::matches($rReg, $selectedRegion);
+                        $bMatches = \App\Services\RegionHelper::matches($bReg, $selectedRegion);
+
+                        if ($rReg !== '' && !$rMatches && $bReg !== '' && !$bMatches) {
+                            return false;
+                        }
+                        if ($rReg !== '' && !$rMatches && $bReg === '') {
                             return false;
                         }
                     }

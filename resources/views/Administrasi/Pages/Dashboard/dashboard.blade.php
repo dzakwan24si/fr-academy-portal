@@ -51,7 +51,6 @@
                 <i data-lucide="calendar" class="w-4 h-4 text-emerald-200"></i>
                 <span class="text-xs font-semibold text-emerald-100 uppercase tracking-wider">Tahun:</span>
                 <form method="GET" action="{{ route('dashboard') }}" class="inline-block">
-                    <input type="hidden" name="month" value="{{ $selectedMonthCode }}">
                     <select name="year" onchange="this.form.submit()" class="bg-emerald-900/80 text-white text-xs font-bold rounded-lg px-3 py-1.5 border border-emerald-500/50 focus:outline-hidden focus:ring-2 focus:ring-emerald-400 cursor-pointer">
                         @foreach($years as $y)
                             <option value="{{ $y }}" {{ (int)($year ?? 2026) === (int)$y ? 'selected' : '' }}>{{ $y }}</option>
@@ -65,42 +64,6 @@
                     <i data-lucide="maximize-2" class="w-3.5 h-3.5 fullscreen-btn-icon"></i>
                     <span class="fullscreen-btn-text">Full Screen</span>
                 </button>
-            </div>
-        </div>
-    </div>
-
-    {{-- ============================== FILTER BULAN (JAN - DES) KUMULATIF ============================== --}}
-    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs">
-        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-            <div class="flex items-center gap-2 shrink-0">
-                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-[#2d5a27] border border-emerald-100 flex items-center justify-center">
-                    <i data-lucide="calendar" class="w-4 h-4"></i>
-                </div>
-                <div>
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700">Filter Bulan (Akumulasi):</h3>
-                    <p class="text-[11px] text-slate-400 font-medium">
-                        Progress Kumulatif {{ $selectedMonthNum ? '(Januari s/d ' . ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][$selectedMonthNum] . ')' : '(Seluruh Bulan)' }}
-                    </p>
-                </div>
-            </div>
-
-            <div class="flex items-center gap-1.5 flex-wrap overflow-x-auto no-scrollbar py-0.5">
-                {{-- Tombol Semua Bulan --}}
-                <a href="{{ route('dashboard', ['year' => $year, 'month' => 'all']) }}"
-                   class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs {{ ($selectedMonthCode === 'all' || !$selectedMonthNum) ? 'bg-[#2d5a27] text-white shadow-xs ring-2 ring-[#2d5a27]/20' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200' }}">
-                    Semua Bulan
-                </a>
-
-                @foreach($monthList as $mNum => $mCode)
-                    @php
-                        $isActiveMonth = ($selectedMonthNum === $mNum);
-                    @endphp
-                    <a href="{{ route('dashboard', ['year' => $year, 'month' => $mCode]) }}"
-                       class="px-3 py-1.5 rounded-lg text-xs font-bold transition-all shadow-2xs {{ $isActiveMonth ? 'bg-green-600 text-white shadow-xs ring-2 ring-green-600/30' : 'bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300' }}"
-                       title="Kumulatif s.d. Bulan {{ ['','Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'][$mNum] }}">
-                        {{ $mCode }}
-                    </a>
-                @endforeach
             </div>
         </div>
     </div>

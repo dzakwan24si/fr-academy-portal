@@ -8,11 +8,32 @@
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div><h1 class="text-2xl font-bold text-[#18181B]">Training Record</h1><p class="mt-1 text-sm text-[#71717A]">Kelola peserta berdasarkan training activity yang sudah tersedia.</p></div>
         <div class="flex flex-wrap items-center gap-2">
-            <a href="{{ route('administrasi.training-record.template') }}" class="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-semibold text-[#374151]">Template Excel</a>
-            <a href="{{ route('administrasi.training-record.export', request()->query()) }}" class="rounded-lg border border-[#E5E7EB] bg-white px-3 py-2 text-xs font-semibold text-[#374151]">Export Excel</a>
-            <form method="POST" action="{{ route('administrasi.training-record.import') }}" enctype="multipart/form-data" class="flex items-center gap-2">@csrf<input type="file" name="file" required accept=".csv,.xlsx" class="max-w-60 text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#4B6A34] file:text-white hover:file:bg-[#3d572b] file:cursor-pointer cursor-pointer"><button class="rounded-lg bg-[#4B6A34] px-3 py-2 text-xs font-semibold text-white hover:bg-[#3d572b] transition-colors">Import Data</button></form>
-            <button type="button" onclick="openDeleteAllModal()" class="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 px-3 py-2 text-xs font-semibold transition-colors">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            {{-- Import Data Button --}}
+            <button type="button" onclick="openImportModal()"
+                    class="flex items-center gap-2 px-3.5 py-2 bg-white border border-[#E5E7EB] text-[#374151] text-xs font-semibold rounded-lg hover:bg-[#F9FAFB] hover:border-[#D1D5DB] transition-all shadow-2xs">
+                <i data-lucide="upload" class="w-4 h-4 text-[#4B6A34]"></i>
+                <span>Import Data</span>
+            </button>
+
+            {{-- Template Excel Button --}}
+            <a href="{{ route('administrasi.training-record.template') }}"
+               class="flex items-center gap-2 px-3.5 py-2 bg-white border border-[#E5E7EB] text-[#374151] text-xs font-semibold rounded-lg hover:bg-[#F9FAFB] hover:border-[#D1D5DB] transition-all shadow-2xs"
+               title="Unduh format template Excel Training Record">
+                <i data-lucide="file-spreadsheet" class="w-4 h-4 text-blue-600"></i>
+                <span>Template Excel</span>
+            </a>
+
+            {{-- Export Excel Button --}}
+            <a href="{{ route('administrasi.training-record.export', request()->query()) }}"
+               class="flex items-center gap-2 px-3.5 py-2 bg-white border border-[#E5E7EB] text-[#374151] text-xs font-semibold rounded-lg hover:bg-[#F9FAFB] hover:border-[#D1D5DB] transition-all shadow-2xs">
+                <i data-lucide="download" class="w-4 h-4 text-[#71717A]"></i>
+                <span>Export Excel</span>
+            </a>
+
+            {{-- Hapus Semua Data Button --}}
+            <button type="button" onclick="openDeleteAllModal()"
+                    class="flex items-center gap-2 px-3.5 py-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-lg hover:bg-red-100 transition-colors shadow-2xs">
+                <i data-lucide="trash-2" class="w-4 h-4 text-red-600"></i>
                 <span>Hapus Semua Data</span>
             </button>
         </div>
@@ -238,6 +259,70 @@
     </div>
 </div>
 
+{{-- ============================== MODAL: IMPORT TRAINING RECORD ============================== --}}
+<div id="modalImportTrainingRecord" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity" onclick="closeImportModal()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        {{-- Header --}}
+        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-[#4B6A34] flex items-center justify-center">
+                    <i data-lucide="upload" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h2 class="text-sm font-bold text-slate-800">Import Data Training Record</h2>
+                    <p class="text-xs text-slate-500">Mendukung format file Excel (.xlsx) atau CSV (.csv)</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeImportModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <form method="POST" action="{{ route('administrasi.training-record.import') }}" enctype="multipart/form-data" class="p-6 space-y-4">
+            @csrf
+
+            {{-- File Input / Dropzone --}}
+            <div>
+                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pilih File Excel / CSV <span class="text-red-500">*</span></label>
+                <div class="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-[#4B6A34] transition-colors bg-slate-50/50">
+                    <i data-lucide="file-spreadsheet" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
+                    <input type="file" name="file" accept=".csv,.xlsx,.txt" required
+                           class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-[#4B6A34] hover:file:bg-emerald-100 cursor-pointer">
+                    <p class="text-[11px] text-slate-400 mt-2">Maksimal ukuran file: 20MB (format .xlsx, .csv)</p>
+                </div>
+            </div>
+
+            {{-- Info Format Kolom & Template --}}
+            <div class="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5 flex items-start gap-3">
+                <i data-lucide="info" class="w-4 h-4 text-[#4B6A34] flex-shrink-0 mt-0.5"></i>
+                <div class="text-[11px] text-slate-600 space-y-1">
+                    <p class="font-semibold text-[#4B6A34]">Format Kolom Utama yang Dibutuhkan:</p>
+                    <p class="font-mono text-[10px] bg-white/80 p-1.5 rounded border border-emerald-200/50 text-slate-700">NIK, Nama Peserta, Nama Pelatihan, Region, Lokasi Kerja, Gol, Jabatan, Tanggal</p>
+                    <div class="pt-1">
+                        <a href="{{ route('administrasi.training-record.template') }}" class="inline-flex items-center gap-1 font-bold text-[#4B6A34] hover:underline">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i> Unduh File Template Excel
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Footer Buttons --}}
+            <div class="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+                <button type="button" onclick="closeImportModal()"
+                        class="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                    Batal
+                </button>
+                <button type="submit"
+                        class="px-5 py-2 text-xs font-bold text-white bg-[#4B6A34] rounded-xl hover:bg-[#3d572b] transition-colors shadow-xs flex items-center gap-1.5">
+                    <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                    <span>Mulai Import Data</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const type = document.getElementById('training-record-program-type');
@@ -391,6 +476,21 @@ function proceedDeleteAll() {
     } else {
         // Step 3 confirmed -> submit form
         document.getElementById('formDeleteAllTrainingRecord').submit();
+    }
+}
+
+function openImportModal() {
+    const modal = document.getElementById('modalImportTrainingRecord');
+    if (modal) {
+        modal.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+    }
+}
+
+function closeImportModal() {
+    const modal = document.getElementById('modalImportTrainingRecord');
+    if (modal) {
+        modal.classList.add('hidden');
     }
 }
 </script>

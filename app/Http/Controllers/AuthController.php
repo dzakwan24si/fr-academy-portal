@@ -55,14 +55,16 @@ class AuthController extends Controller
 
             $user = Auth::user();
             if ($user->hasRole('Top Management')) {
-                return redirect()->intended('/Top_Management');
+                return redirect('/Top_Management');
             }
 
-            if ($user->hasAnyRole(['Administrasi', 'Staff'])) {
-                return redirect()->intended('/administrasi/dashboard-realisasi');
+            // Only Superadmin, Admin E-Information, or users with media/user management permissions access Dashboard Overview
+            if ($user->hasRole('Superadmin') || $user->hasRole('Admin E-Information') || $user->canAny(['manage_articles', 'manage_users', 'manage_tv_display', 'manage_events'])) {
+                return redirect('/admin');
             }
 
-            return redirect()->intended('/admin');
+            // All other roles (Administrasi, Staff, Koordinator Mess, Kepala TU, Atasan, Trainer, etc.) go to Dashboard Utama
+            return redirect('/administrasi/dashboard-realisasi');
         }
 
         return back()->withErrors([

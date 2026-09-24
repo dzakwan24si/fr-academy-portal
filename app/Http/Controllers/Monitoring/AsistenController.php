@@ -66,7 +66,7 @@ class AsistenController extends Controller
 
         // 3. Filter Region (Kepegawaian Saat Ini)
         if ($request->filled('region_saat_ini') && $request->input('region_saat_ini') !== 'all') {
-            $query->where('region_saat_ini', $request->input('region_saat_ini'));
+            \App\Services\RegionHelper::applyQueryFilter($query, 'region_saat_ini', $request->input('region_saat_ini'));
         }
 
         // 4. Filter Status Karyawan
@@ -193,7 +193,8 @@ class AsistenController extends Controller
         // Distinct Filter options
         $asalRekrutList = Asisten::whereNotNull('asal_rekrut')->where('asal_rekrut', '!=', '')->distinct()->orderBy('asal_rekrut')->pluck('asal_rekrut');
         $programList = Asisten::whereNotNull('program')->where('program', '!=', '')->distinct()->orderBy('program')->pluck('program');
-        $regionList = Asisten::whereNotNull('region_saat_ini')->where('region_saat_ini', '!=', '')->distinct()->orderBy('region_saat_ini')->pluck('region_saat_ini');
+        $rawRegions = Asisten::whereNotNull('region_saat_ini')->where('region_saat_ini', '!=', '')->distinct()->pluck('region_saat_ini');
+        $regionList = \App\Services\RegionHelper::getCanonicalRegions($rawRegions);
         $statusList = Asisten::whereNotNull('status_karyawan')->where('status_karyawan', '!=', '')->distinct()->orderBy('status_karyawan')->pluck('status_karyawan');
         
         $dbLevels = Asisten::whereNotNull('level_jabatan')->where('level_jabatan', '!=', '')->distinct()->orderBy('level_jabatan')->pluck('level_jabatan');
@@ -749,7 +750,7 @@ class AsistenController extends Controller
             $query->where('program', $request->input('program'));
         }
         if ($request->filled('region_saat_ini') && $request->input('region_saat_ini') !== 'all') {
-            $query->where('region_saat_ini', $request->input('region_saat_ini'));
+            \App\Services\RegionHelper::applyQueryFilter($query, 'region_saat_ini', $request->input('region_saat_ini'));
         }
         if ($request->filled('status_karyawan') && $request->input('status_karyawan') !== 'all') {
             $query->where('status_karyawan', $request->input('status_karyawan'));

@@ -13,17 +13,6 @@
     </div>
     <div class="flex flex-wrap items-center gap-2">
         @can('edit_cost')
-        {{-- Sync Auto-Agregasi Button --}}
-        <form method="POST" action="{{ route('administrasi.cost.sync', ['year' => $selectedYear, 'month' => $selectedMonth]) }}" class="inline">
-            @csrf
-            <button type="submit"
-                    class="flex items-center gap-2 px-3.5 py-2 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs sm:text-sm font-semibold rounded-lg hover:bg-emerald-100 hover:border-emerald-300 transition-all shadow-sm"
-                    title="Sinkronisasikan realisasi otomatis dari tabel VRA, Capex, dan Biaya Rekruit">
-                <i data-lucide="refresh-cw" class="w-4 h-4 text-emerald-600"></i>
-                <span>Sync Sumber Data</span>
-            </button>
-        </form>
-
         {{-- Import CSV Button --}}
         <button onclick="openImportModal()"
                 class="flex items-center gap-2 px-3.5 py-2 bg-white border border-[#E5E7EB] text-[#374151] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] hover:border-[#D1D5DB] transition-all shadow-sm">

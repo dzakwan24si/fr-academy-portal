@@ -114,6 +114,16 @@ use App\Http\Controllers\Admin\ProfileController;
 // Admin Routes (Protected)
 Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/', function () {
+        $user = auth()->user();
+        if ($user->hasRole('Top Management')) {
+            return redirect('/Top_Management');
+        }
+
+        // If user cannot manage articles/users/tv/events and has access to administrasi, redirect to administrasi dashboard
+        if (!$user->canAny(['manage_articles', 'manage_users', 'manage_tv_display', 'manage_events']) && $user->can('access_administrasi')) {
+            return redirect()->route('administrasi.dashboard-realisasi.index');
+        }
+
         $totalArticles = \App\Models\Article::count();
         $totalPlaylists = \App\Models\TvPlaylist::count();
         $totalUsers = \App\Models\User::count();
