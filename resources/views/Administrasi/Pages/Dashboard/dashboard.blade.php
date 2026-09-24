@@ -46,19 +46,32 @@
                 </p>
             </div>
 
-            {{-- Year Filter Selector & Fullscreen --}}
-            <div class="flex items-center gap-3 self-start md:self-auto bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/20">
-                <i data-lucide="calendar" class="w-4 h-4 text-emerald-200"></i>
-                <span class="text-xs font-semibold text-emerald-100 uppercase tracking-wider">Tahun:</span>
-                <form method="GET" action="{{ route('dashboard') }}" class="inline-block">
-                    <select name="year" onchange="this.form.submit()" class="bg-emerald-900/80 text-white text-xs font-bold rounded-lg px-3 py-1.5 border border-emerald-500/50 focus:outline-hidden focus:ring-2 focus:ring-emerald-400 cursor-pointer">
-                        @foreach($years as $y)
-                            <option value="{{ $y }}" {{ (int)($year ?? 2026) === (int)$y ? 'selected' : '' }}>{{ $y }}</option>
-                        @endforeach
-                    </select>
+            {{-- Year & Month Filter Selector & Fullscreen --}}
+            <div class="flex flex-wrap items-center gap-3 self-start md:self-auto bg-white/10 backdrop-blur-md px-4 py-2 rounded-xl border border-white/20">
+                <form method="GET" action="{{ route('dashboard') }}" class="flex flex-wrap items-center gap-3">
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="calendar" class="w-4 h-4 text-emerald-200"></i>
+                        <span class="text-xs font-semibold text-emerald-100 uppercase tracking-wider">Tahun:</span>
+                        <select name="year" onchange="this.form.submit()" class="bg-emerald-900/80 text-white text-xs font-bold rounded-lg px-3 py-1.5 border border-emerald-500/50 focus:outline-hidden focus:ring-2 focus:ring-emerald-400 cursor-pointer">
+                            @foreach($years as $y)
+                                <option value="{{ $y }}" {{ (int)($year ?? 2026) === (int)$y ? 'selected' : '' }}>{{ $y }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="flex items-center gap-1.5">
+                        <i data-lucide="filter" class="w-3.5 h-3.5 text-emerald-200"></i>
+                        <span class="text-xs font-semibold text-emerald-100 uppercase tracking-wider">Bulan:</span>
+                        <select name="month" onchange="this.form.submit()" class="bg-emerald-900/80 text-white text-xs font-bold rounded-lg px-3 py-1.5 border border-emerald-500/50 focus:outline-hidden focus:ring-2 focus:ring-emerald-400 cursor-pointer">
+                            <option value="all" {{ ($rawMonth ?? 'all') === 'all' ? 'selected' : '' }}>Semua Bulan (s/d Des)</option>
+                            @foreach($monthList as $mNum => $mCode)
+                                <option value="{{ $mNum }}" {{ (int)($selectedMonthNum ?? 0) === (int)$mNum ? 'selected' : '' }}>{{ $mCode }} (Kumulatif s/d {{ $mCode }})</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </form>
 
-                <div class="w-px h-5 bg-white/20"></div>
+                <div class="w-px h-5 bg-white/20 hidden sm:block"></div>
 
                 <button type="button" onclick="toggleDashboardFullscreen()" class="btn-toggle-fullscreen flex items-center gap-1.5 bg-emerald-700/80 hover:bg-emerald-600/90 text-white text-xs font-bold rounded-lg px-3 py-1.5 border border-emerald-400/40 transition-colors cursor-pointer">
                     <i data-lucide="maximize-2" class="w-3.5 h-3.5 fullscreen-btn-icon"></i>

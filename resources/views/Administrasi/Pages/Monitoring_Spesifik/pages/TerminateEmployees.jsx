@@ -45,7 +45,6 @@ export default function TerminateEmployees() {
         loading={loading}
         title="Data Karyawan Resign"
         description="Daftar karyawan FR Academy yang telah berhenti atau resign."
-        onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />

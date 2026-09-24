@@ -45,7 +45,6 @@ export default function EksisEmployees() {
         loading={loading}
         title="Data Karyawan Aktif"
         description="Daftar karyawan FR Academy yang masih aktif bekerja."
-        onAdd={handleAdd}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />

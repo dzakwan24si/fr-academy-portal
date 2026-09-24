@@ -153,12 +153,14 @@ export function EmployeeTable({
               </button>
             )}
 
-            <button 
-              onClick={onAdd}
-              className="px-4 py-2 bg-[#2c8f42] text-white rounded-xl hover:bg-[#237535] transition-colors flex items-center gap-2 text-sm font-bold shadow-sm whitespace-nowrap"
-            >
-              <Plus size={18} /> Tambah Data
-            </button>
+            {onAdd && (
+              <button 
+                onClick={onAdd}
+                className="px-4 py-2 bg-[#2c8f42] text-white rounded-xl hover:bg-[#237535] transition-colors flex items-center gap-2 text-sm font-bold shadow-sm whitespace-nowrap"
+              >
+                <Plus size={18} /> Tambah Data
+              </button>
+            )}
           </div>
         </div>
 
