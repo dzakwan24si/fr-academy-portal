@@ -319,6 +319,11 @@
                             Manajemen Tema
                         </a>
                         @endcan
+
+                        <a href="{{ route('admin.career_programs.index') }}" class="{{ request()->routeIs('admin.career_programs.*') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">
+                            <i data-lucide="briefcase" class="w-5 h-5 mr-3 {{ request()->routeIs('admin.career_programs.*') ? 'text-white' : 'text-gray-400' }}"></i>
+                            Manajemen Karir
+                        </a>
                     </div>
                 </details>
                 @endcanany
