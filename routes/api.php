@@ -21,4 +21,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/trainee/attendances', [TraineeApiController::class, 'attendances']);
     Route::get('trainee/evaluations/pending', [App\Http\Controllers\Api\TraineeApiController::class, 'pendingEvaluations']);
     Route::post('trainee/evaluations/{dailyClassId}', [App\Http\Controllers\Api\TraineeApiController::class, 'submitEvaluation']);
+    Route::get('trainee/certificate/{dailyClassId}', [App\Http\Controllers\Api\TraineeApiController::class, 'downloadCertificate']);
 });
+
+Route::middleware('auth:sanctum')->post('/push-subscribe', [App\Http\Controllers\Api\PushNotificationController::class, 'subscribe']);

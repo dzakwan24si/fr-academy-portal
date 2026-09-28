@@ -43,32 +43,99 @@ class TraineeApiController extends Controller
         ], 401);
     }
 
-    public function profile(Request $request)
+        public function profile(Request $request)
     {
-        $trainee = $request->user()->load('trainingProgram'); // via Sanctum
+        $trainee = $request->user()->load('trainingProgram');
+        
+                $today = now()->format('Y-m-d');
+        // Fetch the most relevant class: current, upcoming, or latest past
+        $todayAttendanceRecord = \App\Models\Attendance::where('trainee_id', $trainee->id)
+            ->whereHas('dailyClass', function($q) use ($today) {
+                $q->where(function ($query) use ($today) {
+                    $query->whereDate('date', '<=', $today)
+                          ->whereDate('end_date', '>=', $today);
+                })->orWhere(function ($query) use ($today) {
+                    $query->whereDate('date', $today)
+                          ->whereNull('end_date');
+                });
+            })->first();
+            
+                if (!$todayAttendanceRecord) {
+            // If no active class today, get the next upcoming one
+            $todayAttendanceRecord = \App\Models\Attendance::where('trainee_id', $trainee->id)
+                ->join('daily_classes', 'attendances.daily_class_id', '=', 'daily_classes.id')
+                ->whereDate('daily_classes.date', '>', $today)
+                ->orderBy('daily_classes.date', 'asc')
+                ->select('attendances.*')
+                ->first();
+        }
+        
+        if (!$todayAttendanceRecord) {
+            // If no upcoming class, get the latest past one
+            $todayAttendanceRecord = \App\Models\Attendance::where('trainee_id', $trainee->id)
+                ->join('daily_classes', 'attendances.daily_class_id', '=', 'daily_classes.id')
+                ->whereDate('daily_classes.end_date', '<', $today)
+                ->orderBy('daily_classes.date', 'desc')
+                ->first();
+        }
+
+        $data = $trainee->ui_data;
+        if ($todayAttendanceRecord && $todayAttendanceRecord->dailyClass) {
+            $data['program'] = $todayAttendanceRecord->dailyClass->trainingProgram->name ?? $data['program'];
+            $data['materi'] = $todayAttendanceRecord->dailyClass->title;
+        } else {
+            $data['program'] = 'Peserta Pelatihan';
+            $data['materi'] = 'Tidak ada jadwal hari ini';
+        }
         
         return response()->json([
             'status' => 'success',
-            'data' => $trainee->ui_data
+            'data' => $data
         ]);
     }
 
-    public function dashboard(Request $request)
+        public function dashboard(Request $request)
     {
         $trainee = $request->user();
         $today = now()->format('Y-m-d');
         
-        // Cek absensi hari ini
         $todayAttendanceRecord = \App\Models\Attendance::where('trainee_id', $trainee->id)
             ->whereHas('dailyClass', function($q) use ($today) {
-                $q->whereDate('date', $today);
+                $q->where(function ($query) use ($today) {
+                    $query->whereDate('date', '<=', $today)
+                          ->whereDate('end_date', '>=', $today);
+                })->orWhere(function ($query) use ($today) {
+                    $query->whereDate('date', $today)
+                          ->whereNull('end_date');
+                });
             })->first();
+            
+        if (!$todayAttendanceRecord) {
+            $todayAttendanceRecord = \App\Models\Attendance::where('trainee_id', $trainee->id)
+                ->join('daily_classes', 'attendances.daily_class_id', '=', 'daily_classes.id')
+                ->whereDate('daily_classes.date', '>', $today)
+                ->orderBy('daily_classes.date', 'asc')
+                ->select('attendances.*')
+                ->first();
+        }
+        
+        if (!$todayAttendanceRecord) {
+            $todayAttendanceRecord = \App\Models\Attendance::where('trainee_id', $trainee->id)
+                ->join('daily_classes', 'attendances.daily_class_id', '=', 'daily_classes.id')
+                ->whereDate('daily_classes.end_date', '<', $today)
+                ->orderBy('daily_classes.date', 'desc')
+                ->select('attendances.*')
+                ->first();
+        }
             
         $todayAttendance = $todayAttendanceRecord && in_array(strtolower($todayAttendanceRecord->status), ['hadir', 'izin', 'sakit']);
 
         // Cek tugas pending
         $pendingTasks = \App\Models\Task::whereHas('dailyClass', function($q) use ($trainee) {
-            $q->where('training_program_id', $trainee->training_program_id);
+            $q->whereHas('attendances', function($subQ) use ($trainee) {
+                $subQ->where('trainee_id', $trainee->id)
+                     ->whereNotIn('status', ['alpha', 'belum']);
+            });
         })->whereDoesntHave('submissions', function($q) use ($trainee) {
             $q->where('trainee_id', $trainee->id)->where('status', 'sudah');
         })->count();
@@ -78,7 +145,24 @@ class TraineeApiController extends Controller
             'data' => [
                 'todayAttendance' => $todayAttendance,
                 'pendingTasks' => $pendingTasks,
-                'trainee' => $trainee->ui_data
+                'pendingEvaluation' => $todayAttendanceRecord && $todayAttendanceRecord->dailyClass->is_evaluation_open && !\App\Models\TraineeEvaluation::where('daily_class_id', $todayAttendanceRecord->daily_class_id)->where('trainee_id', $trainee->id)->exists(),
+                'trainee' => $trainee->ui_data,
+                'todayClass' => $todayAttendanceRecord && $todayAttendanceRecord->dailyClass ? $todayAttendanceRecord->dailyClass->title : null,
+                'classInfo' => $todayAttendanceRecord && $todayAttendanceRecord->dailyClass ? [
+                    'id' => $todayAttendanceRecord->dailyClass->id,
+                    'title' => $todayAttendanceRecord->dailyClass->title,
+                    'date' => $todayAttendanceRecord->dailyClass->date,
+                    'end_date' => $todayAttendanceRecord->dailyClass->end_date,
+                    'start_time' => $todayAttendanceRecord->dailyClass->start_time,
+                    'end_time' => $todayAttendanceRecord->dailyClass->end_time,
+                    'room' => $todayAttendanceRecord->dailyClass->room,
+                    'region' => $todayAttendanceRecord->dailyClass->region,
+                    'mess_url' => $todayAttendanceRecord->dailyClass->mess_url,
+                    'material_url' => $todayAttendanceRecord->dailyClass->material_url,
+                    'certificate_link' => $todayAttendanceRecord->dailyClass->certificate_link,
+                    'is_passed' => $todayAttendanceRecord->is_passed,
+                    'trainer_name' => $todayAttendanceRecord->dailyClass->trainer_name,
+                ] : null
             ]
         ]);
     }
@@ -91,7 +175,10 @@ class TraineeApiController extends Controller
         $dbTasks = Task::with(['dailyClass', 'submissions' => function($q) use ($trainee) {
             $q->where('trainee_id', $trainee->id);
         }])->whereHas('dailyClass', function($q) use ($trainee) {
-            $q->where('training_program_id', $trainee->training_program_id);
+            $q->whereHas('attendances', function($subQ) use ($trainee) {
+                $subQ->where('trainee_id', $trainee->id)
+                     ->whereNotIn('status', ['alpha', 'belum']);
+            });
         })->orderBy('deadline', 'desc')->get();
         
         $tasks = $dbTasks->map(function($task) {
@@ -122,16 +209,49 @@ class TraineeApiController extends Controller
         
         $request->validate([
             'task_files' => 'required|array',
-            'task_files.*' => 'required|file|max:5120' // max 5mb per file
+            'task_files.*' => 'required|file|max:2048' // max 2mb per file
         ], [
             'task_files.required' => 'File tugas wajib diunggah.',
-            'task_files.*.max' => 'Ukuran file maksimal adalah 5MB.',
+            'task_files.*.max' => 'Ukuran file maksimal adalah 2MB, silakan kompres file Anda.',
         ]);
         
         $paths = [];
         if ($request->hasFile('task_files')) {
             foreach ($request->file('task_files') as $file) {
-                $paths[] = $file->store('task_submissions', 'public');
+                // Check if file is an image
+                if (str_starts_with($file->getMimeType(), 'image/')) {
+                    $imagePath = $file->getRealPath();
+                    $mime = $file->getMimeType();
+                    
+                    // Create image resource based on type
+                    $image = null;
+                    if ($mime == 'image/jpeg' || $mime == 'image/jpg') {
+                        $image = @imagecreatefromjpeg($imagePath);
+                    } elseif ($mime == 'image/png') {
+                        $image = @imagecreatefrompng($imagePath);
+                    }
+                    
+                    if ($image) {
+                        // Create target directory if not exists
+                        $targetDir = storage_path('app/public/task_submissions');
+                        if (!file_exists($targetDir)) {
+                            mkdir($targetDir, 0755, true);
+                        }
+                        
+                        // Save as highly compressed JPEG
+                        $filename = 'task_submissions/' . \Illuminate\Support\Str::random(40) . '.jpg';
+                        imagejpeg($image, storage_path('app/public/' . $filename), 50); // 50% quality for high compression
+                        imagedestroy($image);
+                        
+                        $paths[] = $filename;
+                        continue;
+                    }
+                }
+                
+                // Fallback for non-images or if GD fails
+                $originalName = $file->getClientOriginalName();
+                $safeName = time() . '_' . rand(1000, 9999) . '_' . preg_replace('/[^a-zA-Z0-9_\.-]/', '', $originalName);
+                $paths[] = $file->storeAs('task_submissions', $safeName, 'public');
             }
         }
         
@@ -159,7 +279,11 @@ class TraineeApiController extends Controller
         $trainee = $request->user();
 
         // Trim token untuk menghindari error spasi berlebih dari input manual
-        $token = trim($request->qr_token);
+                $rawToken = trim($request->qr_token);
+        
+        $parts = explode('|', $rawToken);
+        $token = $parts[0];
+        $attendanceDate = isset($parts[1]) ? $parts[1] : date('Y-m-d');
 
         // Cari kelas harian berdasarkan token QR (bisa token utuh 32 karakter dari scan, atau 8 karakter awal dari input manual)
         $dailyClass = \App\Models\DailyClass::where('qr_code_token', $token)
@@ -173,8 +297,12 @@ class TraineeApiController extends Controller
             ], 404);
         }
 
-        // Pastikan trainee terdaftar pada program pelatihan kelas ini
-        if ($dailyClass->training_program_id !== $trainee->training_program_id) {
+        // Cek apakah trainee memiliki record absensi di kelas ini (menandakan dia terdaftar di kelas)
+        $isRegistered = \App\Models\Attendance::where('daily_class_id', $dailyClass->id)
+            ->where('trainee_id', $trainee->id)
+            ->exists();
+
+        if (!$isRegistered) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda tidak terdaftar dalam kelas ini.'
@@ -183,7 +311,7 @@ class TraineeApiController extends Controller
 
         // Ambil data absensi, atau BUAT OTOMATIS jika belum ada di database
         $attendance = \App\Models\Attendance::firstOrCreate(
-            ['daily_class_id' => $dailyClass->id, 'trainee_id' => $trainee->id],
+            ['daily_class_id' => $dailyClass->id, 'trainee_id' => $trainee->id, 'attendance_date' => $attendanceDate],
             ['status' => 'belum']
         );
 
@@ -199,6 +327,9 @@ class TraineeApiController extends Controller
             'status' => 'hadir',
             'scanned_at' => now()
         ]);
+
+        // Dispatch job untuk update/create Training Record di background
+        \App\Jobs\UpdateTrainingRecordJob::dispatch($trainee->id, $dailyClass->id, $attendanceDate);
 
         return response()->json([
             'status' => 'success',
@@ -262,7 +393,7 @@ class TraineeApiController extends Controller
         // Cari materi/kelas yang evaluasinya sudah dibuka oleh Admin
         // dan trainee hadir (status != alpha/belum),
         // tapi trainee belum mengisi evaluasi.
-        $pendingClasses = DailyClass::where('is_evaluation_open', true)
+        $pendingClasses = \App\Models\DailyClass::where('is_evaluation_open', true)
             ->whereHas('attendances', function ($query) use ($trainee) {
                 $query->where('trainee_id', $trainee->id)
                       ->whereNotIn('status', ['alpha', 'belum']);
@@ -279,14 +410,24 @@ class TraineeApiController extends Controller
     {
         $trainee = auth()->user();
         
-        $dailyClass = DailyClass::findOrFail($dailyClassId);
+        $dailyClass = \App\Models\DailyClass::findOrFail($dailyClassId);
 
-        $exists = TraineeEvaluation::where('trainee_id', $trainee->id)
+        $exists = \App\Models\TraineeEvaluation::where('trainee_id', $trainee->id)
             ->where('daily_class_id', $dailyClass->id)
             ->exists();
 
         if ($exists) {
             return response()->json(['message' => 'Anda sudah mengisi evaluasi untuk sesi ini.'], 400);
+        }
+
+        // Verifikasi kehadiran: Pastikan Trainee benar-benar HADIR di setidaknya 1 hari sesi kelas ini
+        $hasAttended = \App\Models\Attendance::where('trainee_id', $trainee->id)
+            ->where('daily_class_id', $dailyClass->id)
+            ->whereNotIn('status', ['alpha', 'belum'])
+            ->exists();
+
+        if (!$hasAttended) {
+            return response()->json(['message' => 'Anda tidak dapat mengisi evaluasi karena status Anda tidak hadir di kelas ini.'], 403);
         }
 
         $validated = $request->validate([
@@ -302,7 +443,7 @@ class TraineeApiController extends Controller
             return response()->json(['message' => 'Penjelasan wajib diisi karena Anda memberikan nilai D atau E.'], 400);
         }
 
-        $evaluation = TraineeEvaluation::create([
+        $evaluation = \App\Models\TraineeEvaluation::create([
             'trainee_id' => $trainee->id,
             'daily_class_id' => $dailyClass->id,
             'answers' => $validated['answers'],
@@ -315,4 +456,39 @@ class TraineeApiController extends Controller
             'data' => $evaluation
         ], 201);
     }
+
+    public function downloadCertificate(Request $request, $dailyClassId)
+    {
+        $user = $request->user();
+        $dailyClass = \App\Models\DailyClass::findOrFail($dailyClassId);
+        
+        $attendance = $dailyClass->attendances()->where('trainee_id', $user->id)->first();
+        
+        if (!$attendance || !$attendance->is_passed) {
+            return response()->json(['message' => 'Sertifikat tidak tersedia.'], 403);
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('admin.non-reguler.daily_classes.certificate', [
+            'traineeName' => $user->name,
+            'className' => $dailyClass->title,
+            'certDescription' => $dailyClass->cert_description,
+            'certSignerName' => $dailyClass->cert_signer_name,
+            'certSignerRole' => $dailyClass->cert_signer_role,
+            'certDate' => $dailyClass->cert_date ? \Carbon\Carbon::parse($dailyClass->cert_date)->translatedFormat('d F Y') : \Carbon\Carbon::now()->translatedFormat('d F Y')
+        ])->setPaper('a4', 'landscape');
+
+        return response($pdf->output(), 200)
+            ->header('Content-Type', 'application/pdf')
+            ->header('Content-Disposition', 'inline; filename="Sertifikat_' . str_replace(' ', '_', $user->name) . '.pdf"');
+    }
 }
+
+
+
+
+
+
+
+
+
+

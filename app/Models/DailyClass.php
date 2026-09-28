@@ -13,13 +13,27 @@ class DailyClass extends Model
         'training_program_id',
         'title',
         'date',
+        'end_date',
+        'start_time',
+        'end_time',
+        'room',
+        'provider',
+        'region',
         'trainer_name',
         'is_evaluation_open',
+        'certificate_link',
         'qr_code_token',
+        'material_url',
+        'mess_url',
+        'cert_signer_role',
+        'cert_signer_name',
+        'cert_description',
+        'cert_date',
     ];
     
     protected $casts = [
         'date' => 'date',
+        'end_date' => 'date',
         'is_evaluation_open' => 'boolean',
     ];
 
@@ -43,3 +57,4 @@ class DailyClass extends Model
         return $this->hasMany(Task::class);
     }
 }
+

@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 use Laravel\Sanctum\HasApiTokens;
+use NotificationChannels\WebPush\HasPushSubscriptions;
+use Illuminate\Notifications\Notifiable;
 
 class Trainee extends Model
 {
-    use HasApiTokens, HasFactory;
+    use HasApiTokens, HasFactory, HasPushSubscriptions, Notifiable;
 
     protected $guarded = ['id'];
     
@@ -20,7 +22,9 @@ class Trainee extends Model
         return [
             'name' => $this->name,
             'program' => $this->trainingProgram->name ?? 'Program belum diset',
-            'region' => $this->ojt_region ?? $this->origin,
+            'region' => $this->origin ?? $this->ojt_region,
+            'unit' => $this->unit,
+            'talent_to' => $this->talent_to,
             'university' => $this->university,
             'major' => $this->major,
             'status' => ucfirst($this->status),
@@ -73,3 +77,4 @@ class Trainee extends Model
         return $this->hasMany(TraineeEvaluation::class);
     }
 }
+

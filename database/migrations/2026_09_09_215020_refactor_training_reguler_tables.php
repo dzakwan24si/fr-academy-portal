@@ -17,12 +17,12 @@ return new class extends Migration
         Schema::dropIfExists('report_photos');
 
         // 2. Modify existing tables to remove advanced fields from previous migration
-        Schema::table('weekly_reports', function (Blueprint $table) {
-            $table->dropColumn([
-                'ojt_days', 'ojt_location', 'ojt_tujuan', 'ojt_hasil', 'ojt_photos',
-                'inclass_days', 'inclass_location', 'inclass_tujuan', 'inclass_pesan_kesan', 'inclass_photos'
-            ]);
-        });
+//        Schema::table('weekly_reports', function (Blueprint $table) {
+//            $table->dropColumn([
+//                'ojt_days', 'ojt_location', 'ojt_tujuan', 'ojt_hasil', 'ojt_photos',
+//                'inclass_days', 'inclass_location', 'inclass_tujuan', 'inclass_pesan_kesan', 'inclass_photos'
+//            ]);
+//        });
 
         Schema::table('trainees', function (Blueprint $table) {
             $table->dropColumn(['birth_place', 'birth_date', 'resign_reason', 'photo_path']);

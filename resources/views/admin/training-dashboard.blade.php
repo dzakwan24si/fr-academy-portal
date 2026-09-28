@@ -163,17 +163,17 @@
                 </table>
             </div>
             
-            <div class="p-4 border-t border-gray-100 bg-gray-50 text-center sm:hidden">
+            <!-- <div class="p-4 border-t border-gray-100 bg-gray-50 text-center sm:hidden">
                 <a href="{{ route('training-reguler.weekly-reports.index') }}" class="text-[#28844b] text-sm font-bold">
                     Lihat Semua Laporan
                 </a>
-            </div>
+            </div> -->
         </div>
 
         <!-- Quick Actions Sidebar -->
         <div class="flex flex-col gap-6 h-full">
             <!-- Action 1 -->
-            <a href="{{ route('training-reguler.weekly-reports.index') }}" class="group block relative overflow-hidden bg-gradient-to-br from-[#28844b] to-[#1a4f2b] rounded-3xl p-8 shadow-lg shadow-green-900/20 hover:-translate-y-1 transition-all duration-300">
+            <!-- <a href="{{ route('training-reguler.weekly-reports.index') }}" class="group block relative overflow-hidden bg-gradient-to-br from-[#28844b] to-[#1a4f2b] rounded-3xl p-8 shadow-lg shadow-green-900/20 hover:-translate-y-1 transition-all duration-300">
                 <div class="absolute top-0 right-0 -mr-6 -mt-6 w-32 h-32 rounded-full bg-white opacity-10 group-hover:scale-150 transition-transform duration-500 ease-out"></div>
                 
                 <div class="relative z-10">
@@ -187,7 +187,7 @@
                 <div class="absolute bottom-8 right-8 text-white opacity-0 transform translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </div>
-            </a>
+            </a> -->
 
             <!-- Action 2 -->
             <a href="{{ route('training-reguler.trainees.index') }}" class="group block relative overflow-hidden bg-slate-50 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300">
