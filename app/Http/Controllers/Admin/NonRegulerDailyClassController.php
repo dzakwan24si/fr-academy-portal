@@ -40,13 +40,14 @@ class NonRegulerDailyClassController extends Controller
     public function index()
     {
         if (TrainingProgram::where('type', 'non-reguler')->count() == 0) {
+            $currentYear = date('Y');
             $defaultPrograms = [
-                ['name' => 'Managerial & Leadership', 'type' => 'non-reguler', 'created_at' => now(), 'updated_at' => now()],
-                ['name' => 'Mill', 'type' => 'non-reguler', 'created_at' => now(), 'updated_at' => now()],
-                ['name' => 'Traksi', 'type' => 'non-reguler', 'created_at' => now(), 'updated_at' => now()],
-                ['name' => 'Estate', 'type' => 'non-reguler', 'created_at' => now(), 'updated_at' => now()],
-                ['name' => 'Downstream', 'type' => 'non-reguler', 'created_at' => now(), 'updated_at' => now()],
-                ['name' => 'Administrasi', 'type' => 'non-reguler', 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'Managerial & Leadership', 'type' => 'non-reguler', 'year' => $currentYear, 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'Mill', 'type' => 'non-reguler', 'year' => $currentYear, 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'Traksi', 'type' => 'non-reguler', 'year' => $currentYear, 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'Estate', 'type' => 'non-reguler', 'year' => $currentYear, 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'Downstream', 'type' => 'non-reguler', 'year' => $currentYear, 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'Administrasi', 'type' => 'non-reguler', 'year' => $currentYear, 'created_at' => now(), 'updated_at' => now()],
             ];
             TrainingProgram::insert($defaultPrograms);
         }
