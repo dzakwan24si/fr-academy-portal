@@ -39,6 +39,18 @@ class NonRegulerDailyClassController extends Controller
 
     public function index()
     {
+        if (TrainingProgram::where('type', 'non-reguler')->count() == 0) {
+            $defaultPrograms = [
+                ['name' => 'Managerial & Leadership', 'type' => 'non-reguler', 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'Mill', 'type' => 'non-reguler', 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'Traksi', 'type' => 'non-reguler', 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'Estate', 'type' => 'non-reguler', 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'Downstream', 'type' => 'non-reguler', 'created_at' => now(), 'updated_at' => now()],
+                ['name' => 'Administrasi', 'type' => 'non-reguler', 'created_at' => now(), 'updated_at' => now()],
+            ];
+            TrainingProgram::insert($defaultPrograms);
+        }
+
         $programs = TrainingProgram::where('type', 'non-reguler')->get();
         
         $dailyClasses = DailyClass::with('trainingProgram', 'attendances', 'tasks.submissions', 'traineeEvaluations')
