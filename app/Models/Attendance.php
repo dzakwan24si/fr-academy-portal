@@ -16,6 +16,11 @@ class Attendance extends Model
         return $this->belongsTo(WeeklyReport::class);
     }
 
+    public function dailyClass()
+    {
+        return $this->belongsTo(DailyClass::class);
+    }
+
     public function trainee()
     {
         return $this->belongsTo(Trainee::class);
