@@ -22,6 +22,11 @@
                 { id: '{{ $prog->id }}', name: '{{ addslashes($prog->name) }}', type: '{{ $prog->type }}' },
             @endforeach
         ],
+        dailyClasses: [
+            @foreach($dailyClasses as $class)
+                { id: '{{ $class->id }}', training_program_id: '{{ $class->training_program_id }}' },
+            @endforeach
+        ],
         classCounts: {
             @foreach($programs as $prog)
                 '{{ $prog->id }}': {{ $dailyClasses->where('training_program_id', $prog->id)->count() }},
