@@ -273,28 +273,54 @@ class TraineeApiController extends Controller
     public function submitAttendance(Request $request)
     {
         $request->validate([
-            'qr_token' => 'required|string'
+            'qr_token' => 'nullable|string'
         ]);
 
         $trainee = $request->user();
 
         // Trim token untuk menghindari error spasi berlebih dari input manual
-                $rawToken = trim($request->qr_token);
+        $rawToken = trim($request->qr_token ?? '');
         
-        $parts = explode('|', $rawToken);
-        $token = $parts[0];
-        $attendanceDate = isset($parts[1]) ? $parts[1] : date('Y-m-d');
+        if (empty($rawToken) || strtolower($rawToken) === 'manual') {
+            $today = now()->format('Y-m-d');
+            
+            // Cari kelas aktif hari ini seperti di dashboard
+            $todayAttendanceRecord = \App\Models\Attendance::where('trainee_id', $trainee->id)
+                ->whereHas('dailyClass', function($q) use ($today) {
+                    $q->where(function ($query) use ($today) {
+                        $query->whereDate('date', '<=', $today)
+                              ->whereDate('end_date', '>=', $today);
+                    })->orWhere(function ($query) use ($today) {
+                        $query->whereDate('date', $today)
+                              ->whereNull('end_date');
+                    });
+                })->first();
+                
+            if (!$todayAttendanceRecord) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Tidak ada jadwal kelas aktif hari ini untuk Anda.'
+                ], 404);
+            }
+            
+            $dailyClass = $todayAttendanceRecord->dailyClass;
+            $attendanceDate = $today;
+        } else {
+            $parts = explode('|', $rawToken);
+            $token = $parts[0];
+            $attendanceDate = isset($parts[1]) ? $parts[1] : date('Y-m-d');
 
-        // Cari kelas harian berdasarkan token QR (bisa token utuh 32 karakter dari scan, atau 8 karakter awal dari input manual)
-        $dailyClass = \App\Models\DailyClass::where('qr_code_token', $token)
-            ->orWhere('qr_code_token', 'like', $token . '%')
-            ->first();
+            // Cari kelas harian berdasarkan token QR
+            $dailyClass = \App\Models\DailyClass::where('qr_code_token', $token)
+                ->orWhere('qr_code_token', 'like', $token . '%')
+                ->first();
 
-        if (!$dailyClass) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'QR Code tidak valid atau sudah kadaluarsa.'
-            ], 404);
+            if (!$dailyClass) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'QR Code tidak valid atau sudah kadaluarsa.'
+                ], 404);
+            }
         }
 
         // Cek apakah trainee memiliki record absensi di kelas ini (menandakan dia terdaftar di kelas)
