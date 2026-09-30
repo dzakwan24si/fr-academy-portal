@@ -16,7 +16,7 @@
         <div class="absolute bottom-0 left-0 -mb-16 -ml-16 w-48 h-48 bg-gradient-to-tr from-blue-50 to-blue-100 rounded-full opacity-50 blur-2xl"></div>
 
         <!-- TOP HEADER ROW: Title & Primary Actions -->
-        <div class="relative z-50 flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div class="relative z-30 flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div>
                 <div class="flex items-center gap-3 mb-1">
                     <span class="inline-flex items-center px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md text-xs font-bold uppercase tracking-wide">
