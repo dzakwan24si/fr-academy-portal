@@ -48,8 +48,10 @@ class ProgramBatchController extends Controller
 
     public function data()
     {
-        $nonReguler = ProgramNonReguler::query()->latest('start_date')->get()->map(fn ($item) => $this->normalizeNonReguler($item));
-        $reguler = ProgramReguler::query()->latest('Mulai_program')->get()->map(fn ($item) => $this->normalizeReguler($item));
+        $records = TrainingRecord::where('status', 'valid')->get()->groupBy(fn ($record) => $record->program_type . ':' . $record->program_id);
+
+        $nonReguler = ProgramNonReguler::query()->latest('start_date')->get()->map(fn ($item) => $this->normalizeNonReguler($item, $records->get('non_reguler:' . $item->id_nonreguler, collect())));
+        $reguler = ProgramReguler::query()->latest('Mulai_program')->get()->map(fn ($item) => $this->normalizeReguler($item, $records->get('reguler:' . $item->Program_reguler_id, collect())));
 
         return response()->json($nonReguler->concat($reguler)->values());
     }
@@ -512,9 +514,29 @@ class ProgramBatchController extends Controller
         return array_filter($payload, fn ($value, $key) => in_array($key, $allowedColumns, true), ARRAY_FILTER_USE_BOTH);
     }
 
-    private function normalizeNonReguler(ProgramNonReguler $item): array
+    private function normalizeNonReguler(ProgramNonReguler $item, $actualRecords = null): array
     {
+        $actualRecords = $actualRecords ?? collect();
         $orig = $item->toArray();
+
+        // 1. Hitung berdasarkan Jabatan (Position)
+        $orig['peserta_ast'] = $actualRecords->filter(fn($r) => str_contains(strtolower($r->position), 'asisten') && !str_contains(strtolower($r->position), 'kepala'))->count();
+        $orig['peserta_askep'] = $actualRecords->filter(fn($r) => str_contains(strtolower($r->position), 'askep') || (str_contains(strtolower($r->position), 'asisten') && str_contains(strtolower($r->position), 'kepala')))->count();
+        $orig['peserta_mgr'] = $actualRecords->filter(fn($r) => str_contains(strtolower($r->position), 'manager') && !str_contains(strtolower($r->position), 'general'))->count();
+        $orig['peserta_gm'] = $actualRecords->filter(fn($r) => str_contains(strtolower($r->position), 'general manager') || str_contains(strtolower($r->position), 'gm'))->count();
+        $orig['peserta_head'] = $actualRecords->filter(fn($r) => str_contains(strtolower($r->position), 'head'))->count();
+
+        // 2. Hitung berdasarkan Golongan (Staf vs Non-Staf)
+        $orig['training_staf'] = $actualRecords->filter(fn($r) => strtolower(trim($r->gol)) === 'staf')->count();
+        $orig['training_non_staf'] = $actualRecords->filter(fn($r) => strtolower(trim($r->gol)) !== 'staf')->count();
+        $orig['training_total'] = $actualRecords->count();
+
+        // 3. Hitung Training Days (TD)
+        $totalDays = (int) $item->total_hari;
+        $orig['td_staf'] = $orig['training_staf'] * $totalDays;
+        $orig['td_non_staf'] = $orig['training_non_staf'] * $totalDays;
+        $orig['td_total'] = $orig['training_total'] * $totalDays;
+
         $batchCount = (int) ($item->TARGET_BATCH ?? $item->total_batch ?? 0);
         $participants = (int) ($item->TARGET_PESERTA ?? $item->target_total ?? 0);
         $year = $item->tahun ?: ($item->start_date ? (int)$item->start_date->format('Y') : ($item->end_date ? (int)$item->end_date->format('Y') : null));
@@ -536,9 +558,22 @@ class ProgramBatchController extends Controller
         ];
     }
 
-    private function normalizeReguler(ProgramReguler $item): array
+    private function normalizeReguler(ProgramReguler $item, $actualRecords = null): array
     {
+        $actualRecords = $actualRecords ?? collect();
         $orig = $item->toArray();
+
+        // 1. Hitung berdasarkan Golongan
+        $orig['training_staf'] = $actualRecords->filter(fn($r) => strtolower(trim($r->gol)) === 'staf')->count();
+        $orig['training_non_staf'] = $actualRecords->filter(fn($r) => strtolower(trim($r->gol)) !== 'staf')->count();
+        $orig['training_total'] = $actualRecords->count();
+
+        // 2. Hitung Training Days (TD)
+        $totalDays = (int) ($item->jumlah_hari ?? $item->Total_training_days ?? 0);
+        $orig['td_staf'] = $orig['training_staf'] * $totalDays;
+        $orig['td_non_staf'] = $orig['training_non_staf'] * $totalDays;
+        $orig['td_total'] = $orig['training_total'] * $totalDays;
+
         $orig['Nama_Program_reguler'] = $item->Training_Program;
         $orig['Total_orang'] = $item->target_peserta;
         $year = $item->Mulai_program ? (int)$item->Mulai_program->format('Y') : ($item->tahun ?: ($item->Selesai_program ? (int)$item->Selesai_program->format('Y') : null));
