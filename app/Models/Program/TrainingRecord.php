@@ -16,6 +16,21 @@ class TrainingRecord extends Model
     protected $guarded = [];
     protected $casts = ['training_date' => 'date:Y-m-d'];
 
+    public function displayNik(): ?string
+    {
+        $nik = trim((string) $this->participant_identifier);
+        if ($nik === '') return null;
+
+        $upper = strtoupper($nik);
+        if (str_starts_with($upper, 'NAME:') || str_starts_with($upper, 'SLOT:')) return null;
+        if (in_array($upper, ['-', '#N/A', 'PROMOSI', 'TRAINEE', '0', 'NULL', 'N/A'], true)) return null;
+
+        $name = trim((string) $this->participant_name);
+        if ($name !== '' && strcasecmp($nik, $name) === 0) return null;
+
+        return $nik;
+    }
+
     public function reguler()
     {
         return $this->belongsTo(ProgramReguler::class, 'program_id', 'Program_reguler_id');

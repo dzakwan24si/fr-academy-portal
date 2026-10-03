@@ -130,6 +130,7 @@ class TrainingRecordController extends Controller
             $cleaned = $cleanStr($h);
             if (in_array($cleaned, ['nik', 'nip', 'id peserta', 'no id', 'badge'])) $headerMap['nik'] = $idx;
             elseif (in_array($cleaned, ['nama', 'nama peserta', 'peserta', 'employee name'])) $headerMap['nama'] = $idx;
+            elseif (in_array($cleaned, ['department', 'departemen', 'dept', 'divisi'])) $headerMap['department'] = $idx;
             elseif (in_array($cleaned, ['nama pelatihan', 'training program', 'judul training', 'program', 'nama program', 'jenis pelatihan', 'pelatihan'])) $headerMap['nama pelatihan'] = $idx;
             elseif (in_array($cleaned, ['region', 'wilayah', 'reg'])) $headerMap['region'] = $idx;
             elseif (in_array($cleaned, ['nama pt', 'pt', 'company', 'perusahaan', 'estate'])) $headerMap['nama pt'] = $idx;
@@ -145,6 +146,8 @@ class TrainingRecordController extends Controller
             elseif (in_array($cleaned, ['tanggal', 'tgl', 'date'])) $headerMap['tanggal'] = $idx;
             elseif (in_array($cleaned, ['bulan', 'bln', 'month'])) $headerMap['bulan'] = $idx;
             elseif (in_array($cleaned, ['tahun', 'thn', 'year'])) $headerMap['tahun'] = $idx;
+            elseif (in_array($cleaned, ['jml hari', 'jumlah hari', 'jml_hari', 'total hari', 'total_hari', 'hari'])) $headerMap['jml hari'] = $idx;
+            elseif (in_array($cleaned, ['jam pelatihan', 'jam_pelatihan', 'total jam', 'total_jam', 'jam', 'jam/peserta'])) $headerMap['jam pelatihan'] = $idx;
             elseif (in_array($cleaned, ['keterangan', 'notes', 'note'])) $headerMap['keterangan'] = $idx;
             elseif (in_array($cleaned, ['program_type', 'tipe program'])) $headerMap['program_type'] = $idx;
             elseif (in_array($cleaned, ['program_id', 'id_nonreguler', 'program reguler id'])) $headerMap['program_id'] = $idx;
@@ -221,32 +224,36 @@ class TrainingRecordController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $records = $this->filteredRecords($request);
-        $headers = ['No', 'NIK', 'Nama', 'Jenis Kelamin', 'Nama PT', 'Lokasi Kerja', 'Group', 'REGION', 'GOL', 'Jabatan', 'Nama Pelatihan', 'Instruktur', 'Tempat Pelatihan', 'Reg / Non Reg', 'Internal/Eksternal', 'Level', 'Periode', 'Tanggal', 'Bulan', 'Tahun', 'Keterangan'];
+        $headers = ['No', 'NIK', 'Nama', 'Jenis Kelamin', 'Nama PT', 'Department', 'lokasi Kerja', 'Group', 'REGION', 'GOL', 'Jabatan', 'Tgl', 'Bln', 'Thn', 'Jml Hari', 'Jam Pelatihan', 'Nama Pelatihan', 'Instruktur', 'Tempat Pelatihan', 'Reg / Non Reg', 'Keterangan', 'Internal/Eksternal', 'Level', 'Periode'];
         
         $dataRows = [];
         foreach ($records as $index => $record) {
+            $act = $record->activity();
             $dataRows[] = [
                 $index + 1,
-                $record->participant_identifier,
+                $record->displayNik(),
                 $record->participant_name,
                 $record->gender,
                 $record->company,
+                $record->department,
                 $record->work_location,
                 $record->group_name,
                 $record->region,
                 $record->gol,
                 $record->position,
-                $record->activityName(),
-                $record->instructor,
-                $record->work_location,
-                $record->program_type === 'reguler' ? 'Reguler' : 'Non Reguler',
-                $record->internal_external,
-                $record->level,
-                $record->periode,
                 $record->tanggal,
                 $record->bulan,
                 $record->tahun,
+                $record->jml_hari ?: ($act?->jumlah_hari ?? $act?->total_hari),
+                $record->total_jam ?: $record->activityHoursPerParticipant(),
+                $record->activityName(),
+                $record->instructor ?: $record->activityTrainer(),
+                $record->program_type === 'reguler' ? $act?->Lokasi_training : $act?->lokasi_training,
+                $record->program_type === 'reguler' ? 'Reguler' : 'Non Reguler',
                 $record->notes,
+                $record->internal_external,
+                $record->level,
+                $record->periode,
             ];
         }
 
@@ -255,8 +262,8 @@ class TrainingRecordController extends Controller
 
     public function template(): StreamedResponse
     {
-        $headers = ['NIK', 'Nama', 'Jenis Kelamin', 'Nama PT', 'Lokasi Kerja', 'Group', 'REGION', 'GOL', 'Jabatan', 'Nama Pelatihan', 'Internal/Eksternal', 'Level', 'Periode', 'Tanggal', 'Bulan', 'Tahun', 'Keterangan', 'program_type', 'program_id'];
-        $exampleRow = ['12345678', 'Contoh Peserta', 'L', 'PT FR', 'Estate A', 'Group 1', 'Kalbar', 'IV', 'Asisten', 'Training Leadership', 'Internal', 'Staff', '2026-1', '15', 'JAN', 2026, 'Contoh Catatan', 'reguler', 1];
+        $headers = ['NIK', 'Nama', 'Jenis Kelamin', 'Nama PT', 'Department', 'lokasi Kerja', 'Group', 'REGION', 'GOL', 'Jabatan', 'Tgl', 'Bln', 'Thn', 'Jml Hari', 'Jam Pelatihan', 'Nama Pelatihan', 'Instruktur', 'Keterangan', 'Internal/Eksternal', 'Level', 'Periode', 'program_type', 'program_id'];
+        $exampleRow = ['12345678', 'Contoh Peserta', 'L', 'PT FR', 'Agronomy', 'Estate A', 'Group 1', 'Kalbar', 'IV', 'Asisten', '15', 'JAN', 2026, '2', '16', 'Training Leadership', 'Internal', 'Contoh Catatan', 'Internal', 'Staff', '2026-1', 'reguler', 1];
         
         return ExcelExporter::download('training_record_template.xlsx', $headers, [$exampleRow], 'Template TR');
     }
@@ -266,14 +273,16 @@ class TrainingRecordController extends Controller
         $validated = $request->validate([
             'program_type' => 'required|in:reguler,non_reguler',
             'program_id' => 'required|integer',
-            'participant_identifier' => 'required|string|max:100',
+            'participant_identifier' => 'nullable|string|max:100',
             'participant_name' => 'required|string|max:255',
-            'gender' => 'nullable|string|max:50', 'company' => 'nullable|string|max:255', 'work_location' => 'nullable|string|max:255',
+            'gender' => 'nullable|string|max:50', 'company' => 'nullable|string|max:255', 'department' => 'nullable|string|max:255', 'work_location' => 'nullable|string|max:255',
             'group_name' => 'nullable|string|max:100', 'region' => 'nullable|string|max:100', 'gol' => 'nullable|string|max:100', 'position' => 'nullable|string|max:255', 'instructor' => 'nullable|string|max:255',
             'internal_external' => 'nullable|string|max:50', 'level' => 'nullable|string|max:100', 'periode' => 'nullable|string|max:100', 'notes' => 'nullable|string',
             'tanggal' => 'nullable|string|max:50',
             'bulan' => 'nullable|string|max:50',
             'tahun' => 'nullable|integer|min:2000|max:2100',
+            'jml_hari' => 'nullable|string|max:100',
+            'total_jam' => 'nullable|string|max:100',
         ]);
 
         if (!empty($validated['bulan'])) {
@@ -288,14 +297,15 @@ class TrainingRecordController extends Controller
         if (!$this->activities()->has($type . ':' . $id)) abort(422, 'Training activity tidak ditemukan.');
     }
 
-    private function ensureUnique(string $type, int $id, string $identifier, ?string $tanggal = null, ?string $bulan = null, ?int $tahun = null, ?int $ignore = null): void
+    private function ensureUnique(string $type, int $id, ?string $identifier, ?string $tanggal = null, ?string $bulan = null, ?int $tahun = null, ?int $ignore = null): void
     {
+        if (empty($identifier)) return;
         $query = TrainingRecord::where('program_type', $type)->where('program_id', $id)->where('participant_identifier', $identifier);
         if ($tanggal) $query->where('tanggal', $tanggal);
         if ($bulan) $query->where('bulan', $bulan);
         if ($tahun) $query->where('tahun', $tahun);
         if ($ignore) $query->whereKey('!=', $ignore);
-        if ($query->exists()) abort(422, 'Peserta sudah terdaftar pada jadwal training activity ini.');
+        if ($query->exists()) abort(422, 'Peserta dengan NIK ini sudah terdaftar pada jadwal training activity ini.');
     }
 
     private function activities()
@@ -407,7 +417,7 @@ class TrainingRecordController extends Controller
 
             // 5. Search keyword
             $search = strtolower(trim((string) $clone->input('search')));
-            if ($search !== '' && !str_contains(strtolower(implode(' ', [$record->participant_identifier, $record->participant_name, $record->company, $record->work_location, $record->group_name, $record->region, $record->position, $record->bulan, $record->tahun, $record->activityName()])), $search)) return false;
+            if ($search !== '' && !str_contains(strtolower(implode(' ', [$record->participant_identifier, $record->participant_name, $record->company, $record->department, $record->work_location, $record->group_name, $record->region, $record->position, $record->bulan, $record->tahun, $record->jml_hari, $record->total_jam, $record->activityName()])), $search)) return false;
             foreach (['company', 'work_location', 'group_name', 'region', 'position', 'internal_external', 'level'] as $field) if ($clone->filled($field) && strtolower((string) $record->{$field}) !== strtolower((string) $clone->input($field))) return false;
 
             return true;
@@ -633,16 +643,11 @@ class TrainingRecordController extends Controller
         $nik = trim((string) ($item['nik'] ?? ''));
         $nama = trim((string) ($item['nama'] ?? ''));
 
-        // Check if NIK is a valid specific identifier or just a placeholder
+        // Check if NIK is a valid specific identifier or just a placeholder/name
         $cleanNik = strtoupper(trim($nik));
-        $isPlaceholderNik = ($nik === '' || in_array($cleanNik, ['-', '#N/A', 'PROMOSI', 'TRAINEE', '0', 'NULL', 'N/A']));
-        if (!$isPlaceholderNik) {
-            $identifier = $nik;
-        } elseif ($nama !== '' && $nama !== '-' && $nama !== '#N/A') {
-            $identifier = 'NAME:' . strtoupper($nama);
-        } else {
-            $identifier = 'SLOT:' . strtoupper($item['jabatan'] ?? 'PARTICIPANT') . '-' . uniqid();
-        }
+        $cleanNama = strtoupper(trim($nama));
+        $isPlaceholderNik = ($nik === '' || in_array($cleanNik, ['-', '#N/A', 'PROMOSI', 'TRAINEE', '0', 'NULL', 'N/A']) || ($cleanNama !== '' && $cleanNik === $cleanNama));
+        $identifier = $isPlaceholderNik ? null : $nik;
 
         $finalNama = $nama !== '' ? $nama : (!empty($item['jabatan']) ? $item['jabatan'] : '-');
 
@@ -665,6 +670,7 @@ class TrainingRecordController extends Controller
             'participant_name' => $finalNama,
             'gender' => $item['jenis kelamin'] ?? null,
             'company' => $item['nama pt'] ?? null,
+            'department' => $item['department'] ?? null,
             'work_location' => $item['lokasi kerja'] ?? null,
             'group_name' => $item['group'] ?? null,
             'region' => $finalRegion,
@@ -677,6 +683,8 @@ class TrainingRecordController extends Controller
             'periode' => $item['periode'] ?? null,
             'bulan' => $bulan !== '' ? strtoupper(substr($bulan, 0, 3)) : null,
             'tahun' => $tahunVal,
+            'jml_hari' => $item['jml hari'] ?? null,
+            'total_jam' => $item['jam pelatihan'] ?? null,
             'notes' => $item['keterangan'] ?? null,
         ];
     }
