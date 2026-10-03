@@ -17,6 +17,7 @@ class DailyClass extends Model
         'start_time',
         'end_time',
         'room',
+        'location',
         'provider',
         'region',
         'trainer_name',

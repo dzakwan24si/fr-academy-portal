@@ -588,6 +588,15 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
         Route::post('/reset-data', [MonitoringDashboardController::class, 'resetData'])->name('reset-data');
     });
 
+    // Administrasi - Staf Resign
+    Route::get('/administrasi/staf-resign', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'index'])->name('administrasi.staf-resign.index');
+    Route::post('/administrasi/staf-resign', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'store'])->name('administrasi.staf-resign.store');
+    Route::put('/administrasi/staf-resign/{id}', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'update'])->name('administrasi.staf-resign.update');
+    Route::delete('/administrasi/staf-resign/{id}', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'destroy'])->name('administrasi.staf-resign.destroy');
+    Route::get('/administrasi/staf-resign/template', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'downloadTemplate'])->name('administrasi.staf-resign.template');
+    Route::post('/administrasi/staf-resign/import/preview', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'previewImport'])->name('administrasi.staf-resign.import-preview');
+    Route::post('/administrasi/staf-resign/import/process', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'processImport'])->name('administrasi.staf-resign.import-process');
+
     // Administrasi - Monitoring Karyawan (React SPA) Routes
     Route::get('/administrasi/monitoring/{any?}', function () {
         return view('Administrasi.Pages.Monitoring_Spesifik.index');
@@ -652,7 +661,17 @@ Route::prefix('training-non-reguler')->group(function () {
     Route::get('/', function () {
         $today = now()->format('Y-m-d');
         
-        $totalTrainees = \App\Models\Trainee::count();
+        // Menghitung total peserta yang materi/kelasnya berjalan hari ini
+        $totalTrainees = \App\Models\Attendance::whereHas('dailyClass', function ($query) use ($today) {
+            $query->where(function ($q) use ($today) {
+                $q->whereNotNull('end_date')
+                  ->whereDate('date', '<=', $today)
+                  ->whereDate('end_date', '>=', $today);
+            })->orWhere(function ($q) use ($today) {
+                $q->whereNull('end_date')
+                  ->whereDate('date', '=', $today);
+            });
+        })->distinct('trainee_id')->count('trainee_id');
         $totalSesi = \App\Models\DailyClass::count();
         $totalPrograms = \App\Models\TrainingProgram::count();
         
@@ -692,6 +711,7 @@ Route::prefix('training-non-reguler')->group(function () {
     })->name('training-non-reguler.print.tasks.dummy');
 
     Route::post('daily-classes/{daily_class}/import', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'importTrainees'])->name('training-non-reguler.daily-classes.import');
+    Route::post('daily-classes/{daily_class}/add-manual', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'addManualTrainee'])->name('training-non-reguler.daily-classes.add-manual');
     Route::post('daily-classes/{daily_class}/attendance', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'updateAttendance'])->name('training-non-reguler.daily-classes.attendance.update');
     Route::post('daily-classes/{daily_class}/generate-qr', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'generateQr'])->name('training-non-reguler.daily-classes.generate-qr');
     Route::post('daily-classes/{daily_class}/generate-certificates', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'generateCertificates'])->name('training-non-reguler.daily-classes.generate-certificates');

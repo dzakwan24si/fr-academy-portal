@@ -45,10 +45,16 @@ class UpdateTrainingRecordJob implements ShouldQueue
         $monthNum = $dateObj->month;
         $periode = 'Q' . ceil($monthNum / 3);
 
+        $parentProgramNonReg = DB::table('program_non_reguler')->where('jenis_pelatihan', $dailyClass->title)->first();
+        if (!$parentProgramNonReg) return;
+        
+        $idNonReguler = $parentProgramNonReg->id_nonreguler;
+        $subKategori = $parentProgramNonReg->sub_kategori;
+
         // Cari record yang sudah ada
         $existingRecord = DB::table('training_records')
             ->where('participant_identifier', $trainee->nik)
-            ->where('program_id', $dailyClass->id)
+            ->where('program_id', $idNonReguler)
             ->where('program_type', 'non_reguler')
             ->first();
 
@@ -89,23 +95,36 @@ class UpdateTrainingRecordJob implements ShouldQueue
                 }
             }
 
+            // Coba cari data dari riwayat pelatihan sebelumnya (prioritas pertama)
+            $pastRecord = DB::table('training_records')
+                ->where('participant_identifier', $trainee->nik)
+                ->orderBy('created_at', 'desc')
+                ->first();
+
+            $gender = ($pastRecord && $pastRecord->gender && $pastRecord->gender !== '-') ? $pastRecord->gender : ($trainee->gender ?: '-');
+            $company = ($pastRecord && $pastRecord->company && $pastRecord->company !== '-') ? $pastRecord->company : ($trainee->unit ?: '-');
+            $workLoc = ($pastRecord && $pastRecord->work_location && $pastRecord->work_location !== '-') ? $pastRecord->work_location : ($trainee->unit ?: '-');
+            $group = ($pastRecord && $pastRecord->group_name && $pastRecord->group_name !== '-') ? $pastRecord->group_name : ($trainee->group ?: '-');
+            $region = ($pastRecord && $pastRecord->region && $pastRecord->region !== '-') ? $pastRecord->region : ($trainee->origin ?: '-');
+            $level = ($pastRecord && $pastRecord->level && $pastRecord->level !== '-') ? $pastRecord->level : '-';
+
             // Create record baru
             DB::table('training_records')->insert([
                 'program_type' => 'non_reguler',
-                'program_id' => $dailyClass->id,
+                'program_id' => $idNonReguler,
                 'participant_identifier' => $trainee->nik,
                 'participant_name' => $trainee->name,
-                'gender' => $trainee->gender ?? '-',
-                'company' => $trainee->unit ?? $trainee->ojt_company_name ?? '-',
-                'work_location' => $trainee->unit ?? $trainee->ojt_company_name ?? '-',
-                'group_name' => $trainee->group ?? 'FR',
-                'region' => $trainee->origin ?? $trainee->ojt_region ?? '-',
+                'gender' => $gender,
+                'company' => $company,
+                'work_location' => $workLoc,
+                'group_name' => $group,
+                'region' => $region,
                 'gol' => $gol,
                 'position' => $trainee->talent_to ?? '-',
-                'instructor' => $dailyClass->trainer_name ?? '-',
-                'notes' => $dailyClass->title ?? '-',
-                'internal_external' => 'Internal',
-                'level' => 'workers',
+                'instructor' => $dailyClass->trainer_name ?: ($parentProgramNonReg->trainer ?? '-'),
+                'notes' => $subKategori ?: '-',
+                'internal_external' => $dailyClass->provider ?: 'Internal',
+                'level' => $level,
                 'periode' => $periode,
                 'bulan' => $bulanAbsen,
                 'tahun' => $tahunAbsen,

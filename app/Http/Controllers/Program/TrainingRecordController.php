@@ -221,12 +221,11 @@ class TrainingRecordController extends Controller
     public function export(Request $request): StreamedResponse
     {
         $records = $this->filteredRecords($request);
-        $headers = ['No', 'NIK', 'Nama', 'Jenis Kelamin', 'Nama PT', 'Lokasi Kerja', 'Group', 'REGION', 'GOL', 'Jabatan', 'Nama Pelatihan', 'Instruktur', 'Tempat Pelatihan', 'Reg / Non Reg', 'Internal/Eksternal', 'Level', 'Periode', 'Tanggal', 'Bulan', 'Tahun', 'Keterangan'];
+        $headers = ['NIK', 'Nama', 'Jenis Kelamin', 'Nama PT', 'Lokasi Kerja', 'Group', 'REGION', 'GOL', 'Jabatan', 'Nama Pelatihan', 'Internal/Eksternal', 'Level', 'Periode', 'Tanggal', 'Bulan', 'Tahun', 'Keterangan', 'program_type', 'program_id'];
         
         $dataRows = [];
         foreach ($records as $index => $record) {
             $dataRows[] = [
-                $index + 1,
                 $record->participant_identifier,
                 $record->participant_name,
                 $record->gender,
@@ -237,9 +236,6 @@ class TrainingRecordController extends Controller
                 $record->gol,
                 $record->position,
                 $record->activityName(),
-                $record->instructor,
-                $record->work_location,
-                $record->program_type === 'reguler' ? 'Reguler' : 'Non Reguler',
                 $record->internal_external,
                 $record->level,
                 $record->periode,
@@ -247,6 +243,8 @@ class TrainingRecordController extends Controller
                 $record->bulan,
                 $record->tahun,
                 $record->notes,
+                $record->program_type,
+                ''
             ];
         }
 

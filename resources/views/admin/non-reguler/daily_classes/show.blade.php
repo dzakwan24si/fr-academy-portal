@@ -169,7 +169,10 @@
                     <span class="block text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Lokasi & Ruangan</span>
                     <div class="flex items-center gap-2 text-slate-800 font-medium">
                         <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                        {{ $dailyClass->room ?: '-' }} 
+                        {{ $dailyClass->location ?: '-' }} 
+                        @if($dailyClass->room)
+                            <span class="text-slate-400 font-normal">({{ $dailyClass->room }})</span>
+                        @endif
                         @if($dailyClass->region)
                             <span class="text-slate-400 font-normal">({{ $dailyClass->region }})</span>
                         @endif
@@ -578,15 +581,21 @@
     
         <!-- Data Table Container -->
         <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div class="p-4 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+        <div class="p-4 border-b border-gray-200 bg-gray-50 flex flex-wrap items-center justify-between gap-3">
             <h2 class="font-bold text-gray-800 flex items-center gap-2">
                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
                 Daftar Peserta & Absensi
             </h2>
-            <a :href="`{{ route('training-non-reguler.daily-classes.print-attendance', $dailyClass->id) }}?date=${selectedDay}`" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 font-medium text-xs transition-all shadow-sm">
-                <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                Cetak Absensi
-            </a>
+            <div class="flex items-center gap-2">
+                <button type="button" @click="document.getElementById('addManualModal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-medium text-xs transition-all shadow-sm">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    Tambah Peserta
+                </button>
+                <a :href="`{{ route('training-non-reguler.daily-classes.print-attendance', $dailyClass->id) }}?date=${selectedDay}`" target="_blank" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 font-medium text-xs transition-all shadow-sm">
+                    <svg class="w-3.5 h-3.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    Cetak Absensi
+                </a>
+            </div>
         </div>
         
         <div class="w-full overflow-x-auto custom-scrollbar">
@@ -703,6 +712,48 @@
             </table>
         </div>
     </div>
+        <!-- Add Manual Modal -->
+    <div id="addManualModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden bg-slate-900/50 backdrop-blur-sm transition-opacity text-left p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100 opacity-100">
+            <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
+                <h3 class="text-lg font-black text-slate-800">Tambah Peserta Manual</h3>
+                <button type="button" onclick="document.getElementById('addManualModal').classList.add('hidden')" class="text-slate-400 hover:text-red-500 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <form action="{{ route('training-non-reguler.daily-classes.add-manual', $dailyClass->id) }}" method="POST" class="p-6">
+                @csrf
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">NIK <span class="text-red-500">*</span></label>
+                        <input type="text" name="nik" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required placeholder="Contoh: 2023030337">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Nama <span class="text-red-500">*</span></label>
+                        <input type="text" name="name" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required placeholder="Contoh: Ahmad Pajar">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Jabatan (Talent To) <span class="text-gray-400 font-normal">(Opsional)</span></label>
+                        <input type="text" name="talent_to" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Contoh: Askep">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Unit/PT <span class="text-gray-400 font-normal">(Opsional)</span></label>
+                        <input type="text" name="unit" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Contoh: ANJAS">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Region <span class="text-gray-400 font-normal">(Opsional)</span></label>
+                        <input type="text" name="region" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Contoh: Riau">
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-3 pt-6 border-t border-slate-100">
+                    <button type="button" onclick="document.getElementById('addManualModal').classList.add('hidden')" class="px-6 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition-colors">Batal</button>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 active:scale-95 transition-all shadow-md">Simpan Peserta</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
         <!-- Edit Class Modal -->
     <div id="editClassModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden bg-slate-900/50 backdrop-blur-sm transition-opacity text-left p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all scale-100 opacity-100 max-h-[90vh] flex flex-col">
@@ -749,8 +800,17 @@
                             <input type="text" name="trainer_name" required value="{{ $dailyClass->trainer_name }}" placeholder="Cth: Budi Santoso" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm placeholder:text-slate-400 font-medium">
                         </div>
                         <div>
-                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">LOKASI / RUANGAN <span class="text-slate-400 font-semibold">(OPSIONAL)</span></label>
-                            <input type="text" name="room" value="{{ $dailyClass->room }}" placeholder="Cth: FR Academy" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm placeholder:text-slate-400 font-medium">
+                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">LOKASI TRAINING <span class="text-slate-400 font-semibold">(OPSIONAL)</span></label>
+                            <select name="location" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm font-medium">
+                                <option value="" {{ !$dailyClass->location ? 'selected' : '' }}>Pilih Lokasi</option>
+                                @foreach(['Jakarta', 'FRLC', 'FRLS', 'KAL', 'Kandir', 'Online', 'Online/Onsite', 'Onsite'] as $loc)
+                                    <option value="{{ $loc }}" {{ $dailyClass->location == $loc ? 'selected' : '' }}>{{ $loc }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">RUANGAN <span class="text-slate-400 font-semibold">(OPSIONAL)</span></label>
+                            <input type="text" name="room" value="{{ $dailyClass->room }}" placeholder="Cth: R.Planters" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm placeholder:text-slate-400 font-medium">
                         </div>
                     </div>
                     
@@ -839,8 +899,17 @@
                             <input type="text" name="trainer_name" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required placeholder="Cth: Budi Santoso">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Lokasi / Ruangan <span class="text-gray-400 font-normal">(Opsional)</span></label>
-                            <input type="text" name="room" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Cth: FR Academy">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Lokasi Training <span class="text-gray-400 font-normal">(Opsional)</span></label>
+                            <select name="location" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all">
+                                <option value="">Pilih Lokasi</option>
+                                @foreach(['Jakarta', 'FRLC', 'FRLS', 'KAL', 'Kandir', 'Online', 'Online/Onsite', 'Onsite'] as $loc)
+                                    <option value="{{ $loc }}">{{ $loc }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Ruangan <span class="text-gray-400 font-normal">(Opsional)</span></label>
+                            <input type="text" name="room" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Cth: R.Planters">
                         </div>
                     </div>
                     

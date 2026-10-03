@@ -128,6 +128,14 @@
                     <i data-lucide="line-chart" class="w-4 h-4 shrink-0"></i>
                     <span>Monitoring Detailed</span>
                 </a>
+                
+                <!-- 6. Staf Resign -->
+                <a href="{{ $tmUrl('administrasi.staf-resign.index') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                          {{ request()->routeIs('administrasi.staf-resign.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                    <i data-lucide="user-x" class="w-4 h-4 shrink-0"></i>
+                    <span>Staf Resign</span>
+                </a>
             </div>
         </details>
 

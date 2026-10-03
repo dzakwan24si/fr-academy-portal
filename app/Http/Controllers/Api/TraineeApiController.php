@@ -354,8 +354,8 @@ class TraineeApiController extends Controller
             'scanned_at' => now()
         ]);
 
-        // Dispatch job untuk update/create Training Record di background
-        \App\Jobs\UpdateTrainingRecordJob::dispatch($trainee->id, $dailyClass->id, $attendanceDate);
+        // Dispatch job untuk update/create Training Record langsung secara sync
+        \App\Jobs\UpdateTrainingRecordJob::dispatchSync($trainee->id, $dailyClass->id, $attendanceDate);
 
         return response()->json([
             'status' => 'success',
