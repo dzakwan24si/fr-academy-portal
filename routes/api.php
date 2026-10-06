@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\TraineeApiController;
 
+use App\Http\Controllers\Api\V1\TrainingRecordExportController;
+
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
@@ -12,6 +14,9 @@ Route::get('/user', function (Request $request) {
 Route::post('/trainee/login', [TraineeApiController::class, 'login']);
 
 Route::middleware('auth:sanctum')->group(function () {
+    // V1 External Integration API Routes (e.g. Peta SDM System)
+    Route::get('/v1/training-records/export', [TrainingRecordExportController::class, 'export']);
+
     Route::get('/trainee/dashboard', [TraineeApiController::class, 'dashboard']);
     Route::get('/trainee/profile', [TraineeApiController::class, 'profile']);
     Route::get('/trainee/tasks', [TraineeApiController::class, 'tasks']);
