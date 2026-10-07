@@ -262,8 +262,8 @@ class TrainingRecordController extends Controller
 
     public function template(): StreamedResponse
     {
-        $headers = ['NIK', 'Nama', 'Jenis Kelamin', 'Nama PT', 'Department', 'lokasi Kerja', 'Group', 'REGION', 'GOL', 'Jabatan', 'Tgl', 'Bln', 'Thn', 'Jml Hari', 'Jam Pelatihan', 'Nama Pelatihan', 'Instruktur', 'Keterangan', 'Internal/Eksternal', 'Level', 'Periode', 'program_type', 'program_id'];
-        $exampleRow = ['12345678', 'Contoh Peserta', 'L', 'PT FR', 'Agronomy', 'Estate A', 'Group 1', 'Kalbar', 'IV', 'Asisten', '15', 'JAN', 2026, '2', '16', 'Training Leadership', 'Internal', 'Contoh Catatan', 'Internal', 'Staff', '2026-1', 'reguler', 1];
+        $headers = ['No', 'NIK', 'Nama', 'Jenis Kelamin', 'Nama PT', 'Department', 'lokasi Kerja', 'Group', 'REGION', 'GOL', 'Jabatan', 'Tgl', 'Bln', 'Thn', 'Jml Hari', 'Jam Pelatihan', 'Nama Pelatihan', 'Instruktur', 'Tempat Pelatihan', 'Reg / Non Reg', 'Keterangan', 'Internal/Eksternal', 'Level', 'Periode'];
+        $exampleRow = ['1', '12345678', 'Contoh Peserta', 'Male', 'PT FR', 'Agronomy', 'Estate A', 'Group 1', 'Kalbar', 'Staf', 'Asisten', '15', 'JAN', 2026, '2', '16', 'Training Leadership', 'Budi Santoso', 'Training Center Riau', 'Reguler', 'Contoh Catatan', 'Internal', 'Staff', '2026-1'];
         
         return ExcelExporter::download('training_record_template.xlsx', $headers, [$exampleRow], 'Template TR');
     }
