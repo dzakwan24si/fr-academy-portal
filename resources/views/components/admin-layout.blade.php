@@ -354,6 +354,26 @@
                     </div>
                 </details>
 
+                <!-- SECTION: Standar Kompetensi -->
+                @can('manage_competency')
+                <details class="group" {{ request()->routeIs('admin.competency.*') ? 'open' : '' }}>
+                    <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-wider text-gray-400 hover:bg-gray-100 [&::-webkit-details-marker]:hidden transition-colors">
+                        <span>Standar Kompetensi</span>
+                        <svg class="h-4 w-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </summary>
+                    <div class="space-y-1 mt-1">
+                        <a href="{{ route('admin.competency.index') }}" class="{{ request()->routeIs('admin.competency.*') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">
+                            <i data-lucide="award" class="w-5 h-5 mr-3 {{ request()->routeIs('admin.competency.*') ? 'text-white' : 'text-gray-400' }}"></i>
+                            Kelola Kamus Kompetensi
+                        </a>
+                        <a href="{{ route('competency.public') }}" target="_blank" class="text-gray-600 hover:bg-gray-100 flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">
+                            <i data-lucide="external-link" class="w-5 h-5 mr-3 text-gray-400"></i>
+                            Lihat Halaman Publik
+                        </a>
+                    </div>
+                </details>
+                @endcan
+
                 <!-- SECTION: Sistem & Pengaturan -->
                 <details class="group" {{ request()->routeIs('admin.users.*', 'admin.roles.*', 'admin.profile.*', 'administrasi.activity-logs.*', 'admin.dashboard') ? 'open' : '' }}>
                     <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-wider text-gray-400 hover:bg-gray-100 [&::-webkit-details-marker]:hidden transition-colors">

@@ -11,6 +11,7 @@ use Tests\TestCase;
 class CapexTest extends TestCase
 {
     use DatabaseTransactions;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -95,13 +96,13 @@ class CapexTest extends TestCase
     public function test_can_create_rab_record()
     {
         $payload = [
-            'tahun'              => 2026,
-            'lokasi'             => 'kantor',
+            'tahun' => 2026,
+            'lokasi' => 'kantor',
             'kel_barang_kapital' => 'Server & Network Rack',
-            'type'               => 'Dell PowerEdge R750',
-            'satuan'             => 'Unit',
-            'jumlah_unit'        => 2,
-            'harga_satuan'       => 75000000,
+            'type' => 'Dell PowerEdge R750',
+            'satuan' => 'Unit',
+            'jumlah_unit' => 2,
+            'harga_satuan' => 75000000,
         ];
 
         $response = $this->post('/administrasi/capex/rab', $payload);
@@ -109,8 +110,8 @@ class CapexTest extends TestCase
 
         $this->assertDatabaseHas('capex_rab', [
             'kel_barang_kapital' => 'Server & Network Rack',
-            'type'               => 'Dell PowerEdge R750',
-            'total_rp'           => 150000000,
+            'type' => 'Dell PowerEdge R750',
+            'total_rp' => 150000000,
         ]);
     }
 
@@ -120,37 +121,37 @@ class CapexTest extends TestCase
         $this->assertNotNull($rab);
 
         $payload = [
-            'tahun'              => $rab->tahun,
-            'lokasi'             => $rab->lokasi,
+            'tahun' => $rab->tahun,
+            'lokasi' => $rab->lokasi,
             'kel_barang_kapital' => 'Updated Item Name',
-            'type'               => 'Updated Type',
-            'satuan'             => 'Unit',
-            'jumlah_unit'        => 3,
-            'harga_satuan'       => 10000000,
+            'type' => 'Updated Type',
+            'satuan' => 'Unit',
+            'jumlah_unit' => 3,
+            'harga_satuan' => 10000000,
         ];
 
-        $response = $this->put('/administrasi/capex/rab/' . $rab->rab_id, $payload);
-        $response->assertRedirect('/administrasi/capex?year=' . $rab->tahun . '&location=' . $rab->lokasi);
+        $response = $this->put('/administrasi/capex/rab/'.$rab->rab_id, $payload);
+        $response->assertRedirect('/administrasi/capex?year='.$rab->tahun.'&location='.$rab->lokasi);
 
         $this->assertDatabaseHas('capex_rab', [
-            'rab_id'             => $rab->rab_id,
+            'rab_id' => $rab->rab_id,
             'kel_barang_kapital' => 'Updated Item Name',
-            'total_rp'           => 30000000,
+            'total_rp' => 30000000,
         ]);
     }
 
     public function test_can_delete_rab_record()
     {
         $rab = CapexRab::create([
-            'tahun'              => 2026,
-            'lokasi'             => 'mess',
+            'tahun' => 2026,
+            'lokasi' => 'mess',
             'kel_barang_kapital' => 'Item to Delete',
-            'jumlah_unit'        => 1,
-            'harga_satuan'       => 1000000,
-            'total_rp'           => 1000000,
+            'jumlah_unit' => 1,
+            'harga_satuan' => 1000000,
+            'total_rp' => 1000000,
         ]);
 
-        $response = $this->delete('/administrasi/capex/rab/' . $rab->rab_id);
+        $response = $this->delete('/administrasi/capex/rab/'.$rab->rab_id);
         $response->assertRedirect('/administrasi/capex?year=2026&location=mess');
 
         $this->assertDatabaseMissing('capex_rab', [
@@ -161,14 +162,14 @@ class CapexTest extends TestCase
     public function test_can_create_realisasi_record()
     {
         $payload = [
-            'tahun'              => 2026,
-            'lokasi'             => 'kantor',
+            'tahun' => 2026,
+            'lokasi' => 'kantor',
             'kel_barang_kapital' => 'Komputer & Laptop',
-            'nama_barang'        => 'Lenovo ThinkPad P16',
-            'type'               => 'ThinkPad',
-            'tanggal'            => '2026-04-12',
-            'debit'              => 32000000,
-            'kredit'             => 0,
+            'nama_barang' => 'Lenovo ThinkPad P16',
+            'type' => 'ThinkPad',
+            'tanggal' => '2026-04-12',
+            'debit' => 32000000,
+            'kredit' => 0,
         ];
 
         $response = $this->post('/administrasi/capex/realisasi', $payload);
@@ -176,7 +177,7 @@ class CapexTest extends TestCase
 
         $this->assertDatabaseHas('capex_realisasi', [
             'nama_barang' => 'Lenovo ThinkPad P16',
-            'total_rp'    => 32000000,
+            'total_rp' => 32000000,
         ]);
     }
 
@@ -186,37 +187,37 @@ class CapexTest extends TestCase
         $this->assertNotNull($realisasi);
 
         $payload = [
-            'tahun'              => $realisasi->tahun,
-            'lokasi'             => $realisasi->lokasi,
+            'tahun' => $realisasi->tahun,
+            'lokasi' => $realisasi->lokasi,
             'kel_barang_kapital' => $realisasi->kel_barang_kapital,
-            'nama_barang'        => 'Updated Realisasi Name',
-            'type'               => 'Updated Model',
-            'tanggal'            => '2026-05-20',
-            'debit'              => 25000000,
-            'kredit'             => 5000000,
+            'nama_barang' => 'Updated Realisasi Name',
+            'type' => 'Updated Model',
+            'tanggal' => '2026-05-20',
+            'debit' => 25000000,
+            'kredit' => 5000000,
         ];
 
-        $response = $this->put('/administrasi/capex/realisasi/' . $realisasi->realisasi_id, $payload);
-        $response->assertRedirect('/administrasi/capex?year=' . $realisasi->tahun . '&location=' . $realisasi->lokasi);
+        $response = $this->put('/administrasi/capex/realisasi/'.$realisasi->realisasi_id, $payload);
+        $response->assertRedirect('/administrasi/capex?year='.$realisasi->tahun.'&location='.$realisasi->lokasi);
 
         $this->assertDatabaseHas('capex_realisasi', [
             'realisasi_id' => $realisasi->realisasi_id,
-            'nama_barang'  => 'Updated Realisasi Name',
-            'total_rp'     => 20000000,
+            'nama_barang' => 'Updated Realisasi Name',
+            'total_rp' => 20000000,
         ]);
     }
 
     public function test_can_delete_realisasi_record()
     {
         $realisasi = CapexRealisasi::create([
-            'tahun'              => 2026,
-            'lokasi'             => 'mess',
+            'tahun' => 2026,
+            'lokasi' => 'mess',
             'kel_barang_kapital' => 'Mess Asset',
-            'nama_barang'        => 'Item to Delete',
-            'total_rp'           => 5000000,
+            'nama_barang' => 'Item to Delete',
+            'total_rp' => 5000000,
         ]);
 
-        $response = $this->delete('/administrasi/capex/realisasi/' . $realisasi->realisasi_id);
+        $response = $this->delete('/administrasi/capex/realisasi/'.$realisasi->realisasi_id);
         $response->assertRedirect('/administrasi/capex?year=2026&location=mess');
 
         $this->assertDatabaseMissing('capex_realisasi', [
@@ -258,17 +259,17 @@ class CapexTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('import_rab.csv', $csvContent);
 
         $response = $this->post('/administrasi/capex/import', [
-            'csv_file'    => $file,
+            'csv_file' => $file,
             'import_type' => 'auto',
             'import_mode' => 'append',
-            'tahun'       => 2026,
+            'tahun' => 2026,
         ]);
 
         $response->assertRedirect('/administrasi/capex?year=2026');
         $this->assertDatabaseHas('capex_rab', [
-            'rab_id'             => 999,
+            'rab_id' => 999,
             'kel_barang_kapital' => 'Testing Import CSV',
-            'total_rp'           => 5000000,
+            'total_rp' => 5000000,
         ]);
     }
 
@@ -280,17 +281,17 @@ class CapexTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('import_realisasi.csv', $csvContent);
 
         $response = $this->post('/administrasi/capex/import', [
-            'csv_file'    => $file,
+            'csv_file' => $file,
             'import_type' => 'auto',
             'import_mode' => 'append',
-            'tahun'       => 2026,
+            'tahun' => 2026,
         ]);
 
         $response->assertRedirect('/administrasi/capex?year=2026');
         $this->assertDatabaseHas('capex_realisasi', [
             'realisasi_id' => 888,
-            'nama_barang'  => 'Barang Rel Test',
-            'total_rp'     => 10000000,
+            'nama_barang' => 'Barang Rel Test',
+            'total_rp' => 10000000,
         ]);
     }
 }

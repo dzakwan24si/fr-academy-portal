@@ -1,0 +1,959 @@
+{
+  "code": "estate",
+  "name": "Estate Technical Competency Dictionary",
+  "year": 2026,
+  "status": "published",
+  "positions": [
+    "Asisten Kebun",
+    "Asisten Kepala",
+    "Manager Kebun",
+    "GM / Plantation Controller"
+  ],
+  "competencies": [
+    {
+      "order": 1,
+      "name": "Replanting & Land Preparation",
+      "definition": "Mengelola peremajaan dan persiapan lahan agar kebun baru dibangun sesuai design, standar agronomi, konservasi, jadwal, biaya dan target establishment.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami tahapan replanting/land preparation dan melakukan QC dengan panduan.",
+          "Mandiri mengawasi pekerjaan blok sesuai design, SOP dan progress.",
+          "Menganalisis gap quality/progress serta mengendalikan corrective action.",
+          "Menjadi rujukan execution replanting dan menghasilkan blok establishment yang menjadi benchmark."
+        ],
+        "Asisten Kepala": [
+          "Memahami standard lintas blok dan melakukan verification.",
+          "Mandiri mengkoordinasikan quality, contractor dan progress beberapa blok.",
+          "Menganalisis bottleneck, quality risk dan recovery schedule.",
+          "Membangun standardisasi execution dan capability Asisten."
+        ],
+        "Manager Kebun": [
+          "Memahami development plan, budget, schedule dan agronomic risk.",
+          "Mengelola project replanting estate secara end-to-end.",
+          "Mengoptimalkan quality-time-cost dan early field performance.",
+          "Membangun replanting operating model yang dapat direplikasi."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami portfolio umur tanaman dan kebutuhan replanting lintas estate.",
+          "Menetapkan priorities, standard dan resource direction.",
+          "Mengoptimalkan portfolio schedule, capex dan risk.",
+          "Menentukan strategic replanting roadmap, governance dan benchmark."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Replanting sequence",
+          "Land clearing/chipping",
+          "Conservation & zero-burning principles",
+          "Road/drain/platform/terrace layout",
+          "Planting density & lining",
+          "Project quality-time-cost"
+        ],
+        "skill": [
+          "Membaca design/layout",
+          "Field QC",
+          "Progress/contractor control",
+          "Volume/resource planning",
+          "Risk identification",
+          "Project review"
+        ],
+        "development": [
+          "Training Replanting & Land Preparation",
+          "Self-learning SOP/design/manual",
+          "OJT replanting project",
+          "Coaching Agronomist/Engineering",
+          "Learning Project quality-time-cost",
+          "Benchmark replanting estate"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "name": "Pembibitan (Nursery Management)",
+      "definition": "Mengelola pre-nursery dan main nursery untuk menghasilkan bibit sehat, seragam, true-to-type dan siap tanam sesuai kebutuhan program planting.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami nursery SOP dan melakukan pekerjaan/QC dasar dengan panduan.",
+          "Mandiri mengontrol watering, fertilizing, culling, pest/disease dan seedling quality.",
+          "Menganalisis growth abnormality, mortality dan quality gap.",
+          "Menjadi reference nursery execution dan menghasilkan seedling quality konsisten."
+        ],
+        "Asisten Kepala": [
+          "Memahami nursery quality indicators dan melakukan verification.",
+          "Mengkalibrasi quality/culling dan mengendalikan program nursery.",
+          "Menganalisis systemic growth/mortality issue dan recovery.",
+          "Membangun nursery quality control dan capability tim."
+        ],
+        "Manager Kebun": [
+          "Memahami nursery capacity, demand, cost dan planting schedule.",
+          "Mengelola nursery plan, resource dan quality assurance.",
+          "Mengoptimalkan seedling readiness, cost, uniformity dan supply timing.",
+          "Membangun nursery management system/benchmark estate."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami regional planting demand dan nursery risk.",
+          "Menetapkan capacity/quality priorities dan governance.",
+          "Mengoptimalkan nursery network/resource dan risk.",
+          "Menentukan regional nursery strategy dan benchmark."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Seed/seedling handling",
+          "Pre-nursery & main nursery",
+          "Watering & fertilizing",
+          "Culling/selection criteria",
+          "Pest/disease nursery",
+          "Nursery capacity & cost"
+        ],
+        "skill": [
+          "Seedling inspection",
+          "Culling",
+          "Water/fertilizer control",
+          "Growth/mortality analysis",
+          "Inventory/readiness planning",
+          "Quality assurance"
+        ],
+        "development": [
+          "Training Nursery Management",
+          "Self-learning nursery manual",
+          "OJT nursery rotation",
+          "Coaching Agronomist/SME",
+          "Learning Project mortality/quality improvement",
+          "Benchmark nursery"
+        ]
+      }
+    },
+    {
+      "order": 3,
+      "name": "Planting & Early Field Establishment",
+      "definition": "Memastikan penanaman dan establishment awal menghasilkan populasi, posisi, kualitas tanam dan pertumbuhan awal sesuai standar.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami lining, planting point dan planting standard dengan panduan.",
+          "Mandiri mengontrol planting quality, supply dan early upkeep afdeling.",
+          "Menganalisis planting defect, mortality dan establishment gap.",
+          "Menjadi benchmark planting/establishment quality."
+        ],
+        "Asisten Kepala": [
+          "Memahami quality parameter lintas blok.",
+          "Mengkalibrasi planting quality dan progress.",
+          "Menganalisis recurring defect dan recovery.",
+          "Membangun planting QC system dan capability Asisten."
+        ],
+        "Manager Kebun": [
+          "Memahami planting plan, resource, schedule dan early performance.",
+          "Mengelola planting/establishment estate.",
+          "Mengoptimalkan quality-time-cost-survival.",
+          "Membangun establishment operating model."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami portfolio planting progress/risk.",
+          "Menetapkan priorities/standard/resource.",
+          "Mengoptimalkan cross-estate establishment performance.",
+          "Menentukan planting governance dan benchmark."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Lining & planting density",
+          "Planting hole/technique",
+          "Seedling handling",
+          "Legume cover/early upkeep",
+          "Supply/mortality",
+          "Early growth indicators"
+        ],
+        "skill": [
+          "Planting QC",
+          "Population count",
+          "Mortality/supply analysis",
+          "Progress control",
+          "Early growth monitoring",
+          "Corrective action"
+        ],
+        "development": [
+          "Training Planting Standard",
+          "SOP/self-learning",
+          "OJT planting QC",
+          "Field calibration",
+          "Learning Project mortality reduction",
+          "Benchmark new planting"
+        ]
+      }
+    },
+    {
+      "order": 4,
+      "name": "Kastrasi & Sanitasi",
+      "definition": "Mengelola pembuangan bunga/buah awal dan sanitasi tanaman secara tepat untuk mendukung vegetative growth, kebersihan pokok dan kesiapan menuju produksi.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami tujuan, umur/fase dan standar kastrasi-sanitasi dengan panduan.",
+          "Mandiri mengontrol kualitas, interval dan completeness pekerjaan.",
+          "Menganalisis missed palm/quality gap dan dampaknya terhadap tanaman.",
+          "Menjadi rujukan kualitas kastrasi-sanitasi afdeling."
+        ],
+        "Asisten Kepala": [
+          "Memahami parameter lintas blok dan melakukan verification.",
+          "Mengkalibrasi standard dan progress antar afdeling.",
+          "Menganalisis recurring quality gap dan corrective action.",
+          "Membangun control system dan coaching Asisten."
+        ],
+        "Manager Kebun": [
+          "Memahami hubungan kastrasi/sanitasi dengan crop establishment dan labour cost.",
+          "Mengelola program estate dan quality assurance.",
+          "Mengoptimalkan timing, quality dan resource.",
+          "Membangun standard execution estate."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami variasi program/risk lintas estate.",
+          "Menetapkan standard dan review performance.",
+          "Mengoptimalkan resource/quality secara lintas estate.",
+          "Menentukan governance dan benchmark."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Tujuan fisiologis kastrasi",
+          "Timing/frequency",
+          "Sanitation standard",
+          "Transition TBM-TM",
+          "Work quality & safety"
+        ],
+        "skill": [
+          "Identifikasi pokok/organ target",
+          "QC completeness",
+          "Progress monitoring",
+          "Labour planning",
+          "Field verification"
+        ],
+        "development": [
+          "Technical Clinic Kastrasi & Sanitasi",
+          "Self-learning SOP",
+          "OJT field calibration",
+          "Coaching Askep/Agronomist",
+          "Learning Project quality improvement"
+        ]
+      }
+    },
+    {
+      "order": 5,
+      "name": "Pruning & Canopy Management",
+      "definition": "Mengelola pelepah dan canopy untuk menjaga keseimbangan fotosintesis, akses panen, kebersihan pokok dan produktivitas.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami standard jumlah/susunan pelepah dan melakukan QC dengan panduan.",
+          "Mandiri mengontrol pruning quality dan mencegah over/under pruning.",
+          "Menganalisis canopy/pruning gap dan dampak panen/produksi.",
+          "Menjadi reference pruning quality afdeling."
+        ],
+        "Asisten Kepala": [
+          "Memahami standard berdasarkan umur/kondisi tanaman.",
+          "Mengkalibrasi pruning quality antar afdeling.",
+          "Menganalisis recurring defect dan corrective action.",
+          "Membangun pruning control dan capability Asisten."
+        ],
+        "Manager Kebun": [
+          "Memahami canopy-yield-harvesting relationship.",
+          "Mengelola pruning strategy dan labour/resource estate.",
+          "Mengoptimalkan canopy management dan harvest accessibility.",
+          "Membangun estate pruning standard/benchmark."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami variation/risk lintas estate.",
+          "Menetapkan technical direction dan benchmark.",
+          "Mengevaluasi impact dan systemic gap.",
+          "Menentukan regional canopy management governance."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Palm canopy physiology",
+          "Frond retention standard",
+          "Over/under pruning impact",
+          "Frond stacking",
+          "Harvest accessibility"
+        ],
+        "skill": [
+          "Count/assess frond",
+          "Pruning QC",
+          "Diagnose over/under pruning",
+          "Labour planning",
+          "Trend/impact review"
+        ],
+        "development": [
+          "Training Pruning/Canopy",
+          "Self-learning agronomy literature",
+          "OJT pruning calibration",
+          "Coaching Agronomist",
+          "Learning Project pruning quality",
+          "Benchmark high-yield block"
+        ]
+      }
+    },
+    {
+      "order": 6,
+      "name": "Water Management & Drainage",
+      "definition": "Mengelola tata air, drainage, water table dan konservasi air sesuai kondisi tanah/topografi untuk menjaga akses, kesehatan tanaman dan produktivitas.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami drain/field water standard dan melakukan inspeksi dengan panduan.",
+          "Mandiri mengontrol drain condition, water flow dan tindakan rutin.",
+          "Menganalisis waterlogging/drought/access gap dan prioritas tindakan.",
+          "Menjadi reference water control pada scope afdeling."
+        ],
+        "Asisten Kepala": [
+          "Memahami water system lintas afdeling.",
+          "Mengkalibrasi kondisi dan menentukan priority maintenance.",
+          "Menganalisis systemic drainage/water issue dan recovery.",
+          "Membangun water-control discipline estate."
+        ],
+        "Manager Kebun": [
+          "Memahami hydrology estate, seasonal risk dan production impact.",
+          "Mengelola water management plan/resource/budget.",
+          "Mengoptimalkan water table, drainage, conservation dan access.",
+          "Membangun resilient water management system."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami regional hydrological/terrain risk.",
+          "Menetapkan priorities, design principle dan governance.",
+          "Mengoptimalkan portfolio investment/risk mitigation.",
+          "Menentukan regional water management strategy."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Hydrology basics",
+          "Drainage network",
+          "Water table principles",
+          "Peat/mineral considerations",
+          "Flood/drought risk",
+          "Water conservation"
+        ],
+        "skill": [
+          "Water-level observation",
+          "Drain inspection",
+          "Problem mapping",
+          "Maintenance prioritization",
+          "Seasonal planning",
+          "Risk mitigation"
+        ],
+        "development": [
+          "Training Water Management",
+          "Self-learning hydrology/SOP",
+          "OJT drain/water-level survey",
+          "Coaching Engineering/Agronomist",
+          "Learning Project flood/water-table control",
+          "Benchmark wet/peat estate"
+        ]
+      }
+    },
+    {
+      "order": 7,
+      "name": "Pemeliharaan Jalan, Jembatan & Akses Produksi",
+      "definition": "Menjaga road network, bridge/culvert dan akses produksi agar panen, material, tenaga dan unit dapat bergerak aman, tepat waktu dan efisien.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami road/bridge/access standard dan inspeksi dengan panduan.",
+          "Mandiri mengontrol kondisi, maintenance rutin dan reporting afdeling.",
+          "Menganalisis recurring damage/bottleneck dan corrective action.",
+          "Menjadi reference field access readiness afdeling."
+        ],
+        "Asisten Kepala": [
+          "Memahami service level lintas afdeling.",
+          "Menentukan maintenance priority dan mengkalibrasi quality.",
+          "Menganalisis systemic access issue dan seasonal readiness.",
+          "Membangun road/bridge maintenance control estate."
+        ],
+        "Manager Kebun": [
+          "Memahami network requirement, lifecycle, budget dan production impact.",
+          "Mengelola annual/seasonal road & bridge program.",
+          "Mengoptimalkan maintenance-capex-production trade-off.",
+          "Membangun resilient access management system."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami portfolio infrastructure risk.",
+          "Menetapkan priorities, standard dan capital direction.",
+          "Mengoptimalkan cross-estate investment/risk.",
+          "Menentukan regional infrastructure strategy/governance."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Road classes/standards",
+          "Bridge/culvert basics",
+          "Drain-road interaction",
+          "Maintenance cycle",
+          "Material/equipment needs",
+          "Safety/load/access risk"
+        ],
+        "skill": [
+          "Condition survey",
+          "Damage classification",
+          "Maintenance QC",
+          "Volume/cost estimation",
+          "Priority planning",
+          "Project/contractor control"
+        ],
+        "development": [
+          "Training Road & Infrastructure",
+          "Self-learning engineering standard/SOP",
+          "OJT road condition survey",
+          "Coaching Engineering/Traksi",
+          "Learning Project road readiness",
+          "Benchmark infrastructure"
+        ]
+      }
+    },
+    {
+      "order": 8,
+      "name": "Agronomy, Field Upkeep & Crop Management",
+      "definition": "Menjaga kondisi tanaman dan field upkeep untuk mengoptimalkan crop health, growth dan productive potential.",
+      "levels": {
+        "Asisten Kebun": [
+          "Menjelaskan standar TBM/TM/upkeep dan inspeksi dengan panduan.",
+          "Mandiri mengontrol agronomy execution afdeling.",
+          "Menganalisis crop/field gap dan corrective action.",
+          "Mengoptimalkan afdeling dan menjadi technical reference."
+        ],
+        "Asisten Kepala": [
+          "Memahami parameter lintas afdeling dan verification.",
+          "Mengkalibrasi kualitas antar afdeling.",
+          "Menganalisis pattern gap dan memimpin recovery.",
+          "Membangun standardisasi dan capability Asisten."
+        ],
+        "Manager Kebun": [
+          "Memahami agronomy-yield-cost relationship.",
+          "Mengelola agronomy plan/resource estate.",
+          "Mengoptimalkan program berbasis yield gap/risk.",
+          "Membangun estate agronomy operating model."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami variasi/risk antar estate.",
+          "Menetapkan regional priorities/benchmark.",
+          "Mendesain cross-estate intervention.",
+          "Menentukan strategic agronomy direction/governance."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "TBM/TM agronomy",
+          "Weed/upkeep standards",
+          "Crop indicators",
+          "Soil-water-crop relationship",
+          "Agronomic risk"
+        ],
+        "skill": [
+          "Field diagnosis",
+          "QC upkeep",
+          "Block prioritization",
+          "Gap analysis",
+          "Crop response monitoring"
+        ],
+        "development": [
+          "KKS Agronomy",
+          "SOP/literature",
+          "Field coaching",
+          "OJT block diagnosis",
+          "Learning Project crop recovery",
+          "Benchmarking"
+        ]
+      }
+    },
+    {
+      "order": 9,
+      "name": "Manuring, Soil Fertility & Nutrient Management",
+      "definition": "Memastikan nutrient program efektif melalui recommendation, logistics, application quality dan crop response.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami recommendation/application dasar.",
+          "Mandiri mengontrol aplikasi/progress.",
+          "Menganalisis application gap/crop response.",
+          "Mengoptimalkan execution afdeling."
+        ],
+        "Asisten Kepala": [
+          "Memahami QC lintas afdeling.",
+          "Mengkalibrasi quality/progress.",
+          "Menganalisis logistics-application gap.",
+          "Membangun fertilizing control system."
+        ],
+        "Manager Kebun": [
+          "Memahami nutrient-yield-budget linkage.",
+          "Mengelola annual program.",
+          "Mengoptimalkan timing/effectiveness/cost.",
+          "Membangun nutrient execution model."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami regional nutrient risk.",
+          "Menetapkan priorities/governance.",
+          "Mengevaluasi effectiveness lintas estate.",
+          "Menentukan regional nutrient strategy."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Nutrient functions/deficiency",
+          "Recommendation",
+          "Application principles",
+          "Soil/rainfall factors",
+          "Control & crop response"
+        ],
+        "skill": [
+          "Deficiency identification",
+          "Application QC",
+          "Reconciliation",
+          "Variance analysis",
+          "Effectiveness review"
+        ],
+        "development": [
+          "KKS Nutrient",
+          "SOP/literature",
+          "Agronomist coaching",
+          "OJT fertilizer QC",
+          "Case analysis",
+          "Learning Project"
+        ]
+      }
+    },
+    {
+      "order": 10,
+      "name": "HPT - Pest & Disease Management",
+      "definition": "Melakukan early detection, census, threshold-based decision, treatment dan effectiveness monitoring dengan prinsip IPM.",
+      "levels": {
+        "Asisten Kebun": [
+          "Mengenali HPT dan census/treatment dengan panduan.",
+          "Mandiri menjalankan control sesuai threshold.",
+          "Menganalisis trend/efficacy.",
+          "Menjadi reference early detection/effectiveness."
+        ],
+        "Asisten Kepala": [
+          "Memahami risk lintas afdeling.",
+          "Mengkalibrasi census/treatment.",
+          "Menganalisis outbreak/recovery.",
+          "Membangun Klinik HPT/capability."
+        ],
+        "Manager Kebun": [
+          "Memahami estate risk profile.",
+          "Mengelola plan/budget/response.",
+          "Mengoptimalkan IPM/outbreak management.",
+          "Membangun resilient HPT system."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami regional outbreak risk.",
+          "Menetapkan governance/escalation.",
+          "Memimpin cross-estate response.",
+          "Menentukan regional IPM strategy."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "HPT identification",
+          "Census/threshold",
+          "IPM",
+          "Treatment",
+          "Chemical/environmental safety"
+        ],
+        "skill": [
+          "Identification/census",
+          "Mapping",
+          "Treatment QC",
+          "Trend analysis",
+          "Efficacy monitoring"
+        ],
+        "development": [
+          "Klinik HPT",
+          "Field guide/research",
+          "SME coaching",
+          "OJT census",
+          "Outbreak case",
+          "Learning Project"
+        ]
+      }
+    },
+    {
+      "order": 11,
+      "name": "Harvesting, Crop Recovery & Yield Making",
+      "definition": "Memastikan potensi produksi dikonversi menjadi crop harvested melalui rotasi, ripeness, losses, output dan evacuation yang terkendali.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami ripeness, rotasi, AKP/BJR, losses dan output.",
+          "Mandiri mengelola ancak/mutu/losses/output.",
+          "Menganalisis yield gap dan recovery.",
+          "Menjadi benchmark Yield Making afdeling."
+        ],
+        "Asisten Kepala": [
+          "Memahami indikator lintas afdeling.",
+          "Mengendalikan rotasi/losses/output.",
+          "Menganalisis comparative yield gap.",
+          "Membangun harvesting control system."
+        ],
+        "Manager Kebun": [
+          "Memahami value drivers yield.",
+          "Mengintegrasikan manpower-road-transport-harvest.",
+          "Memimpin estate Yield Making.",
+          "Menciptakan sustainable yield system."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami portfolio yield gap.",
+          "Menetapkan yield priorities/benchmark.",
+          "Memimpin cross-estate recovery.",
+          "Membentuk regional Yield Making strategy."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Ripeness standard",
+          "AKP/BJR/rotation",
+          "Losses",
+          "Yield gap",
+          "Evacuation constraints"
+        ],
+        "skill": [
+          "Taksasi",
+          "Harvest QC",
+          "Loss census",
+          "Yield analysis",
+          "Recovery planning"
+        ],
+        "development": [
+          "Yield Making Training",
+          "SOP/literature",
+          "Field coaching",
+          "OJT inspection",
+          "Data case",
+          "Learning Project",
+          "Benchmark"
+        ]
+      }
+    },
+    {
+      "order": 12,
+      "name": "Production Planning, Manpower & Work Organization",
+      "definition": "Menerjemahkan target menjadi workload, manpower, daily execution dan productivity control.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami norma dan plan dengan arahan.",
+          "Mandiri mengelola daily workforce.",
+          "Menganalisis productivity gap.",
+          "Menjadi benchmark work organization."
+        ],
+        "Asisten Kepala": [
+          "Memahami requirement beberapa afdeling.",
+          "Menyeimbangkan manpower.",
+          "Menganalisis structural productivity gap.",
+          "Membangun workforce control system."
+        ],
+        "Manager Kebun": [
+          "Memahami estate manpower model.",
+          "Menetapkan deployment/target.",
+          "Mengoptimalkan workforce productivity.",
+          "Menciptakan sustainable manpower strategy."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami workforce pattern lintas estate.",
+          "Menetapkan benchmark/priorities.",
+          "Mengoptimalkan allocation/model.",
+          "Menentukan regional workforce strategy."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Work norms",
+          "Manpower planning",
+          "Productivity standard",
+          "Work organization",
+          "Labour-cost relation"
+        ],
+        "skill": [
+          "Workload calculation",
+          "Allocation/briefing",
+          "Tracking",
+          "Variance analysis",
+          "Workforce balancing"
+        ],
+        "development": [
+          "Supervisory/Planning Training",
+          "Work norms self-learning",
+          "Coaching",
+          "OJT planning",
+          "Manpower case",
+          "Productivity project"
+        ]
+      }
+    },
+    {
+      "order": 13,
+      "name": "Cost Control, Budget & Operational Economics",
+      "definition": "Mengendalikan cost driver dan membuat trade-off yang menjaga productive capacity.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami budget/cost dasar afdeling.",
+          "Mandiri mengontrol HK/material/cost.",
+          "Menganalisis variance/unit cost.",
+          "Mengoptimalkan cost afdeling."
+        ],
+        "Asisten Kepala": [
+          "Memahami cost driver lintas afdeling.",
+          "Mengendalikan variance/resource.",
+          "Menganalisis comparative cost.",
+          "Membangun cost discipline."
+        ],
+        "Manager Kebun": [
+          "Memahami estate cost structure.",
+          "Mengelola budget/forecast.",
+          "Mengoptimalkan cost-productivity trade-off.",
+          "Membangun efficiency model."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami portfolio cost.",
+          "Menetapkan guardrail/resource.",
+          "Mengarahkan cost transformation.",
+          "Menentukan regional cost strategy."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Budget",
+          "HPP/cost drivers",
+          "Variance",
+          "Unit cost",
+          "Operational economics"
+        ],
+        "skill": [
+          "Monitoring",
+          "Variance analysis",
+          "Forecast",
+          "Cost diagnosis",
+          "Benefit calculation"
+        ],
+        "development": [
+          "Cost Control Training",
+          "Business literature",
+          "Finance coaching",
+          "Case analysis",
+          "Efficiency project",
+          "Benchmark"
+        ]
+      }
+    },
+    {
+      "order": 14,
+      "name": "PIMS, Data Quality & Performance Analytics",
+      "definition": "Menjamin data benar, tepat waktu dan diubah menjadi insight, keputusan dan action.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami workflow/KPI dasar.",
+          "Menjamin data afdeling/dashboard.",
+          "Menganalisis trend/variance.",
+          "Mengembangkan data discipline."
+        ],
+        "Asisten Kepala": [
+          "Memahami data flow lintas afdeling.",
+          "Memvalidasi/comparative dashboard.",
+          "Mengidentifikasi pattern/root cause.",
+          "Membangun analytics capability."
+        ],
+        "Manager Kebun": [
+          "Memahami integrated estate data.",
+          "Menggunakan data untuk resource decisions.",
+          "Membangun forward-looking review.",
+          "Menciptakan data-driven operating rhythm."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami cross-estate KPI.",
+          "Menggunakan portfolio dashboard.",
+          "Menganalisis systemic pattern.",
+          "Menentukan data governance/strategic insight."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "PIMS workflow",
+          "Data quality",
+          "KPI",
+          "Trend/variance",
+          "Dashboard"
+        ],
+        "skill": [
+          "Verification",
+          "Reconciliation",
+          "Dashboard interpretation",
+          "RCA",
+          "Insight-to-action"
+        ],
+        "development": [
+          "PIMS Training",
+          "Manual",
+          "Coaching",
+          "OJT reconciliation",
+          "Dashboard case",
+          "Data quality project"
+        ]
+      }
+    },
+    {
+      "order": 15,
+      "name": "Mechanisation, Traksi & Operational Reliability",
+      "definition": "Memastikan asset/transport mendukung produksi melalui utilization, reliability, maintenance dan cost.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami kebutuhan unit/downtime.",
+          "Mengkoordinasikan unit afdeling.",
+          "Menganalisis bottleneck traksi.",
+          "Mengoptimalkan interface afdeling-traksi."
+        ],
+        "Asisten Kepala": [
+          "Memahami service requirement.",
+          "Mengendalikan allocation/issues.",
+          "Menganalisis downtime/restan.",
+          "Membangun service-control discipline."
+        ],
+        "Manager Kebun": [
+          "Memahami fleet capacity/reliability/cost.",
+          "Mengintegrasikan traksi-production.",
+          "Mengoptimalkan utilization/reliability.",
+          "Membangun reliability operating system."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami regional fleet profile.",
+          "Menetapkan priorities/vendor governance.",
+          "Mengoptimalkan portfolio asset.",
+          "Menentukan mechanisation strategy."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Fleet basics",
+          "Utilization/downtime",
+          "Preventive maintenance",
+          "Transport/restan",
+          "Lifecycle cost"
+        ],
+        "skill": [
+          "Equipment planning",
+          "Utilization monitoring",
+          "Downtime classification",
+          "RCA",
+          "Capacity/cost analysis"
+        ],
+        "development": [
+          "Traksi Training",
+          "OEM/vendor training",
+          "Manual",
+          "Workshop OJT",
+          "Downtime case",
+          "Reliability project"
+        ]
+      }
+    },
+    {
+      "order": 16,
+      "name": "Quality, Sustainability, K3 & Compliance",
+      "definition": "Menjamin operasi memenuhi quality, safety, environmental, sustainability dan internal control.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami SOP/K3/control.",
+          "Mandiri menjaga compliance/evidence.",
+          "Menganalisis recurring non-conformity.",
+          "Membangun compliance culture."
+        ],
+        "Asisten Kepala": [
+          "Memahami requirement lintas afdeling.",
+          "Melakukan verification/closure.",
+          "Menganalisis systemic gap.",
+          "Membangun assurance discipline."
+        ],
+        "Manager Kebun": [
+          "Memahami estate risk/compliance.",
+          "Mengelola audit/risk.",
+          "Mengintegrasikan compliance.",
+          "Membangun high-reliability culture."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami portfolio risk.",
+          "Menetapkan assurance priorities.",
+          "Mengarahkan systemic correction.",
+          "Menentukan regional governance."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "K3",
+          "Environmental control",
+          "Sustainability",
+          "Audit/control",
+          "Integrity risk"
+        ],
+        "skill": [
+          "Hazard identification",
+          "Audit",
+          "NC analysis",
+          "CAPA",
+          "Risk assessment"
+        ],
+        "development": [
+          "K3/Sustainability Training",
+          "Standards/SOP",
+          "Field audit",
+          "HSE coaching",
+          "Incident case",
+          "Compliance project"
+        ]
+      }
+    },
+    {
+      "order": 17,
+      "name": "Technical Problem Solving & Continuous Improvement",
+      "definition": "Mendefinisikan masalah, menemukan root cause, menguji countermeasure dan mempertahankan hasil.",
+      "levels": {
+        "Asisten Kebun": [
+          "Memahami tools dan solve masalah rutin dengan panduan.",
+          "Mandiri RCA sederhana.",
+          "Menangani masalah kompleks afdeling.",
+          "Menjadi improvement champion."
+        ],
+        "Asisten Kepala": [
+          "Memahami RCA lintas afdeling.",
+          "Memimpin problem solving.",
+          "Menyelesaikan recurring/systemic issue.",
+          "Membangun problem-solving capability."
+        ],
+        "Manager Kebun": [
+          "Memahami improvement economics.",
+          "Memimpin estate project.",
+          "Membangun quantified portfolio.",
+          "Menciptakan CI operating system."
+        ],
+        "GM / Plantation Controller": [
+          "Memahami systemic constraints.",
+          "Menentukan improvement priorities.",
+          "Memimpin transformation lintas estate.",
+          "Membangun regional CI/innovation system."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Problem definition",
+          "Pareto",
+          "5 Why/Fishbone",
+          "PDCA",
+          "Benefit/standardization"
+        ],
+        "skill": [
+          "Evidence collection",
+          "RCA",
+          "Countermeasure",
+          "Impact measurement",
+          "Replication"
+        ],
+        "development": [
+          "Problem Solving Training",
+          "CI literature",
+          "Coaching",
+          "Case analysis",
+          "OPD/Learning Project",
+          "Benchmark/forum"
+        ]
+      }
+    }
+  ]
+}

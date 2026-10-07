@@ -13,6 +13,7 @@ class Vra extends Model
     protected static $logModuleName = 'VRA';
 
     protected $table = 'vra';
+
     protected $primaryKey = 'vra_id';
 
     protected $fillable = [
@@ -61,7 +62,7 @@ class Vra extends Model
         $names = [
             1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
             5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
+            9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember',
         ];
 
         return $names[$this->bulan] ?? '-';

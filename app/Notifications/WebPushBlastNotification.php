@@ -4,14 +4,15 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
-use NotificationChannels\WebPush\WebPushMessage;
 use NotificationChannels\WebPush\WebPushChannel;
+use NotificationChannels\WebPush\WebPushMessage;
 
 class WebPushBlastNotification extends Notification
 {
     use Queueable;
 
     public $title;
+
     public $body;
 
     public function __construct($title, $body)

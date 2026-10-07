@@ -8,12 +8,12 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasColumn('program_non_reguler', 'tahun')) {
+        if (! Schema::hasColumn('program_non_reguler', 'tahun')) {
             Schema::table('program_non_reguler', function (Blueprint $table) {
                 $table->integer('tahun')->nullable();
             });
         }
-        if (!Schema::hasColumn('program_reguler', 'tahun')) {
+        if (! Schema::hasColumn('program_reguler', 'tahun')) {
             Schema::table('program_reguler', function (Blueprint $table) {
                 $table->integer('tahun')->nullable();
             });

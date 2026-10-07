@@ -4,17 +4,16 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use NotificationChannels\WebPush\HasPushSubscriptions;
-use Illuminate\Notifications\Notifiable;
 
 class Trainee extends Model
 {
     use HasApiTokens, HasFactory, HasPushSubscriptions, Notifiable;
 
     protected $guarded = ['id'];
-    
+
     protected $appends = ['ui_data'];
 
     public function getUiDataAttribute()
@@ -28,7 +27,7 @@ class Trainee extends Model
             'university' => $this->university,
             'major' => $this->major,
             'status' => ucfirst($this->status),
-            'initials' => strtoupper(substr($this->name, 0, 2))
+            'initials' => strtoupper(substr($this->name, 0, 2)),
         ];
     }
 
@@ -36,7 +35,6 @@ class Trainee extends Model
     {
         return $this->belongsTo(TrainingProgram::class);
     }
-
 
     public function quizScores()
     {

@@ -10,14 +10,14 @@ trait HandlesCsvImports
     protected function detectCsvDelimiter(string $filePath): string
     {
         $handle = fopen($filePath, 'r');
-        if (!$handle) {
+        if (! $handle) {
             return ',';
         }
 
         $firstLine = fgets($handle);
         fclose($handle);
 
-        if (!$firstLine) {
+        if (! $firstLine) {
             return ',';
         }
 
@@ -39,10 +39,11 @@ trait HandlesCsvImports
     {
         $cleanHeaders = [];
         foreach ($rawHeaders as $idx => $h) {
-            $clean = strtolower(trim(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', (string)$h)));
+            $clean = strtolower(trim(preg_replace('/[\x00-\x1F\x80-\xFF]/', '', (string) $h)));
             $clean = str_replace([' ', '_', '-', '.', '/', '(', ')'], '', $clean);
             $cleanHeaders[$idx] = $clean;
         }
+
         return $cleanHeaders;
     }
 

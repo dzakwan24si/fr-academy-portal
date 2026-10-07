@@ -48,6 +48,7 @@
                                     'manage_tv_display'   => ['title' => 'Manajemen TV Display', 'desc' => 'Mengelola playlist & layar TV.'],
                                     'manage_events'       => ['title' => 'Manajemen Tema Event', 'desc' => 'Mengelola event & banner di homepage.'],
                                     'manage_roles'        => ['title' => 'Manajemen Role & Akses', 'desc' => 'Mengelola peran & hak akses (permissions).'],
+                                    'manage_competency'   => ['title' => 'Kelola Standar Kompetensi', 'desc' => 'Mengelola kamus kompetensi teknis, jabatan, dan butir indikator.'],
                                 ];
                             @endphp
 

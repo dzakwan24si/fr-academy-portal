@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Program\ProgramReguler;
 use App\Models\Program\ProgramNonReguler;
+use App\Models\Program\ProgramReguler;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
@@ -62,7 +62,7 @@ class ProgramBatchImportTest extends TestCase
     {
         $csv = implode("\n", [
             'Program_reguler_id,Nama_Program_reguler,Batch,Lokasi_training,Mulai_program,Selesai_program,jumlah_bulan_training,jumlah_hari,Total_training_days,Promosi_mandor,Fresh_Graduate,Total_orang,Uang_saku,jenis_program_reguler,Region,tanggal_pelaksanaan',
-            '888888,"FAT Multi-Line' . "\n" . 'Program",I-2026,FRLC Kubang,2026-01-01,2026-02-27,6,180,1584,2,31,33,155000000,Training Reguler - Staf,Riau,"[""2026-01-01""]"',
+            '888888,"FAT Multi-Line'."\n".'Program",I-2026,FRLC Kubang,2026-01-01,2026-02-27,6,180,1584,2,31,33,155000000,Training Reguler - Staf,Riau,"[""2026-01-01""]"',
         ]);
 
         $response = $this->post('/administrasi/program-batch/import', [

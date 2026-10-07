@@ -1,13 +1,15 @@
 <?php
 
-require __DIR__ . '/../vendor/autoload.php';
-$app = require __DIR__ . '/../bootstrap/app.php';
-$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+require __DIR__.'/../vendor/autoload.php';
+$app = require __DIR__.'/../bootstrap/app.php';
+$app->make(Kernel::class)->bootstrap();
 
-use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\Api\V1\TrainingRecordExportController;
 use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
-use App\Http\Controllers\Api\V1\TrainingRecordExportController;
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 DB::transaction(function () {
     $prog = ProgramReguler::create([
@@ -45,12 +47,12 @@ DB::transaction(function () {
         'status' => 'valid',
     ]);
 
-    $controller = new TrainingRecordExportController();
-    $request = Illuminate\Http\Request::create('/api/v1/training-records/export', 'GET', ['since' => '2026-10-06']);
+    $controller = new TrainingRecordExportController;
+    $request = Request::create('/api/v1/training-records/export', 'GET', ['since' => '2026-10-06']);
     $response = json_decode($controller->export($request)->getContent(), true);
 
     echo "--- SAMPLE RESPONSE ROW FOR REGULER ---\n";
-    echo json_encode($response['data'][0], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) . "\n";
+    echo json_encode($response['data'][0], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)."\n";
 
     DB::rollBack();
 });

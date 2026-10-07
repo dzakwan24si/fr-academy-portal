@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class PushNotificationController extends Controller
 {
@@ -13,11 +12,11 @@ class PushNotificationController extends Controller
         $request->validate([
             'endpoint' => 'required',
             'keys.auth' => 'required',
-            'keys.p256dh' => 'required'
+            'keys.p256dh' => 'required',
         ]);
 
         $trainee = $request->user();
-        if (!$trainee) {
+        if (! $trainee) {
             return response()->json(['message' => 'Unauthorized'], 401);
         }
 

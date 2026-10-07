@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\ActivityLog;
 use App\Models\Inventaris\Barang;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
@@ -18,15 +19,15 @@ class ActivityLogTest extends TestCase
 
         // 1. CREATE Event
         $barang = Barang::create([
-            'nama_asset'   => 'Laptop ThinkPad',
-            'satuan'       => 'Unit',
+            'nama_asset' => 'Laptop ThinkPad',
+            'satuan' => 'Unit',
             'jenis_lokasi' => 'Kantor',
-            'lokasi'       => 'Ruang IT',
+            'lokasi' => 'Ruang IT',
         ]);
 
         $this->assertDatabaseHas('activity_logs', [
-            'action'    => 'Tambah',
-            'module'    => 'Inventaris Barang',
+            'action' => 'Tambah',
+            'module' => 'Inventaris Barang',
             'user_name' => $user->name,
         ]);
 
@@ -68,24 +69,24 @@ class ActivityLogTest extends TestCase
     {
         // Old log (130 days old) inserted via DB table to bypass Eloquent timestamp setting
         $oldId = DB::table('activity_logs')->insertGetId([
-            'action'      => 'Tambah',
-            'module'      => 'Old Module',
+            'action' => 'Tambah',
+            'module' => 'Old Module',
             'description' => 'Old description',
-            'created_at'  => now()->subDays(130),
-            'updated_at'  => now()->subDays(130),
+            'created_at' => now()->subDays(130),
+            'updated_at' => now()->subDays(130),
         ]);
 
         // Recent log (5 days old)
         $newId = DB::table('activity_logs')->insertGetId([
-            'action'      => 'Tambah',
-            'module'      => 'New Module',
+            'action' => 'Tambah',
+            'module' => 'New Module',
             'description' => 'New description',
-            'created_at'  => now()->subDays(5),
-            'updated_at'  => now()->subDays(5),
+            'created_at' => now()->subDays(5),
+            'updated_at' => now()->subDays(5),
         ]);
 
         $this->artisan('activity-log:clean --days=120')
-             ->assertExitCode(0);
+            ->assertExitCode(0);
 
         $this->assertDatabaseMissing('activity_logs', ['id' => $oldId]);
         $this->assertDatabaseHas('activity_logs', ['id' => $newId]);
@@ -95,7 +96,7 @@ class ActivityLogTest extends TestCase
     {
         $this->authenticateUser();
 
-        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent(
+        $file = UploadedFile::fake()->createWithContent(
             'test_barang.csv',
             "NAMA ASSET,SATUAN,LOKASI,KETERANGAN\nKursi Kerja,Unit,Kantor,Bagus\n"
         );

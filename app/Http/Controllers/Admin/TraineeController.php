@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Imports\TraineesImport;
 use App\Models\Trainee;
 use App\Models\TrainingProgram;
 use Illuminate\Http\Request;
-use App\Imports\TraineesImport;
 
 class TraineeController extends Controller
 {
@@ -18,43 +18,45 @@ class TraineeController extends Controller
         $pasif = Trainee::where('status', 'pasif')->count();
         $resign = Trainee::where('status', 'resign')->count();
         $programs = TrainingProgram::all();
+
         return view('admin.trainees.index', compact('trainees', 'total', 'aktif', 'pasif', 'resign', 'programs'));
     }
 
     public function create()
     {
         $programs = TrainingProgram::all();
+
         return view('admin.trainees.create', compact('programs'));
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'nik'                 => 'required|string|max:255|unique:trainees,nik',
-            'name'                => 'required|string|max:255',
-            'origin'              => 'nullable|string|max:255',
-            'university'          => 'nullable|string|max:255',
-            'major'               => 'nullable|string|max:255',
-            'status'              => 'required|string',
+            'nik' => 'required|string|max:255|unique:trainees,nik',
+            'name' => 'required|string|max:255',
+            'origin' => 'nullable|string|max:255',
+            'university' => 'nullable|string|max:255',
+            'major' => 'nullable|string|max:255',
+            'status' => 'required|string',
             'training_program_id' => 'required|exists:training_programs,id',
             // OJT fields
-            'ojt_company_name'    => 'nullable|string|max:255',
-            'ojt_region'          => 'nullable|string|max:255',
-            'ojt_location_code'   => 'nullable|string|max:255',
+            'ojt_company_name' => 'nullable|string|max:255',
+            'ojt_region' => 'nullable|string|max:255',
+            'ojt_location_code' => 'nullable|string|max:255',
             // Resignation fields
-            'birth_place'         => 'nullable|string|max:255',
-            'birth_date'          => 'nullable|date',
-            'resign_reason'       => 'nullable|string',
-            'photo'               => 'nullable|image|max:2048',
-            'avg_inclass_score'   => 'nullable|numeric',
-            'inclass_rank'        => 'nullable|integer',
-            'avg_practice_score'  => 'nullable|numeric',
-            'practice_rank'       => 'nullable|integer',
+            'birth_place' => 'nullable|string|max:255',
+            'birth_date' => 'nullable|date',
+            'resign_reason' => 'nullable|string',
+            'photo' => 'nullable|image|max:2048',
+            'avg_inclass_score' => 'nullable|numeric',
+            'inclass_rank' => 'nullable|integer',
+            'avg_practice_score' => 'nullable|numeric',
+            'practice_rank' => 'nullable|integer',
         ]);
 
         $traineeData = collect($validated)->only([
             'nik', 'name', 'origin', 'university', 'major', 'status', 'training_program_id',
-            'ojt_company_name', 'ojt_region', 'ojt_location_code'
+            'ojt_company_name', 'ojt_region', 'ojt_location_code',
         ])->toArray();
         $trainee = Trainee::create($traineeData);
 
@@ -80,37 +82,38 @@ class TraineeController extends Controller
     public function edit(Trainee $trainee)
     {
         $programs = TrainingProgram::all();
+
         return view('admin.trainees.edit', compact('trainee', 'programs'));
     }
 
     public function update(Request $request, Trainee $trainee)
     {
         $validated = $request->validate([
-            'nik'                 => 'required|string|max:255|unique:trainees,nik,' . $trainee->id,
-            'name'                => 'required|string|max:255',
-            'origin'              => 'nullable|string|max:255',
-            'university'          => 'nullable|string|max:255',
-            'major'               => 'nullable|string|max:255',
-            'status'              => 'required|string',
+            'nik' => 'required|string|max:255|unique:trainees,nik,'.$trainee->id,
+            'name' => 'required|string|max:255',
+            'origin' => 'nullable|string|max:255',
+            'university' => 'nullable|string|max:255',
+            'major' => 'nullable|string|max:255',
+            'status' => 'required|string',
             'training_program_id' => 'required|exists:training_programs,id',
             // OJT fields
-            'ojt_company_name'    => 'nullable|string|max:255',
-            'ojt_region'          => 'nullable|string|max:255',
-            'ojt_location_code'   => 'nullable|string|max:255',
+            'ojt_company_name' => 'nullable|string|max:255',
+            'ojt_region' => 'nullable|string|max:255',
+            'ojt_location_code' => 'nullable|string|max:255',
             // Resignation fields
-            'birth_place'         => 'nullable|string|max:255',
-            'birth_date'          => 'nullable|date',
-            'resign_reason'       => 'nullable|string',
-            'photo'               => 'nullable|image|max:2048',
-            'avg_inclass_score'   => 'nullable|numeric',
-            'inclass_rank'        => 'nullable|integer',
-            'avg_practice_score'  => 'nullable|numeric',
-            'practice_rank'       => 'nullable|integer',
+            'birth_place' => 'nullable|string|max:255',
+            'birth_date' => 'nullable|date',
+            'resign_reason' => 'nullable|string',
+            'photo' => 'nullable|image|max:2048',
+            'avg_inclass_score' => 'nullable|numeric',
+            'inclass_rank' => 'nullable|integer',
+            'avg_practice_score' => 'nullable|numeric',
+            'practice_rank' => 'nullable|integer',
         ]);
 
         $traineeData = collect($validated)->only([
             'nik', 'name', 'origin', 'university', 'major', 'status', 'training_program_id',
-            'ojt_company_name', 'ojt_region', 'ojt_location_code'
+            'ojt_company_name', 'ojt_region', 'ojt_location_code',
         ])->toArray();
         $trainee->update($traineeData);
 
@@ -139,6 +142,7 @@ class TraineeController extends Controller
     public function destroy(Trainee $trainee)
     {
         $trainee->delete();
+
         return redirect()->route('training-reguler.trainees.index')->with('success', 'Trainee berhasil dihapus.');
     }
 
@@ -148,8 +152,8 @@ class TraineeController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file'               => 'required|file|mimes:xlsx,xls,csv|max:5120',
-            'training_program_id'=> 'required|exists:training_programs,id',
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:5120',
+            'training_program_id' => 'required|exists:training_programs,id',
         ]);
 
         try {
@@ -159,17 +163,17 @@ class TraineeController extends Controller
             $count = $importer->getImportedCount();
             $errors = $importer->getErrors();
 
-            if (!empty($errors)) {
+            if (! empty($errors)) {
                 return redirect()->route('training-reguler.trainees.index')
                     ->with('import_errors', $errors)
-                    ->with('error', "{$count} trainee berhasil diimport, namun ada " . count($errors) . " baris yang gagal.");
+                    ->with('error', "{$count} trainee berhasil diimport, namun ada ".count($errors).' baris yang gagal.');
             }
 
             return redirect()->route('training-reguler.trainees.index')
                 ->with('success', "{$count} trainee berhasil diimport dari file Excel/CSV!");
         } catch (\Exception $e) {
             return redirect()->route('training-reguler.trainees.index')
-                ->with('error', 'Terjadi kesalahan saat import: ' . $e->getMessage());
+                ->with('error', 'Terjadi kesalahan saat import: '.$e->getMessage());
         }
     }
 

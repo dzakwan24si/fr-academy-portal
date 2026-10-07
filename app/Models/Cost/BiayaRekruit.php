@@ -13,6 +13,7 @@ class BiayaRekruit extends Model
     protected static $logModuleName = 'Biaya Rekruit';
 
     protected $table = 'biaya_rekruit';
+
     protected $primaryKey = 'id_biaya_rekruit';
 
     protected $fillable = [

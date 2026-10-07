@@ -7,16 +7,17 @@ use App\Models\ActivityLog;
 use App\Models\Program\ProgramNonReguler;
 use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
-use App\Services\SpreadsheetReader;
 use App\Services\ExcelExporter;
+use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class TrainingRecordController extends Controller
 {
-    private static ?\Illuminate\Support\Collection $cachedActivities = null;
+    private static ?Collection $cachedActivities = null;
 
     private const MONTHS = [1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'];
 
@@ -28,22 +29,22 @@ class TrainingRecordController extends Controller
         $type = $request->input('type', 'all');
         $category = trim((string) $request->input('category', 'all'));
 
-        if (!in_array($type, ['all', 'reguler', 'non_reguler', 'non_reguler_soft_skill', 'non_reguler_teknikal', 'soft_skill', 'teknikal'], true)) {
+        if (! in_array($type, ['all', 'reguler', 'non_reguler', 'non_reguler_soft_skill', 'non_reguler_teknikal', 'soft_skill', 'teknikal'], true)) {
             $type = 'all';
         }
-        
+
         $activities = $this->activities();
         $filteredRecords = $this->filteredRecords($request);
 
-        $trYears = TrainingRecord::whereNotNull('tahun')->pluck('tahun')->map(fn($y) => (int)$y)->filter()->all();
-        $regYears = ProgramReguler::whereNotNull('Mulai_program')->get()->map(fn($p) => (int) optional($p->Mulai_program)->year)->filter()->all();
-        $nonRegYears = ProgramNonReguler::whereNotNull('start_date')->get()->map(fn($p) => (int) optional($p->start_date)->year)->filter()->all();
+        $trYears = TrainingRecord::whereNotNull('tahun')->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
+        $regYears = ProgramReguler::whereNotNull('Mulai_program')->get()->map(fn ($p) => (int) optional($p->Mulai_program)->year)->filter()->all();
+        $nonRegYears = ProgramNonReguler::whereNotNull('start_date')->get()->map(fn ($p) => (int) optional($p->start_date)->year)->filter()->all();
 
         $years = collect([2024, 2025, 2026, 2027])
             ->merge($trYears)
             ->merge($regYears)
             ->merge($nonRegYears)
-            ->filter(fn($y) => $y >= 2000 && $y <= 2100)
+            ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
             ->unique()
             ->sort()
             ->values()
@@ -51,7 +52,7 @@ class TrainingRecordController extends Controller
 
         $nonRegulerSubCategories = ProgramNonReguler::distinct()->pluck('sub_kategori')
             ->filter()
-            ->map(fn($c) => trim((string)$c))
+            ->map(fn ($c) => trim((string) $c))
             ->unique()
             ->values()
             ->all();
@@ -76,6 +77,7 @@ class TrainingRecordController extends Controller
         $this->ensureActivity($data['program_type'], $data['program_id']);
         $this->ensureUnique($data['program_type'], $data['program_id'], $data['participant_identifier']);
         TrainingRecord::create($data + ['status' => 'valid']);
+
         return back()->with('success', 'Training Record berhasil ditambahkan.');
     }
 
@@ -90,12 +92,14 @@ class TrainingRecordController extends Controller
         $this->ensureActivity($data['program_type'], $data['program_id']);
         $this->ensureUnique($data['program_type'], $data['program_id'], $data['participant_identifier'], null, null, null, $trainingRecord->id);
         $trainingRecord->update($data);
+
         return back()->with('success', 'Training Record berhasil diperbarui.');
     }
 
     public function destroy(TrainingRecord $trainingRecord)
     {
         $trainingRecord->delete();
+
         return back()->with('success', 'Training Record berhasil dihapus.');
     }
 
@@ -119,42 +123,69 @@ class TrainingRecordController extends Controller
         $request->validate(['file' => 'required|file|mimes:csv,txt,xlsx|max:20480']);
         $file = $request->file('file');
         $rows = SpreadsheetReader::read($file->getRealPath(), $file->getClientOriginalExtension());
-        if (count($rows) < 2) return back()->withErrors(['file' => 'File tidak memiliki data.']);
-        
+        if (count($rows) < 2) {
+            return back()->withErrors(['file' => 'File tidak memiliki data.']);
+        }
+
         $rawHeaders = array_shift($rows);
-        $cleanStr = fn($str) => SpreadsheetReader::cleanString($str);
-        
+        $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
+
         // Map raw headers to standardized keys
         $headerMap = [];
         foreach ($rawHeaders as $idx => $h) {
             $cleaned = $cleanStr($h);
-            if (in_array($cleaned, ['nik', 'nip', 'id peserta', 'no id', 'badge'])) $headerMap['nik'] = $idx;
-            elseif (in_array($cleaned, ['nama', 'nama peserta', 'peserta', 'employee name'])) $headerMap['nama'] = $idx;
-            elseif (in_array($cleaned, ['department', 'departemen', 'dept', 'divisi'])) $headerMap['department'] = $idx;
-            elseif (in_array($cleaned, ['nama pelatihan', 'training program', 'judul training', 'program', 'nama program', 'jenis pelatihan', 'pelatihan'])) $headerMap['nama pelatihan'] = $idx;
-            elseif (in_array($cleaned, ['region', 'wilayah', 'reg'])) $headerMap['region'] = $idx;
-            elseif (in_array($cleaned, ['nama pt', 'pt', 'company', 'perusahaan', 'estate'])) $headerMap['nama pt'] = $idx;
-            elseif (in_array($cleaned, ['lokasi kerja', 'lokasi', 'kebun/pabrik', 'unit', 'work location'])) $headerMap['lokasi kerja'] = $idx;
-            elseif (in_array($cleaned, ['group', 'group unit'])) $headerMap['group'] = $idx;
-            elseif (in_array($cleaned, ['jenis kelamin', 'jk', 'gender'])) $headerMap['jenis kelamin'] = $idx;
-            elseif (in_array($cleaned, ['gol', 'golongan'])) $headerMap['gol'] = $idx;
-            elseif (in_array($cleaned, ['jabatan', 'position', 'posisi'])) $headerMap['jabatan'] = $idx;
-            elseif (in_array($cleaned, ['instruktur', 'trainer', 'instructor'])) $headerMap['instruktur'] = $idx;
-            elseif (in_array($cleaned, ['internal/eksternal', 'internal_eksternal', 'internal eksternal'])) $headerMap['internal/eksternal'] = $idx;
-            elseif (in_array($cleaned, ['level'])) $headerMap['level'] = $idx;
-            elseif (in_array($cleaned, ['periode', 'period'])) $headerMap['periode'] = $idx;
-            elseif (in_array($cleaned, ['tanggal', 'tgl', 'date'])) $headerMap['tanggal'] = $idx;
-            elseif (in_array($cleaned, ['bulan', 'bln', 'month'])) $headerMap['bulan'] = $idx;
-            elseif (in_array($cleaned, ['tahun', 'thn', 'year'])) $headerMap['tahun'] = $idx;
-            elseif (in_array($cleaned, ['jml hari', 'jumlah hari', 'jml_hari', 'total hari', 'total_hari', 'hari'])) $headerMap['jml hari'] = $idx;
-            elseif (in_array($cleaned, ['jam pelatihan', 'jam_pelatihan', 'total jam', 'total_jam', 'jam', 'jam/peserta'])) $headerMap['jam pelatihan'] = $idx;
-            elseif (in_array($cleaned, ['keterangan', 'notes', 'note'])) $headerMap['keterangan'] = $idx;
-            elseif (in_array($cleaned, ['program_type', 'tipe program'])) $headerMap['program_type'] = $idx;
-            elseif (in_array($cleaned, ['program_id', 'id_nonreguler', 'program reguler id'])) $headerMap['program_id'] = $idx;
-            else $headerMap[$cleaned] = $idx;
+            if (in_array($cleaned, ['nik', 'nip', 'id peserta', 'no id', 'badge'])) {
+                $headerMap['nik'] = $idx;
+            } elseif (in_array($cleaned, ['nama', 'nama peserta', 'peserta', 'employee name'])) {
+                $headerMap['nama'] = $idx;
+            } elseif (in_array($cleaned, ['department', 'departemen', 'dept', 'divisi'])) {
+                $headerMap['department'] = $idx;
+            } elseif (in_array($cleaned, ['nama pelatihan', 'training program', 'judul training', 'program', 'nama program', 'jenis pelatihan', 'pelatihan'])) {
+                $headerMap['nama pelatihan'] = $idx;
+            } elseif (in_array($cleaned, ['region', 'wilayah', 'reg'])) {
+                $headerMap['region'] = $idx;
+            } elseif (in_array($cleaned, ['nama pt', 'pt', 'company', 'perusahaan', 'estate'])) {
+                $headerMap['nama pt'] = $idx;
+            } elseif (in_array($cleaned, ['lokasi kerja', 'lokasi', 'kebun/pabrik', 'unit', 'work location'])) {
+                $headerMap['lokasi kerja'] = $idx;
+            } elseif (in_array($cleaned, ['group', 'group unit'])) {
+                $headerMap['group'] = $idx;
+            } elseif (in_array($cleaned, ['jenis kelamin', 'jk', 'gender'])) {
+                $headerMap['jenis kelamin'] = $idx;
+            } elseif (in_array($cleaned, ['gol', 'golongan'])) {
+                $headerMap['gol'] = $idx;
+            } elseif (in_array($cleaned, ['jabatan', 'position', 'posisi'])) {
+                $headerMap['jabatan'] = $idx;
+            } elseif (in_array($cleaned, ['instruktur', 'trainer', 'instructor'])) {
+                $headerMap['instruktur'] = $idx;
+            } elseif (in_array($cleaned, ['internal/eksternal', 'internal_eksternal', 'internal eksternal'])) {
+                $headerMap['internal/eksternal'] = $idx;
+            } elseif (in_array($cleaned, ['level'])) {
+                $headerMap['level'] = $idx;
+            } elseif (in_array($cleaned, ['periode', 'period'])) {
+                $headerMap['periode'] = $idx;
+            } elseif (in_array($cleaned, ['tanggal', 'tgl', 'date'])) {
+                $headerMap['tanggal'] = $idx;
+            } elseif (in_array($cleaned, ['bulan', 'bln', 'month'])) {
+                $headerMap['bulan'] = $idx;
+            } elseif (in_array($cleaned, ['tahun', 'thn', 'year'])) {
+                $headerMap['tahun'] = $idx;
+            } elseif (in_array($cleaned, ['jml hari', 'jumlah hari', 'jml_hari', 'total hari', 'total_hari', 'hari'])) {
+                $headerMap['jml hari'] = $idx;
+            } elseif (in_array($cleaned, ['jam pelatihan', 'jam_pelatihan', 'total jam', 'total_jam', 'jam', 'jam/peserta'])) {
+                $headerMap['jam pelatihan'] = $idx;
+            } elseif (in_array($cleaned, ['keterangan', 'notes', 'note'])) {
+                $headerMap['keterangan'] = $idx;
+            } elseif (in_array($cleaned, ['program_type', 'tipe program'])) {
+                $headerMap['program_type'] = $idx;
+            } elseif (in_array($cleaned, ['program_id', 'id_nonreguler', 'program reguler id'])) {
+                $headerMap['program_id'] = $idx;
+            } else {
+                $headerMap[$cleaned] = $idx;
+            }
         }
 
-        if (!isset($headerMap['nama pelatihan']) || (!isset($headerMap['nik']) && !isset($headerMap['nama']))) {
+        if (! isset($headerMap['nama pelatihan']) || (! isset($headerMap['nik']) && ! isset($headerMap['nama']))) {
             return back()->withErrors(['file' => 'Header file tidak lengkap. Kolom wajib: NIK/Nama dan Nama Pelatihan.']);
         }
 
@@ -162,28 +193,34 @@ class TrainingRecordController extends Controller
         self::$cachedActivities = null;
         $activities = $this->activities();
 
-        $count = 0; $skipped = 0;
+        $count = 0;
+        $skipped = 0;
         $insertBatch = [];
         $now = now();
 
         DB::transaction(function () use ($rows, $headerMap, &$activities, &$count, &$skipped, &$insertBatch, $now) {
             foreach ($rows as $row) {
-                if (empty(array_filter($row, fn ($val) => trim((string) $val) !== ''))) continue;
-                
+                if (empty(array_filter($row, fn ($val) => trim((string) $val) !== ''))) {
+                    continue;
+                }
+
                 $item = [];
                 foreach ($headerMap as $key => $idx) {
                     $item[$key] = trim((string) ($row[$idx] ?? ''));
                 }
-                
+
                 $nama = $item['nama'] ?? '';
                 $nik = $item['nik'] ?? '';
                 $namaPelatihan = $item['nama pelatihan'] ?? '';
 
-                if ($nama === '' && $nik === '' && empty($item['jabatan']) && empty($item['nama pt'])) continue;
+                if ($nama === '' && $nik === '' && empty($item['jabatan']) && empty($item['nama pt'])) {
+                    continue;
+                }
 
                 $activity = $this->findActivityCached($activities, $item);
-                if (!$activity) {
+                if (! $activity) {
                     $skipped++;
+
                     continue;
                 }
 
@@ -201,7 +238,7 @@ class TrainingRecordController extends Controller
                 }
             }
 
-            if (!empty($insertBatch)) {
+            if (! empty($insertBatch)) {
                 TrainingRecord::insert($insertBatch);
                 $insertBatch = [];
             }
@@ -210,7 +247,7 @@ class TrainingRecordController extends Controller
         ActivityLog::log(
             'Import',
             'Training Record',
-            "Mengimport {$count} data Training Record dari file " . $file->getClientOriginalName(),
+            "Mengimport {$count} data Training Record dari file ".$file->getClientOriginalName(),
             ['filename' => $file->getClientOriginalName(), 'count' => $count, 'skipped' => $skipped]
         );
 
@@ -218,6 +255,7 @@ class TrainingRecordController extends Controller
         if ($skipped > 0) {
             $message .= " ({$skipped} data dilewati karena aktivitas program tidak ditemukan).";
         }
+
         return back()->with('success', $message);
     }
 
@@ -225,7 +263,7 @@ class TrainingRecordController extends Controller
     {
         $records = $this->filteredRecords($request);
         $headers = ['No', 'NIK', 'Nama', 'Jenis Kelamin', 'Nama PT', 'Department', 'lokasi Kerja', 'Group', 'REGION', 'GOL', 'Jabatan', 'Tgl', 'Bln', 'Thn', 'Jml Hari', 'Jam Pelatihan', 'Nama Pelatihan', 'Instruktur', 'Tempat Pelatihan', 'Reg / Non Reg', 'Keterangan', 'Internal/Eksternal', 'Level', 'Periode'];
-        
+
         $dataRows = [];
         foreach ($records as $index => $record) {
             $act = $record->activity();
@@ -264,7 +302,7 @@ class TrainingRecordController extends Controller
     {
         $headers = ['No', 'NIK', 'Nama', 'Jenis Kelamin', 'Nama PT', 'Department', 'lokasi Kerja', 'Group', 'REGION', 'GOL', 'Jabatan', 'Tgl', 'Bln', 'Thn', 'Jml Hari', 'Jam Pelatihan', 'Nama Pelatihan', 'Instruktur', 'Tempat Pelatihan', 'Reg / Non Reg', 'Keterangan', 'Internal/Eksternal', 'Level', 'Periode'];
         $exampleRow = ['1', '12345678', 'Contoh Peserta', 'Male', 'PT FR', 'Agronomy', 'Estate A', 'Group 1', 'Kalbar', 'Staf', 'Asisten', '15', 'JAN', 2026, '2', '16', 'Training Leadership', 'Budi Santoso', 'Training Center Riau', 'Reguler', 'Contoh Catatan', 'Internal', 'Staff', '2026-1'];
-        
+
         return ExcelExporter::download('training_record_template.xlsx', $headers, [$exampleRow], 'Template TR');
     }
 
@@ -285,7 +323,7 @@ class TrainingRecordController extends Controller
             'total_jam' => 'nullable|string|max:100',
         ]);
 
-        if (!empty($validated['bulan'])) {
+        if (! empty($validated['bulan'])) {
             $validated['bulan'] = strtoupper(substr(trim($validated['bulan']), 0, 3));
         }
 
@@ -294,18 +332,32 @@ class TrainingRecordController extends Controller
 
     private function ensureActivity(string $type, int $id): void
     {
-        if (!$this->activities()->has($type . ':' . $id)) abort(422, 'Training activity tidak ditemukan.');
+        if (! $this->activities()->has($type.':'.$id)) {
+            abort(422, 'Training activity tidak ditemukan.');
+        }
     }
 
     private function ensureUnique(string $type, int $id, ?string $identifier, ?string $tanggal = null, ?string $bulan = null, ?int $tahun = null, ?int $ignore = null): void
     {
-        if (empty($identifier)) return;
+        if (empty($identifier)) {
+            return;
+        }
         $query = TrainingRecord::where('program_type', $type)->where('program_id', $id)->where('participant_identifier', $identifier);
-        if ($tanggal) $query->where('tanggal', $tanggal);
-        if ($bulan) $query->where('bulan', $bulan);
-        if ($tahun) $query->where('tahun', $tahun);
-        if ($ignore) $query->whereKey('!=', $ignore);
-        if ($query->exists()) abort(422, 'Peserta dengan NIK ini sudah terdaftar pada jadwal training activity ini.');
+        if ($tanggal) {
+            $query->where('tanggal', $tanggal);
+        }
+        if ($bulan) {
+            $query->where('bulan', $bulan);
+        }
+        if ($tahun) {
+            $query->where('tahun', $tahun);
+        }
+        if ($ignore) {
+            $query->whereKey('!=', $ignore);
+        }
+        if ($query->exists()) {
+            abort(422, 'Peserta dengan NIK ini sudah terdaftar pada jadwal training activity ini.');
+        }
     }
 
     private function activities()
@@ -314,31 +366,32 @@ class TrainingRecordController extends Controller
             return self::$cachedActivities;
         }
 
-        $cleanStr = fn($str) => strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', '', (string) $str)));
+        $cleanStr = fn ($str) => strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', '', (string) $str)));
 
         $reguler = ProgramReguler::all()->mapWithKeys(fn ($item) => [
-            'reguler:' . $item->getKey() => [
+            'reguler:'.$item->getKey() => [
                 'type' => 'reguler',
                 'sub_type' => 'reguler',
                 'type_label' => 'Reguler',
                 'id' => $item->getKey(),
                 'name' => $this->activityLabel($item, 'reguler'),
-                'model' => $item
-            ]
+                'model' => $item,
+            ],
         ]);
 
         $nonReguler = ProgramNonReguler::all()->mapWithKeys(function ($item) use ($cleanStr) {
-            $kat = $cleanStr(($item->kategori_pelatihan ?? '') . ' ' . ($item->sub_kategori ?? '') . ' ' . ($item->jenis_pelatihan ?? ''));
+            $kat = $cleanStr(($item->kategori_pelatihan ?? '').' '.($item->sub_kategori ?? '').' '.($item->jenis_pelatihan ?? ''));
             $isSoft = str_contains($kat, 'managerial') || str_contains($kat, 'leadership') || str_contains($kat, 'soft');
+
             return [
-                'non_reguler:' . $item->getKey() => [
+                'non_reguler:'.$item->getKey() => [
                     'type' => 'non_reguler',
                     'sub_type' => $isSoft ? 'soft_skill' : 'teknikal',
                     'type_label' => $isSoft ? 'Non Reguler - Soft Skill' : 'Non Reguler - Teknikal',
                     'id' => $item->getKey(),
                     'name' => $item->jenis_pelatihan,
-                    'model' => $item
-                ]
+                    'model' => $item,
+                ],
             ];
         });
 
@@ -349,7 +402,7 @@ class TrainingRecordController extends Controller
     {
         $clone = $request->duplicate();
         $activities = $this->activities();
-        $cleanStr = fn($str) => SpreadsheetReader::cleanString($str);
+        $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
 
         return TrainingRecord::latest()->get()->filter(function ($record) use ($clone, $activities, $cleanStr) {
             $type = $clone->input('type', 'all');
@@ -358,17 +411,27 @@ class TrainingRecordController extends Controller
             $year = ($rawYear === 'all' || $rawYear === '' || $rawYear === '0') ? null : (int) $rawYear;
             $month = (int) $clone->input('month', 0);
 
-            $activity = $activities->get($record->program_type . ':' . $record->program_id);
-            if (!$activity) return false;
+            $activity = $activities->get($record->program_type.':'.$record->program_id);
+            if (! $activity) {
+                return false;
+            }
 
             // 1. Filter Type
-            if ($type === 'reguler' && $record->program_type !== 'reguler') return false;
-            if ($type === 'non_reguler' && $record->program_type !== 'non_reguler') return false;
+            if ($type === 'reguler' && $record->program_type !== 'reguler') {
+                return false;
+            }
+            if ($type === 'non_reguler' && $record->program_type !== 'non_reguler') {
+                return false;
+            }
             if (in_array($type, ['non_reguler_soft_skill', 'soft_skill'], true)) {
-                if ($record->program_type !== 'non_reguler' || ($activity['sub_type'] ?? '') !== 'soft_skill') return false;
+                if ($record->program_type !== 'non_reguler' || ($activity['sub_type'] ?? '') !== 'soft_skill') {
+                    return false;
+                }
             }
             if (in_array($type, ['non_reguler_teknikal', 'teknikal'], true)) {
-                if ($record->program_type !== 'non_reguler' || ($activity['sub_type'] ?? '') !== 'teknikal') return false;
+                if ($record->program_type !== 'non_reguler' || ($activity['sub_type'] ?? '') !== 'teknikal') {
+                    return false;
+                }
             }
 
             // 2. Filter Category (Detail Kategori)
@@ -376,22 +439,32 @@ class TrainingRecordController extends Controller
                 $pModel = $activity['model'] ?? null;
                 if ($record->program_type === 'reguler') {
                     $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $activity['name'] ?? ''));
-                    $isMandor = ($pModel && str_contains($cleanStr($pModel->jenis_program_reguler ?? ''), 'mandor')) 
-                        || str_starts_with(strtoupper($pName), 'PMT') 
+                    $isMandor = ($pModel && str_contains($cleanStr($pModel->jenis_program_reguler ?? ''), 'mandor'))
+                        || str_starts_with(strtoupper($pName), 'PMT')
                         || str_starts_with(strtoupper($pName), 'PKT');
 
-                    if ($category === 'staf' && $isMandor) return false;
-                    if ($category === 'mandor' && !$isMandor) return false;
+                    if ($category === 'staf' && $isMandor) {
+                        return false;
+                    }
+                    if ($category === 'mandor' && ! $isMandor) {
+                        return false;
+                    }
                 } else {
                     // Non Reguler
-                    $kat = $cleanStr(($pModel->kategori_pelatihan ?? '') . ' ' . ($pModel->sub_kategori ?? '') . ' ' . ($activity['name'] ?? ''));
+                    $kat = $cleanStr(($pModel->kategori_pelatihan ?? '').' '.($pModel->sub_kategori ?? '').' '.($activity['name'] ?? ''));
                     if ($category === 'managerial' || strcasecmp($category, 'softskill') === 0) {
-                        if (!str_contains($kat, 'managerial') && !str_contains($kat, 'soft')) return false;
+                        if (! str_contains($kat, 'managerial') && ! str_contains($kat, 'soft')) {
+                            return false;
+                        }
                     } elseif ($category === 'technical') {
-                        if (!str_contains($kat, 'technical') || str_contains($kat, 'soft')) return false;
+                        if (! str_contains($kat, 'technical') || str_contains($kat, 'soft')) {
+                            return false;
+                        }
                     } else {
                         $searchCat = $cleanStr($category);
-                        if (!str_contains($kat, $searchCat)) return false;
+                        if (! str_contains($kat, $searchCat)) {
+                            return false;
+                        }
                     }
                 }
             }
@@ -399,9 +472,13 @@ class TrainingRecordController extends Controller
             // 3. Filter Year
             if ($year !== null) {
                 if ($record->tahun || $record->bulan) {
-                    if ($record->tahun && (int) $record->tahun !== $year) return false;
+                    if ($record->tahun && (int) $record->tahun !== $year) {
+                        return false;
+                    }
                 } else {
-                    if (!collect($record->activityDates())->contains(fn ($date) => $date && (int) date('Y', strtotime($date)) === $year)) return false;
+                    if (! collect($record->activityDates())->contains(fn ($date) => $date && (int) date('Y', strtotime($date)) === $year)) {
+                        return false;
+                    }
                 }
             }
 
@@ -409,16 +486,26 @@ class TrainingRecordController extends Controller
             if ($month > 0) {
                 if ($record->bulan) {
                     $monthShort = strtoupper(self::MONTHS[$month] ?? '');
-                    if ($record->bulan !== $monthShort) return false;
+                    if ($record->bulan !== $monthShort) {
+                        return false;
+                    }
                 } else {
-                    if (!collect($record->activityDates())->contains(fn ($date) => $date && (int) date('n', strtotime($date)) === $month)) return false;
+                    if (! collect($record->activityDates())->contains(fn ($date) => $date && (int) date('n', strtotime($date)) === $month)) {
+                        return false;
+                    }
                 }
             }
 
             // 5. Search keyword
             $search = strtolower(trim((string) $clone->input('search')));
-            if ($search !== '' && !str_contains(strtolower(implode(' ', [$record->participant_identifier, $record->participant_name, $record->company, $record->department, $record->work_location, $record->group_name, $record->region, $record->position, $record->bulan, $record->tahun, $record->jml_hari, $record->total_jam, $record->activityName()])), $search)) return false;
-            foreach (['company', 'work_location', 'group_name', 'region', 'position', 'internal_external', 'level'] as $field) if ($clone->filled($field) && strtolower((string) $record->{$field}) !== strtolower((string) $clone->input($field))) return false;
+            if ($search !== '' && ! str_contains(strtolower(implode(' ', [$record->participant_identifier, $record->participant_name, $record->company, $record->department, $record->work_location, $record->group_name, $record->region, $record->position, $record->bulan, $record->tahun, $record->jml_hari, $record->total_jam, $record->activityName()])), $search)) {
+                return false;
+            }
+            foreach (['company', 'work_location', 'group_name', 'region', 'position', 'internal_external', 'level'] as $field) {
+                if ($clone->filled($field) && strtolower((string) $record->{$field}) !== strtolower((string) $clone->input($field))) {
+                    return false;
+                }
+            }
 
             return true;
         });
@@ -434,19 +521,21 @@ class TrainingRecordController extends Controller
         return $this->findActivityCached($this->activities(), $item);
     }
 
-    private function findActivityCached(\Illuminate\Support\Collection &$activities, array $item): ?array
+    private function findActivityCached(Collection &$activities, array $item): ?array
     {
         $type = str_replace('-', '_', strtolower(trim((string) ($item['program_type'] ?? ''))));
         $type = $type === 'nonreguler' ? 'non_reguler' : $type;
         $id = $item['program_id'] ?? ($type === 'reguler' ? ($item['program_id'] ?? null) : ($item['id_nonreguler'] ?? null));
         $rowRegion = $this->inferRowRegion($item);
-        
+
         // 1. If explicit ID was provided, check with or without explicit type
         if ($id) {
             $keysToTry = [];
-            if ($type) $keysToTry[] = $type . ':' . (int) $id;
-            $keysToTry[] = 'non_reguler:' . (int) $id;
-            $keysToTry[] = 'reguler:' . (int) $id;
+            if ($type) {
+                $keysToTry[] = $type.':'.(int) $id;
+            }
+            $keysToTry[] = 'non_reguler:'.(int) $id;
+            $keysToTry[] = 'reguler:'.(int) $id;
 
             foreach ($keysToTry as $k) {
                 if (isset($activities[$k])) {
@@ -455,25 +544,35 @@ class TrainingRecordController extends Controller
                     if ($rowRegion === '' || $actRegion === '' || $actRegion === $rowRegion) {
                         return $matchedAct;
                     }
-                    
+
                     // Region mismatch on provided ID! Look for sister program in the correct region
                     $targetProgName = trim($matchedAct['name']);
                     $actType = $matchedAct['type'];
-                    $sister = $activities->first(function($act) use ($actType, $targetProgName, $rowRegion) {
-                        if ($act['type'] !== $actType) return false;
+                    $sister = $activities->first(function ($act) use ($actType, $targetProgName, $rowRegion) {
+                        if ($act['type'] !== $actType) {
+                            return false;
+                        }
                         $actReg = $this->normalizeRegion($act['model']->Region ?? $act['model']->region ?? '');
-                        if ($actReg !== $rowRegion) return false;
+                        if ($actReg !== $rowRegion) {
+                            return false;
+                        }
+
                         return strcasecmp(trim($act['name']), $targetProgName) === 0 || $this->matchActivityNames($targetProgName, $act['name']);
                     });
-                    if ($sister) return $sister;
+                    if ($sister) {
+                        return $sister;
+                    }
+
                     return $matchedAct;
                 }
             }
         }
-        
+
         $rawPelatihanName = trim((string) ($item['nama pelatihan'] ?? ''));
         $name = strtolower($rawPelatihanName);
-        if ($name === '') return null;
+        if ($name === '') {
+            return null;
+        }
 
         // 2. Exact match
         $matches = $activities->filter(fn ($activity) => strtolower(trim($activity['name'])) === $name);
@@ -490,38 +589,54 @@ class TrainingRecordController extends Controller
             $regionalMatches = $matches->filter(function ($activity) use ($rowRegion) {
                 $model = $activity['model'];
                 $activityRegion = $this->normalizeRegion($model->Region ?? $model->region ?? '');
+
                 return $activityRegion === $rowRegion;
             });
-            if ($regionalMatches->isNotEmpty()) $matches = $regionalMatches;
+            if ($regionalMatches->isNotEmpty()) {
+                $matches = $regionalMatches;
+            }
         }
 
-        if ($matches->count() === 1) return $matches->first();
+        if ($matches->count() === 1) {
+            return $matches->first();
+        }
 
         // Fallback: alias matching or pick first match from flexible results
-        if ($matches->isNotEmpty()) return $matches->first();
+        if ($matches->isNotEmpty()) {
+            return $matches->first();
+        }
 
         $aliasMatch = $activities->first(function ($activity) use ($name, $rowRegion) {
             $model = $activity['model'];
             $aliases = [$model->Training_Program ?? null, $model->jenis_pelatihan ?? null, $model->Batch ?? null];
             $nameMatches = collect($aliases)->filter()->contains(fn ($alias) => $this->matchActivityNames($name, (string) $alias));
-            if (!$nameMatches) return false;
+            if (! $nameMatches) {
+                return false;
+            }
             if ($rowRegion !== '') {
                 $actReg = $this->normalizeRegion($model->Region ?? $model->region ?? '');
-                if ($actReg !== '' && $actReg !== $rowRegion) return false;
+                if ($actReg !== '' && $actReg !== $rowRegion) {
+                    return false;
+                }
             }
+
             return true;
         });
 
-        if ($aliasMatch) return $aliasMatch;
+        if ($aliasMatch) {
+            return $aliasMatch;
+        }
 
         // Fallback 5: Auto-create missing unbudgeted ProgramNonReguler entry with 0 target
         $rawPelatihanName = trim((string) ($item['nama pelatihan'] ?? $item['training program'] ?? $item['program'] ?? ''));
-        if ($rawPelatihanName === '') return null;
+        if ($rawPelatihanName === '') {
+            return null;
+        }
 
         try {
             $formattedRegion = $rowRegion ? ($rowRegion === 'riau' ? 'Riau' : ($rowRegion === 'kalbar' ? 'Kalbar' : 'Kaltim FR')) : 'Riau';
             $isSoft = str_contains(strtolower($rawPelatihanName), 'soft') || str_contains(strtolower($rawPelatihanName), 'leadership') || str_contains(strtolower($rawPelatihanName), 'managerial');
-            
+
             $newNonReg = ProgramNonReguler::create([
                 'jenis_pelatihan' => $rawPelatihanName,
                 'kategori_pelatihan' => $isSoft ? 'Managerial and Leadership' : 'Technical',
@@ -542,10 +657,11 @@ class TrainingRecordController extends Controller
                 'type_label' => $isSoft ? 'Non Reguler - Soft Skill' : 'Non Reguler - Teknikal',
                 'id' => $id,
                 'name' => $newNonReg->jenis_pelatihan,
-                'model' => $newNonReg
+                'model' => $newNonReg,
             ];
 
-            $activities->put('non_reguler:' . $id, $newAct);
+            $activities->put('non_reguler:'.$id, $newAct);
+
             return $newAct;
         } catch (\Exception $e) {
             return null;
@@ -556,9 +672,13 @@ class TrainingRecordController extends Controller
     {
         $inputName = strtolower(trim(preg_replace('/\s+/', ' ', $inputName)));
         $activityName = strtolower(trim(preg_replace('/\s+/', ' ', $activityName)));
-        if ($inputName === '' || $activityName === '') return false;
+        if ($inputName === '' || $activityName === '') {
+            return false;
+        }
 
-        if ($inputName === $activityName) return true;
+        if ($inputName === $activityName) {
+            return true;
+        }
 
         // Check reguler acronyms: FAT, AAT, MAT, TAT, DMT, PMT, PKT, OAT
         $regAcronyms = ['fat', 'aat', 'mat', 'tat', 'dmt', 'pmt', 'pkt', 'oat'];
@@ -572,13 +692,16 @@ class TrainingRecordController extends Controller
 
         if ($inIsReg || $actIsReg) {
             // Must have the exact same acronym
-            if ($inFirst !== $actFirst) return false;
+            if ($inFirst !== $actFirst) {
+                return false;
+            }
             // Check batch roman numeral (I, II, III, IV, etc.)
             $inRoman = $inWords[1] ?? '';
             $actRoman = $actWords[1] ?? '';
             if ($inRoman !== '' && $actRoman !== '' && $inRoman !== $actRoman) {
                 return false;
             }
+
             return true;
         }
 
@@ -592,13 +715,15 @@ class TrainingRecordController extends Controller
         $inputWords = array_values(array_filter(explode(' ', $cleanInput)));
         $activityWords = array_values(array_filter(explode(' ', $cleanActivity)));
 
-        if (empty($inputWords) || empty($activityWords)) return false;
+        if (empty($inputWords) || empty($activityWords)) {
+            return false;
+        }
 
         $noise = ['training', 'pelatihan', 'program', 'unbudget', 'refreshment', 'refresh', 'of', 'by', 'vendor', 'dan', '&'];
         $filteredInWords = array_values(array_diff($inputWords, $noise));
         $filteredActWords = array_values(array_diff($activityWords, $noise));
 
-        if (!empty($filteredInWords) && !empty($filteredActWords)) {
+        if (! empty($filteredInWords) && ! empty($filteredActWords)) {
             $intersect = array_intersect($filteredInWords, $filteredActWords);
             if (count($intersect) === count($filteredInWords) || count($intersect) === count($filteredActWords)) {
                 return true;
@@ -627,11 +752,16 @@ class TrainingRecordController extends Controller
 
     private function activityLabel($activity, string $type): string
     {
-        if ($type !== 'reguler') return trim((string) $activity->jenis_pelatihan);
+        if ($type !== 'reguler') {
+            return trim((string) $activity->jenis_pelatihan);
+        }
 
         $name = trim((string) $activity->Training_Program);
         $batch = trim((string) $activity->Batch);
-        if ($batch !== '' && !str_contains(strtolower($name), strtolower($batch))) $name .= ' - ' . $batch;
+        if ($batch !== '' && ! str_contains(strtolower($name), strtolower($batch))) {
+            $name .= ' - '.$batch;
+        }
+
         return $name;
     }
 
@@ -649,7 +779,7 @@ class TrainingRecordController extends Controller
         $isPlaceholderNik = ($nik === '' || in_array($cleanNik, ['-', '#N/A', 'PROMOSI', 'TRAINEE', '0', 'NULL', 'N/A']) || ($cleanNama !== '' && $cleanNik === $cleanNama));
         $identifier = $isPlaceholderNik ? null : $nik;
 
-        $finalNama = $nama !== '' ? $nama : (!empty($item['jabatan']) ? $item['jabatan'] : '-');
+        $finalNama = $nama !== '' ? $nama : (! empty($item['jabatan']) ? $item['jabatan'] : '-');
 
         $inferred = $this->inferRowRegion($item);
         $finalRegion = $item['region'] ?? null;
@@ -696,10 +826,16 @@ class TrainingRecordController extends Controller
             return $rawRegion;
         }
 
-        $text = strtoupper(trim(($item['nama pt'] ?? '') . ' ' . ($item['lokasi kerja'] ?? '') . ' ' . ($item['group'] ?? '')));
-        if (preg_match('/\b(BDL|CAK|CAK1|CAK2|CAKB|CAKM|BPPJ|BPJJ|BPEJ|BSMJ|MKBB|MKB|MKB2)\b/', $text)) return 'kaltim';
-        if (preg_match('/\b(USP|FAPE|LS|LS1|LS2|SMP|SMP1|SMP2|MKS|MKS1|MKS2|MKSK|KALE|PTLJ|BKP)\b/', $text)) return 'kalbar';
-        if (preg_match('/\b(SAM|SAM1|SAM2|SIR|SIR1|SIR2|SAGM|PSA|SAL|CPK|ATS|ATS1|ATS2|CLP|GSI|PISP1|PISP2|MSSP|MSSP1|MII|PTR|ANJA|ANJAS|MCM|SMM|KTBM)\b/', $text)) return 'riau';
+        $text = strtoupper(trim(($item['nama pt'] ?? '').' '.($item['lokasi kerja'] ?? '').' '.($item['group'] ?? '')));
+        if (preg_match('/\b(BDL|CAK|CAK1|CAK2|CAKB|CAKM|BPPJ|BPJJ|BPEJ|BSMJ|MKBB|MKB|MKB2)\b/', $text)) {
+            return 'kaltim';
+        }
+        if (preg_match('/\b(USP|FAPE|LS|LS1|LS2|SMP|SMP1|SMP2|MKS|MKS1|MKS2|MKSK|KALE|PTLJ|BKP)\b/', $text)) {
+            return 'kalbar';
+        }
+        if (preg_match('/\b(SAM|SAM1|SAM2|SIR|SIR1|SIR2|SAGM|PSA|SAL|CPK|ATS|ATS1|ATS2|CLP|GSI|PISP1|PISP2|MSSP|MSSP1|MII|PTR|ANJA|ANJAS|MCM|SMM|KTBM)\b/', $text)) {
+            return 'riau';
+        }
 
         return $rawRegion;
     }
@@ -707,9 +843,16 @@ class TrainingRecordController extends Controller
     private function normalizeRegion($value): string
     {
         $v = strtolower(trim(str_replace(' fr', '', (string) $value)));
-        if (str_contains($v, 'riau')) return 'riau';
-        if (str_contains($v, 'kalbar')) return 'kalbar';
-        if (str_contains($v, 'kaltim')) return 'kaltim';
+        if (str_contains($v, 'riau')) {
+            return 'riau';
+        }
+        if (str_contains($v, 'kalbar')) {
+            return 'kalbar';
+        }
+        if (str_contains($v, 'kaltim')) {
+            return 'kaltim';
+        }
+
         return $v;
     }
 }

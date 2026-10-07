@@ -1,10 +1,10 @@
 <?php
 
+use App\Http\Controllers\Api\PushNotificationController;
+use App\Http\Controllers\Api\TraineeApiController;
+use App\Http\Controllers\Api\V1\TrainingRecordExportController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\TraineeApiController;
-
-use App\Http\Controllers\Api\V1\TrainingRecordExportController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -24,9 +24,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::delete('/trainee/tasks/{task}/submit', [TraineeApiController::class, 'deleteTaskSubmission']);
     Route::post('/trainee/submit-attendance', [TraineeApiController::class, 'submitAttendance']);
     Route::get('/trainee/attendances', [TraineeApiController::class, 'attendances']);
-    Route::get('trainee/evaluations/pending', [App\Http\Controllers\Api\TraineeApiController::class, 'pendingEvaluations']);
-    Route::post('trainee/evaluations/{dailyClassId}', [App\Http\Controllers\Api\TraineeApiController::class, 'submitEvaluation']);
-    Route::get('trainee/certificate/{dailyClassId}', [App\Http\Controllers\Api\TraineeApiController::class, 'downloadCertificate']);
+    Route::get('trainee/evaluations/pending', [TraineeApiController::class, 'pendingEvaluations']);
+    Route::post('trainee/evaluations/{dailyClassId}', [TraineeApiController::class, 'submitEvaluation']);
+    Route::get('trainee/certificate/{dailyClassId}', [TraineeApiController::class, 'downloadCertificate']);
 });
 
-Route::middleware('auth:sanctum')->post('/push-subscribe', [App\Http\Controllers\Api\PushNotificationController::class, 'subscribe']);
+Route::middleware('auth:sanctum')->post('/push-subscribe', [PushNotificationController::class, 'subscribe']);

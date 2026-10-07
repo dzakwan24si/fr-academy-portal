@@ -13,12 +13,14 @@ class TrainerController extends Controller
     {
         $trainers = Trainer::latest()->paginate(10);
         $total = Trainer::count();
+
         return view('admin.trainers.index', compact('trainers', 'total'));
     }
 
     public function create()
     {
         $users = User::all();
+
         return view('admin.trainers.create', compact('users'));
     }
 
@@ -29,12 +31,14 @@ class TrainerController extends Controller
             'user_id' => 'nullable|exists:users,id',
         ]);
         Trainer::create($validated);
+
         return redirect()->route('training-reguler.trainers.index')->with('success', 'Trainer berhasil ditambahkan.');
     }
 
     public function edit(Trainer $trainer)
     {
         $users = User::all();
+
         return view('admin.trainers.edit', compact('trainer', 'users'));
     }
 
@@ -45,12 +49,14 @@ class TrainerController extends Controller
             'user_id' => 'nullable|exists:users,id',
         ]);
         $trainer->update($validated);
+
         return redirect()->route('training-reguler.trainers.index')->with('success', 'Trainer berhasil diperbarui.');
     }
 
     public function destroy(Trainer $trainer)
     {
         $trainer->delete();
+
         return redirect()->route('training-reguler.trainers.index')->with('success', 'Trainer berhasil dihapus.');
     }
 }

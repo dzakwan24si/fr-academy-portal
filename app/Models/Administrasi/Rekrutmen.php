@@ -63,7 +63,7 @@ class Rekrutmen extends Model
                 $model->metode_rekrutmen = 'Offline';
             }
 
-            if (empty($model->tahun) && !empty($model->tanggal)) {
+            if (empty($model->tahun) && ! empty($model->tanggal)) {
                 if (preg_match('/\b(20\d{2})\b/', $model->tanggal, $matches)) {
                     $model->tahun = (int) $matches[1];
                 }

@@ -16,6 +16,7 @@ class NonRegulerTrainingProgramController extends Controller
         $totalTat = TrainingProgram::where('type', 'TAT')->count();
         $totalMat = TrainingProgram::where('type', 'MAT')->count();
         $totalAat = TrainingProgram::where('type', 'AAT')->count();
+
         return view('admin.non-reguler.training_programs.index', compact('programs', 'total', 'totalFat', 'totalTat', 'totalMat', 'totalAat'));
     }
 
@@ -27,7 +28,7 @@ class NonRegulerTrainingProgramController extends Controller
     public function store(Request $request)
     {
         // Auto-fill type based on name if not provided
-        if (!$request->has('type') || empty($request->type)) {
+        if (! $request->has('type') || empty($request->type)) {
             $request->merge(['type' => explode(' ', $request->name)[0] ?? '']);
         }
 
@@ -39,6 +40,7 @@ class NonRegulerTrainingProgramController extends Controller
             'quote' => 'nullable|string',
         ]);
         TrainingProgram::create($validated);
+
         return redirect()->route('training-non-reguler.training-programs.index')->with('success', 'Program Training berhasil ditambahkan.');
     }
 
@@ -50,7 +52,7 @@ class NonRegulerTrainingProgramController extends Controller
     public function update(Request $request, TrainingProgram $trainingProgram)
     {
         // Auto-fill type based on name if not provided
-        if (!$request->has('type') || empty($request->type)) {
+        if (! $request->has('type') || empty($request->type)) {
             $request->merge(['type' => explode(' ', $request->name)[0] ?? '']);
         }
 
@@ -62,13 +64,14 @@ class NonRegulerTrainingProgramController extends Controller
             'quote' => 'nullable|string',
         ]);
         $trainingProgram->update($validated);
+
         return redirect()->route('training-non-reguler.training-programs.index')->with('success', 'Program Training berhasil diperbarui.');
     }
 
     public function destroy(TrainingProgram $trainingProgram)
     {
         $trainingProgram->delete();
+
         return redirect()->route('training-non-reguler.training-programs.index')->with('success', 'Program Training berhasil dihapus.');
     }
 }
-

@@ -13,6 +13,7 @@ class CapexRealisasi extends Model
     protected static $logModuleName = 'Capex Realisasi';
 
     protected $table = 'capex_realisasi';
+
     protected $primaryKey = 'realisasi_id';
 
     protected $fillable = [
@@ -31,10 +32,10 @@ class CapexRealisasi extends Model
     ];
 
     protected $casts = [
-        'tahun'    => 'integer',
-        'tanggal'  => 'date',
-        'debit'    => 'float',
-        'kredit'   => 'float',
+        'tahun' => 'integer',
+        'tanggal' => 'date',
+        'debit' => 'float',
+        'kredit' => 'float',
         'total_rp' => 'float',
     ];
 

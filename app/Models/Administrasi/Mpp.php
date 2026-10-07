@@ -13,6 +13,7 @@ class Mpp extends Model
     protected static $logModuleName = 'MPP';
 
     protected $table = 'mpp';
+
     protected $primaryKey = 'mpp_id';
 
     public const JENIS_JABATAN = ['Staff', 'PBT', 'KHT', 'KHL'];
@@ -38,7 +39,7 @@ class Mpp extends Model
     {
         $query = self::where('tahun', $year)->where('bulan', $month);
 
-        if (!empty($search)) {
+        if (! empty($search)) {
             $query->where('nama_jabatan', 'like', "%{$search}%");
         }
 

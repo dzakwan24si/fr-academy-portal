@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cost;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Cost\Vra;
+use App\Services\ExcelExporter;
 use App\Traits\HandlesCsvImports;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -49,10 +50,10 @@ class VraController extends Controller
             // Overall View: Group by vehicle for annual summary
             $query = Vra::where('tahun', $selectedYear);
 
-            if (!empty($search)) {
+            if (! empty($search)) {
                 $query->where(function ($q) use ($search) {
                     $q->where('nomor_polisi', 'like', "%{$search}%")
-                      ->orWhere('kendaraan', 'like', "%{$search}%");
+                        ->orWhere('kendaraan', 'like', "%{$search}%");
                 });
             }
 
@@ -74,24 +75,25 @@ class VraController extends Controller
                 DB::raw('SUM(BBM_liter) as BBM_liter'),
                 DB::raw('MAX(budget_tahun) as budget_tahun')
             )
-            ->groupBy('nomor_polisi', 'kendaraan')
-            ->orderBy('nomor_polisi', 'asc')
-            ->paginate(15)
-            ->withQueryString();
+                ->groupBy('nomor_polisi', 'kendaraan')
+                ->orderBy('nomor_polisi', 'asc')
+                ->paginate(15)
+                ->withQueryString();
 
             // Calculate computed metrics per aggregated row
             $records->getCollection()->transform(function ($item) {
                 $item->BBM_KM_liter = $item->BBM_liter > 0 ? ($item->KM / $item->BBM_liter) : 0;
                 $item->VRA = $item->KM > 0 ? ($item->total_biaya_bulan / $item->KM) : 0;
+
                 return $item;
             });
 
             // Calculate overall totals
             $allAnnualRecords = Vra::where('tahun', $selectedYear);
-            if (!empty($search)) {
+            if (! empty($search)) {
                 $allAnnualRecords->where(function ($q) use ($search) {
                     $q->where('nomor_polisi', 'like', "%{$search}%")
-                      ->orWhere('kendaraan', 'like', "%{$search}%");
+                        ->orWhere('kendaraan', 'like', "%{$search}%");
                 });
             }
 
@@ -108,8 +110,8 @@ class VraController extends Controller
                 DB::raw('SUM(BBM_liter) as BBM_liter'),
                 DB::raw('MAX(budget_tahun) as budget_tahun')
             )
-            ->groupBy('nomor_polisi', 'kendaraan')
-            ->get();
+                ->groupBy('nomor_polisi', 'kendaraan')
+                ->get();
 
             $totals = $this->calculateTotals($allGrouped);
 
@@ -118,10 +120,10 @@ class VraController extends Controller
             $monthNum = (int) $selectedPeriod;
             $query = Vra::where('tahun', $selectedYear)->where('bulan', $monthNum);
 
-            if (!empty($search)) {
+            if (! empty($search)) {
                 $query->where(function ($q) use ($search) {
                     $q->where('nomor_polisi', 'like', "%{$search}%")
-                      ->orWhere('kendaraan', 'like', "%{$search}%");
+                        ->orWhere('kendaraan', 'like', "%{$search}%");
                 });
             }
 
@@ -134,10 +136,10 @@ class VraController extends Controller
             $allMonthlyRecords = Vra::where('tahun', $selectedYear)
                 ->where('bulan', $monthNum);
 
-            if (!empty($search)) {
+            if (! empty($search)) {
                 $allMonthlyRecords->where(function ($q) use ($search) {
                     $q->where('nomor_polisi', 'like', "%{$search}%")
-                      ->orWhere('kendaraan', 'like', "%{$search}%");
+                        ->orWhere('kendaraan', 'like', "%{$search}%");
                 });
             }
 
@@ -180,7 +182,7 @@ class VraController extends Controller
         // Default numeric zero
         foreach ([
             'upah', 'BBM', 'BBM_tahun', 'preventif_maintenance',
-            'biaya_lainnya', 'KM_awal', 'KM_akhir', 'KM', 'BBM_liter', 'budget_tahun'
+            'biaya_lainnya', 'KM_awal', 'KM_akhir', 'KM', 'BBM_liter', 'budget_tahun',
         ] as $field) {
             $validated[$field] = isset($validated[$field]) && $validated[$field] !== '' ? (float) $validated[$field] : 0;
         }
@@ -206,20 +208,20 @@ class VraController extends Controller
 
         $vra = Vra::create($validated);
 
-        (new CostController())->syncAggregatedCosts((int)$validated['tahun']);
+        (new CostController)->syncAggregatedCosts((int) $validated['tahun']);
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Data VRA berhasil ditambahkan.',
-                'data' => $vra
+                'data' => $vra,
             ]);
         }
 
         return redirect()->route('administrasi.vra.index', [
             'year' => $validated['tahun'],
-            'period' => $validated['bulan']
-        ])->with('success', 'Data VRA untuk kendaraan ' . $validated['nomor_polisi'] . ' berhasil ditambahkan.');
+            'period' => $validated['bulan'],
+        ])->with('success', 'Data VRA untuk kendaraan '.$validated['nomor_polisi'].' berhasil ditambahkan.');
     }
 
     /**
@@ -228,9 +230,10 @@ class VraController extends Controller
     public function show($id)
     {
         $vra = Vra::findOrFail($id);
+
         return response()->json([
             'success' => true,
-            'data' => $vra
+            'data' => $vra,
         ]);
     }
 
@@ -259,7 +262,7 @@ class VraController extends Controller
         // Default numeric zero
         foreach ([
             'upah', 'BBM', 'BBM_tahun', 'preventif_maintenance',
-            'biaya_lainnya', 'KM_awal', 'KM_akhir', 'KM', 'BBM_liter', 'budget_tahun'
+            'biaya_lainnya', 'KM_awal', 'KM_akhir', 'KM', 'BBM_liter', 'budget_tahun',
         ] as $field) {
             $validated[$field] = isset($validated[$field]) && $validated[$field] !== '' ? (float) $validated[$field] : 0;
         }
@@ -285,13 +288,13 @@ class VraController extends Controller
 
         $vra->update($validated);
 
-        (new CostController())->syncAggregatedCosts((int)$vra->tahun);
+        (new CostController)->syncAggregatedCosts((int) $vra->tahun);
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Data VRA berhasil diperbarui.',
-                'data' => $vra
+                'data' => $vra,
             ]);
         }
 
@@ -299,8 +302,8 @@ class VraController extends Controller
 
         return redirect()->route('administrasi.vra.index', [
             'year' => $vra->tahun,
-            'period' => $period
-        ])->with('success', 'Data VRA untuk kendaraan ' . $vra->nomor_polisi . ' berhasil diperbarui.');
+            'period' => $period,
+        ])->with('success', 'Data VRA untuk kendaraan '.$vra->nomor_polisi.' berhasil diperbarui.');
     }
 
     /**
@@ -318,13 +321,13 @@ class VraController extends Controller
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => "Data VRA {$noPol} berhasil dihapus."
+                'message' => "Data VRA {$noPol} berhasil dihapus.",
             ]);
         }
 
         return redirect()->route('administrasi.vra.index', [
             'year' => $year,
-            'period' => $period
+            'period' => $period,
         ])->with('success', "Data VRA kendaraan {$noPol} berhasil dihapus.");
     }
 
@@ -334,14 +337,14 @@ class VraController extends Controller
     public function storeYear(Request $request)
     {
         $request->validate([
-            'new_year' => 'required|integer|min:2000|max:2099'
+            'new_year' => 'required|integer|min:2000|max:2099',
         ]);
 
         $newYear = (int) $request->new_year;
 
         return redirect()->route('administrasi.vra.index', [
             'year' => $newYear,
-            'period' => 'overall'
+            'period' => 'overall',
         ])->with('success', "Tahun {$newYear} berhasil dipilih sebagai periode aktif.");
     }
 
@@ -370,7 +373,7 @@ class VraController extends Controller
             'BBM_liter',
             'BBM_KM_liter',
             'VRA',
-            'budget_tahun'
+            'budget_tahun',
         ];
 
         $query = Vra::where('tahun', $year);
@@ -399,12 +402,13 @@ class VraController extends Controller
                 $row->BBM_liter,
                 $row->BBM_KM_liter,
                 $row->VRA,
-                $row->budget_tahun
+                $row->budget_tahun,
             ];
         }
 
-        $filename = "VRA_Report_{$year}_" . ($period === 'overall' ? 'Overall' : "Bulan_{$period}") . ".xlsx";
-        return \App\Services\ExcelExporter::download($filename, $headers, $dataRows, 'Report VRA');
+        $filename = "VRA_Report_{$year}_".($period === 'overall' ? 'Overall' : "Bulan_{$period}").'.xlsx';
+
+        return ExcelExporter::download($filename, $headers, $dataRows, 'Report VRA');
     }
 
     /**
@@ -415,14 +419,14 @@ class VraController extends Controller
         $headers = [
             'vra_id', 'nomor_polisi', 'kendaraan', 'bulan', 'upah', 'BBM', 'BBM_tahun',
             'preventif_maintenance', 'biaya_lainnya', 'total_biaya_bulan', 'KM_awal',
-            'KM_akhir', 'KM', 'BBM_liter', 'BBM_KM_liter', 'VRA', 'budget_tahun'
+            'KM_akhir', 'KM', 'BBM_liter', 'BBM_KM_liter', 'VRA', 'budget_tahun',
         ];
         $sampleRows = [
             [1, 'Hilux BM 8177 QG', 'Mobil Pool/Hilux', 5, 4723210, 1122000, 3222000, 2504820, 6419500, 14769530, 58135, 59661, 1526, 165, 9.25, 9679, 81026370],
-            [2, 'Mobil BM 7835 AZ', 'Bus Training', 5, 2577604, 849900, 3128600, 0, 2443981.88, 5871485.88, 138907, 139658, 751, 124.97, 6.01, 7818, 43433211]
+            [2, 'Mobil BM 7835 AZ', 'Bus Training', 5, 2577604, 849900, 3128600, 0, 2443981.88, 5871485.88, 138907, 139658, 751, 124.97, 6.01, 7818, 43433211],
         ];
 
-        return \App\Services\ExcelExporter::download('Template_Import_VRA.xlsx', $headers, $sampleRows, 'Template VRA');
+        return ExcelExporter::download('Template_Import_VRA.xlsx', $headers, $sampleRows, 'Template VRA');
     }
 
     /**
@@ -446,14 +450,15 @@ class VraController extends Controller
 
         // Open file
         $handle = fopen($filePath, 'r');
-        if (!$handle) {
+        if (! $handle) {
             return back()->with('error', 'Gagal membuka file CSV yang diunggah.');
         }
 
         $delimiter = $this->detectCsvDelimiter($filePath);
         $rawHeaders = fgetcsv($handle, 0, $delimiter);
-        if (!$rawHeaders) {
+        if (! $rawHeaders) {
             fclose($handle);
+
             return back()->with('error', 'Format file CSV tidak valid atau file kosong.');
         }
 
@@ -502,7 +507,7 @@ class VraController extends Controller
         }
 
         $fallbackYear = (int) $request->get('year', 2026);
-        $fallbackMonth = $request->get('period') === 'overall' ? 5 : (int)$request->get('period', 5);
+        $fallbackMonth = $request->get('period') === 'overall' ? 5 : (int) $request->get('period', 5);
 
         $insertedCount = 0;
         $updatedCount = 0;
@@ -519,17 +524,17 @@ class VraController extends Controller
                 continue;
             }
 
-            $tahun = isset($headerMap['tahun']) && !empty($row[$headerMap['tahun']]) ? (int)$row[$headerMap['tahun']] : $fallbackYear;
-            $bulan = isset($headerMap['bulan']) && !empty($row[$headerMap['bulan']]) ? (int)$row[$headerMap['bulan']] : $fallbackMonth;
+            $tahun = isset($headerMap['tahun']) && ! empty($row[$headerMap['tahun']]) ? (int) $row[$headerMap['tahun']] : $fallbackYear;
+            $bulan = isset($headerMap['bulan']) && ! empty($row[$headerMap['bulan']]) ? (int) $row[$headerMap['bulan']] : $fallbackMonth;
 
             // Month text fallback (Jan -> 1, Mei -> 5, etc.)
-            if ($bulan === 0 && isset($headerMap['bulan']) && !empty($row[$headerMap['bulan']])) {
+            if ($bulan === 0 && isset($headerMap['bulan']) && ! empty($row[$headerMap['bulan']])) {
                 $mText = strtolower(trim($row[$headerMap['bulan']]));
                 $monthTextMap = [
                     'jan' => 1, 'januari' => 1, 'feb' => 2, 'februari' => 2, 'mar' => 3, 'maret' => 3,
                     'apr' => 4, 'april' => 4, 'mei' => 5, 'may' => 5, 'jun' => 6, 'juni' => 6,
                     'jul' => 7, 'juli' => 7, 'aug' => 8, 'agustus' => 8, 'agu' => 8, 'sep' => 9, 'september' => 9,
-                    'okt' => 10, 'oktober' => 10, 'oct' => 10, 'nov' => 11, 'november' => 11, 'des' => 12, 'desember' => 12, 'dec' => 12
+                    'okt' => 10, 'oktober' => 10, 'oct' => 10, 'nov' => 11, 'november' => 11, 'des' => 12, 'desember' => 12, 'dec' => 12,
                 ];
                 $bulan = $monthTextMap[$mText] ?? 1;
             }
@@ -568,12 +573,12 @@ class VraController extends Controller
 
             // Check existing by vra_id if present, or by (nomor_polisi, tahun, bulan)
             $existing = null;
-            if (isset($headerMap['vra_id']) && !empty($row[$headerMap['vra_id']])) {
-                $id = (int)$row[$headerMap['vra_id']];
+            if (isset($headerMap['vra_id']) && ! empty($row[$headerMap['vra_id']])) {
+                $id = (int) $row[$headerMap['vra_id']];
                 $existing = Vra::find($id);
             }
 
-            if (!$existing) {
+            if (! $existing) {
                 $existing = Vra::where('nomor_polisi', $noPol)
                     ->where('tahun', $tahun)
                     ->where('bulan', $bulan)
@@ -615,18 +620,18 @@ class VraController extends Controller
         if ($updatedCount > 0) {
             $msg .= ", {$updatedCount} data diperbarui";
         }
-        $msg .= ".";
+        $msg .= '.';
 
         ActivityLog::log(
             'Import',
             'VRA',
-            "Mengimport data VRA dari file " . $file->getClientOriginalName() . " ({$insertedCount} baru, {$updatedCount} diperbarui)",
+            'Mengimport data VRA dari file '.$file->getClientOriginalName()." ({$insertedCount} baru, {$updatedCount} diperbarui)",
             ['filename' => $file->getClientOriginalName(), 'inserted' => $insertedCount, 'updated' => $updatedCount]
         );
 
         return redirect()->route('administrasi.vra.index', [
             'year' => $fallbackYear,
-            'period' => $request->get('period', 'overall')
+            'period' => $request->get('period', 'overall'),
         ])->with('success', $msg);
     }
 
@@ -641,13 +646,13 @@ class VraController extends Controller
         $query = Vra::query();
 
         if ($year && is_numeric($year)) {
-            $query->where('tahun', (int)$year);
+            $query->where('tahun', (int) $year);
         }
 
-        if ($period !== 'overall' && is_numeric($period) && (int)$period >= 1 && (int)$period <= 12) {
-            $query->where('bulan', (int)$period);
+        if ($period !== 'overall' && is_numeric($period) && (int) $period >= 1 && (int) $period <= 12) {
+            $query->where('bulan', (int) $period);
             $deleted = $query->delete();
-            $monthName = self::MONTHS[(int)$period] ?? "Bulan {$period}";
+            $monthName = self::MONTHS[(int) $period] ?? "Bulan {$period}";
             $msg = "Seluruh data VRA pada {$monthName} {$year} ({$deleted} data) berhasil dihapus.";
         } else {
             $deleted = $query->delete();
@@ -655,14 +660,14 @@ class VraController extends Controller
         }
 
         ActivityLog::log('Hapus', 'VRA', $msg, [
-            'count'  => $deleted,
-            'year'   => $year,
+            'count' => $deleted,
+            'year' => $year,
             'period' => $period,
         ]);
 
         return redirect()->route('administrasi.vra.index', [
             'year' => $year ?: 2026,
-            'period' => $period
+            'period' => $period,
         ])->with('success', $msg);
     }
 
@@ -676,17 +681,17 @@ class VraController extends Controller
         $totalBBM_liter = $rows->sum('BBM_liter');
 
         return [
-            'count'        => $rows->count(),
-            'upah'         => $rows->sum('upah'),
-            'bbm'          => $rows->sum('BBM'),
-            'bbm_tahun'    => $rows->sum('BBM_tahun'),
-            'maintenance'  => $rows->sum('preventif_maintenance'),
-            'lainnya'      => $rows->sum('biaya_lainnya'),
-            'total_biaya'  => $totalBiaya,
-            'km'           => $totalKM,
-            'bbm_liter'    => $totalBBM_liter,
+            'count' => $rows->count(),
+            'upah' => $rows->sum('upah'),
+            'bbm' => $rows->sum('BBM'),
+            'bbm_tahun' => $rows->sum('BBM_tahun'),
+            'maintenance' => $rows->sum('preventif_maintenance'),
+            'lainnya' => $rows->sum('biaya_lainnya'),
+            'total_biaya' => $totalBiaya,
+            'km' => $totalKM,
+            'bbm_liter' => $totalBBM_liter,
             'bbm_km_liter' => $totalBBM_liter > 0 ? ($totalKM / $totalBBM_liter) : 0,
-            'vra'          => $totalKM > 0 ? ($totalBiaya / $totalKM) : 0,
+            'vra' => $totalKM > 0 ? ($totalBiaya / $totalKM) : 0,
             'budget_tahun' => $rows->sum('budget_tahun'),
         ];
     }

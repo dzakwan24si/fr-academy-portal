@@ -193,7 +193,7 @@ class MppController extends Controller
                 'tahun' => $tahun,
                 'bulan' => $bulan,
                 'counts' => $counts,
-            ]
+            ],
         ]);
     }
 
@@ -303,7 +303,7 @@ class MppController extends Controller
     public function storeYear(Request $request)
     {
         $request->validate([
-            'new_year' => 'required|integer|min:2000|max:2099'
+            'new_year' => 'required|integer|min:2000|max:2099',
         ]);
 
         $newYear = (int) $request->new_year;
@@ -339,7 +339,7 @@ class MppController extends Controller
                 $row['PBT'],
                 $row['KHT'],
                 $row['KHL'],
-                $rowTotal
+                $rowTotal,
             ];
         }
 
@@ -349,10 +349,11 @@ class MppController extends Controller
             $totals['PBT'],
             $totals['KHT'],
             $totals['KHL'],
-            $totals['total_overall']
+            $totals['total_overall'],
         ];
 
         $filename = "Laporan_MPP_Jabatan_{$monthName}_{$year}.xlsx";
+
         return ExcelExporter::download($filename, $headers, $dataRows, 'Laporan MPP');
     }
 
@@ -368,7 +369,7 @@ class MppController extends Controller
             'KHT',
             'KHL',
             'tahun',
-            'bulan'
+            'bulan',
         ];
 
         $sampleRows = [
@@ -401,7 +402,7 @@ class MppController extends Controller
 
         // Detect delimiter
         $handle = fopen($filePath, 'r');
-        if (!$handle) {
+        if (! $handle) {
             return back()->with('error', 'Gagal membuka file CSV yang diunggah.');
         }
 
@@ -417,8 +418,9 @@ class MppController extends Controller
 
         // Read header
         $rawHeaders = fgetcsv($handle, 0, $delimiter);
-        if (!$rawHeaders) {
+        if (! $rawHeaders) {
             fclose($handle);
+
             return back()->with('error', 'Format file CSV tidak valid atau file kosong.');
         }
 
@@ -455,8 +457,9 @@ class MppController extends Controller
             }
         }
 
-        if (!isset($headerMap['nama_jabatan'])) {
+        if (! isset($headerMap['nama_jabatan'])) {
             fclose($handle);
+
             return back()->with('error', 'Header kolom "Nama Jabatan" tidak ditemukan dalam file CSV.');
         }
 
@@ -473,7 +476,7 @@ class MppController extends Controller
             'sep' => 9, 'september' => 9,
             'okt' => 10, 'oktober' => 10, 'oct' => 10, 'october' => 10,
             'nov' => 11, 'november' => 11,
-            'des' => 12, 'desember' => 12, 'dec' => 12, 'december' => 12
+            'des' => 12, 'desember' => 12, 'dec' => 12, 'december' => 12,
         ];
 
         // Replace mode: delete data for active context if replace mode selected
@@ -496,13 +499,13 @@ class MppController extends Controller
 
             // Determine Year
             $tahun = $fallbackYear;
-            if (isset($headerMap['tahun']) && isset($row[$headerMap['tahun']]) && !empty(trim($row[$headerMap['tahun']]))) {
+            if (isset($headerMap['tahun']) && isset($row[$headerMap['tahun']]) && ! empty(trim($row[$headerMap['tahun']]))) {
                 $tahun = (int) trim($row[$headerMap['tahun']]);
             }
 
             // Determine Month
             $bulan = $fallbackMonth;
-            if (isset($headerMap['bulan']) && isset($row[$headerMap['bulan']]) && !empty(trim($row[$headerMap['bulan']]))) {
+            if (isset($headerMap['bulan']) && isset($row[$headerMap['bulan']]) && ! empty(trim($row[$headerMap['bulan']]))) {
                 $mRaw = strtolower(trim($row[$headerMap['bulan']]));
                 if (is_numeric($mRaw)) {
                     $bulan = (int) $mRaw;
@@ -515,9 +518,9 @@ class MppController extends Controller
                 // Matrix columns: Staff, PBT, KHT, KHL
                 $types = [
                     'Staff' => isset($headerMap['staff']) && isset($row[$headerMap['staff']]) ? (int) preg_replace('/[^0-9]/', '', $row[$headerMap['staff']]) : 0,
-                    'PBT'   => isset($headerMap['pbt']) && isset($row[$headerMap['pbt']]) ? (int) preg_replace('/[^0-9]/', '', $row[$headerMap['pbt']]) : 0,
-                    'KHT'   => isset($headerMap['kht']) && isset($row[$headerMap['kht']]) ? (int) preg_replace('/[^0-9]/', '', $row[$headerMap['kht']]) : 0,
-                    'KHL'   => isset($headerMap['khl']) && isset($row[$headerMap['khl']]) ? (int) preg_replace('/[^0-9]/', '', $row[$headerMap['khl']]) : 0,
+                    'PBT' => isset($headerMap['pbt']) && isset($row[$headerMap['pbt']]) ? (int) preg_replace('/[^0-9]/', '', $row[$headerMap['pbt']]) : 0,
+                    'KHT' => isset($headerMap['kht']) && isset($row[$headerMap['kht']]) ? (int) preg_replace('/[^0-9]/', '', $row[$headerMap['kht']]) : 0,
+                    'KHL' => isset($headerMap['khl']) && isset($row[$headerMap['khl']]) ? (int) preg_replace('/[^0-9]/', '', $row[$headerMap['khl']]) : 0,
                 ];
 
                 foreach ($types as $type => $count) {
@@ -546,10 +549,15 @@ class MppController extends Controller
 
                 // Capitalize standard types if match
                 $upperJenis = strtoupper($jenis);
-                if ($upperJenis === 'STAFF') $jenis = 'Staff';
-                elseif ($upperJenis === 'PBT') $jenis = 'PBT';
-                elseif ($upperJenis === 'KHT') $jenis = 'KHT';
-                elseif ($upperJenis === 'KHL') $jenis = 'KHL';
+                if ($upperJenis === 'STAFF') {
+                    $jenis = 'Staff';
+                } elseif ($upperJenis === 'PBT') {
+                    $jenis = 'PBT';
+                } elseif ($upperJenis === 'KHT') {
+                    $jenis = 'KHT';
+                } elseif ($upperJenis === 'KHL') {
+                    $jenis = 'KHL';
+                }
 
                 $record = Mpp::updateOrCreate(
                     [
@@ -577,12 +585,12 @@ class MppController extends Controller
         if ($updatedCount > 0) {
             $msg .= ", {$updatedCount} data diperbarui";
         }
-        $msg .= ".";
+        $msg .= '.';
 
         ActivityLog::log(
             'Import',
             'MPP',
-            "Mengimport data MPP Jabatan dari file " . $file->getClientOriginalName() . " ({$insertedCount} baru, {$updatedCount} diperbarui)",
+            'Mengimport data MPP Jabatan dari file '.$file->getClientOriginalName()." ({$insertedCount} baru, {$updatedCount} diperbarui)",
             ['filename' => $file->getClientOriginalName(), 'inserted' => $insertedCount, 'updated' => $updatedCount]
         );
 

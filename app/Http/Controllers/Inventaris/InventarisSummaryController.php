@@ -83,7 +83,7 @@ class InventarisSummaryController extends Controller
         }
 
         // Room summary aggregation for Kantor
-        $kantorBarangSummary = Barang::where(function($q) {
+        $kantorBarangSummary = Barang::where(function ($q) {
             $q->where('jenis_lokasi', 'Kantor')->orWhere('lokasi', 'Kantor');
         })->get();
 
@@ -102,11 +102,11 @@ class InventarisSummaryController extends Controller
             $baik = $latestSO ? $latestSO->jumlah_baik : $stok;
             $rusak = $latestSO ? $latestSO->jumlah_rusak : 0;
 
-            $roomName = ($latestSO && !empty(trim($latestSO->lokasi_spesifik)))
+            $roomName = ($latestSO && ! empty(trim($latestSO->lokasi_spesifik)))
                 ? trim($latestSO->lokasi_spesifik)
-                : (($b->lokasi && !in_array($b->lokasi, ['Kantor', 'Gudang'])) ? $b->lokasi : 'Kantor (Umum)');
+                : (($b->lokasi && ! in_array($b->lokasi, ['Kantor', 'Gudang'])) ? $b->lokasi : 'Kantor (Umum)');
 
-            if (!isset($summaryRoomMap[$roomName])) {
+            if (! isset($summaryRoomMap[$roomName])) {
                 $summaryRoomMap[$roomName] = (object) [
                     'lokasi_spesifik' => $roomName,
                     'total_jenis_barang' => 0,
@@ -123,7 +123,7 @@ class InventarisSummaryController extends Controller
         }
 
         $summaryRoomList = array_values($summaryRoomMap);
-        usort($summaryRoomList, fn($a, $b) => strcmp($a->lokasi_spesifik, $b->lokasi_spesifik));
+        usort($summaryRoomList, fn ($a, $b) => strcmp($a->lokasi_spesifik, $b->lokasi_spesifik));
         $kantorRoomSummary = collect($summaryRoomList);
 
         return view('Administrasi.Pages.Inventaris.summary', [

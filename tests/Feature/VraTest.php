@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\Cost\Vra;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class VraTest extends TestCase
 {
     use DatabaseTransactions;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -167,9 +169,9 @@ class VraTest extends TestCase
     public function test_can_import_csv()
     {
         $csvContent = "vra_id,nomor_polisi,kendaraan,bulan,upah,BBM,BBM_tahun,preventif_maintenance,biaya_lainnya,total_biaya_bulan,KM_awal,KM_akhir,KM,BBM_liter,BBM_KM_liter,VRA,budget_tahun\n"
-                    . "99,Hilux Test Import,Mobil Test,5,4723210,1122000,3222000,2504820,6419500,14769530,58135,59661,1526,165,9.25,9679,3120\n";
+                    ."99,Hilux Test Import,Mobil Test,5,4723210,1122000,3222000,2504820,6419500,14769530,58135,59661,1526,165,9.25,9679,3120\n";
 
-        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('import.csv', $csvContent);
+        $file = UploadedFile::fake()->createWithContent('import.csv', $csvContent);
 
         $response = $this->post('/administrasi/vra/import', [
             'csv_file' => $file,

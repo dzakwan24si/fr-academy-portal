@@ -20,21 +20,21 @@ class CostTest extends TestCase
         parent::setUp();
         $this->authenticateUser();
         Cost::create([
-            'tahun'          => 2026,
-            'GL_ACCOUNT'     => '135.80.00001',
-            'jenis_cost'     => 'BIAYA KARYAWAN',
-            'account_name'   => 'STAFF',
-            'budget'         => 500000000,
-            'realisasi'      => 400000000,
+            'tahun' => 2026,
+            'GL_ACCOUNT' => '135.80.00001',
+            'jenis_cost' => 'BIAYA KARYAWAN',
+            'account_name' => 'STAFF',
+            'budget' => 500000000,
+            'realisasi' => 400000000,
             'budget_tahunan' => 6000000000,
         ]);
         Cost::create([
-            'tahun'          => 2026,
-            'GL_ACCOUNT'     => '135.80.00001',
-            'jenis_cost'     => 'BIAYA KARYAWAN',
-            'account_name'   => 'NON STAFF',
-            'budget'         => 50000000,
-            'realisasi'      => 40000000,
+            'tahun' => 2026,
+            'GL_ACCOUNT' => '135.80.00001',
+            'jenis_cost' => 'BIAYA KARYAWAN',
+            'account_name' => 'NON STAFF',
+            'budget' => 50000000,
+            'realisasi' => 40000000,
             'budget_tahunan' => 600000000,
         ]);
     }
@@ -52,13 +52,13 @@ class CostTest extends TestCase
     public function test_can_create_cost_item()
     {
         $payload = [
-            'tahun'          => 2026,
-            'bulan'          => 6,
-            'GL_ACCOUNT'     => '135.80.99999',
-            'jenis_cost'     => 'BIAYA OPERASIONAL',
-            'account_name'   => 'INTERNET & BANDWIDTH',
-            'budget'         => 5000000,
-            'realisasi'      => 4500000,
+            'tahun' => 2026,
+            'bulan' => 6,
+            'GL_ACCOUNT' => '135.80.99999',
+            'jenis_cost' => 'BIAYA OPERASIONAL',
+            'account_name' => 'INTERNET & BANDWIDTH',
+            'budget' => 5000000,
+            'realisasi' => 4500000,
             'budget_tahunan' => 60000000,
         ];
 
@@ -67,8 +67,8 @@ class CostTest extends TestCase
 
         $this->assertDatabaseHas('costs', [
             'account_name' => 'INTERNET & BANDWIDTH',
-            'jenis_cost'   => 'BIAYA OPERASIONAL',
-            'budget'       => 5000000,
+            'jenis_cost' => 'BIAYA OPERASIONAL',
+            'budget' => 5000000,
         ]);
     }
 
@@ -78,13 +78,13 @@ class CostTest extends TestCase
         $this->assertNotNull($cost);
 
         $payload = [
-            'tahun'          => $cost->tahun,
-            'bulan'          => $cost->bulan,
-            'GL_ACCOUNT'     => $cost->GL_ACCOUNT,
-            'jenis_cost'     => $cost->jenis_cost,
-            'account_name'   => $cost->account_name . ' (Updated)',
-            'budget'         => 999999,
-            'realisasi'      => 888888,
+            'tahun' => $cost->tahun,
+            'bulan' => $cost->bulan,
+            'GL_ACCOUNT' => $cost->GL_ACCOUNT,
+            'jenis_cost' => $cost->jenis_cost,
+            'account_name' => $cost->account_name.' (Updated)',
+            'budget' => 999999,
+            'realisasi' => 888888,
             'budget_tahunan' => 12000000,
         ];
 
@@ -92,17 +92,17 @@ class CostTest extends TestCase
         $response->assertRedirect("/administrasi/cost?year={$cost->tahun}");
 
         $this->assertDatabaseHas('costs', [
-            'cost_id'      => $cost->cost_id,
-            'account_name' => $cost->account_name . ' (Updated)',
-            'budget'       => 999999,
+            'cost_id' => $cost->cost_id,
+            'account_name' => $cost->account_name.' (Updated)',
+            'budget' => 999999,
         ]);
     }
 
     public function test_can_delete_cost_item()
     {
         $cost = Cost::create([
-            'tahun'        => 2026,
-            'jenis_cost'   => 'TEST DELETE',
+            'tahun' => 2026,
+            'jenis_cost' => 'TEST DELETE',
             'account_name' => 'WILL BE DELETED',
         ]);
 
@@ -127,19 +127,19 @@ class CostTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('import_cost.csv', $csvContent);
 
         $response = $this->post('/administrasi/cost/import', [
-            'csv_file'    => $file,
+            'csv_file' => $file,
             'import_mode' => 'append',
-            'tahun'       => 2026,
+            'tahun' => 2026,
         ]);
 
         $response->assertRedirect('/administrasi/cost?year=2026&month=all');
         $this->assertDatabaseHas('costs', [
             'account_name' => 'KERTAS F4',
-            'jenis_cost'   => 'BIAYA ATK',
+            'jenis_cost' => 'BIAYA ATK',
         ]);
         $this->assertDatabaseHas('costs', [
             'account_name' => 'TINTA PRINTER',
-            'jenis_cost'   => 'BIAYA ATK',
+            'jenis_cost' => 'BIAYA ATK',
         ]);
     }
 
@@ -149,17 +149,17 @@ class CostTest extends TestCase
         $file = UploadedFile::fake()->createWithContent('import_cost_month.csv', $csvContent);
 
         $response = $this->post('/administrasi/cost/import', [
-            'csv_file'    => $file,
+            'csv_file' => $file,
             'import_mode' => 'append',
-            'tahun'       => 2026,
-            'bulan'       => 7,
+            'tahun' => 2026,
+            'bulan' => 7,
         ]);
 
         $response->assertRedirect('/administrasi/cost?year=2026&month=7');
         $this->assertDatabaseHas('costs', [
             'account_name' => 'MAKAN SIANG KARYAWAN',
-            'bulan'        => 7,
-            'realisasi'    => 3200000,
+            'bulan' => 7,
+            'realisasi' => 3200000,
         ]);
     }
 
@@ -177,31 +177,31 @@ class CostTest extends TestCase
 
         // 2. Seed Capex RAB & Realisasi
         CapexRab::create([
-            'tahun'              => 2026,
-            'lokasi'             => 'kantor',
+            'tahun' => 2026,
+            'lokasi' => 'kantor',
             'kel_barang_kapital' => 'AC Split Inverter',
-            'jumlah_unit'        => 5,
-            'harga_satuan'       => 30000000,
-            'total_rp'           => 150000000,
+            'jumlah_unit' => 5,
+            'harga_satuan' => 30000000,
+            'total_rp' => 150000000,
         ]);
         CapexRealisasi::create([
-            'tahun'              => 2026,
-            'lokasi'             => 'kantor',
+            'tahun' => 2026,
+            'lokasi' => 'kantor',
             'kel_barang_kapital' => 'AC Split Inverter',
-            'nama_barang'        => 'Beli AC Split',
-            'tanggal'            => '2026-05-10',
-            'debit'              => 25000000,
-            'kredit'             => 0,
-            'total_rp'           => 25000000,
+            'nama_barang' => 'Beli AC Split',
+            'tanggal' => '2026-05-10',
+            'debit' => 25000000,
+            'kredit' => 0,
+            'total_rp' => 25000000,
         ]);
 
         // 3. Seed Biaya Rekruit
         BiayaRekruit::create([
-            'tahun'         => 2026,
-            'tanggal'       => '2026-05-15',
-            'nama'          => 'Iklan Job Portal & Assessment',
+            'tahun' => 2026,
+            'tanggal' => '2026-05-15',
+            'nama' => 'Iklan Job Portal & Assessment',
             'jenis_rekruit' => 'Eksternal',
-            'total_biaya'   => 1750000,
+            'total_biaya' => 1750000,
         ]);
 
         // Call sync
@@ -219,16 +219,16 @@ class CostTest extends TestCase
         $expectedRabKantor = (float) CapexRab::where('tahun', 2026)->where('lokasi', 'kantor')->sum('total_rp');
         $expectedRealKantor = (float) CapexRealisasi::where('tahun', 2026)->where('lokasi', 'kantor')->sum('total_rp');
         $this->assertDatabaseHas('costs', [
-            'account_name'   => 'Capex Kantor',
+            'account_name' => 'Capex Kantor',
             'budget_tahunan' => $expectedRabKantor,
-            'realisasi'      => $expectedRealKantor,
+            'realisasi' => $expectedRealKantor,
         ]);
 
         // Assert Rekruit is aggregated
         $expectedRekruit = (float) BiayaRekruit::where('tahun', 2026)->sum('total_biaya');
         $this->assertDatabaseHas('costs', [
             'account_name' => 'REKRUT',
-            'realisasi'    => $expectedRekruit,
+            'realisasi' => $expectedRekruit,
         ]);
     }
 
@@ -236,23 +236,23 @@ class CostTest extends TestCase
     {
         // Create 2 monthly entries for the same account
         Cost::create([
-            'tahun'        => 2026,
-            'bulan'        => 1,
-            'GL_ACCOUNT'   => '135.80.00777',
-            'jenis_cost'   => 'BIAYA OPERASIONAL',
+            'tahun' => 2026,
+            'bulan' => 1,
+            'GL_ACCOUNT' => '135.80.00777',
+            'jenis_cost' => 'BIAYA OPERASIONAL',
             'account_name' => 'KONSUMSI HARIAN',
-            'budget'       => 1000000,
-            'realisasi'    => 800000,
+            'budget' => 1000000,
+            'realisasi' => 800000,
         ]);
 
         Cost::create([
-            'tahun'        => 2026,
-            'bulan'        => 2,
-            'GL_ACCOUNT'   => '135.80.00777',
-            'jenis_cost'   => 'BIAYA OPERASIONAL',
+            'tahun' => 2026,
+            'bulan' => 2,
+            'GL_ACCOUNT' => '135.80.00777',
+            'jenis_cost' => 'BIAYA OPERASIONAL',
             'account_name' => 'KONSUMSI HARIAN',
-            'budget'       => 1500000,
-            'realisasi'    => 1200000,
+            'budget' => 1500000,
+            'realisasi' => 1200000,
         ]);
 
         $response = $this->get('/administrasi/cost?year=2026&month=all');

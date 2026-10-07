@@ -25,6 +25,7 @@ class TrainingProgram extends Model
     {
         return $this->hasMany(Moa::class);
     }
+
     public function dailyClasses()
     {
         return $this->hasMany(DailyClass::class);

@@ -10,8 +10,11 @@ class AppSetting extends Model
     use HasFactory;
 
     protected $table = 'app_settings';
+
     protected $primaryKey = 'key';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
@@ -25,6 +28,7 @@ class AppSetting extends Model
     public static function get(string $key, mixed $default = null): mixed
     {
         $setting = static::find($key);
+
         return $setting !== null ? $setting->value : $default;
     }
 

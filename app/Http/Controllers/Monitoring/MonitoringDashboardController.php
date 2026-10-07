@@ -8,8 +8,8 @@ use App\Models\Monitoring\MonitoringAfdeling;
 use App\Models\Monitoring\MonitoringAngkatan;
 use App\Models\Monitoring\MonitoringCulled;
 use App\Models\Monitoring\MonitoringEmployee;
-use App\Services\SpreadsheetReader;
 use App\Services\ExcelExporter;
+use App\Services\SpreadsheetReader;
 use Database\Seeders\Monitoring\MonitoringSeeder;
 use Database\Seeders\MonitoringSeeder as RootMonitoringSeeder;
 use Illuminate\Http\Request;
@@ -75,7 +75,7 @@ class MonitoringDashboardController extends Controller
             }
         }
 
-        $employees = $query->get()->map(fn($emp) => $emp->toFrontendArray());
+        $employees = $query->get()->map(fn ($emp) => $emp->toFrontendArray());
 
         return response()->json([
             'status' => 'success',
@@ -110,7 +110,7 @@ class MonitoringDashboardController extends Controller
             }
         }
 
-        $employee->update(!empty($filtered) ? $filtered : $attributes);
+        $employee->update(! empty($filtered) ? $filtered : $attributes);
 
         return response()->json([
             'status' => 'success',
@@ -156,7 +156,7 @@ class MonitoringDashboardController extends Controller
     {
         $angkatan = MonitoringAngkatan::orderBy('id_angkatan', 'desc')
             ->get()
-            ->map(fn($item) => $item->toFrontendArray());
+            ->map(fn ($item) => $item->toFrontendArray());
 
         return response()->json([
             'status' => 'success',
@@ -265,7 +265,7 @@ class MonitoringDashboardController extends Controller
         $culled = MonitoringCulled::with('angkatan')
             ->orderBy('id_culled', 'desc')
             ->get()
-            ->map(fn($item) => $item->toFrontendArray());
+            ->map(fn ($item) => $item->toFrontendArray());
 
         return response()->json([
             'status' => 'success',
@@ -345,7 +345,7 @@ class MonitoringDashboardController extends Controller
     // -------------------------------------------------------------
     public function getAfdeling()
     {
-        $afdeling = MonitoringAfdeling::all()->map(fn($item) => $item->toFrontendArray());
+        $afdeling = MonitoringAfdeling::all()->map(fn ($item) => $item->toFrontendArray());
 
         return response()->json([
             'status' => 'success',
@@ -364,7 +364,7 @@ class MonitoringDashboardController extends Controller
             );
         }
 
-        $afdeling = MonitoringAfdeling::all()->map(fn($item) => $item->toFrontendArray());
+        $afdeling = MonitoringAfdeling::all()->map(fn ($item) => $item->toFrontendArray());
 
         return response()->json([
             'status' => 'success',
@@ -384,20 +384,20 @@ class MonitoringDashboardController extends Controller
             try {
                 $file = $request->file('file');
                 $rawRows = SpreadsheetReader::read($file->getRealPath(), $file->getClientOriginalExtension());
-                if (!empty($rawRows)) {
+                if (! empty($rawRows)) {
                     $header = array_shift($rawRows);
                     foreach ($rawRows as $data) {
                         $row = [];
                         foreach ($header as $i => $col) {
-                            $row[trim((string)$col)] = isset($data[$i]) ? trim((string)$data[$i]) : null;
+                            $row[trim((string) $col)] = isset($data[$i]) ? trim((string) $data[$i]) : null;
                         }
-                        if (!empty($row['NAMA']) || !empty($row['NIK']) || !empty($row['ID_MONITORING'])) {
+                        if (! empty($row['NAMA']) || ! empty($row['NIK']) || ! empty($row['ID_MONITORING'])) {
                             $rows[] = $row;
                         }
                     }
                 }
             } catch (\Exception $e) {
-                return response()->json(['status' => 'error', 'message' => 'Gagal membaca file: ' . $e->getMessage()], 422);
+                return response()->json(['status' => 'error', 'message' => 'Gagal membaca file: '.$e->getMessage()], 422);
             }
         } elseif ($request->filled('rows') && is_array($request->input('rows'))) {
             $rows = $request->input('rows');
@@ -448,7 +448,7 @@ class MonitoringDashboardController extends Controller
             }
         }
 
-        if (!empty($batch)) {
+        if (! empty($batch)) {
             DB::table('monitoring_employees')->insert($batch);
             $insertedCount += count($batch);
         }
@@ -476,20 +476,20 @@ class MonitoringDashboardController extends Controller
             try {
                 $file = $request->file('file');
                 $rawRows = SpreadsheetReader::read($file->getRealPath(), $file->getClientOriginalExtension());
-                if (!empty($rawRows)) {
+                if (! empty($rawRows)) {
                     $header = array_shift($rawRows);
                     foreach ($rawRows as $data) {
                         $row = [];
                         foreach ($header as $i => $col) {
-                            $row[trim((string)$col)] = isset($data[$i]) ? trim((string)$data[$i]) : null;
+                            $row[trim((string) $col)] = isset($data[$i]) ? trim((string) $data[$i]) : null;
                         }
-                        if (!empty($row['angkatan']) || !empty($row['Angkatan'])) {
+                        if (! empty($row['angkatan']) || ! empty($row['Angkatan'])) {
                             $rows[] = $row;
                         }
                     }
                 }
             } catch (\Exception $e) {
-                return response()->json(['status' => 'error', 'message' => 'Gagal membaca file: ' . $e->getMessage()], 422);
+                return response()->json(['status' => 'error', 'message' => 'Gagal membaca file: '.$e->getMessage()], 422);
             }
         } elseif ($request->filled('rows') && is_array($request->input('rows'))) {
             $rows = $request->input('rows');
@@ -522,7 +522,9 @@ class MonitoringDashboardController extends Controller
 
         foreach ($rows as $row) {
             $angkatan = $row['angkatan'] ?? $row['Angkatan'] ?? '';
-            if (empty($angkatan)) continue;
+            if (empty($angkatan)) {
+                continue;
+            }
 
             $batch[] = [
                 'id_angkatan' => $seqId++,
@@ -543,7 +545,7 @@ class MonitoringDashboardController extends Controller
             }
         }
 
-        if (!empty($batch)) {
+        if (! empty($batch)) {
             DB::table('monitoring_angkatan')->insert($batch);
             $insertedCount += count($batch);
         }
@@ -571,20 +573,20 @@ class MonitoringDashboardController extends Controller
             try {
                 $file = $request->file('file');
                 $rawRows = SpreadsheetReader::read($file->getRealPath(), $file->getClientOriginalExtension());
-                if (!empty($rawRows)) {
+                if (! empty($rawRows)) {
                     $header = array_shift($rawRows);
                     foreach ($rawRows as $data) {
                         $row = [];
                         foreach ($header as $i => $col) {
-                            $row[trim((string)$col)] = isset($data[$i]) ? trim((string)$data[$i]) : null;
+                            $row[trim((string) $col)] = isset($data[$i]) ? trim((string) $data[$i]) : null;
                         }
-                        if (!empty($row['NAMA']) || !empty($row['nama']) || !empty($row['Nama']) || !empty($row['Nama Lengkap'])) {
+                        if (! empty($row['NAMA']) || ! empty($row['nama']) || ! empty($row['Nama']) || ! empty($row['Nama Lengkap'])) {
                             $rows[] = $row;
                         }
                     }
                 }
             } catch (\Exception $e) {
-                return response()->json(['status' => 'error', 'message' => 'Gagal membaca file: ' . $e->getMessage()], 422);
+                return response()->json(['status' => 'error', 'message' => 'Gagal membaca file: '.$e->getMessage()], 422);
             }
         } elseif ($request->filled('rows') && is_array($request->input('rows'))) {
             $rows = $request->input('rows');
@@ -602,8 +604,8 @@ class MonitoringDashboardController extends Controller
             ], 422);
         }
 
-        $angkatanMap = DB::table('monitoring_angkatan')->pluck('id_angkatan', 'angkatan')->mapWithKeys(function($id, $name) {
-            return [strtolower(trim((string)$name)) => $id];
+        $angkatanMap = DB::table('monitoring_angkatan')->pluck('id_angkatan', 'angkatan')->mapWithKeys(function ($id, $name) {
+            return [strtolower(trim((string) $name)) => $id];
         })->toArray();
 
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');
@@ -621,15 +623,17 @@ class MonitoringDashboardController extends Controller
 
         foreach ($rows as $row) {
             $nama = $row['NAMA'] ?? $row['nama'] ?? $row['Nama'] ?? $row['Nama Lengkap'] ?? '';
-            if (empty($nama)) continue;
+            if (empty($nama)) {
+                continue;
+            }
 
             $idAngkatan = null;
             $angkatanName = $row['ANGKATAN'] ?? $row['angkatan'] ?? $row['Angkatan'] ?? $row['id_angkatan'] ?? $row['ID_ANGKATAN'] ?? null;
             if ($angkatanName) {
-                if (is_numeric($angkatanName) && in_array((int)$angkatanName, $angkatanMap, true)) {
-                    $idAngkatan = (int)$angkatanName;
+                if (is_numeric($angkatanName) && in_array((int) $angkatanName, $angkatanMap, true)) {
+                    $idAngkatan = (int) $angkatanName;
                 } else {
-                    $cleanName = strtolower(trim((string)$angkatanName));
+                    $cleanName = strtolower(trim((string) $angkatanName));
                     if (isset($angkatanMap[$cleanName])) {
                         $idAngkatan = $angkatanMap[$cleanName];
                     }
@@ -658,7 +662,7 @@ class MonitoringDashboardController extends Controller
             }
         }
 
-        if (!empty($batch)) {
+        if (! empty($batch)) {
             DB::table('monitoring_culled')->insert($batch);
             $insertedCount += count($batch);
         }
@@ -690,7 +694,7 @@ class MonitoringDashboardController extends Controller
             'LOKASI TERAKHIR', 'REGION TERAKHIR', 'STATUS', 'DATE TERMINATE',
             'BULAN TERMINATE', 'TAHUN TERMINATE', 'LAMA BEKERJA (BULAN)',
             'LAMA BEKERJA (TAHUN)', 'LAMA BEKERJA', 'Alasan Resign', 'Detail',
-            'LOKASI AWAL PENEMPATAN', 'REGION AWAL PENEMPATAN', 'GM', 'MK'
+            'LOKASI AWAL PENEMPATAN', 'REGION AWAL PENEMPATAN', 'GM', 'MK',
         ];
 
         $dataRows = [];
@@ -724,7 +728,7 @@ class MonitoringDashboardController extends Controller
             ];
         }
 
-        return ExcelExporter::download('Export_Master_Data_Karyawan_' . date('Ymd_His') . '.xlsx', $headers, $dataRows, 'Data Karyawan');
+        return ExcelExporter::download('Export_Master_Data_Karyawan_'.date('Ymd_His').'.xlsx', $headers, $dataRows, 'Data Karyawan');
     }
 
     public function templateEmployees()
@@ -735,7 +739,7 @@ class MonitoringDashboardController extends Controller
             'LOKASI TERAKHIR', 'REGION TERAKHIR', 'STATUS', 'DATE TERMINATE',
             'BULAN TERMINATE', 'TAHUN TERMINATE', 'LAMA BEKERJA (BULAN)',
             'LAMA BEKERJA (TAHUN)', 'LAMA BEKERJA', 'Alasan Resign', 'Detail',
-            'LOKASI AWAL PENEMPATAN', 'REGION AWAL PENEMPATAN', 'GM', 'MK'
+            'LOKASI AWAL PENEMPATAN', 'REGION AWAL PENEMPATAN', 'GM', 'MK',
         ];
 
         $sampleRows = [
@@ -745,8 +749,8 @@ class MonitoringDashboardController extends Controller
                 'Kebun Sei Buatan', 'Riau', 'Aktif', '',
                 '', '', '',
                 '', '', '', '',
-                'Kebun Sei Buatan', 'Riau', 'Bambang S', 'M. Kurniawan'
-            ]
+                'Kebun Sei Buatan', 'Riau', 'Bambang S', 'M. Kurniawan',
+            ],
         ];
 
         return ExcelExporter::download('Template_Import_Master_Karyawan.xlsx', $headers, $sampleRows, 'Template Karyawan');
@@ -770,7 +774,7 @@ class MonitoringDashboardController extends Controller
             ];
         }
 
-        return ExcelExporter::download('Export_Master_Data_Angkatan_' . date('Ymd_His') . '.xlsx', $headers, $dataRows, 'Data Angkatan');
+        return ExcelExporter::download('Export_Master_Data_Angkatan_'.date('Ymd_His').'.xlsx', $headers, $dataRows, 'Data Angkatan');
     }
 
     public function templateAngkatan()
@@ -779,7 +783,7 @@ class MonitoringDashboardController extends Controller
 
         $sampleRows = [
             ['FAT 1 2024', 30, 25, 2, 2, 1],
-            ['AAT 2 2024', 25, 22, 1, 1, 1]
+            ['AAT 2 2024', 25, 22, 1, 1, 1],
         ];
 
         return ExcelExporter::download('Template_Import_Master_Angkatan.xlsx', $headers, $sampleRows, 'Template Angkatan');
@@ -802,7 +806,7 @@ class MonitoringDashboardController extends Controller
             ];
         }
 
-        return ExcelExporter::download('Export_Data_Peserta_Culled_' . date('Ymd_His') . '.xlsx', $headers, $dataRows, 'Peserta Culled');
+        return ExcelExporter::download('Export_Data_Peserta_Culled_'.date('Ymd_His').'.xlsx', $headers, $dataRows, 'Peserta Culled');
     }
 
     public function templateCulled()
@@ -811,7 +815,7 @@ class MonitoringDashboardController extends Controller
 
         $sampleRows = [
             ['Ahmad Fauzi', 'FAT 1 2024', 'Culled', 'Resign_In_Class', 'Alasan kesehatan / keluarga'],
-            ['Siti Rahma', 'AAT 2 2024', 'Tidak Lulus', 'Resign_OJT', 'Kualifikasi tidak memenuhi syarat']
+            ['Siti Rahma', 'AAT 2 2024', 'Tidak Lulus', 'Resign_OJT', 'Kualifikasi tidak memenuhi syarat'],
         ];
 
         return ExcelExporter::download('Template_Import_Peserta_Culled.xlsx', $headers, $sampleRows, 'Template Culled');
@@ -823,10 +827,10 @@ class MonitoringDashboardController extends Controller
     public function resetData()
     {
         if (class_exists(MonitoringSeeder::class)) {
-            $seeder = new MonitoringSeeder();
+            $seeder = new MonitoringSeeder;
             $seeder->run();
         } elseif (class_exists(RootMonitoringSeeder::class)) {
-            $seeder = new RootMonitoringSeeder();
+            $seeder = new RootMonitoringSeeder;
             $seeder->run();
         }
 

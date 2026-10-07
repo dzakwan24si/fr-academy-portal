@@ -1,0 +1,1258 @@
+{
+  "code": "mill",
+  "name": "FR Mill / PKS Technical Competency Dictionary",
+  "year": 2027,
+  "status": "published",
+  "positions": [
+    "Asisten Proses",
+    "Asisten Sortasi",
+    "Asisten Laboratorium",
+    "Asisten Maintenance",
+    "Askep Mill",
+    "Mill Manager",
+    "Production Controller"
+  ],
+  "competencies": [
+    {
+      "order": 1,
+      "name": "FFB Reception, Grading & Sortation",
+      "definition": "Menjamin penerimaan dan mutu TBS melalui timbangan, grading/sortasi, traceability dan feedback kualitas.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami keterkaitan FFB Reception, Grading & Sortation dengan proses produksi PKS.",
+          "Mandiri berkoordinasi dan menggunakan informasi FFB Reception, Grading & Sortation untuk menjaga stabilitas proses.",
+          "Menganalisis dampak deviasi FFB Reception, Grading & Sortation terhadap OER/KER, throughput, quality atau cost.",
+          "Mengintegrasikan FFB Reception, Grading & Sortation ke dalam optimasi proses dan menjadi rujukan pada interface antar-fungsi."
+        ],
+        "Asisten Sortasi": [
+          "Memahami standar dan indikator dasar FFB Reception, Grading & Sortation serta melakukan pemeriksaan dengan bimbingan.",
+          "Mandiri menjalankan kontrol FFB Reception, Grading & Sortation, memastikan ketepatan data, mutu dan kepatuhan SOP.",
+          "Menganalisis pola deviasi FFB Reception, Grading & Sortation, sumber masalah dan dampaknya terhadap mutu TBS/proses.",
+          "Mengoptimalkan sistem FFB Reception, Grading & Sortation, menjadi rujukan grading/quality dan membangun konsistensi assessor/operator."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami metode, parameter, sampling dan standar dasar FFB Reception, Grading & Sortation dengan bimbingan.",
+          "Mandiri memastikan pengujian/data FFB Reception, Grading & Sortation akurat, tepat waktu, traceable dan sesuai metode.",
+          "Menganalisis trend, abnormal result, correlation dan root cause terkait FFB Reception, Grading & Sortation.",
+          "Mengembangkan reliability analisa FFB Reception, Grading & Sortation, menjadi rujukan teknis dan mengarahkan improvement berbasis data."
+        ],
+        "Asisten Maintenance": [
+          "Memahami kebutuhan reliability equipment yang mendukung FFB Reception, Grading & Sortation.",
+          "Mandiri mengkoordinasikan dukungan maintenance untuk menjaga continuity FFB Reception, Grading & Sortation.",
+          "Menganalisis dampak equipment issue terhadap performance FFB Reception, Grading & Sortation.",
+          "Mengembangkan reliability solution yang meningkatkan efektivitas FFB Reception, Grading & Sortation."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point FFB Reception, Grading & Sortation lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi FFB Reception, Grading & Sortation agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada FFB Reception, Grading & Sortation serta memimpin recovery.",
+          "Mengoptimalkan FFB Reception, Grading & Sortation, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement FFB Reception, Grading & Sortation.",
+          "Mandiri menetapkan plan, target, resource dan governance FFB Reception, Grading & Sortation pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada FFB Reception, Grading & Sortation.",
+          "Membangun operating system FFB Reception, Grading & Sortation yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark FFB Reception, Grading & Sortation lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk FFB Reception, Grading & Sortation.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada FFB Reception, Grading & Sortation.",
+          "Menentukan strategy, benchmark dan governance FFB Reception, Grading & Sortation serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Kriteria kematangan dan kualitas TBS",
+          "Grading/sortation standard dan sampling",
+          "Weighbridge, traceability dan FFB reconciliation",
+          "Dampak kualitas TBS terhadap FFA, OER dan proses",
+          "Sistem feedback mutu ke estate/supplier"
+        ],
+        "skill": [
+          "Melakukan grading dan sampling representatif",
+          "Mengidentifikasi abnormal fruit/contamination",
+          "Menganalisis trend mutu TBS dan rejection",
+          "Merekonsiliasi timbang-penerimaan-processing",
+          "Memberikan feedback berbasis data"
+        ],
+        "development": [
+          "Technical Clinic FFB Grading & Sortation",
+          "Kalibrasi grader dan cross-check Estate-Mill",
+          "OJT weighbridge/loading ramp",
+          "Case analysis mutu TBS vs OER/FFA",
+          "Improvement project grading accuracy",
+          "Benchmark mill dengan raw material quality terbaik"
+        ]
+      }
+    },
+    {
+      "order": 2,
+      "name": "Sterilization Process",
+      "definition": "Mengendalikan cycle, pressure, time, condensate dan kualitas perebusan untuk mendukung extraction dan proses berikutnya.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami prinsip, parameter dan SOP Sterilization Process serta melakukan pengecekan dengan bimbingan.",
+          "Mandiri mengendalikan pelaksanaan Sterilization Process, menjaga parameter dan menindaklanjuti deviasi rutin.",
+          "Menganalisis trend, losses/bottleneck dan root cause pada Sterilization Process, lalu menetapkan corrective action.",
+          "Mengoptimalkan Sterilization Process, menjadi rujukan teknis station dan membangun standard kerja/operator yang konsisten."
+        ],
+        "Asisten Sortasi": [
+          "Memahami hubungan Sterilization Process dengan kualitas bahan baku dan kinerja PKS.",
+          "Mandiri menyediakan/menindaklanjuti informasi sortasi yang relevan untuk Sterilization Process.",
+          "Menganalisis korelasi mutu TBS dengan deviasi pada Sterilization Process.",
+          "Menjadi rujukan pada integrasi kualitas TBS dengan perbaikan Sterilization Process."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami parameter laboratorium yang terkait dengan Sterilization Process.",
+          "Mandiri menyediakan hasil analisa yang mendukung kontrol Sterilization Process.",
+          "Menganalisis hubungan data laboratorium dengan performance Sterilization Process.",
+          "Mengembangkan insight dan early warning untuk optimasi Sterilization Process."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Sterilization Process.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Sterilization Process.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Sterilization Process, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Sterilization Process lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Sterilization Process agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Sterilization Process serta memimpin recovery.",
+          "Mengoptimalkan Sterilization Process, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Sterilization Process.",
+          "Mandiri menetapkan plan, target, resource dan governance Sterilization Process pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Sterilization Process.",
+          "Membangun operating system Sterilization Process yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Sterilization Process lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Sterilization Process.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Sterilization Process.",
+          "Menentukan strategy, benchmark dan governance Sterilization Process serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Prinsip sterilization dan heat transfer",
+          "Cycle, pressure, time dan condensate",
+          "Dampak under/over sterilization",
+          "Interlock, safety dan steam balance",
+          "Hubungan sterilizer dengan threshing, pressing dan losses"
+        ],
+        "skill": [
+          "Membaca trend cycle/pressure/time",
+          "Mengendalikan charging-discharge dan condensate",
+          "Mendiagnosis abnormal sterilization",
+          "Menganalisis impact ke USB, oil losses dan throughput",
+          "Menetapkan corrective action aman"
+        ],
+        "development": [
+          "Sterilizer Process Training",
+          "OJT cycle optimization",
+          "Coaching process engineer/SME",
+          "Case study under/over sterilization",
+          "Learning Project cycle-time vs quality",
+          "Vendor/benchmark exposure"
+        ]
+      }
+    },
+    {
+      "order": 3,
+      "name": "Threshing Process",
+      "definition": "Mengendalikan pemisahan fruitlet dari bunch, unstripped bunch dan losses pada station thresher.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami prinsip, parameter dan SOP Threshing Process serta melakukan pengecekan dengan bimbingan.",
+          "Mandiri mengendalikan pelaksanaan Threshing Process, menjaga parameter dan menindaklanjuti deviasi rutin.",
+          "Menganalisis trend, losses/bottleneck dan root cause pada Threshing Process, lalu menetapkan corrective action.",
+          "Mengoptimalkan Threshing Process, menjadi rujukan teknis station dan membangun standard kerja/operator yang konsisten."
+        ],
+        "Asisten Sortasi": [
+          "Memahami hubungan Threshing Process dengan kualitas bahan baku dan kinerja PKS.",
+          "Mandiri menyediakan/menindaklanjuti informasi sortasi yang relevan untuk Threshing Process.",
+          "Menganalisis korelasi mutu TBS dengan deviasi pada Threshing Process.",
+          "Menjadi rujukan pada integrasi kualitas TBS dengan perbaikan Threshing Process."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami parameter laboratorium yang terkait dengan Threshing Process.",
+          "Mandiri menyediakan hasil analisa yang mendukung kontrol Threshing Process.",
+          "Menganalisis hubungan data laboratorium dengan performance Threshing Process.",
+          "Mengembangkan insight dan early warning untuk optimasi Threshing Process."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Threshing Process.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Threshing Process.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Threshing Process, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Threshing Process lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Threshing Process agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Threshing Process serta memimpin recovery.",
+          "Mengoptimalkan Threshing Process, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Threshing Process.",
+          "Mandiri menetapkan plan, target, resource dan governance Threshing Process pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Threshing Process.",
+          "Membangun operating system Threshing Process yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Threshing Process lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Threshing Process.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Threshing Process.",
+          "Menentukan strategy, benchmark dan governance Threshing Process serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Prinsip threshing dan fruit separation",
+          "Thresher speed/capacity dan feeding",
+          "Unstripped bunch dan empty bunch quality",
+          "Loss points dan recirculation",
+          "Safety rotating equipment"
+        ],
+        "skill": [
+          "Inspeksi separation quality",
+          "Mengukur/menganalisis USB dan losses",
+          "Mendeteksi feeding/bottleneck issue",
+          "Menghubungkan sterilization-threshing performance",
+          "Melakukan corrective action"
+        ],
+        "development": [
+          "Technical Clinic Threshing",
+          "OJT loss census",
+          "Field/process calibration",
+          "RCA USB tinggi",
+          "Improvement project thresher loss",
+          "Benchmark best-performing line"
+        ]
+      }
+    },
+    {
+      "order": 4,
+      "name": "Digestion & Pressing Process",
+      "definition": "Mengendalikan digestion, pressing, dilution dan press cake untuk memaksimalkan oil recovery dengan losses terkendali.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami prinsip, parameter dan SOP Digestion & Pressing Process serta melakukan pengecekan dengan bimbingan.",
+          "Mandiri mengendalikan pelaksanaan Digestion & Pressing Process, menjaga parameter dan menindaklanjuti deviasi rutin.",
+          "Menganalisis trend, losses/bottleneck dan root cause pada Digestion & Pressing Process, lalu menetapkan corrective action.",
+          "Mengoptimalkan Digestion & Pressing Process, menjadi rujukan teknis station dan membangun standard kerja/operator yang konsisten."
+        ],
+        "Asisten Sortasi": [
+          "Memahami hubungan Digestion & Pressing Process dengan kualitas bahan baku dan kinerja PKS.",
+          "Mandiri menyediakan/menindaklanjuti informasi sortasi yang relevan untuk Digestion & Pressing Process.",
+          "Menganalisis korelasi mutu TBS dengan deviasi pada Digestion & Pressing Process.",
+          "Menjadi rujukan pada integrasi kualitas TBS dengan perbaikan Digestion & Pressing Process."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami parameter laboratorium yang terkait dengan Digestion & Pressing Process.",
+          "Mandiri menyediakan hasil analisa yang mendukung kontrol Digestion & Pressing Process.",
+          "Menganalisis hubungan data laboratorium dengan performance Digestion & Pressing Process.",
+          "Mengembangkan insight dan early warning untuk optimasi Digestion & Pressing Process."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Digestion & Pressing Process.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Digestion & Pressing Process.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Digestion & Pressing Process, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Digestion & Pressing Process lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Digestion & Pressing Process agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Digestion & Pressing Process serta memimpin recovery.",
+          "Mengoptimalkan Digestion & Pressing Process, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Digestion & Pressing Process.",
+          "Mandiri menetapkan plan, target, resource dan governance Digestion & Pressing Process pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Digestion & Pressing Process.",
+          "Membangun operating system Digestion & Pressing Process yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Digestion & Pressing Process lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Digestion & Pressing Process.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Digestion & Pressing Process.",
+          "Menentukan strategy, benchmark dan governance Digestion & Pressing Process serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Digestion principles dan temperature",
+          "Screw press operation, pressure/cone setting",
+          "Dilution dan oil recovery",
+          "Press cake composition",
+          "Oil/nut losses dan equipment limitation"
+        ],
+        "skill": [
+          "Mengendalikan digester/press parameter",
+          "Sampling dan interpretasi losses",
+          "Menganalisis press efficiency",
+          "Mendiagnosis abnormal cake/oil recovery",
+          "Optimasi parameter tanpa mengorbankan kernel/equipment"
+        ],
+        "development": [
+          "Digester & Press Training",
+          "OJT parameter optimization",
+          "OEM/vendor coaching",
+          "Case analysis press losses",
+          "Project oil-loss reduction",
+          "Benchmark press station"
+        ]
+      }
+    },
+    {
+      "order": 5,
+      "name": "Clarification & Oil Purification",
+      "definition": "Mengendalikan clarification, purification dan drying untuk menghasilkan CPO sesuai mutu dengan oil losses minimum.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami prinsip, parameter dan SOP Clarification & Oil Purification serta melakukan pengecekan dengan bimbingan.",
+          "Mandiri mengendalikan pelaksanaan Clarification & Oil Purification, menjaga parameter dan menindaklanjuti deviasi rutin.",
+          "Menganalisis trend, losses/bottleneck dan root cause pada Clarification & Oil Purification, lalu menetapkan corrective action.",
+          "Mengoptimalkan Clarification & Oil Purification, menjadi rujukan teknis station dan membangun standard kerja/operator yang konsisten."
+        ],
+        "Asisten Sortasi": [
+          "Memahami hubungan Clarification & Oil Purification dengan kualitas bahan baku dan kinerja PKS.",
+          "Mandiri menyediakan/menindaklanjuti informasi sortasi yang relevan untuk Clarification & Oil Purification.",
+          "Menganalisis korelasi mutu TBS dengan deviasi pada Clarification & Oil Purification.",
+          "Menjadi rujukan pada integrasi kualitas TBS dengan perbaikan Clarification & Oil Purification."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami metode, parameter, sampling dan standar dasar Clarification & Oil Purification dengan bimbingan.",
+          "Mandiri memastikan pengujian/data Clarification & Oil Purification akurat, tepat waktu, traceable dan sesuai metode.",
+          "Menganalisis trend, abnormal result, correlation dan root cause terkait Clarification & Oil Purification.",
+          "Mengembangkan reliability analisa Clarification & Oil Purification, menjadi rujukan teknis dan mengarahkan improvement berbasis data."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Clarification & Oil Purification.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Clarification & Oil Purification.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Clarification & Oil Purification, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Clarification & Oil Purification lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Clarification & Oil Purification agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Clarification & Oil Purification serta memimpin recovery.",
+          "Mengoptimalkan Clarification & Oil Purification, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Clarification & Oil Purification.",
+          "Mandiri menetapkan plan, target, resource dan governance Clarification & Oil Purification pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Clarification & Oil Purification.",
+          "Membangun operating system Clarification & Oil Purification yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Clarification & Oil Purification lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Clarification & Oil Purification.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Clarification & Oil Purification.",
+          "Menentukan strategy, benchmark dan governance Clarification & Oil Purification serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Clarification flow dan separation principles",
+          "Temperature, dilution, retention/settling",
+          "Purifier/centrifuge/vacuum dryer",
+          "CPO moisture, dirt dan quality",
+          "Oil losses in sludge/effluent"
+        ],
+        "skill": [
+          "Mengendalikan clarification parameters",
+          "Sampling dan interpretasi quality/losses",
+          "Mass-balance sederhana",
+          "Mendiagnosis carry-over dan high losses",
+          "Optimasi oil recovery dan product quality"
+        ],
+        "development": [
+          "Clarification & Purification Training",
+          "Lab-process joint calibration",
+          "OJT clarification control",
+          "RCA high oil losses",
+          "Project CPO quality & recovery",
+          "Benchmark clarification performance"
+        ]
+      }
+    },
+    {
+      "order": 6,
+      "name": "Nut & Kernel Recovery",
+      "definition": "Mengendalikan depericarper, nut preparation, cracking dan separation untuk mengoptimalkan KER dan kernel quality.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami prinsip, parameter dan SOP Nut & Kernel Recovery serta melakukan pengecekan dengan bimbingan.",
+          "Mandiri mengendalikan pelaksanaan Nut & Kernel Recovery, menjaga parameter dan menindaklanjuti deviasi rutin.",
+          "Menganalisis trend, losses/bottleneck dan root cause pada Nut & Kernel Recovery, lalu menetapkan corrective action.",
+          "Mengoptimalkan Nut & Kernel Recovery, menjadi rujukan teknis station dan membangun standard kerja/operator yang konsisten."
+        ],
+        "Asisten Sortasi": [
+          "Memahami hubungan Nut & Kernel Recovery dengan kualitas bahan baku dan kinerja PKS.",
+          "Mandiri menyediakan/menindaklanjuti informasi sortasi yang relevan untuk Nut & Kernel Recovery.",
+          "Menganalisis korelasi mutu TBS dengan deviasi pada Nut & Kernel Recovery.",
+          "Menjadi rujukan pada integrasi kualitas TBS dengan perbaikan Nut & Kernel Recovery."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami metode, parameter, sampling dan standar dasar Nut & Kernel Recovery dengan bimbingan.",
+          "Mandiri memastikan pengujian/data Nut & Kernel Recovery akurat, tepat waktu, traceable dan sesuai metode.",
+          "Menganalisis trend, abnormal result, correlation dan root cause terkait Nut & Kernel Recovery.",
+          "Mengembangkan reliability analisa Nut & Kernel Recovery, menjadi rujukan teknis dan mengarahkan improvement berbasis data."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Nut & Kernel Recovery.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Nut & Kernel Recovery.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Nut & Kernel Recovery, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Nut & Kernel Recovery lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Nut & Kernel Recovery agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Nut & Kernel Recovery serta memimpin recovery.",
+          "Mengoptimalkan Nut & Kernel Recovery, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Nut & Kernel Recovery.",
+          "Mandiri menetapkan plan, target, resource dan governance Nut & Kernel Recovery pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Nut & Kernel Recovery.",
+          "Membangun operating system Nut & Kernel Recovery yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Nut & Kernel Recovery lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Nut & Kernel Recovery.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Nut & Kernel Recovery.",
+          "Menentukan strategy, benchmark dan governance Nut & Kernel Recovery serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Nut/fibre separation",
+          "Nut conditioning dan ripple mill",
+          "LTDS/hydrocyclone/claybath sesuai konfigurasi",
+          "Kernel moisture/dirt/broken kernel",
+          "Kernel losses dan KER drivers"
+        ],
+        "skill": [
+          "Mengendalikan nut/kernel station",
+          "Sampling losses dan quality",
+          "Menganalisis cracking/separation efficiency",
+          "Mendiagnosis kernel loss/broken kernel",
+          "Optimasi KER dan kernel quality"
+        ],
+        "development": [
+          "Kernel Recovery Training",
+          "OJT ripple mill/separation",
+          "OEM/SME coaching",
+          "Case analysis KER gap",
+          "Project kernel-loss reduction",
+          "Benchmark kernel plant"
+        ]
+      }
+    },
+    {
+      "order": 7,
+      "name": "Boiler & Steam Management",
+      "definition": "Menjamin fuel management, combustion, boiler efficiency, steam quality/balance dan keselamatan boiler.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami prinsip, parameter dan SOP Boiler & Steam Management serta melakukan pengecekan dengan bimbingan.",
+          "Mandiri mengendalikan pelaksanaan Boiler & Steam Management, menjaga parameter dan menindaklanjuti deviasi rutin.",
+          "Menganalisis trend, losses/bottleneck dan root cause pada Boiler & Steam Management, lalu menetapkan corrective action.",
+          "Mengoptimalkan Boiler & Steam Management, menjadi rujukan teknis station dan membangun standard kerja/operator yang konsisten."
+        ],
+        "Asisten Sortasi": [
+          "Memahami hubungan Boiler & Steam Management dengan kualitas bahan baku dan kinerja PKS.",
+          "Mandiri menyediakan/menindaklanjuti informasi sortasi yang relevan untuk Boiler & Steam Management.",
+          "Menganalisis korelasi mutu TBS dengan deviasi pada Boiler & Steam Management.",
+          "Menjadi rujukan pada integrasi kualitas TBS dengan perbaikan Boiler & Steam Management."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami parameter laboratorium yang terkait dengan Boiler & Steam Management.",
+          "Mandiri menyediakan hasil analisa yang mendukung kontrol Boiler & Steam Management.",
+          "Menganalisis hubungan data laboratorium dengan performance Boiler & Steam Management.",
+          "Mengembangkan insight dan early warning untuk optimasi Boiler & Steam Management."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Boiler & Steam Management.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Boiler & Steam Management.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Boiler & Steam Management, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Boiler & Steam Management lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Boiler & Steam Management agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Boiler & Steam Management serta memimpin recovery.",
+          "Mengoptimalkan Boiler & Steam Management, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Boiler & Steam Management.",
+          "Mandiri menetapkan plan, target, resource dan governance Boiler & Steam Management pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Boiler & Steam Management.",
+          "Membangun operating system Boiler & Steam Management yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Boiler & Steam Management lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Boiler & Steam Management.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Boiler & Steam Management.",
+          "Menentukan strategy, benchmark dan governance Boiler & Steam Management serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Boiler combustion dan heat balance",
+          "Fuel fibre/shell quality",
+          "Steam pressure/quality dan distribution",
+          "Boiler water chemistry/blowdown",
+          "Boiler safety, efficiency dan emissions"
+        ],
+        "skill": [
+          "Mengontrol combustion dan steam supply",
+          "Membaca boiler performance",
+          "Menganalisis fuel-steam efficiency",
+          "Mendiagnosis combustion/water issue",
+          "Mengoptimalkan steam balance secara aman"
+        ],
+        "development": [
+          "Boiler Operation & Efficiency Training",
+          "Boiler water chemistry clinic",
+          "OJT combustion tuning",
+          "OEM/boiler inspector coaching",
+          "Project steam/fuel efficiency",
+          "Benchmark boiler house"
+        ]
+      }
+    },
+    {
+      "order": 8,
+      "name": "Power Generation & Electrical System",
+      "definition": "Menjamin turbine/genset, power balance, electrical reliability dan efisiensi energi.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami prinsip, parameter dan SOP Power Generation & Electrical System serta melakukan pengecekan dengan bimbingan.",
+          "Mandiri mengendalikan pelaksanaan Power Generation & Electrical System, menjaga parameter dan menindaklanjuti deviasi rutin.",
+          "Menganalisis trend, losses/bottleneck dan root cause pada Power Generation & Electrical System, lalu menetapkan corrective action.",
+          "Mengoptimalkan Power Generation & Electrical System, menjadi rujukan teknis station dan membangun standard kerja/operator yang konsisten."
+        ],
+        "Asisten Sortasi": [
+          "Memahami hubungan Power Generation & Electrical System dengan kualitas bahan baku dan kinerja PKS.",
+          "Mandiri menyediakan/menindaklanjuti informasi sortasi yang relevan untuk Power Generation & Electrical System.",
+          "Menganalisis korelasi mutu TBS dengan deviasi pada Power Generation & Electrical System.",
+          "Menjadi rujukan pada integrasi kualitas TBS dengan perbaikan Power Generation & Electrical System."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami parameter laboratorium yang terkait dengan Power Generation & Electrical System.",
+          "Mandiri menyediakan hasil analisa yang mendukung kontrol Power Generation & Electrical System.",
+          "Menganalisis hubungan data laboratorium dengan performance Power Generation & Electrical System.",
+          "Mengembangkan insight dan early warning untuk optimasi Power Generation & Electrical System."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Power Generation & Electrical System.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Power Generation & Electrical System.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Power Generation & Electrical System, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Power Generation & Electrical System lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Power Generation & Electrical System agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Power Generation & Electrical System serta memimpin recovery.",
+          "Mengoptimalkan Power Generation & Electrical System, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Power Generation & Electrical System.",
+          "Mandiri menetapkan plan, target, resource dan governance Power Generation & Electrical System pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Power Generation & Electrical System.",
+          "Membangun operating system Power Generation & Electrical System yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Power Generation & Electrical System lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Power Generation & Electrical System.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Power Generation & Electrical System.",
+          "Menentukan strategy, benchmark dan governance Power Generation & Electrical System serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Steam turbine/genset principles",
+          "Power balance dan load management",
+          "Electrical distribution/protection",
+          "Power quality dan critical loads",
+          "Energy efficiency dan electrical safety"
+        ],
+        "skill": [
+          "Monitoring load dan generation",
+          "Menganalisis trip/power disturbance",
+          "Koordinasi load shedding/recovery",
+          "Menghitung energy intensity",
+          "Mendorong reliability improvement"
+        ],
+        "development": [
+          "Power Generation Training",
+          "Electrical safety & protection clinic",
+          "OJT turbine/genset",
+          "OEM coaching",
+          "Trip RCA case",
+          "Energy efficiency project"
+        ]
+      }
+    },
+    {
+      "order": 9,
+      "name": "Water Treatment & Process Water",
+      "definition": "Menjamin raw/process/boiler water treatment, kualitas air, chemical control dan kontinuitas supply.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami prinsip, parameter dan SOP Water Treatment & Process Water serta melakukan pengecekan dengan bimbingan.",
+          "Mandiri mengendalikan pelaksanaan Water Treatment & Process Water, menjaga parameter dan menindaklanjuti deviasi rutin.",
+          "Menganalisis trend, losses/bottleneck dan root cause pada Water Treatment & Process Water, lalu menetapkan corrective action.",
+          "Mengoptimalkan Water Treatment & Process Water, menjadi rujukan teknis station dan membangun standard kerja/operator yang konsisten."
+        ],
+        "Asisten Sortasi": [
+          "Memahami hubungan Water Treatment & Process Water dengan kualitas bahan baku dan kinerja PKS.",
+          "Mandiri menyediakan/menindaklanjuti informasi sortasi yang relevan untuk Water Treatment & Process Water.",
+          "Menganalisis korelasi mutu TBS dengan deviasi pada Water Treatment & Process Water.",
+          "Menjadi rujukan pada integrasi kualitas TBS dengan perbaikan Water Treatment & Process Water."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami metode, parameter, sampling dan standar dasar Water Treatment & Process Water dengan bimbingan.",
+          "Mandiri memastikan pengujian/data Water Treatment & Process Water akurat, tepat waktu, traceable dan sesuai metode.",
+          "Menganalisis trend, abnormal result, correlation dan root cause terkait Water Treatment & Process Water.",
+          "Mengembangkan reliability analisa Water Treatment & Process Water, menjadi rujukan teknis dan mengarahkan improvement berbasis data."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Water Treatment & Process Water.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Water Treatment & Process Water.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Water Treatment & Process Water, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Water Treatment & Process Water lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Water Treatment & Process Water agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Water Treatment & Process Water serta memimpin recovery.",
+          "Mengoptimalkan Water Treatment & Process Water, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Water Treatment & Process Water.",
+          "Mandiri menetapkan plan, target, resource dan governance Water Treatment & Process Water pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Water Treatment & Process Water.",
+          "Membangun operating system Water Treatment & Process Water yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Water Treatment & Process Water lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Water Treatment & Process Water.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Water Treatment & Process Water.",
+          "Menentukan strategy, benchmark dan governance Water Treatment & Process Water serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Raw water characteristics",
+          "Clarification/filtration/softening/demineralization sesuai system",
+          "Boiler feed-water requirements",
+          "Chemical dosing dan test parameters",
+          "Water consumption dan conservation"
+        ],
+        "skill": [
+          "Sampling/test kualitas air",
+          "Mengendalikan dosing dan WTP operation",
+          "Menganalisis abnormal water quality",
+          "Merekonsiliasi water balance",
+          "Optimasi chemical dan water usage"
+        ],
+        "development": [
+          "Water Treatment Training",
+          "Lab-WTP calibration",
+          "OJT chemical control",
+          "Vendor/chemical supplier coaching",
+          "Water-quality case analysis",
+          "Water-use reduction project"
+        ]
+      }
+    },
+    {
+      "order": 10,
+      "name": "Process Control, OER, KER & Losses Optimization",
+      "definition": "Mengintegrasikan mass balance, process parameters, OER, KER, losses dan recovery untuk optimasi extraction.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami prinsip, parameter dan SOP Process Control, OER, KER & Losses Optimization serta melakukan pengecekan dengan bimbingan.",
+          "Mandiri mengendalikan pelaksanaan Process Control, OER, KER & Losses Optimization, menjaga parameter dan menindaklanjuti deviasi rutin.",
+          "Menganalisis trend, losses/bottleneck dan root cause pada Process Control, OER, KER & Losses Optimization, lalu menetapkan corrective action.",
+          "Mengoptimalkan Process Control, OER, KER & Losses Optimization, menjadi rujukan teknis station dan membangun standard kerja/operator yang konsisten."
+        ],
+        "Asisten Sortasi": [
+          "Memahami standar dan indikator dasar Process Control, OER, KER & Losses Optimization serta melakukan pemeriksaan dengan bimbingan.",
+          "Mandiri menjalankan kontrol Process Control, OER, KER & Losses Optimization, memastikan ketepatan data, mutu dan kepatuhan SOP.",
+          "Menganalisis pola deviasi Process Control, OER, KER & Losses Optimization, sumber masalah dan dampaknya terhadap mutu TBS/proses.",
+          "Mengoptimalkan sistem Process Control, OER, KER & Losses Optimization, menjadi rujukan grading/quality dan membangun konsistensi assessor/operator."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami metode, parameter, sampling dan standar dasar Process Control, OER, KER & Losses Optimization dengan bimbingan.",
+          "Mandiri memastikan pengujian/data Process Control, OER, KER & Losses Optimization akurat, tepat waktu, traceable dan sesuai metode.",
+          "Menganalisis trend, abnormal result, correlation dan root cause terkait Process Control, OER, KER & Losses Optimization.",
+          "Mengembangkan reliability analisa Process Control, OER, KER & Losses Optimization, menjadi rujukan teknis dan mengarahkan improvement berbasis data."
+        ],
+        "Asisten Maintenance": [
+          "Memahami kebutuhan reliability equipment yang mendukung Process Control, OER, KER & Losses Optimization.",
+          "Mandiri mengkoordinasikan dukungan maintenance untuk menjaga continuity Process Control, OER, KER & Losses Optimization.",
+          "Menganalisis dampak equipment issue terhadap performance Process Control, OER, KER & Losses Optimization.",
+          "Mengembangkan reliability solution yang meningkatkan efektivitas Process Control, OER, KER & Losses Optimization."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Process Control, OER, KER & Losses Optimization lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Process Control, OER, KER & Losses Optimization agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Process Control, OER, KER & Losses Optimization serta memimpin recovery.",
+          "Mengoptimalkan Process Control, OER, KER & Losses Optimization, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Process Control, OER, KER & Losses Optimization.",
+          "Mandiri menetapkan plan, target, resource dan governance Process Control, OER, KER & Losses Optimization pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Process Control, OER, KER & Losses Optimization.",
+          "Membangun operating system Process Control, OER, KER & Losses Optimization yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Process Control, OER, KER & Losses Optimization lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Process Control, OER, KER & Losses Optimization.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Process Control, OER, KER & Losses Optimization.",
+          "Menentukan strategy, benchmark dan governance Process Control, OER, KER & Losses Optimization serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Mass balance PKS",
+          "OER, KER dan extraction drivers",
+          "Oil/kernel loss points",
+          "Process parameter interdependency",
+          "Throughput-quality-extraction trade-off"
+        ],
+        "skill": [
+          "Menghitung dan memvalidasi OER/KER/losses",
+          "Membaca trend dan correlation",
+          "Melakukan root cause analysis",
+          "Menyusun recovery plan",
+          "Mengoptimalkan process window lintas station"
+        ],
+        "development": [
+          "OER/KER & Losses Clinic",
+          "Mass Balance workshop",
+          "Daily loss-review coaching",
+          "Case analysis low OER",
+          "OPD Yield/Extraction Improvement",
+          "Benchmark high-OER mill"
+        ]
+      }
+    },
+    {
+      "order": 11,
+      "name": "Quality Control & Laboratory Management",
+      "definition": "Menjamin sampling, test method, FFA, moisture/dirt, losses analysis, calibration dan reliability hasil laboratorium.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami keterkaitan Quality Control & Laboratory Management dengan proses produksi PKS.",
+          "Mandiri berkoordinasi dan menggunakan informasi Quality Control & Laboratory Management untuk menjaga stabilitas proses.",
+          "Menganalisis dampak deviasi Quality Control & Laboratory Management terhadap OER/KER, throughput, quality atau cost.",
+          "Mengintegrasikan Quality Control & Laboratory Management ke dalam optimasi proses dan menjadi rujukan pada interface antar-fungsi."
+        ],
+        "Asisten Sortasi": [
+          "Memahami hubungan Quality Control & Laboratory Management dengan kualitas bahan baku dan kinerja PKS.",
+          "Mandiri menyediakan/menindaklanjuti informasi sortasi yang relevan untuk Quality Control & Laboratory Management.",
+          "Menganalisis korelasi mutu TBS dengan deviasi pada Quality Control & Laboratory Management.",
+          "Menjadi rujukan pada integrasi kualitas TBS dengan perbaikan Quality Control & Laboratory Management."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami metode, parameter, sampling dan standar dasar Quality Control & Laboratory Management dengan bimbingan.",
+          "Mandiri memastikan pengujian/data Quality Control & Laboratory Management akurat, tepat waktu, traceable dan sesuai metode.",
+          "Menganalisis trend, abnormal result, correlation dan root cause terkait Quality Control & Laboratory Management.",
+          "Mengembangkan reliability analisa Quality Control & Laboratory Management, menjadi rujukan teknis dan mengarahkan improvement berbasis data."
+        ],
+        "Asisten Maintenance": [
+          "Memahami kebutuhan reliability equipment yang mendukung Quality Control & Laboratory Management.",
+          "Mandiri mengkoordinasikan dukungan maintenance untuk menjaga continuity Quality Control & Laboratory Management.",
+          "Menganalisis dampak equipment issue terhadap performance Quality Control & Laboratory Management.",
+          "Mengembangkan reliability solution yang meningkatkan efektivitas Quality Control & Laboratory Management."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Quality Control & Laboratory Management lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Quality Control & Laboratory Management agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Quality Control & Laboratory Management serta memimpin recovery.",
+          "Mengoptimalkan Quality Control & Laboratory Management, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Quality Control & Laboratory Management.",
+          "Mandiri menetapkan plan, target, resource dan governance Quality Control & Laboratory Management pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Quality Control & Laboratory Management.",
+          "Membangun operating system Quality Control & Laboratory Management yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Quality Control & Laboratory Management lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Quality Control & Laboratory Management.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Quality Control & Laboratory Management.",
+          "Menentukan strategy, benchmark dan governance Quality Control & Laboratory Management serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Sampling theory dan representativeness",
+          "Metode analisa CPO/kernel/losses",
+          "FFA, moisture, dirt dan relevant quality parameters",
+          "Calibration, reagent dan lab QA/QC",
+          "Data integrity dan traceability"
+        ],
+        "skill": [
+          "Sampling dan testing yang repeatable",
+          "Calibration/verification alat",
+          "Validasi abnormal result",
+          "Trend/correlation analysis",
+          "Menjaga chain-of-custody data"
+        ],
+        "development": [
+          "Laboratory Management Training",
+          "Inter-lab calibration",
+          "Method/SOP self-learning",
+          "OJT QA/QC",
+          "Data integrity case",
+          "Lab reliability improvement project"
+        ]
+      }
+    },
+    {
+      "order": 12,
+      "name": "Maintenance & Equipment Reliability",
+      "definition": "Menjamin preventive/predictive maintenance, breakdown response, critical equipment, downtime dan asset reliability.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami keterkaitan Maintenance & Equipment Reliability dengan proses produksi PKS.",
+          "Mandiri berkoordinasi dan menggunakan informasi Maintenance & Equipment Reliability untuk menjaga stabilitas proses.",
+          "Menganalisis dampak deviasi Maintenance & Equipment Reliability terhadap OER/KER, throughput, quality atau cost.",
+          "Mengintegrasikan Maintenance & Equipment Reliability ke dalam optimasi proses dan menjadi rujukan pada interface antar-fungsi."
+        ],
+        "Asisten Sortasi": [
+          "Memahami hubungan Maintenance & Equipment Reliability dengan kualitas bahan baku dan kinerja PKS.",
+          "Mandiri menyediakan/menindaklanjuti informasi sortasi yang relevan untuk Maintenance & Equipment Reliability.",
+          "Menganalisis korelasi mutu TBS dengan deviasi pada Maintenance & Equipment Reliability.",
+          "Menjadi rujukan pada integrasi kualitas TBS dengan perbaikan Maintenance & Equipment Reliability."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami parameter laboratorium yang terkait dengan Maintenance & Equipment Reliability.",
+          "Mandiri menyediakan hasil analisa yang mendukung kontrol Maintenance & Equipment Reliability.",
+          "Menganalisis hubungan data laboratorium dengan performance Maintenance & Equipment Reliability.",
+          "Mengembangkan insight dan early warning untuk optimasi Maintenance & Equipment Reliability."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Maintenance & Equipment Reliability.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Maintenance & Equipment Reliability.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Maintenance & Equipment Reliability, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Maintenance & Equipment Reliability lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Maintenance & Equipment Reliability agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Maintenance & Equipment Reliability serta memimpin recovery.",
+          "Mengoptimalkan Maintenance & Equipment Reliability, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Maintenance & Equipment Reliability.",
+          "Mandiri menetapkan plan, target, resource dan governance Maintenance & Equipment Reliability pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Maintenance & Equipment Reliability.",
+          "Membangun operating system Maintenance & Equipment Reliability yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Maintenance & Equipment Reliability lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Maintenance & Equipment Reliability.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Maintenance & Equipment Reliability.",
+          "Menentukan strategy, benchmark dan governance Maintenance & Equipment Reliability serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Maintenance strategy PM/PdM/CM",
+          "Critical equipment dan failure modes",
+          "Lubrication/alignment/vibration basics",
+          "Planning, backlog dan spare parts",
+          "MTBF, MTTR, downtime dan lifecycle cost"
+        ],
+        "skill": [
+          "Condition inspection",
+          "Maintenance planning/scheduling",
+          "Failure/RCA analysis",
+          "Downtime/MTBF/MTTR analysis",
+          "Prioritas spare dan reliability action"
+        ],
+        "development": [
+          "Reliability & Maintenance Training",
+          "OEM technical training",
+          "OJT condition monitoring",
+          "RCA breakdown clinic",
+          "Critical-equipment reliability project",
+          "Benchmark maintenance system"
+        ]
+      }
+    },
+    {
+      "order": 13,
+      "name": "Production Planning & Throughput Management",
+      "definition": "Mengubah FFB forecast menjadi processing plan, operating hours, capacity utilization dan bottleneck control.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami prinsip, parameter dan SOP Production Planning & Throughput Management serta melakukan pengecekan dengan bimbingan.",
+          "Mandiri mengendalikan pelaksanaan Production Planning & Throughput Management, menjaga parameter dan menindaklanjuti deviasi rutin.",
+          "Menganalisis trend, losses/bottleneck dan root cause pada Production Planning & Throughput Management, lalu menetapkan corrective action.",
+          "Mengoptimalkan Production Planning & Throughput Management, menjadi rujukan teknis station dan membangun standard kerja/operator yang konsisten."
+        ],
+        "Asisten Sortasi": [
+          "Memahami standar dan indikator dasar Production Planning & Throughput Management serta melakukan pemeriksaan dengan bimbingan.",
+          "Mandiri menjalankan kontrol Production Planning & Throughput Management, memastikan ketepatan data, mutu dan kepatuhan SOP.",
+          "Menganalisis pola deviasi Production Planning & Throughput Management, sumber masalah dan dampaknya terhadap mutu TBS/proses.",
+          "Mengoptimalkan sistem Production Planning & Throughput Management, menjadi rujukan grading/quality dan membangun konsistensi assessor/operator."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami parameter laboratorium yang terkait dengan Production Planning & Throughput Management.",
+          "Mandiri menyediakan hasil analisa yang mendukung kontrol Production Planning & Throughput Management.",
+          "Menganalisis hubungan data laboratorium dengan performance Production Planning & Throughput Management.",
+          "Mengembangkan insight dan early warning untuk optimasi Production Planning & Throughput Management."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Production Planning & Throughput Management.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Production Planning & Throughput Management.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Production Planning & Throughput Management, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Production Planning & Throughput Management lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Production Planning & Throughput Management agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Production Planning & Throughput Management serta memimpin recovery.",
+          "Mengoptimalkan Production Planning & Throughput Management, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Production Planning & Throughput Management.",
+          "Mandiri menetapkan plan, target, resource dan governance Production Planning & Throughput Management pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Production Planning & Throughput Management.",
+          "Membangun operating system Production Planning & Throughput Management yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Production Planning & Throughput Management lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Production Planning & Throughput Management.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Production Planning & Throughput Management.",
+          "Menentukan strategy, benchmark dan governance Production Planning & Throughput Management serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "FFB forecast dan mill capacity",
+          "Processing hours dan throughput",
+          "Bottleneck/cycle time",
+          "Shutdown/start-up planning",
+          "Interface FFB supply, storage, process dan maintenance"
+        ],
+        "skill": [
+          "Menyusun daily/weekly processing plan",
+          "Capacity/bottleneck analysis",
+          "Mengatur sequence dan operating hours",
+          "Recovery planning",
+          "Koordinasi lintas fungsi"
+        ],
+        "development": [
+          "Production Planning Training",
+          "Daily planning coaching",
+          "OJT bottleneck mapping",
+          "Case throughput shortfall",
+          "Throughput improvement project",
+          "Benchmark operating rhythm"
+        ]
+      }
+    },
+    {
+      "order": 14,
+      "name": "Cost, Efficiency & Resource Management",
+      "definition": "Mengendalikan processing cost, energy, chemical, manpower, maintenance dan resource efficiency.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami keterkaitan Cost, Efficiency & Resource Management dengan proses produksi PKS.",
+          "Mandiri berkoordinasi dan menggunakan informasi Cost, Efficiency & Resource Management untuk menjaga stabilitas proses.",
+          "Menganalisis dampak deviasi Cost, Efficiency & Resource Management terhadap OER/KER, throughput, quality atau cost.",
+          "Mengintegrasikan Cost, Efficiency & Resource Management ke dalam optimasi proses dan menjadi rujukan pada interface antar-fungsi."
+        ],
+        "Asisten Sortasi": [
+          "Memahami hubungan Cost, Efficiency & Resource Management dengan kualitas bahan baku dan kinerja PKS.",
+          "Mandiri menyediakan/menindaklanjuti informasi sortasi yang relevan untuk Cost, Efficiency & Resource Management.",
+          "Menganalisis korelasi mutu TBS dengan deviasi pada Cost, Efficiency & Resource Management.",
+          "Menjadi rujukan pada integrasi kualitas TBS dengan perbaikan Cost, Efficiency & Resource Management."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami parameter laboratorium yang terkait dengan Cost, Efficiency & Resource Management.",
+          "Mandiri menyediakan hasil analisa yang mendukung kontrol Cost, Efficiency & Resource Management.",
+          "Menganalisis hubungan data laboratorium dengan performance Cost, Efficiency & Resource Management.",
+          "Mengembangkan insight dan early warning untuk optimasi Cost, Efficiency & Resource Management."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Cost, Efficiency & Resource Management.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Cost, Efficiency & Resource Management.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Cost, Efficiency & Resource Management, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Cost, Efficiency & Resource Management lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Cost, Efficiency & Resource Management agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Cost, Efficiency & Resource Management serta memimpin recovery.",
+          "Mengoptimalkan Cost, Efficiency & Resource Management, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Cost, Efficiency & Resource Management.",
+          "Mandiri menetapkan plan, target, resource dan governance Cost, Efficiency & Resource Management pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Cost, Efficiency & Resource Management.",
+          "Membangun operating system Cost, Efficiency & Resource Management yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Cost, Efficiency & Resource Management lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Cost, Efficiency & Resource Management.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Cost, Efficiency & Resource Management.",
+          "Menentukan strategy, benchmark dan governance Cost, Efficiency & Resource Management serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Mill cost structure",
+          "Energy/chemical/manpower/maintenance cost drivers",
+          "Budget dan variance",
+          "Unit cost per ton FFB/CPO",
+          "Efficiency vs reliability/quality trade-off"
+        ],
+        "skill": [
+          "Cost monitoring dan variance analysis",
+          "Resource productivity analysis",
+          "Forecasting sederhana",
+          "Benefit-cost analysis",
+          "Prioritasi efficiency initiative"
+        ],
+        "development": [
+          "Mill Cost Control Training",
+          "Finance coaching",
+          "Cost-driver case analysis",
+          "Energy/chemical efficiency project",
+          "Budget review assignment",
+          "Benchmark processing cost"
+        ]
+      }
+    },
+    {
+      "order": 15,
+      "name": "Mill Data & Performance Analytics",
+      "definition": "Menjamin data accuracy, dashboard, trend/variance analysis, RCA dan evidence-based decision making.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami prinsip, parameter dan SOP Mill Data & Performance Analytics serta melakukan pengecekan dengan bimbingan.",
+          "Mandiri mengendalikan pelaksanaan Mill Data & Performance Analytics, menjaga parameter dan menindaklanjuti deviasi rutin.",
+          "Menganalisis trend, losses/bottleneck dan root cause pada Mill Data & Performance Analytics, lalu menetapkan corrective action.",
+          "Mengoptimalkan Mill Data & Performance Analytics, menjadi rujukan teknis station dan membangun standard kerja/operator yang konsisten."
+        ],
+        "Asisten Sortasi": [
+          "Memahami standar dan indikator dasar Mill Data & Performance Analytics serta melakukan pemeriksaan dengan bimbingan.",
+          "Mandiri menjalankan kontrol Mill Data & Performance Analytics, memastikan ketepatan data, mutu dan kepatuhan SOP.",
+          "Menganalisis pola deviasi Mill Data & Performance Analytics, sumber masalah dan dampaknya terhadap mutu TBS/proses.",
+          "Mengoptimalkan sistem Mill Data & Performance Analytics, menjadi rujukan grading/quality dan membangun konsistensi assessor/operator."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami metode, parameter, sampling dan standar dasar Mill Data & Performance Analytics dengan bimbingan.",
+          "Mandiri memastikan pengujian/data Mill Data & Performance Analytics akurat, tepat waktu, traceable dan sesuai metode.",
+          "Menganalisis trend, abnormal result, correlation dan root cause terkait Mill Data & Performance Analytics.",
+          "Mengembangkan reliability analisa Mill Data & Performance Analytics, menjadi rujukan teknis dan mengarahkan improvement berbasis data."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Mill Data & Performance Analytics.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Mill Data & Performance Analytics.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Mill Data & Performance Analytics, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Mill Data & Performance Analytics lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Mill Data & Performance Analytics agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Mill Data & Performance Analytics serta memimpin recovery.",
+          "Mengoptimalkan Mill Data & Performance Analytics, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Mill Data & Performance Analytics.",
+          "Mandiri menetapkan plan, target, resource dan governance Mill Data & Performance Analytics pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Mill Data & Performance Analytics.",
+          "Membangun operating system Mill Data & Performance Analytics yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Mill Data & Performance Analytics lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Mill Data & Performance Analytics.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Mill Data & Performance Analytics.",
+          "Menentukan strategy, benchmark dan governance Mill Data & Performance Analytics serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "Data flow dan source system/PIMS",
+          "KPI definitions dan data governance",
+          "Trend, variance dan correlation",
+          "Dashboard dan visualization",
+          "RCA dan decision-making"
+        ],
+        "skill": [
+          "Data verification/reconciliation",
+          "Dashboard interpretation",
+          "Trend/variance analysis",
+          "Mengubah data menjadi insight/action",
+          "Monitoring action closure"
+        ],
+        "development": [
+          "PIMS/Data Analytics Training",
+          "Dashboard clinic",
+          "OJT data reconciliation",
+          "Performance-review coaching",
+          "Analytics case",
+          "Data-quality improvement project"
+        ]
+      }
+    },
+    {
+      "order": 16,
+      "name": "Safety, Sustainability & Compliance",
+      "definition": "Menjamin K3, process safety, environmental compliance, sustainability, audit dan operational risk control.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami prinsip, parameter dan SOP Safety, Sustainability & Compliance serta melakukan pengecekan dengan bimbingan.",
+          "Mandiri mengendalikan pelaksanaan Safety, Sustainability & Compliance, menjaga parameter dan menindaklanjuti deviasi rutin.",
+          "Menganalisis trend, losses/bottleneck dan root cause pada Safety, Sustainability & Compliance, lalu menetapkan corrective action.",
+          "Mengoptimalkan Safety, Sustainability & Compliance, menjadi rujukan teknis station dan membangun standard kerja/operator yang konsisten."
+        ],
+        "Asisten Sortasi": [
+          "Memahami standar dan indikator dasar Safety, Sustainability & Compliance serta melakukan pemeriksaan dengan bimbingan.",
+          "Mandiri menjalankan kontrol Safety, Sustainability & Compliance, memastikan ketepatan data, mutu dan kepatuhan SOP.",
+          "Menganalisis pola deviasi Safety, Sustainability & Compliance, sumber masalah dan dampaknya terhadap mutu TBS/proses.",
+          "Mengoptimalkan sistem Safety, Sustainability & Compliance, menjadi rujukan grading/quality dan membangun konsistensi assessor/operator."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami metode, parameter, sampling dan standar dasar Safety, Sustainability & Compliance dengan bimbingan.",
+          "Mandiri memastikan pengujian/data Safety, Sustainability & Compliance akurat, tepat waktu, traceable dan sesuai metode.",
+          "Menganalisis trend, abnormal result, correlation dan root cause terkait Safety, Sustainability & Compliance.",
+          "Mengembangkan reliability analisa Safety, Sustainability & Compliance, menjadi rujukan teknis dan mengarahkan improvement berbasis data."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Safety, Sustainability & Compliance.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Safety, Sustainability & Compliance.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Safety, Sustainability & Compliance, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Safety, Sustainability & Compliance lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Safety, Sustainability & Compliance agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Safety, Sustainability & Compliance serta memimpin recovery.",
+          "Mengoptimalkan Safety, Sustainability & Compliance, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Safety, Sustainability & Compliance.",
+          "Mandiri menetapkan plan, target, resource dan governance Safety, Sustainability & Compliance pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Safety, Sustainability & Compliance.",
+          "Membangun operating system Safety, Sustainability & Compliance yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Safety, Sustainability & Compliance lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Safety, Sustainability & Compliance.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Safety, Sustainability & Compliance.",
+          "Menentukan strategy, benchmark dan governance Safety, Sustainability & Compliance serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "K3 dan process safety",
+          "LOTO/permit-to-work dan high-risk activity",
+          "Environmental/sustainability requirements",
+          "Audit, legal compliance dan emergency response",
+          "Operational risk dan internal control"
+        ],
+        "skill": [
+          "Hazard identification/risk assessment",
+          "Permit/LOTO verification",
+          "Audit dan inspection",
+          "Incident/NC root cause analysis",
+          "CAPA dan risk-control follow-up"
+        ],
+        "development": [
+          "K3/Process Safety Training",
+          "Emergency drill",
+          "Audit shadowing",
+          "Incident investigation clinic",
+          "Compliance improvement project",
+          "Cross-mill safety benchmark"
+        ]
+      }
+    },
+    {
+      "order": 17,
+      "name": "Waste, Effluent & By-product Management",
+      "definition": "Mengelola POME, EFB, fibre, shell, decanter solid, biogas/land application dan dampak lingkungan.",
+      "levels": {
+        "Asisten Proses": [
+          "Memahami prinsip, parameter dan SOP Waste, Effluent & By-product Management serta melakukan pengecekan dengan bimbingan.",
+          "Mandiri mengendalikan pelaksanaan Waste, Effluent & By-product Management, menjaga parameter dan menindaklanjuti deviasi rutin.",
+          "Menganalisis trend, losses/bottleneck dan root cause pada Waste, Effluent & By-product Management, lalu menetapkan corrective action.",
+          "Mengoptimalkan Waste, Effluent & By-product Management, menjadi rujukan teknis station dan membangun standard kerja/operator yang konsisten."
+        ],
+        "Asisten Sortasi": [
+          "Memahami hubungan Waste, Effluent & By-product Management dengan kualitas bahan baku dan kinerja PKS.",
+          "Mandiri menyediakan/menindaklanjuti informasi sortasi yang relevan untuk Waste, Effluent & By-product Management.",
+          "Menganalisis korelasi mutu TBS dengan deviasi pada Waste, Effluent & By-product Management.",
+          "Menjadi rujukan pada integrasi kualitas TBS dengan perbaikan Waste, Effluent & By-product Management."
+        ],
+        "Asisten Laboratorium": [
+          "Memahami metode, parameter, sampling dan standar dasar Waste, Effluent & By-product Management dengan bimbingan.",
+          "Mandiri memastikan pengujian/data Waste, Effluent & By-product Management akurat, tepat waktu, traceable dan sesuai metode.",
+          "Menganalisis trend, abnormal result, correlation dan root cause terkait Waste, Effluent & By-product Management.",
+          "Mengembangkan reliability analisa Waste, Effluent & By-product Management, menjadi rujukan teknis dan mengarahkan improvement berbasis data."
+        ],
+        "Asisten Maintenance": [
+          "Memahami fungsi equipment, failure mode, SOP dan aspek keselamatan pada Waste, Effluent & By-product Management.",
+          "Mandiri menjalankan inspection, maintenance planning/execution dan breakdown response untuk Waste, Effluent & By-product Management.",
+          "Menganalisis downtime, repeat failure dan root cause serta menetapkan reliability improvement.",
+          "Mengoptimalkan reliability Waste, Effluent & By-product Management, menjadi rujukan teknis dan mengembangkan preventive/predictive standard."
+        ],
+        "Askep Mill": [
+          "Memahami standard, KPI dan critical control point Waste, Effluent & By-product Management lintas fungsi.",
+          "Mandiri mengkoordinasikan dan memverifikasi Waste, Effluent & By-product Management agar target shift/harian tercapai.",
+          "Menganalisis cross-functional gap, root cause dan trade-off pada Waste, Effluent & By-product Management serta memimpin recovery.",
+          "Mengoptimalkan Waste, Effluent & By-product Management, menstandardisasi best practice dan membangun capability para Asisten."
+        ],
+        "Mill Manager": [
+          "Memahami business impact, risk, KPI dan resource requirement Waste, Effluent & By-product Management.",
+          "Mandiri menetapkan plan, target, resource dan governance Waste, Effluent & By-product Management pada level mill.",
+          "Menganalisis systemic gap dan trade-off quality-throughput-extraction-reliability-cost pada Waste, Effluent & By-product Management.",
+          "Membangun operating system Waste, Effluent & By-product Management yang optimal, sustainable dan menjadi benchmark mill."
+        ],
+        "Production Controller": [
+          "Memahami portfolio performance, risk dan benchmark Waste, Effluent & By-product Management lintas mill.",
+          "Menetapkan direction, target, governance dan resource priorities untuk Waste, Effluent & By-product Management.",
+          "Menganalisis cross-mill variation, systemic constraint dan investment/intervention priority pada Waste, Effluent & By-product Management.",
+          "Menentukan strategy, benchmark dan governance Waste, Effluent & By-product Management serta mereplikasi best practice lintas mill."
+        ]
+      },
+      "items": {
+        "knowledge": [
+          "POME characteristics dan treatment stages",
+          "EFB, fibre, shell dan decanter solid management",
+          "Biogas/land application principles jika applicable",
+          "BOD/COD dan environmental parameters",
+          "Waste balance, reuse dan circularity"
+        ],
+        "skill": [
+          "Monitoring effluent parameters",
+          "Mengendalikan treatment process",
+          "Waste/by-product reconciliation",
+          "Menganalisis abnormal discharge/performance",
+          "Mengembangkan reuse/resource recovery"
+        ],
+        "development": [
+          "POME & Waste Management Training",
+          "OJT effluent plant",
+          "Environmental SME coaching",
+          "Case BOD/COD deviation",
+          "Waste valorization/biogas project",
+          "Benchmark zero-waste/circular mill"
+        ]
+      }
+    }
+  ]
+}

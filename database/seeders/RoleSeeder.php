@@ -2,16 +2,17 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 
 class RoleSeeder extends Seeder
 {
     public function run(): void
     {
         // Reset cached roles and permissions
-        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+        app()[PermissionRegistrar::class]->forgetCachedPermissions();
 
         // 1. Create Permissions
         $permissions = [
@@ -26,14 +27,14 @@ class RoleSeeder extends Seeder
         ];
 
         foreach ($permissions as $permission) {
-            \Spatie\Permission\Models\Permission::firstOrCreate(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
         // 2. Create Roles and Assign Default Permissions
-        
+
         // Superadmin bypasses everything, but we create it anyway
         Role::firstOrCreate(['name' => 'Superadmin']);
-        
+
         // Admin E-Information gets specific default permissions
         $adminInfoRole = Role::firstOrCreate(['name' => 'Admin E-Information']);
         $adminInfoRole->syncPermissions(['manage_articles', 'manage_tv_display', 'manage_events']);

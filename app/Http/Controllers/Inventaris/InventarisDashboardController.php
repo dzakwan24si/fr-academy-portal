@@ -7,18 +7,17 @@ use App\Models\Inventaris\Barang;
 use App\Models\Inventaris\Pembelian;
 use App\Models\Inventaris\StockOpname;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class InventarisDashboardController extends Controller
 {
     public function index(Request $request)
     {
         $selectedYear = (int) $request->query('year', date('Y'));
-        
+
         // Fetch all available years from Pembelian & StockOpname
-        $pembelianYears = Pembelian::selectRaw('YEAR(tanggal_pembelian) as yr')->whereNotNull('tanggal_pembelian')->pluck('yr')->map(fn($y) => (int)$y)->toArray();
-        $soYears = StockOpname::selectRaw('YEAR(tanggal_stock_opname) as yr')->whereNotNull('tanggal_stock_opname')->pluck('yr')->map(fn($y) => (int)$y)->toArray();
-        $defaultYears = [2020, 2021, 2022, 2023, 2024, 2025, 2026, (int)date('Y')];
+        $pembelianYears = Pembelian::selectRaw('YEAR(tanggal_pembelian) as yr')->whereNotNull('tanggal_pembelian')->pluck('yr')->map(fn ($y) => (int) $y)->toArray();
+        $soYears = StockOpname::selectRaw('YEAR(tanggal_stock_opname) as yr')->whereNotNull('tanggal_stock_opname')->pluck('yr')->map(fn ($y) => (int) $y)->toArray();
+        $defaultYears = [2020, 2021, 2022, 2023, 2024, 2025, 2026, (int) date('Y')];
         $allYears = array_values(array_unique(array_merge($defaultYears, $pembelianYears, $soYears)));
         sort($allYears);
 
@@ -32,8 +31,10 @@ class InventarisDashboardController extends Controller
         $totalKondisiBaik = 0;
         $totalKondisiRusak = 0;
 
-        $gudangBaik = 0; $gudangRusak = 0;
-        $kantorBaik = 0; $kantorRusak = 0;
+        $gudangBaik = 0;
+        $gudangRusak = 0;
+        $kantorBaik = 0;
+        $kantorRusak = 0;
 
         $damagedItems = [];
 
@@ -79,7 +80,7 @@ class InventarisDashboardController extends Controller
         }
 
         // Sort damaged items by jumlah_rusak DESC (Top 10)
-        usort($damagedItems, fn($a, $b) => $b['jumlah_rusak'] <=> $a['jumlah_rusak']);
+        usort($damagedItems, fn ($a, $b) => $b['jumlah_rusak'] <=> $a['jumlah_rusak']);
         $topDamagedItems = array_slice($damagedItems, 0, 10);
 
         $healthRatio = $totalAsetUnit > 0 ? round(($totalKondisiBaik / $totalAsetUnit) * 100, 1) : 0;
@@ -95,7 +96,7 @@ class InventarisDashboardController extends Controller
         ];
 
         // 3. CHART 2 DATA: Room Breakdown (Kantor Rooms)
-        $kantorBarang = Barang::where(function($q) {
+        $kantorBarang = Barang::where(function ($q) {
             $q->where('jenis_lokasi', 'Kantor')->orWhere('lokasi', 'Kantor');
         })->get();
 
@@ -114,11 +115,11 @@ class InventarisDashboardController extends Controller
             $baik = $latestSO ? $latestSO->jumlah_baik : $stok;
             $rusak = $latestSO ? $latestSO->jumlah_rusak : 0;
 
-            $roomName = ($latestSO && !empty(trim($latestSO->lokasi_spesifik)))
+            $roomName = ($latestSO && ! empty(trim($latestSO->lokasi_spesifik)))
                 ? trim($latestSO->lokasi_spesifik)
-                : (($b->lokasi && !in_array($b->lokasi, ['Kantor', 'Gudang'])) ? $b->lokasi : 'Kantor (Umum)');
+                : (($b->lokasi && ! in_array($b->lokasi, ['Kantor', 'Gudang'])) ? $b->lokasi : 'Kantor (Umum)');
 
-            if (!isset($roomMap[$roomName])) {
+            if (! isset($roomMap[$roomName])) {
                 $roomMap[$roomName] = (object) [
                     'lokasi_spesifik' => $roomName,
                     'total_baik' => 0,
@@ -133,13 +134,13 @@ class InventarisDashboardController extends Controller
         }
 
         $roomSummaryList = array_values($roomMap);
-        usort($roomSummaryList, fn($a, $b) => $b->total_aset <=> $a->total_aset);
+        usort($roomSummaryList, fn ($a, $b) => $b->total_aset <=> $a->total_aset);
         $roomSummary = collect($roomSummaryList);
 
         $chartRoom = [
             'rooms' => $roomSummary->pluck('lokasi_spesifik')->toArray(),
-            'baik' => $roomSummary->pluck('total_baik')->map(fn($v) => (int)$v)->toArray(),
-            'rusak' => $roomSummary->pluck('total_rusak')->map(fn($v) => (int)$v)->toArray(),
+            'baik' => $roomSummary->pluck('total_baik')->map(fn ($v) => (int) $v)->toArray(),
+            'rusak' => $roomSummary->pluck('total_rusak')->map(fn ($v) => (int) $v)->toArray(),
         ];
 
         // 4. CHART 3 DATA: Purchase Trend per Year

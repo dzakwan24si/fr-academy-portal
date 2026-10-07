@@ -29,7 +29,7 @@ trait LogsActivity
 
             // Filter out ignored attributes & timestamps
             $changedKeys = array_filter(array_keys($changes), function ($key) use ($ignored) {
-                return !in_array($key, $ignored);
+                return ! in_array($key, $ignored);
             });
 
             if (empty($changedKeys)) {
@@ -75,7 +75,7 @@ trait LogsActivity
 
     protected static function getActivityModuleName(): string
     {
-        if (property_exists(static::class, 'logModuleName') && !empty(static::$logModuleName)) {
+        if (property_exists(static::class, 'logModuleName') && ! empty(static::$logModuleName)) {
             return static::$logModuleName;
         }
 

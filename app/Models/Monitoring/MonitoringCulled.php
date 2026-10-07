@@ -13,6 +13,7 @@ class MonitoringCulled extends Model
     protected static $logModuleName = 'Monitoring Culled';
 
     protected $table = 'monitoring_culled';
+
     protected $primaryKey = 'id_culled';
 
     protected $fillable = [

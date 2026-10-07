@@ -38,7 +38,7 @@ class RealisasiVsBatchController extends Controller
         $region = trim((string) $request->input('region', ''));
         $rows = $this->buildRows($year, $month, $type, $region);
         $regions = ProgramNonReguler::pluck('region')->merge(ProgramReguler::pluck('Region'))->filter()->map(fn ($value) => trim((string) $value))->unique()->sort()->values();
-        $activities = ProgramReguler::all()->map(fn ($item) => ['type' => 'reguler', 'id' => $item->getKey(), 'name' => $item->Training_Program])->concat(ProgramNonReguler::all()->map(fn ($item) => ['type' => 'non_reguler', 'id' => $item->getKey(), 'name' => $item->jenis_pelatihan . ' - ' . $item->region]))->values();
+        $activities = ProgramReguler::all()->map(fn ($item) => ['type' => 'reguler', 'id' => $item->getKey(), 'name' => $item->Training_Program])->concat(ProgramNonReguler::all()->map(fn ($item) => ['type' => 'non_reguler', 'id' => $item->getKey(), 'name' => $item->jenis_pelatihan.' - '.$item->region]))->values();
         $summary = [
             'planned_batch' => $rows->sum('planned_batch'),
             'realized_batch' => $rows->sum('realized_batch'),
@@ -66,12 +66,14 @@ class RealisasiVsBatchController extends Controller
             ['program_type' => $data['program_type'], 'program_id' => $data['program_id'], 'tahun' => $data['tahun'], 'bulan' => $month],
             ['legacy_realized_batch' => $data['legacy_realized_batch'] ?? 0, 'legacy_realized_participants' => $data['legacy_realized_participants'] ?? 0]
         );
+
         return back()->with('success', 'Realisasi berhasil dibuat tanpa mengubah nilai hasil perhitungan.');
     }
 
     public function destroy($id)
     {
         RealisasiVsBatch::findOrFail($id)->delete();
+
         return back()->with('success', 'Data realisasi dihapus.');
     }
 
@@ -94,25 +96,32 @@ class RealisasiVsBatchController extends Controller
     {
         $request->validate(['file' => 'required|file|mimes:csv,txt,xlsx|max:20480']);
         $rows = SpreadsheetReader::read($request->file('file')->getRealPath(), $request->file('file')->getClientOriginalExtension());
-        if (count($rows) < 2) return back()->withErrors(['file' => 'File tidak memiliki data.']);
+        if (count($rows) < 2) {
+            return back()->withErrors(['file' => 'File tidak memiliki data.']);
+        }
         $headers = array_map(function ($value) {
             return trim((string) $value, " \t\r\n\xEF\xBB\xBF");
         }, array_shift($rows));
         $type = in_array('id_nonreguler', $headers, true) ? 'non_reguler' : (in_array('Program_id', $headers, true) ? 'reguler' : null);
-        if (!$type || !in_array('bulan', $headers, true)) return back()->withErrors(['file' => 'Header Realisasi tidak dikenali.']);
+        if (! $type || ! in_array('bulan', $headers, true)) {
+            return back()->withErrors(['file' => 'Header Realisasi tidak dikenali.']);
+        }
 
         $imported = 0;
         $skipped = 0;
         DB::transaction(function () use ($rows, $headers, $type, &$imported, &$skipped) {
             foreach ($rows as $row) {
-                if (!is_array($row) || count(array_filter($row, fn ($value) => trim((string) $value) !== '')) === 0) continue;
+                if (! is_array($row) || count(array_filter($row, fn ($value) => trim((string) $value) !== '')) === 0) {
+                    continue;
+                }
                 $values = array_pad($row, count($headers), null);
                 $item = array_combine($headers, array_slice($values, 0, count($headers)));
                 $idValue = $item[$type === 'non_reguler' ? 'id_nonreguler' : 'Program_id'] ?? null;
                 $id = is_numeric($idValue) ? (int) $idValue : 0;
                 $month = $this->monthNumber($item['bulan'] ?? null);
-                if (!$id || !$month) {
+                if (! $id || ! $month) {
                     $skipped++;
+
                     continue;
                 }
                 $yearValue = $item['tahun'] ?? date('Y');
@@ -128,11 +137,11 @@ class RealisasiVsBatchController extends Controller
         ActivityLog::log(
             'Import',
             'Realisasi Vs Target',
-            "Mengimport {$imported} data realisasi vs target dari file " . $request->file('file')->getClientOriginalName(),
+            "Mengimport {$imported} data realisasi vs target dari file ".$request->file('file')->getClientOriginalName(),
             ['filename' => $request->file('file')->getClientOriginalName(), 'count' => $imported, 'skipped' => $skipped]
         );
 
-        return back()->with('success', "{$imported} data realisasi berhasil disimpan" . ($skipped ? ". {$skipped} baris dilewati karena ID atau bulan tidak valid" : '') . '. Nilai akan digantikan otomatis saat Training Record tersedia.');
+        return back()->with('success', "{$imported} data realisasi berhasil disimpan".($skipped ? ". {$skipped} baris dilewati karena ID atau bulan tidak valid" : '').'. Nilai akan digantikan otomatis saat Training Record tersedia.');
     }
 
     public function export(Request $request)
@@ -158,28 +167,35 @@ class RealisasiVsBatchController extends Controller
                 $row->batch_percent,
                 $row->planned_participants,
                 $row->realized_participants,
-                $row->participant_percent
+                $row->participant_percent,
             ];
         }
 
-        $filename = 'realisasi_vs_batch_' . $year . '_' . self::MONTH_3_LETTERS[$month] . '.xlsx';
+        $filename = 'realisasi_vs_batch_'.$year.'_'.self::MONTH_3_LETTERS[$month].'.xlsx';
+
         return ExcelExporter::download($filename, $headers, $dataRows, 'Realisasi Vs Batch');
     }
 
     private function buildRows(int $year, int $month, string $type, string $region = '')
     {
         $programs = collect();
-        if ($type !== 'reguler') $programs = $programs->concat(ProgramNonReguler::all()->map(fn ($program) => $this->programData($program, 'non_reguler', $year, $month)));
-        if ($type !== 'non_reguler') $programs = $programs->concat(ProgramReguler::all()->map(fn ($program) => $this->programData($program, 'reguler', $year, $month)));
+        if ($type !== 'reguler') {
+            $programs = $programs->concat(ProgramNonReguler::all()->map(fn ($program) => $this->programData($program, 'non_reguler', $year, $month)));
+        }
+        if ($type !== 'non_reguler') {
+            $programs = $programs->concat(ProgramReguler::all()->map(fn ($program) => $this->programData($program, 'reguler', $year, $month)));
+        }
         $programs = $programs->filter(fn ($program) => $program !== null);
-        if ($region !== '') $programs = $programs->filter(fn ($program) => strtolower(trim((string) $program['region'])) === strtolower($region));
+        if ($region !== '') {
+            $programs = $programs->filter(fn ($program) => strtolower(trim((string) $program['region'])) === strtolower($region));
+        }
         $trainingRecords = TrainingRecord::where('status', 'valid')->get();
 
         return $programs->map(function ($program) use ($year, $month, $trainingRecords) {
             $matchingRecords = $trainingRecords
                 ->filter(fn (TrainingRecord $record) => $this->recordMatchesActivity($record, $program))
                 ->filter(function (TrainingRecord $record) use ($program, $year, $month) {
-                    if ($program['program_type'] === 'non_reguler' && !$this->recordMatchesRegion($record, $program['region'])) {
+                    if ($program['program_type'] === 'non_reguler' && ! $this->recordMatchesRegion($record, $program['region'])) {
                         return false;
                     }
 
@@ -187,18 +203,18 @@ class RealisasiVsBatchController extends Controller
                     if ($record->bulan || $record->tahun) {
                         if ($record->tahun && (int) $record->tahun !== $year) {
                             $isCarryOver = str_contains(strtolower($program['program_name'] ?? ''), 'carry over');
-                            if (!($isCarryOver && ((int) $record->tahun === $year - 1 || (int) $record->tahun === $year))) {
+                            if (! ($isCarryOver && ((int) $record->tahun === $year - 1 || (int) $record->tahun === $year))) {
                                 return false;
                             }
                         }
                         if ($record->bulan) {
                             $recMonth = $this->monthNumber($record->bulan);
+
                             return $recMonth !== null && $recMonth <= $month;
                         }
                     }
 
-                    return collect($record->activityDates())->contains(fn ($date) =>
-                        $date && (int) date('Y', strtotime($date)) === $year && (int) date('n', strtotime($date)) <= $month
+                    return collect($record->activityDates())->contains(fn ($date) => $date && (int) date('Y', strtotime($date)) === $year && (int) date('n', strtotime($date)) <= $month
                     );
                 });
 
@@ -213,6 +229,7 @@ class RealisasiVsBatchController extends Controller
             $row = (object) array_merge($program, ['realisasi_id' => null, 'realized_batch' => $realizedBatch, 'realized_participants' => $realizedParticipants]);
             $row->batch_percent = $this->percent($row->realized_batch, $row->planned_batch);
             $row->participant_percent = $this->percent($row->realized_participants, $row->planned_participants);
+
             return $row;
         })->values();
     }
@@ -261,12 +278,14 @@ class RealisasiVsBatchController extends Controller
         }
 
         $dates = $program->tanggal_pelaksanaan ?: [];
-        if (!$dates) $dates = $type === 'reguler' ? [$program->Mulai_program, $program->Selesai_program] : [$program->start_date, $program->end_date];
-        
+        if (! $dates) {
+            $dates = $type === 'reguler' ? [$program->Mulai_program, $program->Selesai_program] : [$program->start_date, $program->end_date];
+        }
+
         $hasMonthDates = collect($dates)->filter()->isNotEmpty();
         if ($hasMonthDates) {
             $inMonth = collect($dates)->contains(fn ($date) => $date && (int) date('n', strtotime($date)) <= $month);
-            if (!$inMonth && $type === 'reguler') {
+            if (! $inMonth && $type === 'reguler') {
                 return null;
             }
         }
@@ -279,23 +298,37 @@ class RealisasiVsBatchController extends Controller
             'region' => $type === 'reguler' ? $program->Region : $program->region,
             'planned_batch' => $type === 'reguler' ? 1 : (int) ($program->TARGET_BATCH ?? $program->realisasi_batch ?? $program->total_batch ?? 0),
             'realisasi_batch' => $type === 'reguler' ? (int) ($program->Batch ?? 1) : (int) ($program->realisasi_batch ?? $program->total_batch ?? 0),
-            'planned_participants' => $type === 'reguler' ? (int) $program->target_peserta : (int) ($program->TARGET_PESERTA ?? $program->target_total ?? 0)
+            'planned_participants' => $type === 'reguler' ? (int) $program->target_peserta : (int) ($program->TARGET_PESERTA ?? $program->target_total ?? 0),
         ];
     }
 
     public function availableYears(): array
     {
         $regYears = ProgramReguler::all()->map(function ($item) {
-            if ($item->Mulai_program) return (int) $item->Mulai_program->format('Y');
-            if ($item->tahun) return (int) $item->tahun;
-            if ($item->Selesai_program) return (int) $item->Selesai_program->format('Y');
+            if ($item->Mulai_program) {
+                return (int) $item->Mulai_program->format('Y');
+            }
+            if ($item->tahun) {
+                return (int) $item->tahun;
+            }
+            if ($item->Selesai_program) {
+                return (int) $item->Selesai_program->format('Y');
+            }
+
             return null;
         });
 
         $nonRegYears = ProgramNonReguler::all()->map(function ($item) {
-            if ($item->tahun) return (int) $item->tahun;
-            if ($item->start_date) return (int) $item->start_date->format('Y');
-            if ($item->end_date) return (int) $item->end_date->format('Y');
+            if ($item->tahun) {
+                return (int) $item->tahun;
+            }
+            if ($item->start_date) {
+                return (int) $item->start_date->format('Y');
+            }
+            if ($item->end_date) {
+                return (int) $item->end_date->format('Y');
+            }
+
             return null;
         });
 
@@ -318,7 +351,9 @@ class RealisasiVsBatchController extends Controller
 
         $recordName = strtolower(trim((string) $record->activityName()));
         $programName = strtolower(trim((string) ($program['program_name'] ?? '')));
-        if ($recordName === '' || $programName === '') return false;
+        if ($recordName === '' || $programName === '') {
+            return false;
+        }
 
         if ($recordName === $programName
             || str_starts_with($recordName, $programName)
@@ -332,7 +367,9 @@ class RealisasiVsBatchController extends Controller
         $recordWords = array_values(array_filter(explode(' ', $cleanRecord)));
         $programWords = array_values(array_filter(explode(' ', $cleanProgram)));
 
-        if (empty($recordWords) || empty($programWords)) return false;
+        if (empty($recordWords) || empty($programWords)) {
+            return false;
+        }
 
         // If program is 1 word (e.g. "Supervisory", "Damkarhutlabun")
         if (count($programWords) === 1) {
@@ -357,7 +394,9 @@ class RealisasiVsBatchController extends Controller
     private function recordMatchesRegion(TrainingRecord $record, ?string $programRegion): bool
     {
         $programRegion = strtolower(trim((string) $programRegion));
-        if ($programRegion === '') return true;
+        if ($programRegion === '') {
+            return true;
+        }
 
         return $this->normalizeRegion($record->region) === $this->normalizeRegion($programRegion);
     }
@@ -367,12 +406,24 @@ class RealisasiVsBatchController extends Controller
         return strtolower(trim(str_replace(' fr', '', (string) $value)));
     }
 
-    private function percent(int $value, int $total): float { return $total > 0 ? round($value / $total * 100, 2) : 0; }
-    private function number($value): int { return is_numeric($value) ? (int) $value : 0; }
+    private function percent(int $value, int $total): float
+    {
+        return $total > 0 ? round($value / $total * 100, 2) : 0;
+    }
+
+    private function number($value): int
+    {
+        return is_numeric($value) ? (int) $value : 0;
+    }
+
     public function monthNumber($value): ?int
     {
-        if ($value === null || $value === '') return null;
-        if (is_numeric($value)) return max(1, min(12, (int) $value));
+        if ($value === null || $value === '') {
+            return null;
+        }
+        if (is_numeric($value)) {
+            return max(1, min(12, (int) $value));
+        }
 
         $upper = strtoupper(substr(trim((string) $value), 0, 3));
         $aliasMap = [
@@ -394,6 +445,7 @@ class RealisasiVsBatchController extends Controller
                 return $number;
             }
         }
+
         return null;
     }
 }

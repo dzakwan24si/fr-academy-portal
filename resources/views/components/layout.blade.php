@@ -51,7 +51,16 @@
                 <nav class="hidden md:flex space-x-8">
                     <a href="/" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">BERANDA</a>
                     <a href="/tentang-kami" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">TENTANG</a>
-                    <a href="/program" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">PROGRAM</a>
+                    <div x-data="{ open: false }" class="relative flex items-center" @mouseenter="open = true" @mouseleave="open = false" @keydown.escape="open = false">
+                        <a href="/program" class="text-white hover:text-green-accent pl-3 pr-1 py-2 text-sm font-medium transition">PROGRAM</a>
+                        <button type="button" @click="open = !open" :aria-expanded="open" aria-label="Buka submenu Program" class="text-white hover:text-green-accent py-2 pr-2 focus:outline-none">
+                            <svg class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </button>
+                        <div x-show="open" x-transition.opacity class="absolute top-full left-0 mt-0 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700" style="display: none;">
+                            <a href="/program" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 transition">Program Kami</a>
+                            <a href="{{ route('competency.public') }}" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 transition">Standar Kompetensi</a>
+                        </div>
+                    </div>
                     <a href="/career" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">CAREER</a>
                     <a href="/artikel" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">ARTIKEL</a>
                     <div x-data="{ open: false }" class="relative flex items-center" @mouseenter="open = true" @mouseleave="open = false">
@@ -130,6 +139,7 @@
                 <a href="/" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">BERANDA</a>
                 <a href="/tentang-kami" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">TENTANG</a>
                 <a href="/program" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">PROGRAM</a>
+                <a href="{{ route('competency.public') }}" class="block pl-8 pr-3 py-2.5 rounded-md text-sm font-medium text-teal-100 hover:bg-teal-700 hover:text-green-accent transition">&#8627; Standar Kompetensi</a>
                 <a href="/career" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">CAREER</a>
                 <a href="/artikel" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">ARTIKEL</a>
                 <a href="https://e-learning.first-resources.com" target="_blank" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">E-LEARNING</a>
@@ -181,6 +191,7 @@
                     <ul class="space-y-3 text-sm text-gray-300">
                         <li><a href="/" class="hover:text-green-accent transition">Beranda Utama</a></li>
                         <li><a href="/artikel" class="hover:text-green-accent transition">Semua Artikel & Berita</a></li>
+                        <li><a href="{{ route('competency.public') }}" class="hover:text-green-accent transition">Standar Kompetensi</a></li>
                         <li><a href="/login" class="hover:text-green-accent transition">Login Admin / Staf</a></li>
                         <li><a href="/tv-display" class="hover:text-green-accent transition">Mode Layar TV (TV Display)</a></li>
                     </ul>

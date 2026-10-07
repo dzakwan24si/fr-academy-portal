@@ -6,8 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Monitoring\Asisten;
 use App\Models\Monitoring\AsistenProgramMonitoring;
-use App\Services\SpreadsheetReader;
 use App\Services\ExcelExporter;
+use App\Services\RegionHelper;
+use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -66,7 +67,7 @@ class AsistenController extends Controller
 
         // 3. Filter Region (Kepegawaian Saat Ini)
         if ($request->filled('region_saat_ini') && $request->input('region_saat_ini') !== 'all') {
-            \App\Services\RegionHelper::applyQueryFilter($query, 'region_saat_ini', $request->input('region_saat_ini'));
+            RegionHelper::applyQueryFilter($query, 'region_saat_ini', $request->input('region_saat_ini'));
         }
 
         // 4. Filter Status Karyawan
@@ -76,23 +77,23 @@ class AsistenController extends Controller
 
         // 5. Filter Level / Jabatan
         if ($request->filled('level_jabatan') && $request->input('level_jabatan') !== 'all') {
-            $lvl = trim((string)$request->input('level_jabatan'));
-            $query->where(function($q) use ($lvl) {
+            $lvl = trim((string) $request->input('level_jabatan'));
+            $query->where(function ($q) use ($lvl) {
                 if (strcasecmp($lvl, 'GM') === 0 || strcasecmp($lvl, 'General Manager') === 0) {
                     $q->where('level_jabatan', 'like', '%GM%');
                 } elseif (strcasecmp($lvl, 'PC') === 0) {
                     $q->where('level_jabatan', 'like', '%PC%');
                 } elseif (strcasecmp($lvl, 'Askep') === 0 || strcasecmp($lvl, 'Askep / KTU') === 0) {
                     $q->where('level_jabatan', 'like', '%Askep%')
-                      ->orWhere('level_jabatan', 'like', '%KTU%');
+                        ->orWhere('level_jabatan', 'like', '%KTU%');
                 } elseif (strcasecmp($lvl, 'MK / MM') === 0 || strcasecmp($lvl, 'Manager') === 0) {
                     $q->where('level_jabatan', 'like', '%MK%')
-                      ->orWhere('level_jabatan', 'like', '%MM%')
-                      ->orWhere('level_jabatan', 'like', '%Manager%');
+                        ->orWhere('level_jabatan', 'like', '%MM%')
+                        ->orWhere('level_jabatan', 'like', '%Manager%');
                 } elseif (strcasecmp($lvl, 'Asisten / Staff') === 0 || strcasecmp($lvl, 'Asisten') === 0) {
                     $q->where('level_jabatan', 'like', '%Asisten%')
-                      ->orWhere('level_jabatan', 'like', '%Staff%')
-                      ->orWhere('level_jabatan', 'like', '%ASST%');
+                        ->orWhere('level_jabatan', 'like', '%Staff%')
+                        ->orWhere('level_jabatan', 'like', '%ASST%');
                 } else {
                     $q->where('level_jabatan', 'like', "%{$lvl}%");
                 }
@@ -105,16 +106,16 @@ class AsistenController extends Controller
             if ($ket === 'Aktif') {
                 $query->where(function ($q) {
                     $q->where('keterangan', 'Aktif')
-                      ->orWhere('keterangan', 'Eksis')
-                      ->orWhere('keterangan', 'like', '%aktif%')
-                      ->orWhere('keterangan', 'like', '%eksis%');
+                        ->orWhere('keterangan', 'Eksis')
+                        ->orWhere('keterangan', 'like', '%aktif%')
+                        ->orWhere('keterangan', 'like', '%eksis%');
                 });
             } elseif ($ket === 'Resign') {
                 $query->where(function ($q) {
                     $q->where('keterangan', 'Resign')
-                      ->orWhere('keterangan', 'PHK')
-                      ->orWhere('keterangan', 'like', '%resign%')
-                      ->orWhere('keterangan', 'like', '%phk%');
+                        ->orWhere('keterangan', 'PHK')
+                        ->orWhere('keterangan', 'like', '%resign%')
+                        ->orWhere('keterangan', 'like', '%phk%');
                 });
             } elseif ($ket === 'Gagal') {
                 $query->where('keterangan', 'like', '%gagal%');
@@ -128,15 +129,15 @@ class AsistenController extends Controller
             $search = trim($request->input('search'));
             $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('nik', 'like', "%{$search}%")
-                  ->orWhere('program', 'like', "%{$search}%")
-                  ->orWhere('asal_rekrut', 'like', "%{$search}%")
-                  ->orWhere('jabatan_awal', 'like', "%{$search}%")
-                  ->orWhere('jabatan_terakhir', 'like', "%{$search}%")
-                  ->orWhere('pt_penempatan', 'like', "%{$search}%")
-                  ->orWhere('unit_kerja_saat_ini', 'like', "%{$search}%")
-                  ->orWhere('unit_kerja_penempatan_training', 'like', "%{$search}%")
-                  ->orWhere('keterangan', 'like', "%{$search}%");
+                    ->orWhere('nik', 'like', "%{$search}%")
+                    ->orWhere('program', 'like', "%{$search}%")
+                    ->orWhere('asal_rekrut', 'like', "%{$search}%")
+                    ->orWhere('jabatan_awal', 'like', "%{$search}%")
+                    ->orWhere('jabatan_terakhir', 'like', "%{$search}%")
+                    ->orWhere('pt_penempatan', 'like', "%{$search}%")
+                    ->orWhere('unit_kerja_saat_ini', 'like', "%{$search}%")
+                    ->orWhere('unit_kerja_penempatan_training', 'like', "%{$search}%")
+                    ->orWhere('keterangan', 'like', "%{$search}%");
             });
         }
 
@@ -144,12 +145,12 @@ class AsistenController extends Controller
         $totalAll = Asisten::count();
         $totalAktif = Asisten::where(function ($q) {
             $q->where('keterangan', 'like', '%eksis%')
-              ->orWhere('keterangan', 'like', '%aktif%');
+                ->orWhere('keterangan', 'like', '%aktif%');
         })->count();
 
         $totalResign = Asisten::where(function ($q) {
             $q->where('keterangan', 'like', '%resign%')
-              ->orWhere('keterangan', 'like', '%phk%');
+                ->orWhere('keterangan', 'like', '%phk%');
         })->count();
 
         $totalGagal = Asisten::where('keterangan', 'like', '%gagal%')->count();
@@ -159,7 +160,7 @@ class AsistenController extends Controller
         $sortOrder = $request->input('sort_order', 'asc');
         $validSortColumns = [
             'id', 'no', 'nama', 'asal_rekrut', 'program', 'jabatan_awal',
-            'level_jabatan', 'jabatan_terakhir', 'pt_penempatan', 'region_saat_ini', 'keterangan', 'created_at'
+            'level_jabatan', 'jabatan_terakhir', 'pt_penempatan', 'region_saat_ini', 'keterangan', 'created_at',
         ];
 
         if (in_array($sortBy, $validSortColumns)) {
@@ -194,11 +195,11 @@ class AsistenController extends Controller
         $asalRekrutList = Asisten::whereNotNull('asal_rekrut')->where('asal_rekrut', '!=', '')->distinct()->orderBy('asal_rekrut')->pluck('asal_rekrut');
         $programList = Asisten::whereNotNull('program')->where('program', '!=', '')->distinct()->orderBy('program')->pluck('program');
         $rawRegions = Asisten::whereNotNull('region_saat_ini')->where('region_saat_ini', '!=', '')->distinct()->pluck('region_saat_ini');
-        $regionList = \App\Services\RegionHelper::getCanonicalRegions($rawRegions);
+        $regionList = RegionHelper::getCanonicalRegions($rawRegions);
         $statusList = Asisten::whereNotNull('status_karyawan')->where('status_karyawan', '!=', '')->distinct()->orderBy('status_karyawan')->pluck('status_karyawan');
-        
+
         $dbLevels = Asisten::whereNotNull('level_jabatan')->where('level_jabatan', '!=', '')->distinct()->orderBy('level_jabatan')->pluck('level_jabatan');
-        
+
         $levelList = collect(['GM', 'Askep / KTU', 'MK / MM', 'PC', 'Asisten / Staff'])
             ->merge($dbLevels)
             ->filter()
@@ -380,7 +381,7 @@ class AsistenController extends Controller
         $delimiter = (str_contains($firstLine, ';')) ? ';' : ',';
 
         $handle = fopen($file->getRealPath(), 'r');
-        if (!$handle) {
+        if (! $handle) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Gagal membuka file CSV.',
@@ -388,8 +389,9 @@ class AsistenController extends Controller
         }
 
         $header = fgetcsv($handle, 10000, $delimiter);
-        if (!$header) {
+        if (! $header) {
             fclose($handle);
+
             return response()->json([
                 'status' => 'error',
                 'message' => 'File CSV kosong atau tidak valid.',
@@ -401,6 +403,7 @@ class AsistenController extends Controller
             $str = trim($h);
             $str = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $str);
             $str = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $str));
+
             return $str;
         }, $header);
 
@@ -476,6 +479,7 @@ class AsistenController extends Controller
                 } else {
                     $columnIndices['unit_kerja_saat_ini'] = $colIdx;
                 }
+
                 continue;
             }
             if ($colName === 'regional' || $colName === 'region') {
@@ -485,12 +489,13 @@ class AsistenController extends Controller
                 } else {
                     $columnIndices['region_saat_ini'] = $colIdx;
                 }
+
                 continue;
             }
 
             foreach ($headerMap as $field => $aliases) {
                 if (in_array($colName, $aliases)) {
-                    if (!isset($columnIndices[$field])) {
+                    if (! isset($columnIndices[$field])) {
                         $columnIndices[$field] = $colIdx;
                     }
                 }
@@ -503,7 +508,7 @@ class AsistenController extends Controller
 
         while (($row = fgetcsv($handle, 10000, $delimiter)) !== false) {
             $rowNumber++;
-            if (empty(array_filter($row, fn($v) => trim($v) !== ''))) {
+            if (empty(array_filter($row, fn ($v) => trim($v) !== ''))) {
                 continue;
             }
 
@@ -511,6 +516,7 @@ class AsistenController extends Controller
             $nama = trim($row[$columnIndices['nama'] ?? 2] ?? '');
             if (empty($nama)) {
                 $errors[] = ['row' => $rowNumber, 'reason' => 'Kolom Nama kosong / wajib diisi'];
+
                 continue;
             }
 
@@ -538,7 +544,7 @@ class AsistenController extends Controller
             $tglAmbilIjazah = $this->parseDate($row[$columnIndices['tanggal_pengambilan_ijazah'] ?? -1] ?? null);
 
             $rowObj = [
-                'no' => !empty($row[$columnIndices['no'] ?? 0]) ? (int) $row[$columnIndices['no'] ?? 0] : $rowNumber - 1,
+                'no' => ! empty($row[$columnIndices['no'] ?? 0]) ? (int) $row[$columnIndices['no'] ?? 0] : $rowNumber - 1,
                 'nama' => $nama,
                 'nik' => trim($row[$columnIndices['nik'] ?? -1] ?? '') ?: null,
                 'jenis_kelamin' => trim($row[$columnIndices['jenis_kelamin'] ?? -1] ?? '') ?: null,
@@ -611,10 +617,15 @@ class AsistenController extends Controller
                 'no_bpjs_tk' => trim($row[$columnIndices['no_bpjs_tk'] ?? -1] ?? '') ?: null,
                 'no_bpjs_kes' => trim($row[$columnIndices['no_bpjs_kes'] ?? -1] ?? '') ?: null,
                 'npwp' => trim($row[$columnIndices['npwp'] ?? -1] ?? '') ?: null,
-                'keterangan' => (function() use ($row, $columnIndices) {
+                'keterangan' => (function () use ($row, $columnIndices) {
                     $raw = trim($row[$columnIndices['keterangan'] ?? -1] ?? '');
-                    if (stripos($raw, 'gagal') !== false) return 'Gagal';
-                    if (stripos($raw, 'resign') !== false || stripos($raw, 'phk') !== false) return 'Resign';
+                    if (stripos($raw, 'gagal') !== false) {
+                        return 'Gagal';
+                    }
+                    if (stripos($raw, 'resign') !== false || stripos($raw, 'phk') !== false) {
+                        return 'Resign';
+                    }
+
                     return 'Aktif';
                 })(),
                 'created_at' => now(),
@@ -626,7 +637,7 @@ class AsistenController extends Controller
 
         fclose($handle);
 
-        if (empty($rowsToInsert) && !empty($errors)) {
+        if (empty($rowsToInsert) && ! empty($errors)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Semua baris dalam file CSV gagal diproses.',
@@ -651,13 +662,13 @@ class AsistenController extends Controller
             ActivityLog::log(
                 'Import',
                 'Database Asisten',
-                "Mengimport " . count($rowsToInsert) . " data asisten dari file " . $file->getClientOriginalName(),
+                'Mengimport '.count($rowsToInsert).' data asisten dari file '.$file->getClientOriginalName(),
                 ['filename' => $file->getClientOriginalName(), 'count' => count($rowsToInsert), 'mode' => $mode]
             );
 
             return response()->json([
                 'status' => 'success',
-                'message' => "Import CSV berhasil! {$mode} " . count($rowsToInsert) . " data.",
+                'message' => "Import CSV berhasil! {$mode} ".count($rowsToInsert).' data.',
                 'success_count' => count($rowsToInsert),
                 'failed_count' => count($errors),
                 'errors' => $errors,
@@ -666,9 +677,10 @@ class AsistenController extends Controller
             if (DB::transactionLevel() > 0) {
                 DB::rollBack();
             }
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Gagal menyimpan data import: ' . $e->getMessage(),
+                'message' => 'Gagal menyimpan data import: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -678,7 +690,9 @@ class AsistenController extends Controller
      */
     private function parseDate($value)
     {
-        if (empty($value)) return null;
+        if (empty($value)) {
+            return null;
+        }
         $v = trim((string) $value);
         if ($v === '' || $v === '-' || strtolower($v) === 'null' || strtolower($v) === 'n/a') {
             return null;
@@ -702,10 +716,10 @@ class AsistenController extends Controller
         // Try DD/MM/YYYY or DD-MM-YYYY
         $parts = preg_split('/[\/\-\.]/', $v);
         if (count($parts) === 3) {
-            if (strlen($parts[2]) === 4 && checkdate((int)$parts[1], (int)$parts[0], (int)$parts[2])) {
+            if (strlen($parts[2]) === 4 && checkdate((int) $parts[1], (int) $parts[0], (int) $parts[2])) {
                 return sprintf('%04d-%02d-%02d', $parts[2], $parts[1], $parts[0]);
             }
-            if (strlen($parts[0]) === 4 && checkdate((int)$parts[1], (int)$parts[2], (int)$parts[0])) {
+            if (strlen($parts[0]) === 4 && checkdate((int) $parts[1], (int) $parts[2], (int) $parts[0])) {
                 return sprintf('%04d-%02d-%02d', $parts[0], $parts[1], $parts[2]);
             }
         }
@@ -718,10 +732,15 @@ class AsistenController extends Controller
      */
     private function parseNumeric($value)
     {
-        if (empty($value) && $value !== '0' && $value !== 0) return null;
+        if (empty($value) && $value !== '0' && $value !== 0) {
+            return null;
+        }
         $v = trim((string) $value);
-        if ($v === '' || $v === '-' || strtolower($v) === 'null') return null;
+        if ($v === '' || $v === '-' || strtolower($v) === 'null') {
+            return null;
+        }
         $v = str_replace(',', '.', $v);
+
         return is_numeric($v) ? (float) $v : null;
     }
 
@@ -730,9 +749,14 @@ class AsistenController extends Controller
      */
     private function parseInteger($value)
     {
-        if (empty($value) && $value !== '0' && $value !== 0) return null;
+        if (empty($value) && $value !== '0' && $value !== 0) {
+            return null;
+        }
         $v = trim((string) $value);
-        if ($v === '' || $v === '-' || strtolower($v) === 'null') return null;
+        if ($v === '' || $v === '-' || strtolower($v) === 'null') {
+            return null;
+        }
+
         return is_numeric($v) ? (int) $v : null;
     }
 
@@ -750,21 +774,21 @@ class AsistenController extends Controller
             $query->where('program', $request->input('program'));
         }
         if ($request->filled('region_saat_ini') && $request->input('region_saat_ini') !== 'all') {
-            \App\Services\RegionHelper::applyQueryFilter($query, 'region_saat_ini', $request->input('region_saat_ini'));
+            RegionHelper::applyQueryFilter($query, 'region_saat_ini', $request->input('region_saat_ini'));
         }
         if ($request->filled('status_karyawan') && $request->input('status_karyawan') !== 'all') {
             $query->where('status_karyawan', $request->input('status_karyawan'));
         }
         if ($request->filled('level_jabatan') && $request->input('level_jabatan') !== 'all') {
-            $lvl = trim((string)$request->input('level_jabatan'));
+            $lvl = trim((string) $request->input('level_jabatan'));
             $query->where('level_jabatan', 'like', "%{$lvl}%");
         }
         if ($request->filled('search')) {
             $search = trim($request->input('search'));
             $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('nik', 'like', "%{$search}%")
-                  ->orWhere('program', 'like', "%{$search}%");
+                    ->orWhere('nik', 'like', "%{$search}%")
+                    ->orWhere('program', 'like', "%{$search}%");
             });
         }
 
@@ -786,7 +810,7 @@ class AsistenController extends Controller
 
             $dataRows = [];
             foreach ($records as $idx => $r) {
-                $unitKerja = $r->unit_kerja_display . ($r->is_unit_kerja_fallback ? ' (Penempatan Awal)' : '');
+                $unitKerja = $r->unit_kerja_display.($r->is_unit_kerja_fallback ? ' (Penempatan Awal)' : '');
                 $dataRows[] = [
                     $r->no ?? ($idx + 1),
                     $r->nama,
@@ -800,7 +824,8 @@ class AsistenController extends Controller
                 ];
             }
 
-            $filename = 'Database_Asisten_Ringkas_' . date('Ymd_His') . '.xlsx';
+            $filename = 'Database_Asisten_Ringkas_'.date('Ymd_His').'.xlsx';
+
             return ExcelExporter::download($filename, $headers, $dataRows, 'Asisten Ringkas');
         } else {
             $headers = [
@@ -830,7 +855,8 @@ class AsistenController extends Controller
                 ];
             }
 
-            $filename = 'Database_Asisten_Lengkap_' . date('Ymd_His') . '.xlsx';
+            $filename = 'Database_Asisten_Lengkap_'.date('Ymd_His').'.xlsx';
+
             return ExcelExporter::download($filename, $headers, $dataRows, 'Asisten Lengkap');
         }
     }
@@ -853,7 +879,7 @@ class AsistenController extends Controller
             $kat = $request->input('kategori');
             $query->where(function ($q) use ($kat) {
                 $q->where('kode_kategori', $kat)
-                  ->orWhere('kategori_program', $kat);
+                    ->orWhere('kategori_program', $kat);
             });
         }
 
@@ -862,8 +888,8 @@ class AsistenController extends Controller
             $thn = (int) $request->input('tahun');
             $query->where(function ($q) use ($thn) {
                 $q->where('tahun_rekrut', $thn)
-                  ->orWhere('tahun_training', $thn)
-                  ->orWhere('tahun_lulus', $thn);
+                    ->orWhere('tahun_training', $thn)
+                    ->orWhere('tahun_lulus', $thn);
             });
         }
 
@@ -872,9 +898,9 @@ class AsistenController extends Controller
             $search = trim($request->input('search'));
             $query->where(function ($q) use ($search) {
                 $q->where('nama_program', 'like', "%{$search}%")
-                  ->orWhere('kategori_program', 'like', "%{$search}%")
-                  ->orWhere('tahun_training', 'like', "%{$search}%")
-                  ->orWhere('tahun_lulus', 'like', "%{$search}%");
+                    ->orWhere('kategori_program', 'like', "%{$search}%")
+                    ->orWhere('tahun_training', 'like', "%{$search}%")
+                    ->orWhere('tahun_lulus', 'like', "%{$search}%");
             });
         }
 
@@ -893,6 +919,7 @@ class AsistenController extends Controller
             $str = str_replace(['admin assistant', 'aat'], 'aat', $str);
             $str = str_replace(['traction assistant', 'tat'], 'tat', $str);
             $str = str_replace(['downstream management', 'dmt'], 'dmt', $str);
+
             return preg_replace('/[^a-zA-Z0-9]/', '', $str);
         };
 
@@ -1045,10 +1072,10 @@ class AsistenController extends Controller
                 }
 
                 $catCode = $item['kode_kategori'] ?: 'OTHER';
-                $groupKey = $catCode . '_' . ($effYear ?: 'UNKNOWN');
+                $groupKey = $catCode.'_'.($effYear ?: 'UNKNOWN');
 
-                if (!isset($aggregatedMap[$groupKey])) {
-                    $shortCode = match($catCode) {
+                if (! isset($aggregatedMap[$groupKey])) {
+                    $shortCode = match ($catCode) {
                         'A' => 'FAT',
                         'B' => 'MAT',
                         'C' => 'AAT',
@@ -1098,10 +1125,10 @@ class AsistenController extends Controller
                 $aggregatedMap[$groupKey]['asisten_count_in_db'] += $item['asisten_count_in_db'];
 
                 // Track minimum rekrut / training year
-                if ($item['tahun_rekrut'] && (!$aggregatedMap[$groupKey]['tahun_rekrut'] || $item['tahun_rekrut'] < $aggregatedMap[$groupKey]['tahun_rekrut'])) {
+                if ($item['tahun_rekrut'] && (! $aggregatedMap[$groupKey]['tahun_rekrut'] || $item['tahun_rekrut'] < $aggregatedMap[$groupKey]['tahun_rekrut'])) {
                     $aggregatedMap[$groupKey]['tahun_rekrut'] = $item['tahun_rekrut'];
                 }
-                if ($item['tahun_training'] && (!$aggregatedMap[$groupKey]['tahun_training'] || $item['tahun_training'] < $aggregatedMap[$groupKey]['tahun_training'])) {
+                if ($item['tahun_training'] && (! $aggregatedMap[$groupKey]['tahun_training'] || $item['tahun_training'] < $aggregatedMap[$groupKey]['tahun_training'])) {
                     $aggregatedMap[$groupKey]['tahun_training'] = $item['tahun_training'];
                 }
             }
@@ -1192,10 +1219,10 @@ class AsistenController extends Controller
             foreach ($programList as $idx => $pName) {
                 if ($idx === 0) {
                     $q->where('program', $pName)
-                      ->orWhere('program', 'like', "%{$pName}%");
+                        ->orWhere('program', 'like', "%{$pName}%");
                 } else {
                     $q->orWhere('program', $pName)
-                      ->orWhere('program', 'like', "%{$pName}%");
+                        ->orWhere('program', 'like', "%{$pName}%");
                 }
             }
         });
@@ -1203,38 +1230,38 @@ class AsistenController extends Controller
         if ($filterType === 'resign') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'Resign')
-                  ->orWhere('status_resign', 'Resign')
-                  ->orWhere('status_resign', 'PHK');
+                    ->orWhere('status_resign', 'Resign')
+                    ->orWhere('status_resign', 'PHK');
             });
         } elseif ($filterType === 'eksis') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'Aktif')
-                  ->orWhere('keterangan', 'Eksis');
+                    ->orWhere('keterangan', 'Eksis');
             });
         } elseif ($filterType === 'pc') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'Aktif')
-                  ->where('level_jabatan', 'like', '%PC%');
+                    ->where('level_jabatan', 'like', '%PC%');
             });
         } elseif ($filterType === 'gm') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'Aktif')
-                  ->where('level_jabatan', 'like', '%GM%');
+                    ->where('level_jabatan', 'like', '%GM%');
             });
         } elseif ($filterType === 'mgr') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'Aktif')
-                  ->where(fn($sub) => $sub->where('level_jabatan', 'like', '%MK%')->orWhere('level_jabatan', 'like', '%MM%')->orWhere('level_jabatan', 'like', '%MGR%')->orWhere('level_jabatan', 'like', '%Manager%'));
+                    ->where(fn ($sub) => $sub->where('level_jabatan', 'like', '%MK%')->orWhere('level_jabatan', 'like', '%MM%')->orWhere('level_jabatan', 'like', '%MGR%')->orWhere('level_jabatan', 'like', '%Manager%'));
             });
         } elseif ($filterType === 'askep') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'Aktif')
-                  ->where(fn($sub) => $sub->where('level_jabatan', 'like', '%ASKEP%')->orWhere('level_jabatan', 'like', '%KTU%'));
+                    ->where(fn ($sub) => $sub->where('level_jabatan', 'like', '%ASKEP%')->orWhere('level_jabatan', 'like', '%KTU%'));
             });
         } elseif ($filterType === 'asisten') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'Aktif')
-                  ->where(fn($sub) => $sub->where('level_jabatan', 'like', '%ASISTEN%')->orWhere('level_jabatan', 'like', '%ASST%')->orWhere('level_jabatan', 'like', '%Staff%'));
+                    ->where(fn ($sub) => $sub->where('level_jabatan', 'like', '%ASISTEN%')->orWhere('level_jabatan', 'like', '%ASST%')->orWhere('level_jabatan', 'like', '%Staff%'));
             });
         }
 
@@ -1281,14 +1308,14 @@ class AsistenController extends Controller
         }
 
         // Fill years if simplified single 'tahun' is sent
-        if (!empty($data['tahun'])) {
+        if (! empty($data['tahun'])) {
             $data['tahun_training'] = $data['tahun_training'] ?? (int) $data['tahun'];
             $data['tahun_lulus'] = $data['tahun_lulus'] ?? (int) $data['tahun'];
             $data['tahun_rekrut'] = $data['tahun_rekrut'] ?? (int) $data['tahun'];
         }
 
-        if (empty($data['kategori_program']) && !empty($data['kode_kategori'])) {
-            $data['kategori_program'] = match($data['kode_kategori']) {
+        if (empty($data['kategori_program']) && ! empty($data['kode_kategori'])) {
+            $data['kategori_program'] = match ($data['kode_kategori']) {
                 'A' => 'Field Assistant Training',
                 'B' => 'Mill Assistant Training',
                 'C' => 'Admin Assistant Training',
@@ -1339,14 +1366,14 @@ class AsistenController extends Controller
         }
 
         $data = $request->all();
-        if (!empty($data['tahun'])) {
+        if (! empty($data['tahun'])) {
             $data['tahun_training'] = $data['tahun_training'] ?? (int) $data['tahun'];
             $data['tahun_lulus'] = $data['tahun_lulus'] ?? (int) $data['tahun'];
             $data['tahun_rekrut'] = $data['tahun_rekrut'] ?? (int) $data['tahun'];
         }
 
-        if (empty($data['kategori_program']) && !empty($data['kode_kategori'])) {
-            $data['kategori_program'] = match($data['kode_kategori']) {
+        if (empty($data['kategori_program']) && ! empty($data['kode_kategori'])) {
+            $data['kategori_program'] = match ($data['kode_kategori']) {
                 'A' => 'Field Assistant Training',
                 'B' => 'Mill Assistant Training',
                 'C' => 'Admin Assistant Training',
@@ -1389,14 +1416,14 @@ class AsistenController extends Controller
         $records = $json['data'] ?? [];
         $summary = $json['summary'] ?? [];
 
-        $filename = 'Monitoring_Program_Angkatan_' . date('Ymd_His') . '.xlsx';
+        $filename = 'Monitoring_Program_Angkatan_'.date('Ymd_His').'.xlsx';
         $headers = [
             'No', 'Kode_Kategori', 'Kategori_Program', 'Nama_Program',
             'Tahun_Rekrut', 'Tahun_Training', 'Tahun_Lulus',
             'Jumlah_Trainee', 'Jumlah_Culled', 'Jumlah_Passed',
             'Jumlah_Resign', 'Jumlah_Eksis',
             'Pct_Culled', 'Pct_Passed', 'Pct_Resign', 'Pct_Existing',
-            'Posisi_PC', 'Posisi_GM', 'Posisi_MGR', 'Posisi_Askep', 'Posisi_Asisten'
+            'Posisi_PC', 'Posisi_GM', 'Posisi_MGR', 'Posisi_Askep', 'Posisi_Asisten',
         ];
 
         $dataRows = [];
@@ -1428,7 +1455,7 @@ class AsistenController extends Controller
 
         // Summary row
         $dataRows[] = [
-            'TOTAL', '', '', count($records) . ' Batch Programs',
+            'TOTAL', '', '', count($records).' Batch Programs',
             '', '', '',
             $summary['total_trainee'] ?? 0,
             $summary['total_culled'] ?? 0,
@@ -1465,7 +1492,7 @@ class AsistenController extends Controller
             $file = $request->file('file');
             $rawRows = SpreadsheetReader::read($file->getRealPath(), $file->getClientOriginalExtension());
         } catch (\Exception $e) {
-            return response()->json(['status' => 'error', 'message' => 'Gagal membaca file: ' . $e->getMessage()], 400);
+            return response()->json(['status' => 'error', 'message' => 'Gagal membaca file: '.$e->getMessage()], 400);
         }
 
         if (empty($rawRows)) {
@@ -1480,21 +1507,25 @@ class AsistenController extends Controller
 
         foreach ($rawRows as $row) {
             $rowNum++;
-            if (empty(array_filter($row, fn($v) => trim((string)$v) !== ''))) continue;
+            if (empty(array_filter($row, fn ($v) => trim((string) $v) !== ''))) {
+                continue;
+            }
 
-            $namaProg = trim((string)($row[3] ?? ''));
-            if (empty($namaProg)) continue;
+            $namaProg = trim((string) ($row[3] ?? ''));
+            if (empty($namaProg)) {
+                continue;
+            }
 
             $rows[] = [
-                'no' => !empty($row[0]) && is_numeric($row[0]) ? (int) $row[0] : $rowNum - 1,
-                'kode_kategori' => trim((string)($row[1] ?? '')) ?: null,
-                'kategori_program' => trim((string)($row[2] ?? '')) ?: null,
+                'no' => ! empty($row[0]) && is_numeric($row[0]) ? (int) $row[0] : $rowNum - 1,
+                'kode_kategori' => trim((string) ($row[1] ?? '')) ?: null,
+                'kategori_program' => trim((string) ($row[2] ?? '')) ?: null,
                 'nama_program' => $namaProg,
-                'tahun_rekrut' => !empty($row[4]) && is_numeric($row[4]) ? (int) $row[4] : null,
-                'tahun_training' => !empty($row[5]) && is_numeric($row[5]) ? (int) $row[5] : null,
-                'tahun_lulus' => !empty($row[6]) && is_numeric($row[6]) ? (int) $row[6] : null,
-                'jumlah_trainee' => !empty($row[7]) && is_numeric($row[7]) ? (int) $row[7] : 0,
-                'jumlah_culled' => !empty($row[8]) && is_numeric($row[8]) ? (int) $row[8] : 0,
+                'tahun_rekrut' => ! empty($row[4]) && is_numeric($row[4]) ? (int) $row[4] : null,
+                'tahun_training' => ! empty($row[5]) && is_numeric($row[5]) ? (int) $row[5] : null,
+                'tahun_lulus' => ! empty($row[6]) && is_numeric($row[6]) ? (int) $row[6] : null,
+                'jumlah_trainee' => ! empty($row[7]) && is_numeric($row[7]) ? (int) $row[7] : 0,
+                'jumlah_culled' => ! empty($row[8]) && is_numeric($row[8]) ? (int) $row[8] : 0,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -1511,13 +1542,13 @@ class AsistenController extends Controller
         ActivityLog::log(
             'Import',
             'Monitoring Alumni',
-            "Mengimport " . count($rows) . " data batch program dari file " . $file->getClientOriginalName(),
+            'Mengimport '.count($rows).' data batch program dari file '.$file->getClientOriginalName(),
             ['filename' => $file->getClientOriginalName(), 'count' => count($rows), 'mode' => $mode]
         );
 
         return response()->json([
             'status' => 'success',
-            'message' => "Berhasil mengimpor " . count($rows) . " data batch program!",
+            'message' => 'Berhasil mengimpor '.count($rows).' data batch program!',
         ]);
     }
 }

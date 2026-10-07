@@ -47,15 +47,15 @@ class ActivityLog extends Model
         }
 
         return static::create([
-            'user_id'     => $user ? $user->id : null,
-            'user_name'   => $user ? $user->name : 'Sistem',
-            'user_role'   => $roleName,
-            'action'      => $action,
-            'module'      => $module,
+            'user_id' => $user ? $user->id : null,
+            'user_name' => $user ? $user->name : 'Sistem',
+            'user_role' => $roleName,
+            'action' => $action,
+            'module' => $module,
             'description' => $description,
-            'ip_address'  => Request::ip(),
-            'user_agent'  => Request::userAgent(),
-            'properties'  => $properties,
+            'ip_address' => Request::ip(),
+            'user_agent' => Request::userAgent(),
+            'properties' => $properties,
         ]);
     }
 }

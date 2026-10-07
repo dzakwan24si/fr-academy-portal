@@ -19,23 +19,23 @@ class AuthController extends Controller
         $request->validate([
             'identifier' => ['required', 'string'],
             'password' => ['required', 'string'],
-            // 'cf-turnstile-response' => ['required', 'string'], 
+            // 'cf-turnstile-response' => ['required', 'string'],
         ]
-        // , [
-        //     'cf-turnstile-response.required' => 'Harap selesaikan verifikasi keamanan Cloudflare.'
-        // ]
+            // , [
+            //     'cf-turnstile-response.required' => 'Harap selesaikan verifikasi keamanan Cloudflare.'
+            // ]
         );
 
         // 2. Kirim token ke API Cloudflare untuk divalidasi keasliannya
         // $http = Http::asForm();
-        
+
         // // Bypass verifikasi SSL HANYA saat dijalankan di Localhost/Laragon
         // if (app()->isLocal()) {
         //     $http = $http->withoutVerifying();
         // }
-        
+
         // $turnstileResponse = $http->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-        //     'secret' => '0x4AAAAAAEzPGKSsKiRsoVbsX1tzF-N7x8k', 
+        //     'secret' => '0x4AAAAAAEzPGKSsKiRsoVbsX1tzF-N7x8k',
         //     'response' => $request->input('cf-turnstile-response'),
         //     'remoteip' => $request->ip(),
         // ]);
@@ -49,7 +49,7 @@ class AuthController extends Controller
 
         // 4. Jika Turnstile sukses, lanjutkan ke proses login asli milikmu
         $identifier = $request->input('identifier');
-        
+
         $fieldType = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'nik';
 
         if (Auth::attempt([$fieldType => $identifier, 'password' => $request->input('password')], $request->boolean('remember'))) {

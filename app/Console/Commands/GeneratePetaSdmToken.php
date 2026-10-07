@@ -28,7 +28,7 @@ class GeneratePetaSdmToken extends Command
     public function handle()
     {
         $name = $this->option('name');
-        
+
         $systemUser = User::firstOrCreate(
             ['email' => 'system-peta-sdm@academy.portal'],
             [
@@ -47,14 +47,14 @@ class GeneratePetaSdmToken extends Command
         $this->info('  PERSONAL ACCESS TOKEN GENERATED FOR PETA SDM SYSTEM');
         $this->info('=====================================================');
         $this->line('');
-        $this->comment('Token Name: ' . $name);
-        $this->comment('User Account: ' . $systemUser->email);
+        $this->comment('Token Name: '.$name);
+        $this->comment('User Account: '.$systemUser->email);
         $this->line('');
         $this->question('PLAIN TEXT TOKEN (Save this in your Peta SDM .env):');
-        $this->line('<fg=yellow;bg=black>' . $token->plainTextToken . '</>');
+        $this->line('<fg=yellow;bg=black>'.$token->plainTextToken.'</>');
         $this->line('');
         $this->info('Header usage example:');
-        $this->line('Authorization: Bearer ' . $token->plainTextToken);
+        $this->line('Authorization: Bearer '.$token->plainTextToken);
         $this->info('=====================================================');
 
         return 0;

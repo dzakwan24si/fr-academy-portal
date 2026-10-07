@@ -49,18 +49,18 @@ class InventarisMessController extends Controller
         $availableYears = Pembelian::whereHas('barang', function ($q) {
             $q->where('lokasi', $this->lokasi);
         })
-        ->selectRaw('YEAR(tanggal_pembelian) as year')
-        ->distinct()
-        ->orderByDesc('year')
-        ->pluck('year')
-        ->toArray();
+            ->selectRaw('YEAR(tanggal_pembelian) as year')
+            ->distinct()
+            ->orderByDesc('year')
+            ->pluck('year')
+            ->toArray();
 
         $currentYear = (int) date('Y');
         $defaultYears = [$currentYear - 1, $currentYear, $currentYear + 1];
         $allYears = array_values(array_unique(array_merge($defaultYears, $availableYears)));
         sort($allYears);
 
-        if (!$selectedYear) {
+        if (! $selectedYear) {
             $selectedYear = in_array($currentYear, $allYears) ? $currentYear : (end($allYears) ?: $currentYear);
         }
 
@@ -112,16 +112,16 @@ class InventarisMessController extends Controller
         $sessions = StockOpname::whereHas('barang', function ($q) {
             $q->where('lokasi', $this->lokasi);
         })
-        ->select(
-            'tanggal_stock_opname',
-            DB::raw('MAX(status) as status'),
-            DB::raw('MAX(catatan_sesi) as catatan_sesi'),
-            DB::raw('COUNT(DISTINCT barang_id) as total_aset_diperiksa'),
-            DB::raw('SUM(jumlah_rusak_ringan + jumlah_rusak_berat + jumlah_hilang) as total_masalah')
-        )
-        ->groupBy('tanggal_stock_opname')
-        ->orderByDesc('tanggal_stock_opname')
-        ->get();
+            ->select(
+                'tanggal_stock_opname',
+                DB::raw('MAX(status) as status'),
+                DB::raw('MAX(catatan_sesi) as catatan_sesi'),
+                DB::raw('COUNT(DISTINCT barang_id) as total_aset_diperiksa'),
+                DB::raw('SUM(jumlah_rusak_ringan + jumlah_rusak_berat + jumlah_hilang) as total_masalah')
+            )
+            ->groupBy('tanggal_stock_opname')
+            ->orderByDesc('tanggal_stock_opname')
+            ->get();
 
         return view('Administrasi.Pages.Inventaris.mess_stock_opname', [
             'sessions' => $sessions,
@@ -153,8 +153,8 @@ class InventarisMessController extends Controller
         $sessionMeta = StockOpname::whereHas('barang', function ($q) {
             $q->where('lokasi', $this->lokasi);
         })
-        ->where('tanggal_stock_opname', $date)
-        ->first();
+            ->where('tanggal_stock_opname', $date)
+            ->first();
 
         return view('Administrasi.Pages.Inventaris.mess_stock_opname_detail', [
             'date' => $date,
@@ -194,6 +194,7 @@ class InventarisMessController extends Controller
         }
 
         $filename = "Stock_Opname_Mess_{$date}.xlsx";
+
         return ExcelExporter::download($filename, $headers, $dataRows, 'Stock Opname Mess');
     }
 }

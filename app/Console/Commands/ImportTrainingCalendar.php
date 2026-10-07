@@ -5,7 +5,6 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use ZipArchive;
-use SimpleXMLElement;
 
 class ImportTrainingCalendar extends Command
 {
@@ -29,33 +28,35 @@ class ImportTrainingCalendar extends Command
     public function handle()
     {
         $sourcePath = 'C:\\Users\\ASUS\\Downloads\\Kalender Pelatiha (1).xlsx';
-        
-        if (!file_exists($sourcePath)) {
+
+        if (! file_exists($sourcePath)) {
             // Fallback to checking Kalender Pelatiha.xlsx
             $sourcePath = 'C:\\Users\\ASUS\\Downloads\\Kalender Pelatiha.xlsx';
         }
 
-        if (!file_exists($sourcePath)) {
-            $this->error("Excel file not found at: C:\\Users\\ASUS\\Downloads\\Kalender Pelatiha (1).xlsx");
+        if (! file_exists($sourcePath)) {
+            $this->error('Excel file not found at: C:\\Users\\ASUS\\Downloads\\Kalender Pelatiha (1).xlsx');
+
             return 1;
         }
 
-        $this->info("Copying Excel file to storage/app/Kalender_Pelatihan.xlsx...");
-        
+        $this->info('Copying Excel file to storage/app/Kalender_Pelatihan.xlsx...');
+
         // Ensure storage directory exists
         $storageDir = storage_path('app');
-        if (!is_dir($storageDir)) {
+        if (! is_dir($storageDir)) {
             mkdir($storageDir, 0755, true);
         }
 
         $destinationPath = storage_path('app/Kalender_Pelatihan.xlsx');
         copy($sourcePath, $destinationPath);
 
-        $this->info("Parsing Excel file...");
+        $this->info('Parsing Excel file...');
 
-        $zip = new ZipArchive();
-        if ($zip->open($destinationPath) !== TRUE) {
-            $this->error("Failed to open excel file.");
+        $zip = new ZipArchive;
+        if ($zip->open($destinationPath) !== true) {
+            $this->error('Failed to open excel file.');
+
             return 1;
         }
 
@@ -66,11 +67,11 @@ class ImportTrainingCalendar extends Command
             $xml = simplexml_load_string($sharedStringsXml);
             foreach ($xml->si as $val) {
                 if (isset($val->t)) {
-                    $sharedStrings[] = (string)$val->t;
+                    $sharedStrings[] = (string) $val->t;
                 } else {
                     $text = '';
                     foreach ($val->r as $r) {
-                        $text .= (string)$r->t;
+                        $text .= (string) $r->t;
                     }
                     $sharedStrings[] = $text;
                 }
@@ -78,24 +79,26 @@ class ImportTrainingCalendar extends Command
         }
 
         // 2. Helper to get cell values
-        $getCellVal = function($cell, $sharedStrings) {
-            $type = (string)$cell['t'];
-            $val = (string)$cell->v;
+        $getCellVal = function ($cell, $sharedStrings) {
+            $type = (string) $cell['t'];
+            $val = (string) $cell->v;
             if ($type === 's') {
-                return trim($sharedStrings[(int)$val] ?? '');
+                return trim($sharedStrings[(int) $val] ?? '');
             }
+
             return trim($val);
         };
 
         // 3. Helper to map columns
-        $getRowData = function($row, $sharedStrings, $getCellVal) {
+        $getRowData = function ($row, $sharedStrings, $getCellVal) {
             $data = [];
             foreach ($row->c as $cell) {
-                $ref = (string)$cell['r'];
+                $ref = (string) $cell['r'];
                 preg_match('/^[A-Z]+/', $ref, $matches);
                 $col = $matches[0] ?? '';
                 $data[$col] = $getCellVal($cell, $sharedStrings);
             }
+
             return $data;
         };
 
@@ -105,52 +108,63 @@ class ImportTrainingCalendar extends Command
         $sheet1Xml = $zip->getFromName('xl/worksheets/sheet1.xml');
         if ($sheet1Xml !== false) {
             $xml = simplexml_load_string($sheet1Xml);
-            
-            $currentSection = "LEADERSHIP / SOFT SKILLS";
-            $currentSubsection = "";
-            $currentProgramNo = "";
-            $currentProgramName = "";
+
+            $currentSection = 'LEADERSHIP / SOFT SKILLS';
+            $currentSubsection = '';
+            $currentProgramNo = '';
+            $currentProgramName = '';
 
             foreach ($xml->sheetData->row as $row) {
-                $rowIndex = (int)$row['r'];
-                if ($rowIndex < 8) continue; // Skip headers & summary row
+                $rowIndex = (int) $row['r'];
+                if ($rowIndex < 8) {
+                    continue;
+                } // Skip headers & summary row
 
                 $rowCells = $getRowData($row, $sharedStrings, $getCellVal);
-                if (empty($rowCells)) continue;
+                if (empty($rowCells)) {
+                    continue;
+                }
 
                 $no = $rowCells['B'] ?? '';
                 $program = $rowCells['C'] ?? '';
-                
+
                 // Detect Section Headers
                 if ($no === 'I' && empty($program)) {
-                    $currentSection = "LEADERSHIP / SOFT SKILLS";
-                    $currentSubsection = "";
+                    $currentSection = 'LEADERSHIP / SOFT SKILLS';
+                    $currentSubsection = '';
+
                     continue;
                 } elseif ($no === 'II' && $program === 'TECHNICAL') {
-                    $currentSection = "TECHNICAL";
-                    $currentSubsection = "";
+                    $currentSection = 'TECHNICAL';
+                    $currentSubsection = '';
+
                     continue;
                 }
 
                 // Detect Subsection Headers
-                if ($currentSection === "TECHNICAL" && empty($program) && in_array($no, ['A', 'B', 'C', 'D', 'E'])) {
-                    continue; 
+                if ($currentSection === 'TECHNICAL' && empty($program) && in_array($no, ['A', 'B', 'C', 'D', 'E'])) {
+                    continue;
                 }
-                
+
                 if ($no === 'A' && $program === 'ESTATE') {
-                    $currentSubsection = "ESTATE";
+                    $currentSubsection = 'ESTATE';
+
                     continue;
                 } elseif ($no === 'B' && $program === 'MILL') {
-                    $currentSubsection = "MILL";
+                    $currentSubsection = 'MILL';
+
                     continue;
                 } elseif ($no === 'C' && $program === 'TRAKSI') {
-                    $currentSubsection = "TRAKSI";
+                    $currentSubsection = 'TRAKSI';
+
                     continue;
                 } elseif ($no === 'D' && $program === 'DOWNSTREAM') {
-                    $currentSubsection = "DOWNSTREAM";
+                    $currentSubsection = 'DOWNSTREAM';
+
                     continue;
                 } elseif ($no === 'E' && $program === 'ADMINISTRASI') {
-                    $currentSubsection = "ADMINISTRASI";
+                    $currentSubsection = 'ADMINISTRASI';
+
                     continue;
                 }
 
@@ -165,17 +179,17 @@ class ImportTrainingCalendar extends Command
 
                 $region = $rowCells['D'] ?? '';
                 if ($region !== '' && $currentProgramName !== '') {
-                    $category = "Training Corporate";
+                    $category = 'Training Corporate';
                     if (strcasecmp($region, 'Riau') === 0) {
-                        $category = "Training Riau";
+                        $category = 'Training Riau';
                     } elseif (strcasecmp($region, 'Kalbar') === 0) {
-                        $category = "Training Kalbar";
+                        $category = 'Training Kalbar';
                     } elseif (strcasecmp($region, 'Kaltim FR') === 0 || strcasecmp($region, 'Kaltim') === 0) {
-                        $category = "Training Kaltim";
+                        $category = 'Training Kaltim';
                     } elseif (strcasecmp($region, 'Corporate') === 0) {
-                        $category = "Training Corporate";
+                        $category = 'Training Corporate';
                     } else {
-                        $category = "Training " . $region;
+                        $category = 'Training '.$region;
                     }
 
                     $calendar = [];
@@ -195,7 +209,7 @@ class ImportTrainingCalendar extends Command
                     ];
 
                     foreach ($monthMap as $col => $monthName) {
-                        if (!empty($rowCells[$col])) {
+                        if (! empty($rowCells[$col])) {
                             $calendar[$monthName] = $rowCells[$col];
                         }
                     }
@@ -210,24 +224,24 @@ class ImportTrainingCalendar extends Command
                         'region' => $region,
                         'trainer' => $rowCells['E'] ?? '-',
                         'type_training' => $rowCells['F'] ?? '-',
-                        'total_hours' => (int)($rowCells['G'] ?? 0),
-                        'days' => (int)($rowCells['H'] ?? 0),
+                        'total_hours' => (int) ($rowCells['G'] ?? 0),
+                        'days' => (int) ($rowCells['H'] ?? 0),
                         'participants' => [
-                            'non_staff' => (int)($rowCells['I'] ?? 0),
-                            'ast' => (int)($rowCells['J'] ?? 0),
-                            'askep' => (int)($rowCells['K'] ?? 0),
-                            'mgr' => (int)($rowCells['L'] ?? 0),
-                            'gm' => (int)($rowCells['M'] ?? 0),
-                            'head' => (int)($rowCells['N'] ?? 0),
+                            'non_staff' => (int) ($rowCells['I'] ?? 0),
+                            'ast' => (int) ($rowCells['J'] ?? 0),
+                            'askep' => (int) ($rowCells['K'] ?? 0),
+                            'mgr' => (int) ($rowCells['L'] ?? 0),
+                            'gm' => (int) ($rowCells['M'] ?? 0),
+                            'head' => (int) ($rowCells['N'] ?? 0),
                         ],
                         'target_participants' => [
-                            'staf' => (int)($rowCells['O'] ?? 0),
-                            'non_staf' => (int)($rowCells['P'] ?? 0),
-                            'total' => (int)($rowCells['Q'] ?? 0),
+                            'staf' => (int) ($rowCells['O'] ?? 0),
+                            'non_staf' => (int) ($rowCells['P'] ?? 0),
+                            'total' => (int) ($rowCells['Q'] ?? 0),
                         ],
-                        'total_batches' => (int)($rowCells['U'] ?? 0),
+                        'total_batches' => (int) ($rowCells['U'] ?? 0),
                         'location' => $rowCells['V'] ?? '-',
-                        'calendar' => $calendar
+                        'calendar' => $calendar,
                     ];
                 }
             }
@@ -238,21 +252,26 @@ class ImportTrainingCalendar extends Command
         if ($sheet2Xml !== false) {
             $xml = simplexml_load_string($sheet2Xml);
 
-            $currentSection = "Field Assistant Training ( FAT)";
-            
+            $currentSection = 'Field Assistant Training ( FAT)';
+
             foreach ($xml->sheetData->row as $row) {
-                $rowIndex = (int)$row['r'];
-                if ($rowIndex < 6) continue;
+                $rowIndex = (int) $row['r'];
+                if ($rowIndex < 6) {
+                    continue;
+                }
 
                 $rowCells = $getRowData($row, $sharedStrings, $getCellVal);
-                if (empty($rowCells)) continue;
+                if (empty($rowCells)) {
+                    continue;
+                }
 
                 $prog = $rowCells['D'] ?? '';
                 $batch = $rowCells['F'] ?? '';
                 $period = $rowCells['H'] ?? '';
-                
+
                 if (preg_match('/^[A-Z]\.\s+(.*)/', $prog, $matches)) {
                     $currentSection = trim($matches[1]);
+
                     continue;
                 }
 
@@ -261,19 +280,19 @@ class ImportTrainingCalendar extends Command
                 }
 
                 if ($prog !== '' && $batch !== '') {
-                    $category = "Training Reguler - Staf";
+                    $category = 'Training Reguler - Staf';
                     if (strpos($currentSection, 'Mandor') !== false || strpos($prog, 'PMT') !== false || strpos($prog, 'Mandor') !== false) {
-                        $category = "Training Reguler - Mandor";
+                        $category = 'Training Reguler - Mandor';
                     }
 
                     $calendar = [];
                     $months = [
                         'O' => 'Jan', 'P' => 'Feb', 'Q' => 'Mar', 'R' => 'Apr',
                         'S' => 'Mei', 'T' => 'Jun', 'U' => 'Jul', 'V' => 'Ags',
-                        'W' => 'Sept', 'X' => 'Okt', 'Y' => 'Nov', 'Z' => 'Des'
+                        'W' => 'Sept', 'X' => 'Okt', 'Y' => 'Nov', 'Z' => 'Des',
                     ];
                     foreach ($months as $col => $mName) {
-                        if (!empty($rowCells[$col])) {
+                        if (! empty($rowCells[$col])) {
                             $calendar[$mName] = $rowCells[$col];
                         }
                     }
@@ -284,10 +303,10 @@ class ImportTrainingCalendar extends Command
                         'section' => $currentSection,
                         'subsection' => '',
                         'no' => $batch,
-                        'name' => $currentSection . ' - ' . $prog,
+                        'name' => $currentSection.' - '.$prog,
                         'region' => '-',
                         'trainer' => 'Internal',
-                        'type_training' => 'Batch ' . $batch,
+                        'type_training' => 'Batch '.$batch,
                         'total_hours' => 0,
                         'days' => 0,
                         'participants' => [
@@ -299,14 +318,14 @@ class ImportTrainingCalendar extends Command
                             'head' => 0,
                         ],
                         'target_participants' => [
-                            'staf' => (int)($rowCells['L'] ?? 0),
+                            'staf' => (int) ($rowCells['L'] ?? 0),
                             'non_staf' => 0,
-                            'total' => (int)($rowCells['L'] ?? 0),
+                            'total' => (int) ($rowCells['L'] ?? 0),
                         ],
                         'total_batches' => 1,
                         'location' => $rowCells['N'] ?? 'FRLC Kubang',
                         'calendar' => $calendar,
-                        'period' => $period
+                        'period' => $period,
                     ];
                 }
             }
@@ -322,7 +341,7 @@ class ImportTrainingCalendar extends Command
                 break;
             }
         }
-        if (!$hasMandor) {
+        if (! $hasMandor) {
             $unifiedPrograms[] = [
                 'sheet' => 'Reguler',
                 'category' => 'Training Reguler - Mandor',
@@ -352,9 +371,9 @@ class ImportTrainingCalendar extends Command
                 'location' => 'FRLC Kubang',
                 'calendar' => [
                     'Mei' => '30',
-                    'Jun' => '30'
+                    'Jun' => '30',
                 ],
-                'period' => '1 Mei 2026 - 31 Jun 2026'
+                'period' => '1 Mei 2026 - 31 Jun 2026',
             ];
             $unifiedPrograms[] = [
                 'sheet' => 'Reguler',
@@ -385,9 +404,9 @@ class ImportTrainingCalendar extends Command
                 'location' => 'FRLC Kubang',
                 'calendar' => [
                     'Sept' => '25',
-                    'Okt' => '25'
+                    'Okt' => '25',
                 ],
-                'period' => '1 Sept 2026 - 31 Okt 2026'
+                'period' => '1 Sept 2026 - 31 Okt 2026',
             ];
         }
 
@@ -395,7 +414,8 @@ class ImportTrainingCalendar extends Command
         $jsonContent = json_encode($unifiedPrograms, JSON_PRETTY_PRINT);
         file_put_contents(storage_path('app/kalender_training.json'), $jsonContent);
 
-        $this->info("Successfully imported " . count($unifiedPrograms) . " training records!");
+        $this->info('Successfully imported '.count($unifiedPrograms).' training records!');
+
         return 0;
     }
 }

@@ -126,11 +126,11 @@ class Asisten extends Model
      */
     public function getUnitKerjaDisplayAttribute(): string
     {
-        if (!empty(trim($this->unit_kerja_saat_ini ?? ''))) {
+        if (! empty(trim($this->unit_kerja_saat_ini ?? ''))) {
             return trim($this->unit_kerja_saat_ini);
         }
 
-        if (!empty(trim($this->unit_kerja_penempatan_training ?? ''))) {
+        if (! empty(trim($this->unit_kerja_penempatan_training ?? ''))) {
             return trim($this->unit_kerja_penempatan_training);
         }
 
@@ -142,7 +142,7 @@ class Asisten extends Model
      */
     public function getIsUnitKerjaFallbackAttribute(): bool
     {
-        return empty(trim($this->unit_kerja_saat_ini ?? '')) && !empty(trim($this->unit_kerja_penempatan_training ?? ''));
+        return empty(trim($this->unit_kerja_saat_ini ?? '')) && ! empty(trim($this->unit_kerja_penempatan_training ?? ''));
     }
 
     /**
@@ -157,6 +157,7 @@ class Asisten extends Model
         if (str_contains($v, 'resign') || str_contains($v, 'phk')) {
             return 'Resign';
         }
+
         return 'Aktif';
     }
 

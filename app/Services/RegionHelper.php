@@ -13,7 +13,9 @@ class RegionHelper
      */
     public static function normalize(?string $raw): ?string
     {
-        if ($raw === null) return null;
+        if ($raw === null) {
+            return null;
+        }
         $trimmed = trim((string) $raw);
         if ($trimmed === '' || $trimmed === '-' || strcasecmp($trimmed, 'all') === 0 || strcasecmp($trimmed, 'null') === 0) {
             return null;
@@ -66,7 +68,7 @@ class RegionHelper
         }
 
         $normalized = collect($rawRegions)
-            ->map(fn($r) => self::normalize((string)$r))
+            ->map(fn ($r) => self::normalize((string) $r))
             ->filter()
             ->unique()
             ->values()
@@ -134,19 +136,19 @@ class RegionHelper
         return $query->where(function ($q) use ($column, $fLower, $filterRegion) {
             if (str_contains($fLower, 'kaltim') || str_contains($fLower, 'kubar')) {
                 $q->where($column, 'like', '%kaltim%')
-                  ->orWhere($column, 'like', '%kubar%');
+                    ->orWhere($column, 'like', '%kubar%');
             } elseif (str_contains($fLower, 'kalbar')) {
                 $q->where($column, 'like', '%kalbar%');
             } elseif (str_contains($fLower, 'riau')) {
                 $q->where($column, 'like', '%riau%')
-                  ->orWhere($column, 'like', '%frlc%');
+                    ->orWhere($column, 'like', '%frlc%');
             } elseif (str_contains($fLower, 'kalsel')) {
                 $q->where($column, 'like', '%kalsel%');
             } elseif (str_contains($fLower, 'kalteng')) {
                 $q->where($column, 'like', '%kalteng%');
             } elseif (str_contains($fLower, 'jkt') || str_contains($fLower, 'jakarta')) {
                 $q->where($column, 'like', '%jkt%')
-                  ->orWhere($column, 'like', '%jakarta%');
+                    ->orWhere($column, 'like', '%jakarta%');
             } else {
                 $q->where($column, 'like', "%{$filterRegion}%");
             }

@@ -13,6 +13,7 @@ class CapexRab extends Model
     protected static $logModuleName = 'Capex RAB';
 
     protected $table = 'capex_rab';
+
     protected $primaryKey = 'rab_id';
 
     protected $fillable = [
@@ -29,10 +30,10 @@ class CapexRab extends Model
     ];
 
     protected $casts = [
-        'tahun'        => 'integer',
-        'jumlah_unit'  => 'float',
+        'tahun' => 'integer',
+        'jumlah_unit' => 'float',
         'harga_satuan' => 'float',
-        'total_rp'     => 'float',
+        'total_rp' => 'float',
     ];
 
     public function realisasis()

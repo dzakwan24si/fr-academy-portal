@@ -13,6 +13,7 @@ class MonitoringAngkatan extends Model
     protected static $logModuleName = 'Monitoring Angkatan';
 
     protected $table = 'monitoring_angkatan';
+
     protected $primaryKey = 'id_angkatan';
 
     protected $fillable = [

@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Program\ProgramNonReguler;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use App\Models\Program\ProgramNonReguler;
 
 class DummyTrainingRecordSeeder extends Seeder
 {
@@ -31,7 +31,7 @@ class DummyTrainingRecordSeeder extends Seeder
                 'lokasi_training' => 'Jakarta',
                 'total_hari' => 2,
                 'total_jam' => 16,
-            ]
+            ],
         ];
 
         foreach ($programs as $prog) {
@@ -93,7 +93,7 @@ class DummyTrainingRecordSeeder extends Seeder
                 'periode' => '2026',
                 'status' => 'valid',
                 'created_at' => now()->subDays(1),
-            ]
+            ],
         ];
 
         DB::table('training_records')->insert($records);

@@ -37,8 +37,8 @@ return new class extends Migration
     {
         Schema::table('weekly_reports', function (Blueprint $table) {
             $table->dropColumn([
-                'training_type', 'topic', 'location', 'provider', 
-                'feedback_notes', 'eval_materi_score', 'eval_trainer_score', 'eval_fasilitas_score'
+                'training_type', 'topic', 'location', 'provider',
+                'feedback_notes', 'eval_materi_score', 'eval_trainer_score', 'eval_fasilitas_score',
             ]);
         });
 

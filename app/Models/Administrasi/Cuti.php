@@ -13,6 +13,7 @@ class Cuti extends Model
     protected static $logModuleName = 'Cuti';
 
     protected $table = 'cuti';
+
     protected $primaryKey = 'cuti_id';
 
     protected $fillable = [
@@ -112,7 +113,7 @@ class Cuti extends Model
      */
     public function getTotalBulananAttribute(): int
     {
-        return (int) array_sum(array_map(fn($m) => (int) $this->$m, self::MONTHS));
+        return (int) array_sum(array_map(fn ($m) => (int) $this->$m, self::MONTHS));
     }
 
     /**
@@ -139,6 +140,7 @@ class Cuti extends Model
     {
         $start = $this->tahun - 3;
         $end = $this->tahun - 2;
+
         return "{$start}–{$end}";
     }
 

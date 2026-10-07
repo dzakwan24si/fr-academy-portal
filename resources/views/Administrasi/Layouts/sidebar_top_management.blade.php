@@ -157,6 +157,30 @@
             </div>
         </details>
 
+        <!-- SECTION: Standar Kompetensi -->
+        @can('manage_competency')
+        <details class="group" {{ request()->routeIs('admin.competency.*') ? 'open' : '' }}>
+            <summary
+                class="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA] hover:bg-[#F9FAFB] [&::-webkit-details-marker]:hidden">
+                <span>Standar Kompetensi</span>
+                <i data-lucide="chevron-down" class="h-3.5 w-3.5 transition-transform group-open:rotate-180"></i>
+            </summary>
+            <div class="space-y-0.5">
+                <a href="{{ route('admin.competency.index') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                          {{ request()->routeIs('admin.competency.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                    <i data-lucide="award" class="w-4 h-4 shrink-0"></i>
+                    <span>Kelola Kamus Kompetensi</span>
+                </a>
+                <a href="{{ route('competency.public') }}" target="_blank"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium">
+                    <i data-lucide="external-link" class="w-4 h-4 shrink-0"></i>
+                    <span>Lihat Halaman Publik</span>
+                </a>
+            </div>
+        </details>
+        @endcan
+
         <!-- SECTION: Sistem & Pengaturan -->
         <details class="group" {{ request()->routeIs('administrasi.activity-logs.*', 'admin.dashboard') ? 'open' : '' }}>
             <summary

@@ -31,7 +31,7 @@ class DailyClass extends Model
         'cert_description',
         'cert_date',
     ];
-    
+
     protected $casts = [
         'date' => 'date',
         'end_date' => 'date',
@@ -58,4 +58,3 @@ class DailyClass extends Model
         return $this->hasMany(Task::class);
     }
 }
-

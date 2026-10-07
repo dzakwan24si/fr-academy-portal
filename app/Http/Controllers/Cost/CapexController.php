@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Cost\CapexRab;
 use App\Models\Cost\CapexRealisasi;
+use App\Services\ExcelExporter;
 use App\Traits\HandlesCsvImports;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -16,9 +17,9 @@ class CapexController extends Controller
     use HandlesCsvImports;
 
     public const MONTHS = [
-        1  => 'Januari',   2  => 'Februari', 3  => 'Maret',
-        4  => 'April',     5  => 'Mei',       6  => 'Juni',
-        7  => 'Juli',      8  => 'Agustus',   9  => 'September',
+        1 => 'Januari',   2 => 'Februari', 3 => 'Maret',
+        4 => 'April',     5 => 'Mei',       6 => 'Juni',
+        7 => 'Juli',      8 => 'Agustus',   9 => 'September',
         10 => 'Oktober',   11 => 'November',  12 => 'Desember',
     ];
 
@@ -42,29 +43,29 @@ class CapexController extends Controller
 
         // 2. Base Queries for RAB
         $rabKantorQuery = CapexRab::where('tahun', $selectedYear)->where('lokasi', 'kantor');
-        $rabMessQuery   = CapexRab::where('tahun', $selectedYear)->where('lokasi', 'mess');
+        $rabMessQuery = CapexRab::where('tahun', $selectedYear)->where('lokasi', 'mess');
 
         // 3. Base Queries for Realisasi
         $realisasiKantorQuery = CapexRealisasi::with('rab')->where('tahun', $selectedYear)->where('lokasi', 'kantor');
-        $realisasiMessQuery   = CapexRealisasi::with('rab')->where('tahun', $selectedYear)->where('lokasi', 'mess');
+        $realisasiMessQuery = CapexRealisasi::with('rab')->where('tahun', $selectedYear)->where('lokasi', 'mess');
 
-        if (is_numeric($selectedMonth) && (int)$selectedMonth >= 1 && (int)$selectedMonth <= 12) {
+        if (is_numeric($selectedMonth) && (int) $selectedMonth >= 1 && (int) $selectedMonth <= 12) {
             $monthInt = (int) $selectedMonth;
             $realisasiKantorQuery->whereMonth('tanggal', $monthInt);
             $realisasiMessQuery->whereMonth('tanggal', $monthInt);
         }
 
         // Apply Search if provided
-        if (!empty($search)) {
+        if (! empty($search)) {
             $rabFilter = function ($q) use ($search) {
                 $q->where('kel_barang_kapital', 'like', "%{$search}%")
-                  ->orWhere('type', 'like', "%{$search}%")
-                  ->orWhere('satuan', 'like', "%{$search}%");
+                    ->orWhere('type', 'like', "%{$search}%")
+                    ->orWhere('satuan', 'like', "%{$search}%");
             };
             $realisasiFilter = function ($q) use ($search) {
                 $q->where('kel_barang_kapital', 'like', "%{$search}%")
-                  ->orWhere('nama_barang', 'like', "%{$search}%")
-                  ->orWhere('type', 'like', "%{$search}%");
+                    ->orWhere('nama_barang', 'like', "%{$search}%")
+                    ->orWhere('type', 'like', "%{$search}%");
             };
 
             $rabKantorQuery->where($rabFilter);
@@ -74,31 +75,31 @@ class CapexController extends Controller
         }
 
         // 4. Summary Totals (Independent of pagination)
-        $rabKantorTotal       = (float) CapexRab::where('tahun', $selectedYear)->where('lokasi', 'kantor')->sum('total_rp');
-        $rabMessTotal         = (float) CapexRab::where('tahun', $selectedYear)->where('lokasi', 'mess')->sum('total_rp');
+        $rabKantorTotal = (float) CapexRab::where('tahun', $selectedYear)->where('lokasi', 'kantor')->sum('total_rp');
+        $rabMessTotal = (float) CapexRab::where('tahun', $selectedYear)->where('lokasi', 'mess')->sum('total_rp');
 
         $realKantorQuery = CapexRealisasi::where('tahun', $selectedYear)->where('lokasi', 'kantor');
-        $realMessQuery   = CapexRealisasi::where('tahun', $selectedYear)->where('lokasi', 'mess');
+        $realMessQuery = CapexRealisasi::where('tahun', $selectedYear)->where('lokasi', 'mess');
 
-        if (is_numeric($selectedMonth) && (int)$selectedMonth >= 1 && (int)$selectedMonth <= 12) {
+        if (is_numeric($selectedMonth) && (int) $selectedMonth >= 1 && (int) $selectedMonth <= 12) {
             $monthInt = (int) $selectedMonth;
             $realKantorQuery->whereMonth('tanggal', $monthInt);
             $realMessQuery->whereMonth('tanggal', $monthInt);
         }
 
-        $debitKantorTotal     = (float) (clone $realKantorQuery)->sum('debit');
-        $kreditKantorTotal    = (float) (clone $realKantorQuery)->sum('kredit');
+        $debitKantorTotal = (float) (clone $realKantorQuery)->sum('debit');
+        $kreditKantorTotal = (float) (clone $realKantorQuery)->sum('kredit');
         $realisasiKantorTotal = (float) (clone $realKantorQuery)->sum('total_rp');
 
-        $debitMessTotal       = (float) (clone $realMessQuery)->sum('debit');
-        $kreditMessTotal      = (float) (clone $realMessQuery)->sum('kredit');
-        $realisasiMessTotal   = (float) (clone $realMessQuery)->sum('total_rp');
+        $debitMessTotal = (float) (clone $realMessQuery)->sum('debit');
+        $kreditMessTotal = (float) (clone $realMessQuery)->sum('kredit');
+        $realisasiMessTotal = (float) (clone $realMessQuery)->sum('total_rp');
 
-        $totalRab       = $rabKantorTotal + $rabMessTotal;
-        $totalDebit     = $debitKantorTotal + $debitMessTotal;
-        $totalKredit    = $kreditKantorTotal + $kreditMessTotal;
+        $totalRab = $rabKantorTotal + $rabMessTotal;
+        $totalDebit = $debitKantorTotal + $debitMessTotal;
+        $totalKredit = $kreditKantorTotal + $kreditMessTotal;
         $totalRealisasi = $realisasiKantorTotal + $realisasiMessTotal;
-        $sisaRab        = $totalRab - $totalRealisasi;
+        $sisaRab = $totalRab - $totalRealisasi;
 
         $summary = compact(
             'rabKantorTotal',
@@ -150,15 +151,15 @@ class CapexController extends Controller
     public function storeRab(Request $request)
     {
         $validated = $request->validate([
-            'tahun'              => 'required|integer|min:2000|max:2099',
-            'lokasi'             => 'required|in:kantor,mess',
+            'tahun' => 'required|integer|min:2000|max:2099',
+            'lokasi' => 'required|in:kantor,mess',
             'kel_barang_kapital' => 'required|string|max:255',
-            'foto_barang'        => 'nullable|string|max:255',
-            'foto_file'          => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-            'type'               => 'nullable|string|max:255',
-            'satuan'             => 'nullable|string|max:100',
-            'jumlah_unit'        => 'required|numeric|min:0',
-            'harga_satuan'       => 'required|numeric|min:0',
+            'foto_barang' => 'nullable|string|max:255',
+            'foto_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'type' => 'nullable|string|max:255',
+            'satuan' => 'nullable|string|max:100',
+            'jumlah_unit' => 'required|numeric|min:0',
+            'harga_satuan' => 'required|numeric|min:0',
         ]);
 
         if ($request->hasFile('foto_file')) {
@@ -169,11 +170,11 @@ class CapexController extends Controller
         $validated['total_rp'] = (float) $validated['jumlah_unit'] * (float) $validated['harga_satuan'];
 
         CapexRab::create($validated);
-        (new \App\Http\Controllers\Cost\CostController())->syncAggregatedCosts((int)$validated['tahun']);
+        (new CostController)->syncAggregatedCosts((int) $validated['tahun']);
 
         return redirect()
             ->route('administrasi.capex.index', ['year' => $validated['tahun'], 'location' => $validated['lokasi']])
-            ->with('success', 'Data RAB CAPEX (' . ucfirst($validated['lokasi']) . ') berhasil ditambahkan.');
+            ->with('success', 'Data RAB CAPEX ('.ucfirst($validated['lokasi']).') berhasil ditambahkan.');
     }
 
     /**
@@ -182,6 +183,7 @@ class CapexController extends Controller
     public function showRab($id)
     {
         $item = CapexRab::findOrFail($id);
+
         return response()->json([
             'success' => true,
             'data' => $item,
@@ -196,15 +198,15 @@ class CapexController extends Controller
         $item = CapexRab::findOrFail($id);
 
         $validated = $request->validate([
-            'tahun'              => 'required|integer|min:2000|max:2099',
-            'lokasi'             => 'required|in:kantor,mess',
+            'tahun' => 'required|integer|min:2000|max:2099',
+            'lokasi' => 'required|in:kantor,mess',
             'kel_barang_kapital' => 'required|string|max:255',
-            'foto_barang'        => 'nullable|string|max:255',
-            'foto_file'          => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-            'type'               => 'nullable|string|max:255',
-            'satuan'             => 'nullable|string|max:100',
-            'jumlah_unit'        => 'required|numeric|min:0',
-            'harga_satuan'       => 'required|numeric|min:0',
+            'foto_barang' => 'nullable|string|max:255',
+            'foto_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'type' => 'nullable|string|max:255',
+            'satuan' => 'nullable|string|max:100',
+            'jumlah_unit' => 'required|numeric|min:0',
+            'harga_satuan' => 'required|numeric|min:0',
         ]);
 
         if ($request->hasFile('foto_file')) {
@@ -215,7 +217,7 @@ class CapexController extends Controller
         $validated['total_rp'] = (float) $validated['jumlah_unit'] * (float) $validated['harga_satuan'];
 
         $item->update($validated);
-        (new \App\Http\Controllers\Cost\CostController())->syncAggregatedCosts((int)$item->tahun);
+        (new CostController)->syncAggregatedCosts((int) $item->tahun);
 
         return redirect()
             ->route('administrasi.capex.index', ['year' => $item->tahun, 'location' => $item->lokasi])
@@ -235,7 +237,7 @@ class CapexController extends Controller
         CapexRealisasi::where('rab_id', $id)->update(['rab_id' => null]);
 
         $item->delete();
-        (new \App\Http\Controllers\Cost\CostController())->syncAggregatedCosts((int)$tahun);
+        (new CostController)->syncAggregatedCosts((int) $tahun);
 
         return redirect()
             ->route('administrasi.capex.index', ['year' => $tahun, 'location' => $lokasi])
@@ -248,18 +250,18 @@ class CapexController extends Controller
     public function storeRealisasi(Request $request)
     {
         $validated = $request->validate([
-            'rab_id'             => 'nullable|integer|exists:capex_rab,rab_id',
-            'tahun'              => 'required|integer|min:2000|max:2099',
-            'lokasi'             => 'required|in:kantor,mess',
+            'rab_id' => 'nullable|integer|exists:capex_rab,rab_id',
+            'tahun' => 'required|integer|min:2000|max:2099',
+            'lokasi' => 'required|in:kantor,mess',
             'kel_barang_kapital' => 'required|string|max:255',
-            'foto_barang'        => 'nullable|string|max:255',
-            'foto_file'          => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-            'nama_barang'        => 'required|string|max:255',
-            'type'               => 'nullable|string|max:255',
-            'tanggal'            => 'nullable|date',
-            'debit'              => 'nullable|numeric|min:0',
-            'kredit'             => 'nullable|numeric|min:0',
-            'total_rp'           => 'nullable|numeric',
+            'foto_barang' => 'nullable|string|max:255',
+            'foto_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'nama_barang' => 'required|string|max:255',
+            'type' => 'nullable|string|max:255',
+            'tanggal' => 'nullable|date',
+            'debit' => 'nullable|numeric|min:0',
+            'kredit' => 'nullable|numeric|min:0',
+            'total_rp' => 'nullable|numeric',
         ]);
 
         if ($request->hasFile('foto_file')) {
@@ -267,16 +269,16 @@ class CapexController extends Controller
             $validated['foto_barang'] = $path;
         }
 
-        $debit  = (float) ($validated['debit'] ?? 0);
+        $debit = (float) ($validated['debit'] ?? 0);
         $kredit = (float) ($validated['kredit'] ?? 0);
         $validated['total_rp'] = $debit - $kredit;
 
         CapexRealisasi::create($validated);
-        (new \App\Http\Controllers\Cost\CostController())->syncAggregatedCosts((int)$validated['tahun']);
+        (new CostController)->syncAggregatedCosts((int) $validated['tahun']);
 
         return redirect()
             ->route('administrasi.capex.index', ['year' => $validated['tahun'], 'location' => $validated['lokasi']])
-            ->with('success', 'Data Realisasi CAPEX (' . ucfirst($validated['lokasi']) . ') berhasil ditambahkan.');
+            ->with('success', 'Data Realisasi CAPEX ('.ucfirst($validated['lokasi']).') berhasil ditambahkan.');
     }
 
     /**
@@ -285,6 +287,7 @@ class CapexController extends Controller
     public function showRealisasi($id)
     {
         $item = CapexRealisasi::with('rab')->findOrFail($id);
+
         return response()->json([
             'success' => true,
             'data' => $item,
@@ -299,18 +302,18 @@ class CapexController extends Controller
         $item = CapexRealisasi::findOrFail($id);
 
         $validated = $request->validate([
-            'rab_id'             => 'nullable|integer|exists:capex_rab,rab_id',
-            'tahun'              => 'required|integer|min:2000|max:2099',
-            'lokasi'             => 'required|in:kantor,mess',
+            'rab_id' => 'nullable|integer|exists:capex_rab,rab_id',
+            'tahun' => 'required|integer|min:2000|max:2099',
+            'lokasi' => 'required|in:kantor,mess',
             'kel_barang_kapital' => 'required|string|max:255',
-            'foto_barang'        => 'nullable|string|max:255',
-            'foto_file'          => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
-            'nama_barang'        => 'required|string|max:255',
-            'type'               => 'nullable|string|max:255',
-            'tanggal'            => 'nullable|date',
-            'debit'              => 'nullable|numeric|min:0',
-            'kredit'             => 'nullable|numeric|min:0',
-            'total_rp'           => 'nullable|numeric',
+            'foto_barang' => 'nullable|string|max:255',
+            'foto_file' => 'nullable|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+            'nama_barang' => 'required|string|max:255',
+            'type' => 'nullable|string|max:255',
+            'tanggal' => 'nullable|date',
+            'debit' => 'nullable|numeric|min:0',
+            'kredit' => 'nullable|numeric|min:0',
+            'total_rp' => 'nullable|numeric',
         ]);
 
         if ($request->hasFile('foto_file')) {
@@ -318,12 +321,12 @@ class CapexController extends Controller
             $validated['foto_barang'] = $path;
         }
 
-        $debit  = (float) ($validated['debit'] ?? 0);
+        $debit = (float) ($validated['debit'] ?? 0);
         $kredit = (float) ($validated['kredit'] ?? 0);
         $validated['total_rp'] = $debit - $kredit;
 
         $item->update($validated);
-        (new \App\Http\Controllers\Cost\CostController())->syncAggregatedCosts((int)$item->tahun);
+        (new CostController)->syncAggregatedCosts((int) $item->tahun);
 
         return redirect()
             ->route('administrasi.capex.index', ['year' => $item->tahun, 'location' => $item->lokasi])
@@ -340,7 +343,7 @@ class CapexController extends Controller
         $lokasi = $item->lokasi;
 
         $item->delete();
-        (new \App\Http\Controllers\Cost\CostController())->syncAggregatedCosts((int)$tahun);
+        (new CostController)->syncAggregatedCosts((int) $tahun);
 
         return redirect()
             ->route('administrasi.capex.index', ['year' => $tahun, 'location' => $lokasi])
@@ -353,10 +356,10 @@ class CapexController extends Controller
     public function importCsv(Request $request)
     {
         $request->validate([
-            'csv_file'    => 'required|file|mimes:csv,txt,text|max:10240',
+            'csv_file' => 'required|file|mimes:csv,txt,text|max:10240',
             'import_type' => 'nullable|string|in:auto,rab,realisasi',
             'import_mode' => 'nullable|string|in:append,replace',
-            'tahun'       => 'nullable|integer|min:2000|max:2099',
+            'tahun' => 'nullable|integer|min:2000|max:2099',
         ]);
 
         $file = $request->file('csv_file');
@@ -366,14 +369,15 @@ class CapexController extends Controller
         $defaultYear = (int) $request->get('tahun', date('Y'));
 
         $handle = fopen($filePath, 'r');
-        if (!$handle) {
+        if (! $handle) {
             return back()->with('error', 'Gagal membaca file CSV yang diunggah.');
         }
 
         $delimiter = $this->detectCsvDelimiter($filePath);
         $rawHeaders = fgetcsv($handle, 0, $delimiter);
-        if (!$rawHeaders) {
+        if (! $rawHeaders) {
             fclose($handle);
+
             return back()->with('error', 'Format file CSV tidak valid atau kosong.');
         }
 
@@ -405,25 +409,55 @@ class CapexController extends Controller
         $headerMap = [];
         foreach ($cleanHeaders as $idx => $col) {
             // Common
-            if (in_array($col, ['tahun', 'year', 'thn', 'periode'])) $headerMap['tahun'] = $idx;
-            if (in_array($col, ['lokasi', 'location', 'jeniscapex'])) $headerMap['lokasi'] = $idx;
-            if (in_array($col, ['kelbarangkapital', 'kelompokbarang', 'kelompok', 'kategoribarang'])) $headerMap['kel_barang_kapital'] = $idx;
-            if (in_array($col, ['fotobarang', 'foto', 'image', 'gambar', 'urlfoto'])) $headerMap['foto_barang'] = $idx;
-            if (in_array($col, ['type', 'tipe', 'typemerk', 'merk', 'model'])) $headerMap['type'] = $idx;
-            if (in_array($col, ['totalrp', 'total', 'totalbiaya', 'totalrab'])) $headerMap['total_rp'] = $idx;
+            if (in_array($col, ['tahun', 'year', 'thn', 'periode'])) {
+                $headerMap['tahun'] = $idx;
+            }
+            if (in_array($col, ['lokasi', 'location', 'jeniscapex'])) {
+                $headerMap['lokasi'] = $idx;
+            }
+            if (in_array($col, ['kelbarangkapital', 'kelompokbarang', 'kelompok', 'kategoribarang'])) {
+                $headerMap['kel_barang_kapital'] = $idx;
+            }
+            if (in_array($col, ['fotobarang', 'foto', 'image', 'gambar', 'urlfoto'])) {
+                $headerMap['foto_barang'] = $idx;
+            }
+            if (in_array($col, ['type', 'tipe', 'typemerk', 'merk', 'model'])) {
+                $headerMap['type'] = $idx;
+            }
+            if (in_array($col, ['totalrp', 'total', 'totalbiaya', 'totalrab'])) {
+                $headerMap['total_rp'] = $idx;
+            }
 
             // RAB specific
-            if (in_array($col, ['rabid', 'idrab', 'id'])) $headerMap['rab_id'] = $idx;
-            if (in_array($col, ['satuan', 'unit', 'uom'])) $headerMap['satuan'] = $idx;
-            if (in_array($col, ['jumlahunit', 'jumlah', 'qty', 'kuantitas', 'unitcount'])) $headerMap['jumlah_unit'] = $idx;
-            if (in_array($col, ['hargasatuan', 'harga', 'price', 'unitprice'])) $headerMap['harga_satuan'] = $idx;
+            if (in_array($col, ['rabid', 'idrab', 'id'])) {
+                $headerMap['rab_id'] = $idx;
+            }
+            if (in_array($col, ['satuan', 'unit', 'uom'])) {
+                $headerMap['satuan'] = $idx;
+            }
+            if (in_array($col, ['jumlahunit', 'jumlah', 'qty', 'kuantitas', 'unitcount'])) {
+                $headerMap['jumlah_unit'] = $idx;
+            }
+            if (in_array($col, ['hargasatuan', 'harga', 'price', 'unitprice'])) {
+                $headerMap['harga_satuan'] = $idx;
+            }
 
             // Realisasi specific
-            if (in_array($col, ['realisasiid', 'idrealisasi'])) $headerMap['realisasi_id'] = $idx;
-            if (in_array($col, ['namabarang', 'namatransaksi', 'barang', 'keterangan', 'deskripsi'])) $headerMap['nama_barang'] = $idx;
-            if (in_array($col, ['tanggal', 'date', 'tgl', 'tgltransaksi', 'bulan', 'month', 'bln'])) $headerMap['tanggal'] = $idx;
-            if (in_array($col, ['debit', 'pengeluaran', 'masuk', 'debet'])) $headerMap['debit'] = $idx;
-            if (in_array($col, ['kredit', 'penerimaan', 'keluar'])) $headerMap['kredit'] = $idx;
+            if (in_array($col, ['realisasiid', 'idrealisasi'])) {
+                $headerMap['realisasi_id'] = $idx;
+            }
+            if (in_array($col, ['namabarang', 'namatransaksi', 'barang', 'keterangan', 'deskripsi'])) {
+                $headerMap['nama_barang'] = $idx;
+            }
+            if (in_array($col, ['tanggal', 'date', 'tgl', 'tgltransaksi', 'bulan', 'month', 'bln'])) {
+                $headerMap['tanggal'] = $idx;
+            }
+            if (in_array($col, ['debit', 'pengeluaran', 'masuk', 'debet'])) {
+                $headerMap['debit'] = $idx;
+            }
+            if (in_array($col, ['kredit', 'penerimaan', 'keluar'])) {
+                $headerMap['kredit'] = $idx;
+            }
         }
 
         // Handle Replace mode
@@ -438,13 +472,13 @@ class CapexController extends Controller
         }
 
         $importedCount = 0;
-        $updatedCount  = 0;
+        $updatedCount = 0;
 
         DB::beginTransaction();
         try {
             while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
                 // Skip empty rows
-                if (empty(array_filter($row, fn($v) => trim($v) !== ''))) {
+                if (empty(array_filter($row, fn ($v) => trim($v) !== ''))) {
                     continue;
                 }
 
@@ -452,11 +486,14 @@ class CapexController extends Controller
                     if (isset($headerMap[$key]) && isset($row[$headerMap[$key]])) {
                         return trim($row[$headerMap[$key]]);
                     }
+
                     return $default;
                 };
 
                 $tahun = (int) $getVal('tahun', $defaultYear);
-                if ($tahun <= 0) $tahun = $defaultYear;
+                if ($tahun <= 0) {
+                    $tahun = $defaultYear;
+                }
 
                 $rawLokasi = strtolower((string) $getVal('lokasi', 'kantor'));
                 $lokasi = (str_contains($rawLokasi, 'mess') || str_contains($rawLokasi, 'mes')) ? 'mess' : 'kantor';
@@ -466,22 +503,22 @@ class CapexController extends Controller
                 $type = $getVal('type', null);
 
                 if ($detectedType === 'rab') {
-                    $rabId       = $getVal('rab_id');
-                    $satuan      = $getVal('satuan', 'Unit');
-                    $jumlahUnit  = $this->cleanNumeric($getVal('jumlah_unit', 1), 1);
+                    $rabId = $getVal('rab_id');
+                    $satuan = $getVal('satuan', 'Unit');
+                    $jumlahUnit = $this->cleanNumeric($getVal('jumlah_unit', 1), 1);
                     $hargaSatuan = $this->cleanNumeric($getVal('harga_satuan', 0), 0);
-                    $totalRp     = $this->cleanNumeric($getVal('total_rp', $jumlahUnit * $hargaSatuan), $jumlahUnit * $hargaSatuan);
+                    $totalRp = $this->cleanNumeric($getVal('total_rp', $jumlahUnit * $hargaSatuan), $jumlahUnit * $hargaSatuan);
 
                     $data = [
-                        'tahun'              => $tahun,
-                        'lokasi'             => $lokasi,
+                        'tahun' => $tahun,
+                        'lokasi' => $lokasi,
                         'kel_barang_kapital' => $kelBarang,
-                        'foto_barang'        => $fotoBarang,
-                        'type'               => $type,
-                        'satuan'             => $satuan,
-                        'jumlah_unit'        => $jumlahUnit,
-                        'harga_satuan'       => $hargaSatuan,
-                        'total_rp'           => $totalRp,
+                        'foto_barang' => $fotoBarang,
+                        'type' => $type,
+                        'satuan' => $satuan,
+                        'jumlah_unit' => $jumlahUnit,
+                        'harga_satuan' => $hargaSatuan,
+                        'total_rp' => $totalRp,
                     ];
 
                     if ($rabId && is_numeric($rabId)) {
@@ -501,18 +538,18 @@ class CapexController extends Controller
                 } else {
                     // Realisasi
                     $realisasiId = $getVal('realisasi_id');
-                    $rabId       = $getVal('rab_id');
-                    $namaBarang  = $getVal('nama_barang', $kelBarang);
-                    $rawDate     = $getVal('tanggal');
-                    $debit       = $this->cleanNumeric($getVal('debit', 0), 0);
-                    $kredit      = $this->cleanNumeric($getVal('kredit', 0), 0);
-                    $totalRp     = ($debit != 0 || $kredit != 0) ? ($debit - $kredit) : $this->cleanNumeric($getVal('total_rp', 0), 0);
+                    $rabId = $getVal('rab_id');
+                    $namaBarang = $getVal('nama_barang', $kelBarang);
+                    $rawDate = $getVal('tanggal');
+                    $debit = $this->cleanNumeric($getVal('debit', 0), 0);
+                    $kredit = $this->cleanNumeric($getVal('kredit', 0), 0);
+                    $totalRp = ($debit != 0 || $kredit != 0) ? ($debit - $kredit) : $this->cleanNumeric($getVal('total_rp', 0), 0);
 
                     // Parse Date / Month
                     $tanggal = null;
-                    if (!empty($rawDate)) {
-                        if (is_numeric($rawDate) && (int)$rawDate >= 1 && (int)$rawDate <= 12) {
-                            $mStr = str_pad((int)$rawDate, 2, '0', STR_PAD_LEFT);
+                    if (! empty($rawDate)) {
+                        if (is_numeric($rawDate) && (int) $rawDate >= 1 && (int) $rawDate <= 12) {
+                            $mStr = str_pad((int) $rawDate, 2, '0', STR_PAD_LEFT);
                             $tanggal = "{$tahun}-{$mStr}-01";
                         } else {
                             $lowerDate = strtolower($rawDate);
@@ -545,17 +582,17 @@ class CapexController extends Controller
                     }
 
                     $data = [
-                        'rab_id'             => ($rabId && is_numeric($rabId)) ? (int) $rabId : null,
-                        'tahun'              => $tahun,
-                        'lokasi'             => $lokasi,
+                        'rab_id' => ($rabId && is_numeric($rabId)) ? (int) $rabId : null,
+                        'tahun' => $tahun,
+                        'lokasi' => $lokasi,
                         'kel_barang_kapital' => $kelBarang,
-                        'foto_barang'        => $fotoBarang,
-                        'nama_barang'        => $namaBarang,
-                        'type'               => $type,
-                        'tanggal'            => $tanggal,
-                        'debit'              => $debit,
-                        'kredit'             => $kredit,
-                        'total_rp'           => $totalRp,
+                        'foto_barang' => $fotoBarang,
+                        'nama_barang' => $namaBarang,
+                        'type' => $type,
+                        'tanggal' => $tanggal,
+                        'debit' => $debit,
+                        'kredit' => $kredit,
+                        'total_rp' => $totalRp,
                     ];
 
                     if ($realisasiId && is_numeric($realisasiId)) {
@@ -583,7 +620,7 @@ class CapexController extends Controller
             ActivityLog::log(
                 'Import',
                 'CAPEX',
-                "Mengimport data {$typeLabel} CAPEX dari file " . $file->getClientOriginalName() . " ({$importedCount} baru, {$updatedCount} diperbarui)",
+                "Mengimport data {$typeLabel} CAPEX dari file ".$file->getClientOriginalName()." ({$importedCount} baru, {$updatedCount} diperbarui)",
                 ['filename' => $file->getClientOriginalName(), 'imported' => $importedCount, 'updated' => $updatedCount, 'type' => $typeLabel]
             );
         } catch (\Exception $e) {
@@ -591,7 +628,8 @@ class CapexController extends Controller
             if (is_resource($handle)) {
                 fclose($handle);
             }
-            return back()->with('error', 'Terjadi kesalahan saat import data: ' . $e->getMessage());
+
+            return back()->with('error', 'Terjadi kesalahan saat import data: '.$e->getMessage());
         }
 
         $typeLabel = $detectedType === 'rab' ? 'RAB' : 'Realisasi';
@@ -616,7 +654,8 @@ class CapexController extends Controller
                 [2, 2, 'kantor', 'Komputer & Laptop', '', 'MacBook Air M2', 'Apple', '2026-02-10', 18500000, 0, 18500000],
                 [3, 11, 'mess', 'AC & Pendingin Ruangan', '', 'AC Inverter 1 PK', 'Daikin', '2026-03-05', 5500000, 0, 5500000],
             ];
-            return \App\Services\ExcelExporter::download('Template_Import_Capex_Realisasi.xlsx', $headers, $sampleRows, 'Realisasi Capex');
+
+            return ExcelExporter::download('Template_Import_Capex_Realisasi.xlsx', $headers, $sampleRows, 'Realisasi Capex');
         }
 
         // Default: RAB Template
@@ -626,7 +665,8 @@ class CapexController extends Controller
             [2, 'kantor', 'Komputer & Laptop', '', 'MacBook Air M2 16GB', 'Unit', 2, 19000000, 38000000],
             [3, 'mess', 'AC & Pendingin Ruangan', '', 'Daikin 1 PK Inverter', 'Unit', 4, 5500000, 22000000],
         ];
-        return \App\Services\ExcelExporter::download('Template_Import_Capex_RAB.xlsx', $headers, $sampleRows, 'RAB Capex');
+
+        return ExcelExporter::download('Template_Import_Capex_RAB.xlsx', $headers, $sampleRows, 'RAB Capex');
     }
 
     /**
@@ -634,13 +674,13 @@ class CapexController extends Controller
      */
     public function export(Request $request)
     {
-        $year  = (int) $request->get('year', date('Y'));
+        $year = (int) $request->get('year', date('Y'));
         $month = $request->get('month', 'all');
-        $type  = $request->get('type', 'all'); // 'all', 'rab', 'realisasi'
+        $type = $request->get('type', 'all'); // 'all', 'rab', 'realisasi'
 
         $realisasiQuery = CapexRealisasi::where('tahun', $year);
-        if (is_numeric($month) && (int)$month >= 1 && (int)$month <= 12) {
-            $realisasiQuery->whereMonth('tanggal', (int)$month);
+        if (is_numeric($month) && (int) $month >= 1 && (int) $month <= 12) {
+            $realisasiQuery->whereMonth('tanggal', (int) $month);
         }
 
         if ($type === 'realisasi') {
@@ -664,7 +704,8 @@ class CapexController extends Controller
                 ];
             }
             $filename = "CAPEX_Realisasi_Report_{$year}.xlsx";
-            return \App\Services\ExcelExporter::download($filename, $headers, $dataRows, 'Realisasi Capex');
+
+            return ExcelExporter::download($filename, $headers, $dataRows, 'Realisasi Capex');
         } elseif ($type === 'rab') {
             $headers = ['rab_id', 'tahun', 'lokasi', 'kel_barang_kapital', 'foto_barang', 'type', 'satuan', 'jumlah_unit', 'harga_satuan', 'total_rp'];
             $records = CapexRab::where('tahun', $year)->orderBy('lokasi')->orderBy('rab_id')->get();
@@ -684,7 +725,8 @@ class CapexController extends Controller
                 ];
             }
             $filename = "CAPEX_RAB_Report_{$year}.xlsx";
-            return \App\Services\ExcelExporter::download($filename, $headers, $dataRows, 'RAB Capex');
+
+            return ExcelExporter::download($filename, $headers, $dataRows, 'RAB Capex');
         } else {
             $headers = ['Tipe Data', 'ID', 'RAB ID', 'Tahun', 'Lokasi', 'Kelompok Barang', 'Foto Barang', 'Nama Barang / Type', 'Satuan / Tanggal', 'Jumlah Unit / Debit', 'Harga Satuan / Kredit', 'Total Rp'];
             $dataRows = [];
@@ -726,7 +768,8 @@ class CapexController extends Controller
             }
 
             $filename = "CAPEX_Report_All_{$year}.xlsx";
-            return \App\Services\ExcelExporter::download($filename, $headers, $dataRows, 'Capex Report');
+
+            return ExcelExporter::download($filename, $headers, $dataRows, 'Capex Report');
         }
     }
 
@@ -736,14 +779,14 @@ class CapexController extends Controller
     private function handleUpload($file)
     {
         $uploadDir = public_path('uploads/capex');
-        if (!File::exists($uploadDir)) {
+        if (! File::exists($uploadDir)) {
             File::makeDirectory($uploadDir, 0755, true);
         }
 
-        $filename = 'capex_' . time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $filename = 'capex_'.time().'_'.uniqid().'.'.$file->getClientOriginalExtension();
         $file->move($uploadDir, $filename);
 
-        return '/uploads/capex/' . $filename;
+        return '/uploads/capex/'.$filename;
     }
 
     /**
@@ -761,7 +804,7 @@ class CapexController extends Controller
             $realQuery->where('lokasi', $location);
             $deletedRab = $rabQuery->delete();
             $deletedReal = $realQuery->delete();
-            $msg = "Seluruh data CAPEX lokasi " . ucfirst($location) . " ({$deletedRab} RAB, {$deletedReal} Realisasi) berhasil dihapus.";
+            $msg = 'Seluruh data CAPEX lokasi '.ucfirst($location)." ({$deletedRab} RAB, {$deletedReal} Realisasi) berhasil dihapus.";
         } else {
             $deletedRab = $rabQuery->delete();
             $deletedReal = $realQuery->delete();

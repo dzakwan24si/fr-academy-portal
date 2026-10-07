@@ -10,7 +10,9 @@ class Capex extends Model
     use LogsActivity;
 
     protected static $logModuleName = 'CAPEX';
+
     protected $table = 'capex';
+
     protected $primaryKey = 'capex_id';
 
     protected $fillable = [
@@ -30,11 +32,11 @@ class Capex extends Model
     ];
 
     protected $casts = [
-        'tanggal'      => 'date',
-        'jumlah_unit'  => 'decimal:2',
+        'tanggal' => 'date',
+        'jumlah_unit' => 'decimal:2',
         'harga_satuan' => 'decimal:2',
-        'total_rab'    => 'decimal:2',
-        'debit'        => 'decimal:2',
-        'kredit'       => 'decimal:2',
+        'total_rab' => 'decimal:2',
+        'debit' => 'decimal:2',
+        'kredit' => 'decimal:2',
     ];
 }

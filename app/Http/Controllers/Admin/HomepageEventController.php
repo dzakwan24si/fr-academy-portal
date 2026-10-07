@@ -15,6 +15,7 @@ class HomepageEventController extends Controller
     public function index()
     {
         $events = HomepageEvent::latest()->paginate(10);
+
         return view('admin.events.index', compact('events'));
     }
 
@@ -34,7 +35,7 @@ class HomepageEventController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_active' => 'nullable|boolean'
+            'is_active' => 'nullable|boolean',
         ]);
 
         $isActive = $request->has('is_active') ? true : false;
@@ -49,8 +50,8 @@ class HomepageEventController extends Controller
 
         HomepageEvent::create([
             'name' => $validated['name'],
-            'image_path' => 'storage/' . $imagePath,
-            'is_active' => $isActive
+            'image_path' => 'storage/'.$imagePath,
+            'is_active' => $isActive,
         ]);
 
         return redirect()->route('admin.events.index')->with('success', 'Tema event berhasil ditambahkan.');
@@ -72,19 +73,19 @@ class HomepageEventController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'is_active' => 'nullable|boolean'
+            'is_active' => 'nullable|boolean',
         ]);
 
         $isActive = $request->has('is_active') ? true : false;
 
         // Jika event ini diaktifkan, matikan semua event lain
-        if ($isActive && !$event->is_active) {
+        if ($isActive && ! $event->is_active) {
             HomepageEvent::where('is_active', true)->update(['is_active' => false]);
         }
 
         $dataToUpdate = [
             'name' => $validated['name'],
-            'is_active' => $isActive
+            'is_active' => $isActive,
         ];
 
         if ($request->hasFile('image')) {
@@ -98,7 +99,7 @@ class HomepageEventController extends Controller
             }
 
             $imagePath = $request->file('image')->store('events', 'public');
-            $dataToUpdate['image_path'] = 'storage/' . $imagePath;
+            $dataToUpdate['image_path'] = 'storage/'.$imagePath;
         }
 
         $event->update($dataToUpdate);

@@ -4,11 +4,11 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
@@ -16,14 +16,14 @@ class UserController extends Controller
     {
         $search = $request->query('search');
         $users = User::with('roles')
-            ->when($search, function($q) use ($search) {
+            ->when($search, function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('nik', 'like', "%{$search}%");
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('nik', 'like', "%{$search}%");
             })
             ->latest()
             ->paginate(10);
-            
+
         return view('admin.users.index', compact('users', 'search'));
     }
 
@@ -31,6 +31,7 @@ class UserController extends Controller
     {
         $roles = Role::all();
         $permissions = Permission::all();
+
         return view('admin.users.create', compact('roles', 'permissions'));
     }
 
@@ -69,7 +70,7 @@ class UserController extends Controller
         $permissions = Permission::all();
         $userRoles = $user->roles->pluck('name')->toArray();
         $userPermissions = $user->permissions->pluck('name')->toArray(); // Direct permissions
-        
+
         return view('admin.users.edit', compact('user', 'roles', 'permissions', 'userRoles', 'userPermissions'));
     }
 
@@ -77,8 +78,8 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'nik' => ['nullable', 'string', 'max:255', 'unique:users,nik,' . $user->id],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'nik' => ['nullable', 'string', 'max:255', 'unique:users,nik,'.$user->id],
             'password' => ['nullable', 'confirmed', Password::defaults()],
             'roles' => ['nullable', 'array'],
             'permissions' => ['nullable', 'array'],
@@ -118,6 +119,7 @@ class UserController extends Controller
         }
 
         $user->delete();
+
         return redirect()->route('admin.users.index')->with('success', 'User berhasil dihapus.');
     }
 }

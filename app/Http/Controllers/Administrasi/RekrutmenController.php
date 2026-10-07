@@ -5,10 +5,10 @@ namespace App\Http\Controllers\Administrasi;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Administrasi\Rekrutmen;
+use App\Services\ExcelExporter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Services\ExcelExporter;
 
 class RekrutmenController extends Controller
 {
@@ -31,8 +31,8 @@ class RekrutmenController extends Controller
         if ($request->filled('lokasi')) {
             $lokasi = $request->input('lokasi');
             if (is_array($lokasi)) {
-                $lokasiClean = array_filter($lokasi, fn($l) => $l !== 'all' && $l !== 'Semua Lokasi' && !empty($l));
-                if (!empty($lokasiClean)) {
+                $lokasiClean = array_filter($lokasi, fn ($l) => $l !== 'all' && $l !== 'Semua Lokasi' && ! empty($l));
+                if (! empty($lokasiClean)) {
                     $query->whereIn('lokasi_rekrut', $lokasiClean);
                 }
             } elseif ($lokasi !== 'all' && $lokasi !== 'Semua Lokasi') {
@@ -57,11 +57,11 @@ class RekrutmenController extends Controller
         if ($request->filled('tahun')) {
             $tahun = $request->input('tahun');
             if (is_array($tahun)) {
-                $tahunClean = array_filter($tahun, fn($t) => $t !== 'all' && !empty($t));
-                if (!empty($tahunClean)) {
+                $tahunClean = array_filter($tahun, fn ($t) => $t !== 'all' && ! empty($t));
+                if (! empty($tahunClean)) {
                     $query->whereIn('tahun', $tahunClean);
                 }
-            } elseif ($tahun !== 'all' && !empty($tahun)) {
+            } elseif ($tahun !== 'all' && ! empty($tahun)) {
                 $query->where('tahun', (int) $tahun);
             }
         }
@@ -76,11 +76,11 @@ class RekrutmenController extends Controller
             $search = trim($request->input('search'));
             $query->where(function ($q) use ($search) {
                 $q->where('lokasi_rekrut', 'like', "%{$search}%")
-                  ->orWhere('metode_rekrutmen', 'like', "%{$search}%")
-                  ->orWhere('program', 'like', "%{$search}%")
-                  ->orWhere('tanggal', 'like', "%{$search}%")
-                  ->orWhere('tahun', 'like', "%{$search}%")
-                  ->orWhere('no', 'like', "%{$search}%");
+                    ->orWhere('metode_rekrutmen', 'like', "%{$search}%")
+                    ->orWhere('program', 'like', "%{$search}%")
+                    ->orWhere('tanggal', 'like', "%{$search}%")
+                    ->orWhere('tahun', 'like', "%{$search}%")
+                    ->orWhere('no', 'like', "%{$search}%");
             });
         }
 
@@ -164,6 +164,7 @@ class RekrutmenController extends Controller
             $join = (int) $items->sum('join_fr');
             $psiko = (int) $items->sum('jumlah_lolos_psikotest');
             $intUser = (int) $items->sum('jumlah_lolos_interview_user');
+
             return [
                 'metode' => $metodeName,
                 'batch_count' => $items->count(),
@@ -180,6 +181,7 @@ class RekrutmenController extends Controller
         $byLocation = $allFiltered->groupBy('lokasi_rekrut')->map(function ($items, $lokasi) {
             $hadir = (int) $items->sum('jumlah_peserta_hadir');
             $join = (int) $items->sum('join_fr');
+
             return [
                 'lokasi' => $lokasi,
                 'batch_count' => $items->count(),
@@ -196,6 +198,7 @@ class RekrutmenController extends Controller
         $byYear = $allFiltered->groupBy('tahun')->map(function ($items, $year) {
             $hadir = (int) $items->sum('jumlah_peserta_hadir');
             $join = (int) $items->sum('join_fr');
+
             return [
                 'tahun' => (int) $year,
                 'batch_count' => $items->count(),
@@ -330,7 +333,7 @@ class RekrutmenController extends Controller
 
         // Stage validations (A step can't exceed previous step)
         $stageErrors = $this->validateStages($validated);
-        if (!empty($stageErrors)) {
+        if (! empty($stageErrors)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Validasi tahapan seleksi gagal.',
@@ -390,7 +393,7 @@ class RekrutmenController extends Controller
         $validated['metode_rekrutmen'] = ucfirst(strtolower($validated['metode_rekrutmen']));
 
         $stageErrors = $this->validateStages($validated);
-        if (!empty($stageErrors)) {
+        if (! empty($stageErrors)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Validasi tahapan seleksi gagal.',
@@ -470,8 +473,9 @@ class RekrutmenController extends Controller
         }
 
         $header = fgetcsv($handle, 10000, ',');
-        if (!$header) {
+        if (! $header) {
             fclose($handle);
+
             return response()->json([
                 'status' => 'error',
                 'message' => 'File CSV kosong atau format tidak valid.',
@@ -482,6 +486,7 @@ class RekrutmenController extends Controller
         $cleanHeader = array_map(function ($col) {
             $clean = trim($col);
             $clean = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $clean);
+
             return strtoupper($clean);
         }, $header);
 
@@ -503,14 +508,30 @@ class RekrutmenController extends Controller
                     $columnIndex[$key] = $idx;
                 }
             }
-            if (str_contains($name, 'PSIKOTEST')) $columnIndex['PSIKOTEST'] = $idx;
-            if (str_contains($name, 'HADIR INTERVIEW AWAL') || str_contains($name, 'HADIR INT AWAL')) $columnIndex['HADIR_INT_AWAL'] = $idx;
-            if (str_contains($name, 'LOLOS INTERVIEW AWAL') || str_contains($name, 'LOLOS INT AWAL')) $columnIndex['LOLOS_INT_AWAL'] = $idx;
-            if (str_contains($name, 'INTERVIEW USER') || str_contains($name, 'INT USER')) $columnIndex['INT_USER'] = $idx;
-            if (str_contains($name, 'IKUT MCU')) $columnIndex['IKUT_MCU'] = $idx;
-            if (str_contains($name, 'LOLOS MCU')) $columnIndex['LOLOS_MCU'] = $idx;
-            if (str_contains($name, 'TAHUN') || str_contains($name, 'YEAR')) $columnIndex['TAHUN'] = $idx;
-            if (str_contains($name, 'NO') || str_contains($name, 'NOMOR')) $columnIndex['NO'] = $idx;
+            if (str_contains($name, 'PSIKOTEST')) {
+                $columnIndex['PSIKOTEST'] = $idx;
+            }
+            if (str_contains($name, 'HADIR INTERVIEW AWAL') || str_contains($name, 'HADIR INT AWAL')) {
+                $columnIndex['HADIR_INT_AWAL'] = $idx;
+            }
+            if (str_contains($name, 'LOLOS INTERVIEW AWAL') || str_contains($name, 'LOLOS INT AWAL')) {
+                $columnIndex['LOLOS_INT_AWAL'] = $idx;
+            }
+            if (str_contains($name, 'INTERVIEW USER') || str_contains($name, 'INT USER')) {
+                $columnIndex['INT_USER'] = $idx;
+            }
+            if (str_contains($name, 'IKUT MCU')) {
+                $columnIndex['IKUT_MCU'] = $idx;
+            }
+            if (str_contains($name, 'LOLOS MCU')) {
+                $columnIndex['LOLOS_MCU'] = $idx;
+            }
+            if (str_contains($name, 'TAHUN') || str_contains($name, 'YEAR')) {
+                $columnIndex['TAHUN'] = $idx;
+            }
+            if (str_contains($name, 'NO') || str_contains($name, 'NOMOR')) {
+                $columnIndex['NO'] = $idx;
+            }
         }
 
         $rowsToInsert = [];
@@ -519,23 +540,24 @@ class RekrutmenController extends Controller
 
         while (($row = fgetcsv($handle, 10000, ',')) !== false) {
             $rowNumber++;
-            if (empty(array_filter($row, fn($v) => trim($v) !== ''))) {
+            if (empty(array_filter($row, fn ($v) => trim($v) !== ''))) {
                 continue; // Skip empty row
             }
 
             // Extract values
             $lokasi = trim($row[$columnIndex['LOKASI'] ?? 1] ?? '');
-            
+
             // Extract & strictly validate METODE REKRUTMEN
             $metodeRaw = trim($row[$columnIndex['METODE'] ?? 2] ?? '');
             $metodeNormalized = strtolower($metodeRaw);
-            if (!in_array($metodeNormalized, ['online', 'offline'])) {
+            if (! in_array($metodeNormalized, ['online', 'offline'])) {
                 // If column was not found by name, check if index 2 is indeed Online/Offline or if it's program
-                if (!in_array($metodeNormalized, ['online', 'offline'])) {
+                if (! in_array($metodeNormalized, ['online', 'offline'])) {
                     $errors[] = [
                         'row' => $rowNumber,
-                        'reason' => 'Kolom METODE REKRUTMEN tidak valid (wajib bernilai "Online" atau "Offline", ditemukan: "' . $metodeRaw . '")'
+                        'reason' => 'Kolom METODE REKRUTMEN tidak valid (wajib bernilai "Online" atau "Offline", ditemukan: "'.$metodeRaw.'")',
                     ];
+
                     continue;
                 }
             }
@@ -557,14 +579,17 @@ class RekrutmenController extends Controller
             // Validations
             if (empty($lokasi)) {
                 $errors[] = ['row' => $rowNumber, 'reason' => 'Lokasi rekrut kosong'];
+
                 continue;
             }
             if (empty($program)) {
                 $errors[] = ['row' => $rowNumber, 'reason' => 'Program kosong'];
+
                 continue;
             }
             if (empty($tanggal)) {
                 $errors[] = ['row' => $rowNumber, 'reason' => 'Tanggal kosong'];
+
                 continue;
             }
 
@@ -588,13 +613,14 @@ class RekrutmenController extends Controller
             // Stage validation logic check
             if ($hadir < 0 || $join < 0) {
                 $errors[] = ['row' => $rowNumber, 'reason' => 'Angka peserta atau join tidak boleh negatif'];
+
                 continue;
             }
 
             $persenLulus = $hadir > 0 ? round($join / $hadir, 6) : 0;
 
             $rowsToInsert[] = [
-                'no' => !empty($noStr) ? (int) $noStr : $rowNumber - 1,
+                'no' => ! empty($noStr) ? (int) $noStr : $rowNumber - 1,
                 'lokasi_rekrut' => $lokasi,
                 'metode_rekrutmen' => $metode,
                 'program' => $program,
@@ -616,7 +642,7 @@ class RekrutmenController extends Controller
 
         fclose($handle);
 
-        if (empty($rowsToInsert) && !empty($errors)) {
+        if (empty($rowsToInsert) && ! empty($errors)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Semua baris dalam file CSV gagal diproses karena validasi kolom atau format.',
@@ -642,22 +668,23 @@ class RekrutmenController extends Controller
             ActivityLog::log(
                 'Import',
                 'Rekrutmen',
-                "Mengimport " . count($rowsToInsert) . " data rekrutmen dari file " . $file->getClientOriginalName(),
+                'Mengimport '.count($rowsToInsert).' data rekrutmen dari file '.$file->getClientOriginalName(),
                 ['filename' => $file->getClientOriginalName(), 'count' => count($rowsToInsert), 'mode' => $mode]
             );
 
             return response()->json([
                 'status' => 'success',
-                'message' => "Import CSV berhasil! {$mode} " . count($rowsToInsert) . " data.",
+                'message' => "Import CSV berhasil! {$mode} ".count($rowsToInsert).' data.',
                 'success_count' => count($rowsToInsert),
                 'failed_count' => count($errors),
                 'errors' => $errors,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Gagal menyimpan data import: ' . $e->getMessage(),
+                'message' => 'Gagal menyimpan data import: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -672,8 +699,8 @@ class RekrutmenController extends Controller
         if ($request->filled('lokasi')) {
             $lokasi = $request->input('lokasi');
             if (is_array($lokasi)) {
-                $lokasiClean = array_filter($lokasi, fn($l) => $l !== 'all' && $l !== 'Semua Lokasi' && !empty($l));
-                if (!empty($lokasiClean)) {
+                $lokasiClean = array_filter($lokasi, fn ($l) => $l !== 'all' && $l !== 'Semua Lokasi' && ! empty($l));
+                if (! empty($lokasiClean)) {
                     $query->whereIn('lokasi_rekrut', $lokasiClean);
                 }
             } elseif ($lokasi !== 'all' && $lokasi !== 'Semua Lokasi') {
@@ -696,11 +723,11 @@ class RekrutmenController extends Controller
         if ($request->filled('tahun')) {
             $tahun = $request->input('tahun');
             if (is_array($tahun)) {
-                $tahunClean = array_filter($tahun, fn($t) => $t !== 'all' && !empty($t));
-                if (!empty($tahunClean)) {
+                $tahunClean = array_filter($tahun, fn ($t) => $t !== 'all' && ! empty($t));
+                if (! empty($tahunClean)) {
                     $query->whereIn('tahun', $tahunClean);
                 }
-            } elseif ($tahun !== 'all' && !empty($tahun)) {
+            } elseif ($tahun !== 'all' && ! empty($tahun)) {
                 $query->where('tahun', (int) $tahun);
             }
         }
@@ -713,16 +740,16 @@ class RekrutmenController extends Controller
             $search = trim($request->input('search'));
             $query->where(function ($q) use ($search) {
                 $q->where('lokasi_rekrut', 'like', "%{$search}%")
-                  ->orWhere('metode_rekrutmen', 'like', "%{$search}%")
-                  ->orWhere('program', 'like', "%{$search}%")
-                  ->orWhere('tanggal', 'like', "%{$search}%")
-                  ->orWhere('tahun', 'like', "%{$search}%");
+                    ->orWhere('metode_rekrutmen', 'like', "%{$search}%")
+                    ->orWhere('program', 'like', "%{$search}%")
+                    ->orWhere('tanggal', 'like', "%{$search}%")
+                    ->orWhere('tahun', 'like', "%{$search}%");
             });
         }
 
         $records = $query->orderBy('no', 'asc')->get();
 
-        $filename = 'Data_Rekrutmen_Export_' . date('Ymd_His') . '.xlsx';
+        $filename = 'Data_Rekrutmen_Export_'.date('Ymd_His').'.xlsx';
         $headers = [
             'NO', 'LOKASI REKRUT', 'METODE REKRUTMEN', 'PROGRAM', 'TANGGAL', 'TAHUN',
             'JUMLAH PESERTA HADIR', 'JUMLAH LOLOS PSIKOTEST', 'JUMLAH HADIR INTERVIEW AWAL',
@@ -730,8 +757,14 @@ class RekrutmenController extends Controller
             'JUMLAH LOLOS MCU', 'JOIN FR', '% LULUS',
         ];
 
-        $totalHadir = 0; $totalPsiko = 0; $totalHadirInt = 0; $totalLolosInt = 0;
-        $totalIntUser = 0; $totalIkutMcu = 0; $totalLolosMcu = 0; $totalJoin = 0;
+        $totalHadir = 0;
+        $totalPsiko = 0;
+        $totalHadirInt = 0;
+        $totalLolosInt = 0;
+        $totalIntUser = 0;
+        $totalIkutMcu = 0;
+        $totalLolosMcu = 0;
+        $totalJoin = 0;
 
         $dataRows = [];
         foreach ($records as $index => $row) {
@@ -789,25 +822,25 @@ class RekrutmenController extends Controller
         $join = (int) ($data['join_fr'] ?? 0);
 
         if ($psiko > $hadir) {
-            $errors['jumlah_lolos_psikotest'] = ['Jumlah lolos psikotest (' . $psiko . ') tidak boleh melebihi jumlah peserta hadir (' . $hadir . ').'];
+            $errors['jumlah_lolos_psikotest'] = ['Jumlah lolos psikotest ('.$psiko.') tidak boleh melebihi jumlah peserta hadir ('.$hadir.').'];
         }
         if ($hadirIntAwal > $hadir) {
-            $errors['jumlah_hadir_interview_awal'] = ['Jumlah hadir interview awal (' . $hadirIntAwal . ') tidak boleh melebihi peserta hadir (' . $hadir . ').'];
+            $errors['jumlah_hadir_interview_awal'] = ['Jumlah hadir interview awal ('.$hadirIntAwal.') tidak boleh melebihi peserta hadir ('.$hadir.').'];
         }
         if ($lolosIntAwal > $hadirIntAwal && $hadirIntAwal > 0) {
-            $errors['jumlah_lolos_interview_awal'] = ['Jumlah lolos interview awal (' . $lolosIntAwal . ') tidak boleh melebihi hadir interview awal (' . $hadirIntAwal . ').'];
+            $errors['jumlah_lolos_interview_awal'] = ['Jumlah lolos interview awal ('.$lolosIntAwal.') tidak boleh melebihi hadir interview awal ('.$hadirIntAwal.').'];
         }
         if ($intUser > $hadir) {
-            $errors['jumlah_lolos_interview_user'] = ['Jumlah lolos interview user (' . $intUser . ') tidak boleh melebihi peserta hadir (' . $hadir . ').'];
+            $errors['jumlah_lolos_interview_user'] = ['Jumlah lolos interview user ('.$intUser.') tidak boleh melebihi peserta hadir ('.$hadir.').'];
         }
         if ($ikutMcu > $hadir) {
-            $errors['jumlah_ikut_mcu'] = ['Jumlah ikut MCU (' . $ikutMcu . ') tidak boleh melebihi peserta hadir (' . $hadir . ').'];
+            $errors['jumlah_ikut_mcu'] = ['Jumlah ikut MCU ('.$ikutMcu.') tidak boleh melebihi peserta hadir ('.$hadir.').'];
         }
         if ($lolosMcu > $ikutMcu && ikutMcu > 0) {
-            $errors['jumlah_lolos_mcu'] = ['Jumlah lolos MCU (' . $lolosMcu . ') tidak boleh melebihi ikut MCU (' . $ikutMcu . ').'];
+            $errors['jumlah_lolos_mcu'] = ['Jumlah lolos MCU ('.$lolosMcu.') tidak boleh melebihi ikut MCU ('.$ikutMcu.').'];
         }
         if ($join > $hadir) {
-            $errors['join_fr'] = ['Jumlah Join FR (' . $join . ') tidak boleh melebihi peserta hadir (' . $hadir . ').'];
+            $errors['join_fr'] = ['Jumlah Join FR ('.$join.') tidak boleh melebihi peserta hadir ('.$hadir.').'];
         }
 
         return $errors;

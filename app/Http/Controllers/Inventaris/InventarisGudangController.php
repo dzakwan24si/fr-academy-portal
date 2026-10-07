@@ -24,7 +24,7 @@ class InventarisGudangController extends Controller
         $search = $request->query('search');
         $jenisLokasiFilter = $request->query('jenis_lokasi');
 
-        $query = Barang::where(function($q) {
+        $query = Barang::where(function ($q) {
             $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
         });
 
@@ -99,7 +99,7 @@ class InventarisGudangController extends Controller
 
         $file = $request->file('file');
         $handle = fopen($file->getRealPath(), 'r');
-        if (!$handle) {
+        if (! $handle) {
             return [];
         }
 
@@ -120,7 +120,7 @@ class InventarisGudangController extends Controller
 
         $rows = [];
         while (($data = fgetcsv($handle, 1000, $delimiter)) !== false) {
-            if (!empty($data) && count($data) >= 1) {
+            if (! empty($data) && count($data) >= 1) {
                 $rows[] = $data;
             }
         }
@@ -139,7 +139,7 @@ class InventarisGudangController extends Controller
         }
 
         if (preg_match('/^\d{4}$/', $tanggalRaw)) {
-            return $tanggalRaw . '-01-01';
+            return $tanggalRaw.'-01-01';
         }
 
         try {
@@ -152,30 +152,30 @@ class InventarisGudangController extends Controller
     private function findOrCreateBarang(?string $idBarang, ?string $namaAsset): Barang
     {
         $barang = null;
-        if (!empty($idBarang) && is_numeric($idBarang)) {
+        if (! empty($idBarang) && is_numeric($idBarang)) {
             $barang = Barang::find((int) $idBarang);
         }
 
-        if (!$barang && !empty($namaAsset)) {
+        if (! $barang && ! empty($namaAsset)) {
             if (is_numeric($namaAsset)) {
                 $barang = Barang::find((int) $namaAsset);
             }
-            if (!$barang) {
-                $barang = Barang::where(function($q) {
+            if (! $barang) {
+                $barang = Barang::where(function ($q) {
                     $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
                 })->where('nama_asset', $namaAsset)->first();
             }
         }
 
-        if (!$barang) {
-            $finalNama = !empty($namaAsset) ? $namaAsset : (!empty($idBarang) ? "Asset #{$idBarang}" : "Asset Baru");
+        if (! $barang) {
+            $finalNama = ! empty($namaAsset) ? $namaAsset : (! empty($idBarang) ? "Asset #{$idBarang}" : 'Asset Baru');
             $attributes = [
                 'nama_asset' => $finalNama,
                 'satuan' => 'Unit',
                 'jenis_lokasi' => $this->lokasi,
                 'lokasi' => $this->lokasi,
             ];
-            if (!empty($idBarang) && is_numeric($idBarang)) {
+            if (! empty($idBarang) && is_numeric($idBarang)) {
                 $attributes['id'] = (int) $idBarang;
                 DB::table('barang')->insert($attributes);
                 $barang = Barang::find((int) $idBarang);
@@ -242,17 +242,17 @@ class InventarisGudangController extends Controller
                 if (is_numeric($col0) && isset($data[1])) {
                     $idBarang = $col0;
                     $namaAsset = trim($data[1]);
-                    $satuan = isset($data[2]) && !empty(trim($data[2])) ? trim($data[2]) : 'Unit';
+                    $satuan = isset($data[2]) && ! empty(trim($data[2])) ? trim($data[2]) : 'Unit';
                     $keterangan = isset($data[3]) ? trim($data[3]) : null;
                 } else {
                     $namaAsset = $col0;
-                    $satuan = isset($data[1]) && !empty(trim($data[1])) ? trim($data[1]) : 'Unit';
+                    $satuan = isset($data[1]) && ! empty(trim($data[1])) ? trim($data[1]) : 'Unit';
                     $keterangan = isset($data[2]) ? trim($data[2]) : null;
                 }
             }
 
             if (($namaAsset && in_array(strtolower($namaAsset), ['nama_asset', 'nama asset', 'nama barang', 'nama_barang', 'id_barang', 'id'], true)) ||
-                ($idBarang && !is_numeric($idBarang) && in_array(strtolower($idBarang), ['id_barang', 'id', 'id_pembelian'], true))) {
+                ($idBarang && ! is_numeric($idBarang) && in_array(strtolower($idBarang), ['id_barang', 'id', 'id_pembelian'], true))) {
                 continue;
             }
 
@@ -261,32 +261,32 @@ class InventarisGudangController extends Controller
             }
 
             $barang = null;
-            if (!empty($idBarang) && is_numeric($idBarang)) {
+            if (! empty($idBarang) && is_numeric($idBarang)) {
                 $barang = Barang::find((int) $idBarang);
             }
-            if (!$barang && !empty($namaAsset)) {
-                $barang = Barang::where(function($q) {
+            if (! $barang && ! empty($namaAsset)) {
+                $barang = Barang::where(function ($q) {
                     $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
                 })->where('nama_asset', $namaAsset)->first();
             }
 
             if ($barang) {
                 $barang->update([
-                    'nama_asset' => !empty($namaAsset) ? $namaAsset : $barang->nama_asset,
-                    'satuan' => !empty($satuan) ? $satuan : $barang->satuan,
+                    'nama_asset' => ! empty($namaAsset) ? $namaAsset : $barang->nama_asset,
+                    'satuan' => ! empty($satuan) ? $satuan : $barang->satuan,
                     'jenis_lokasi' => $this->lokasi,
                     'lokasi' => $this->lokasi,
                     'keterangan' => $keterangan !== null ? $keterangan : $barang->keterangan,
                 ]);
             } else {
                 $attributes = [
-                    'nama_asset' => !empty($namaAsset) ? $namaAsset : "Asset #{$idBarang}",
-                    'satuan' => !empty($satuan) ? $satuan : 'Unit',
+                    'nama_asset' => ! empty($namaAsset) ? $namaAsset : "Asset #{$idBarang}",
+                    'satuan' => ! empty($satuan) ? $satuan : 'Unit',
                     'jenis_lokasi' => $this->lokasi,
                     'lokasi' => $this->lokasi,
                     'keterangan' => $keterangan,
                 ];
-                if (!empty($idBarang) && is_numeric($idBarang)) {
+                if (! empty($idBarang) && is_numeric($idBarang)) {
                     $attributes['id'] = (int) $idBarang;
                 }
                 Barang::create($attributes);
@@ -311,23 +311,23 @@ class InventarisGudangController extends Controller
         $pembelianYears = Pembelian::whereHas('barang', function ($q) {
             $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
         })
-        ->selectRaw('YEAR(tanggal_pembelian) as yr')
-        ->whereNotNull('tanggal_pembelian')
-        ->pluck('yr')->map(fn($y) => (int)$y)->toArray();
+            ->selectRaw('YEAR(tanggal_pembelian) as yr')
+            ->whereNotNull('tanggal_pembelian')
+            ->pluck('yr')->map(fn ($y) => (int) $y)->toArray();
 
         $soYears = StockOpname::whereHas('barang', function ($q) {
             $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
         })
-        ->selectRaw('YEAR(tanggal_stock_opname) as yr')
-        ->whereNotNull('tanggal_stock_opname')
-        ->pluck('yr')->map(fn($y) => (int)$y)->toArray();
+            ->selectRaw('YEAR(tanggal_stock_opname) as yr')
+            ->whereNotNull('tanggal_stock_opname')
+            ->pluck('yr')->map(fn ($y) => (int) $y)->toArray();
 
         $currentYear = (int) date('Y');
         $defaultYears = [2017, 2018, 2020, 2021, 2022, 2023, 2024, 2025, 2026, $currentYear];
         $allYears = array_values(array_unique(array_merge($defaultYears, $pembelianYears, $soYears)));
         sort($allYears);
 
-        if (!$selectedYear) {
+        if (! $selectedYear) {
             $selectedYear = 'all';
         }
 
@@ -503,16 +503,26 @@ class InventarisGudangController extends Controller
                     $jumlahRaw = trim($data[3]);
                     $keterangan = isset($data[4]) ? trim($data[4]) : null;
                 } else {
-                    if (isset($data[0])) $namaAsset = trim($data[0]);
-                    if (isset($data[1])) $tanggalRaw = trim($data[1]);
-                    if (isset($data[2])) $jumlahRaw = trim($data[2]);
-                    if (isset($data[3])) $lokasiSpesifik = trim($data[3]);
-                    if (isset($data[4])) $keterangan = trim($data[4]);
+                    if (isset($data[0])) {
+                        $namaAsset = trim($data[0]);
+                    }
+                    if (isset($data[1])) {
+                        $tanggalRaw = trim($data[1]);
+                    }
+                    if (isset($data[2])) {
+                        $jumlahRaw = trim($data[2]);
+                    }
+                    if (isset($data[3])) {
+                        $lokasiSpesifik = trim($data[3]);
+                    }
+                    if (isset($data[4])) {
+                        $keterangan = trim($data[4]);
+                    }
                 }
             }
 
             if (($namaAsset && in_array(strtolower($namaAsset), ['nama_asset', 'nama asset', 'nama barang', 'id_barang', 'id_pembelian'], true)) ||
-                ($idBarang && !is_numeric($idBarang) && in_array(strtolower($idBarang), ['id_barang', 'id_pembelian', 'id'], true))) {
+                ($idBarang && ! is_numeric($idBarang) && in_array(strtolower($idBarang), ['id_barang', 'id_pembelian', 'id'], true))) {
                 continue;
             }
 
@@ -532,7 +542,7 @@ class InventarisGudangController extends Controller
                 'keterangan' => $keterangan,
             ];
 
-            if (!empty($idPembelian) && is_numeric($idPembelian)) {
+            if (! empty($idPembelian) && is_numeric($idPembelian)) {
                 $pembelian = Pembelian::find((int) $idPembelian);
                 if ($pembelian) {
                     $pembelian->update($pembelianAttr);
@@ -559,16 +569,16 @@ class InventarisGudangController extends Controller
         $sessions = StockOpname::whereHas('barang', function ($q) {
             $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
         })
-        ->select(
-            'tanggal_stock_opname',
-            DB::raw('MAX(status) as status'),
-            DB::raw('MAX(catatan_sesi) as catatan_sesi'),
-            DB::raw('COUNT(DISTINCT barang_id) as total_aset_diperiksa'),
-            DB::raw('SUM(jumlah_rusak) as total_masalah')
-        )
-        ->groupBy('tanggal_stock_opname')
-        ->orderByDesc('tanggal_stock_opname')
-        ->get();
+            ->select(
+                'tanggal_stock_opname',
+                DB::raw('MAX(status) as status'),
+                DB::raw('MAX(catatan_sesi) as catatan_sesi'),
+                DB::raw('COUNT(DISTINCT barang_id) as total_aset_diperiksa'),
+                DB::raw('SUM(jumlah_rusak) as total_masalah')
+            )
+            ->groupBy('tanggal_stock_opname')
+            ->orderByDesc('tanggal_stock_opname')
+            ->get();
 
         return view('Administrasi.Pages.Inventaris.gudang_stock_opname', [
             'sessions' => $sessions,
@@ -621,11 +631,11 @@ class InventarisGudangController extends Controller
         StockOpname::whereHas('barang', function ($q) {
             $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
         })
-        ->where('tanggal_stock_opname', $date)
-        ->update([
-            'status' => $validated['status'],
-            'catatan_sesi' => $validated['catatan_sesi'],
-        ]);
+            ->where('tanggal_stock_opname', $date)
+            ->update([
+                'status' => $validated['status'],
+                'catatan_sesi' => $validated['catatan_sesi'],
+            ]);
 
         return redirect()->route('administrasi.inventaris.gudang.stock-opname.detail', ['date' => $date])
             ->with('success', 'Informasi sesi Stock Opname berhasil diperbarui!');
@@ -636,11 +646,11 @@ class InventarisGudangController extends Controller
         StockOpname::whereHas('barang', function ($q) {
             $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
         })
-        ->where('tanggal_stock_opname', $date)
-        ->delete();
+            ->where('tanggal_stock_opname', $date)
+            ->delete();
 
         return redirect()->route('administrasi.inventaris.gudang.stock-opname')
-            ->with('success', 'Sesi Stock Opname tanggal ' . Carbon::parse($date)->translatedFormat('d F Y') . ' berhasil dihapus!');
+            ->with('success', 'Sesi Stock Opname tanggal '.Carbon::parse($date)->translatedFormat('d F Y').' berhasil dihapus!');
     }
 
     /* =========================================================================
@@ -672,8 +682,8 @@ class InventarisGudangController extends Controller
         $sessionMeta = StockOpname::whereHas('barang', function ($q) {
             $q->where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi);
         })
-        ->where('tanggal_stock_opname', $date)
-        ->first();
+            ->where('tanggal_stock_opname', $date)
+            ->first();
 
         $allBarang = Barang::where('jenis_lokasi', $this->lokasi)->orWhere('lokasi', $this->lokasi)->orderBy('nama_asset', 'asc')->get();
 
@@ -806,6 +816,7 @@ class InventarisGudangController extends Controller
         }
 
         $filename = "Stock_Opname_Gudang_{$date}.xlsx";
+
         return ExcelExporter::download($filename, $headers, $dataRows, 'Stock Opname Gudang');
     }
 

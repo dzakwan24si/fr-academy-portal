@@ -3,21 +3,26 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\WeeklyReport;
-use App\Models\TrainingProgram;
-use App\Models\Trainee;
-use App\Models\Trainer;
-use App\Models\Resignation;
-use App\Models\SessionEvaluation;
-use App\Models\TrainingSession;
-use App\Models\SessionParticipant;
+use App\Models\DailyClass;
 use App\Models\OjtPlacement;
 use App\Models\QuizScore;
 use App\Models\Ranking;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
+use App\Models\Resignation;
+use App\Models\SessionEvaluation;
+use App\Models\SessionParticipant;
+use App\Models\SessionPhoto;
+use App\Models\Trainee;
+use App\Models\Trainer;
+use App\Models\TrainingProgram;
+use App\Models\TrainingSession;
+use App\Models\WeeklyReport;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class WeeklyReportController extends Controller
 {
@@ -47,21 +52,21 @@ class WeeklyReportController extends Controller
         $total = WeeklyReport::count();
         $draft = WeeklyReport::where('status', 'draft')->count();
         $submitted = WeeklyReport::where('status', '!=', 'draft')->count();
-        
+
         $months = [];
         $distinctDates = WeeklyReport::select('week_start_date')->distinct()->orderBy('week_start_date', 'desc')->get();
         foreach ($distinctDates as $date) {
             if ($date->week_start_date) {
-                $parsed = \Carbon\Carbon::parse($date->week_start_date);
+                $parsed = Carbon::parse($date->week_start_date);
                 $key = $parsed->format('Y-m');
-                if (!isset($months[$key])) {
+                if (! isset($months[$key])) {
                     $months[$key] = $parsed->translatedFormat('F Y');
                 }
             }
         }
         $programs = TrainingProgram::with('trainees')->get();
         $trainers = Trainer::all();
-        
+
         return view('admin.weekly_reports.index', compact('reports', 'programs', 'trainers', 'total', 'draft', 'submitted', 'months'));
     }
 
@@ -76,6 +81,7 @@ class WeeklyReportController extends Controller
         $trainees = Trainee::where('training_program_id', $programId)
             ->where('status', '!=', 'resign')
             ->get(['id', 'name', 'origin', 'university']);
+
         return response()->json($trainees);
     }
 
@@ -89,20 +95,21 @@ class WeeklyReportController extends Controller
             'trainingSessions.ojtPlacements.trainee',
             'quizScores.trainee',
             'rankings.trainee',
-            'resignations.trainee'
+            'resignations.trainee',
         ]);
-        
-        $dailyClasses = \App\Models\DailyClass::with(['attendances.trainee', 'tasks.submissions.trainee'])
+
+        $dailyClasses = DailyClass::with(['attendances.trainee', 'tasks.submissions.trainee'])
             ->where('training_program_id', $weeklyReport->training_program_id)
             ->whereBetween('date', [$weeklyReport->week_start_date, $weeklyReport->week_end_date])
             ->get();
-            
+
         return view('admin.weekly_reports.show', compact('weeklyReport', 'dailyClasses'));
     }
 
     public function destroy(WeeklyReport $weeklyReport)
     {
         $weeklyReport->delete();
+
         return redirect()->route('training-reguler.weekly-reports.index')
             ->with('success', 'Laporan berhasil dihapus.');
     }
@@ -117,18 +124,19 @@ class WeeklyReportController extends Controller
             'trainingSessions.ojtPlacements.trainee',
             'quizScores.trainee',
             'rankings.trainee',
-            'resignations.trainee'
+            'resignations.trainee',
         ]);
-        
-        $dailyClasses = \App\Models\DailyClass::with(['attendances.trainee', 'tasks.submissions.trainee'])
+
+        $dailyClasses = DailyClass::with(['attendances.trainee', 'tasks.submissions.trainee'])
             ->where('training_program_id', $weeklyReport->training_program_id)
             ->whereBetween('date', [$weeklyReport->week_start_date, $weeklyReport->week_end_date])
             ->get();
-        
+
         $pdf = Pdf::loadView('admin.weekly_reports.pdf', [
             'weeklyReport' => $weeklyReport,
-            'dailyClasses' => $dailyClasses
+            'dailyClasses' => $dailyClasses,
         ])->setPaper('a4', 'portrait');
+
         return $pdf->stream('Laporan_Mingguan.pdf');
     }
 
@@ -143,15 +151,15 @@ class WeeklyReportController extends Controller
             'trainingSessions.ojtPlacements.trainee',
             'quizScores.trainee',
             'rankings.trainee',
-            'resignations.trainee'
+            'resignations.trainee',
         ])->get();
 
         if ($reports->isEmpty()) {
             return back()->with('error', 'Tidak ada laporan yang dipilih.');
         }
 
-        foreach($reports as $report) {
-            $report->dailyClasses = \App\Models\DailyClass::with(['attendances.trainee', 'tasks.submissions.trainee'])
+        foreach ($reports as $report) {
+            $report->dailyClasses = DailyClass::with(['attendances.trainee', 'tasks.submissions.trainee'])
                 ->where('training_program_id', $report->training_program_id)
                 ->whereBetween('date', [$report->week_start_date, $report->week_end_date])
                 ->get();
@@ -159,6 +167,7 @@ class WeeklyReportController extends Controller
 
         $pdf = Pdf::loadView('admin.weekly_reports.export_multiple', ['reports' => $reports])
             ->setPaper('a4', 'portrait');
+
         return $pdf->stream('Laporan_Mingguan_Multiple.pdf');
     }
 
@@ -166,21 +175,21 @@ class WeeklyReportController extends Controller
     {
         $request->validate([
             'training_program_id' => 'required|exists:training_programs,id',
-            'week_start_date'     => 'required|date',
-            'week_end_date'       => 'required|date',
-            'theme'               => 'nullable|string',
+            'week_start_date' => 'required|date',
+            'week_end_date' => 'required|date',
+            'theme' => 'nullable|string',
         ]);
 
         // Karena Trainer Utama diisi manual per-sesi, kita set default trainer_id agar tidak error di database
-        $defaultTrainerId = \App\Models\Trainer::first()->id ?? 1;
+        $defaultTrainerId = Trainer::first()->id ?? 1;
 
         $report = WeeklyReport::create([
             'training_program_id' => $request->training_program_id,
-            'trainer_id'          => $defaultTrainerId,
-            'week_start_date'     => $request->week_start_date,
-            'week_end_date'       => $request->week_end_date,
-            'theme'               => $request->theme ?? 'reguler',
-            'status'              => 'draft'
+            'trainer_id' => $defaultTrainerId,
+            'week_start_date' => $request->week_start_date,
+            'week_end_date' => $request->week_end_date,
+            'theme' => $request->theme ?? 'reguler',
+            'status' => 'draft',
         ]);
 
         // Karena form wizard "Buat Laporan Baru" mengirimkan SEMUA data (sesi, foto, dsb) dalam satu waktu,
@@ -191,27 +200,28 @@ class WeeklyReportController extends Controller
     public function edit(WeeklyReport $weeklyReport)
     {
         $weeklyReport->load([
-            'trainingProgram.trainees', 
+            'trainingProgram.trainees',
             'trainer',
             'trainingSessions.sessionParticipants.trainee',
             'trainingSessions.evaluations',
             'trainingSessions.ojtPlacements.trainee',
             'quizScores.trainee',
             'rankings.trainee',
-            'resignations.trainee'
+            'resignations.trainee',
         ]);
-        
+
         $programs = TrainingProgram::with('trainees')->get();
         $trainers = Trainer::all();
-        
-        $resigneesData = \App\Models\Trainee::with('resignation')
+
+        $resigneesData = Trainee::with('resignation')
             ->where('status', 'like', '%esign%')
             ->get()
-            ->filter(function($t) use ($weeklyReport) {
+            ->filter(function ($t) use ($weeklyReport) {
                 return $t->training_program_id == $weeklyReport->training_program_id;
             })
-            ->map(function($t) {
+            ->map(function ($t) {
                 $r = $t->resignation;
+
                 return [
                     'id' => $r ? $r->id : null,
                     'trainee_id' => $t->id,
@@ -222,8 +232,8 @@ class WeeklyReportController extends Controller
                     'inclass_rank' => $r ? $r->inclass_rank : '',
                     'avg_practice_score' => $r ? $r->avg_practice_score : '',
                     'practice_rank' => $r ? $r->practice_rank : '',
-                    'photoPreview' => ($r && $r->photo_path) ? '/storage/' . $r->photo_path : null,
-                    'traineeObj' => $t
+                    'photoPreview' => ($r && $r->photo_path) ? '/storage/'.$r->photo_path : null,
+                    'traineeObj' => $t,
                 ];
             })->values()->toArray();
 
@@ -232,12 +242,12 @@ class WeeklyReportController extends Controller
 
         $initialRankings = [];
         $initialRemedialNotes = [];
-        foreach($weeklyReport->rankings as $rank) {
+        foreach ($weeklyReport->rankings as $rank) {
             $initialRankings[$rank->trainee_id] = [
                 'id' => $rank->id,
                 'total_average' => $rank->total_average,
                 'rank' => $rank->rank,
-                'rank_group' => $rank->rank_group
+                'rank_group' => $rank->rank_group,
             ];
             if ($rank->remedial_note) {
                 $initialRemedialNotes[$rank->trainee_id] = $rank->remedial_note;
@@ -245,37 +255,37 @@ class WeeklyReportController extends Controller
         }
 
         $existingPhotos = [
-            1 => $weeklyReport->cover_photo_1 ? '/storage/' . $weeklyReport->cover_photo_1 : null,
-            2 => $weeklyReport->cover_photo_2 ? '/storage/' . $weeklyReport->cover_photo_2 : null,
-            3 => $weeklyReport->cover_photo_3 ? '/storage/' . $weeklyReport->cover_photo_3 : null,
-            4 => $weeklyReport->cover_photo_4 ? '/storage/' . $weeklyReport->cover_photo_4 : null,
-            5 => $weeklyReport->cover_photo_5 ? '/storage/' . $weeklyReport->cover_photo_5 : null,
-            6 => $weeklyReport->cover_photo_6 ? '/storage/' . $weeklyReport->cover_photo_6 : null,
+            1 => $weeklyReport->cover_photo_1 ? '/storage/'.$weeklyReport->cover_photo_1 : null,
+            2 => $weeklyReport->cover_photo_2 ? '/storage/'.$weeklyReport->cover_photo_2 : null,
+            3 => $weeklyReport->cover_photo_3 ? '/storage/'.$weeklyReport->cover_photo_3 : null,
+            4 => $weeklyReport->cover_photo_4 ? '/storage/'.$weeklyReport->cover_photo_4 : null,
+            5 => $weeklyReport->cover_photo_5 ? '/storage/'.$weeklyReport->cover_photo_5 : null,
+            6 => $weeklyReport->cover_photo_6 ? '/storage/'.$weeklyReport->cover_photo_6 : null,
         ];
-        
+
         $stripPreviews = [
-            1 => $weeklyReport->strip_photo_1 ? '/storage/' . $weeklyReport->strip_photo_1 : null,
-            2 => $weeklyReport->strip_photo_2 ? '/storage/' . $weeklyReport->strip_photo_2 : null,
-            3 => $weeklyReport->strip_photo_3 ? '/storage/' . $weeklyReport->strip_photo_3 : null,
-            4 => $weeklyReport->strip_photo_4 ? '/storage/' . $weeklyReport->strip_photo_4 : null,
-            5 => $weeklyReport->strip_photo_5 ? '/storage/' . $weeklyReport->strip_photo_5 : null,
-            6 => $weeklyReport->strip_photo_6 ? '/storage/' . $weeklyReport->strip_photo_6 : null,
-            7 => $weeklyReport->strip_photo_7 ? '/storage/' . $weeklyReport->strip_photo_7 : null,
-            8 => $weeklyReport->strip_photo_8 ? '/storage/' . $weeklyReport->strip_photo_8 : null,
+            1 => $weeklyReport->strip_photo_1 ? '/storage/'.$weeklyReport->strip_photo_1 : null,
+            2 => $weeklyReport->strip_photo_2 ? '/storage/'.$weeklyReport->strip_photo_2 : null,
+            3 => $weeklyReport->strip_photo_3 ? '/storage/'.$weeklyReport->strip_photo_3 : null,
+            4 => $weeklyReport->strip_photo_4 ? '/storage/'.$weeklyReport->strip_photo_4 : null,
+            5 => $weeklyReport->strip_photo_5 ? '/storage/'.$weeklyReport->strip_photo_5 : null,
+            6 => $weeklyReport->strip_photo_6 ? '/storage/'.$weeklyReport->strip_photo_6 : null,
+            7 => $weeklyReport->strip_photo_7 ? '/storage/'.$weeklyReport->strip_photo_7 : null,
+            8 => $weeklyReport->strip_photo_8 ? '/storage/'.$weeklyReport->strip_photo_8 : null,
         ];
 
         $allTrainees = Trainee::where('training_program_id', $weeklyReport->training_program_id)->get();
 
         return view('admin.weekly_reports.edit', compact(
-            'weeklyReport', 'programs', 'trainers', 'resigneesData', 'uniqueSubjects', 
-            'initialQuizScores', 'initialRankings', 'initialRemedialNotes', 
+            'weeklyReport', 'programs', 'trainers', 'resigneesData', 'uniqueSubjects',
+            'initialQuizScores', 'initialRankings', 'initialRemedialNotes',
             'existingPhotos', 'stripPreviews', 'allTrainees'
         ));
     }
 
     public function update(Request $request, WeeklyReport $weeklyReport)
     {
-        \Illuminate\Support\Facades\Log::info('Update WeeklyReport Request:', $request->all());
+        Log::info('Update WeeklyReport Request:', $request->all());
         DB::beginTransaction();
         try {
             // Update Report Meta
@@ -287,7 +297,7 @@ class WeeklyReportController extends Controller
                 'training_purpose' => $request->training_purpose ?? $weeklyReport->training_purpose,
                 'quote' => $request->quote ?? $weeklyReport->quote,
                 'quiz_notes' => $request->quiz_notes ?? $weeklyReport->quiz_notes,
-                'status' => 'submitted', 
+                'status' => 'submitted',
             ]);
 
             // Handle Cover Photos
@@ -310,7 +320,7 @@ class WeeklyReportController extends Controller
 
             // Handle Strip Photos
             $currentStrips = is_array($weeklyReport->strip_photos) ? $weeklyReport->strip_photos : [];
-            
+
             if ($request->input('delete_all_strip_photos') == '1' || $request->input('skip_page_2') == '1') {
                 $currentStrips = [];
             }
@@ -327,7 +337,9 @@ class WeeklyReportController extends Controller
             // Update Sessions
             $requestSessionIds = collect($request->sessions ?? [])
                 ->pluck('id')
-                ->filter(function($id) { return is_numeric($id); })
+                ->filter(function ($id) {
+                    return is_numeric($id);
+                })
                 ->toArray();
 
             TrainingSession::where('weekly_report_id', $weeklyReport->id)
@@ -335,14 +347,16 @@ class WeeklyReportController extends Controller
                 ->delete();
 
             foreach ($request->sessions ?? [] as $sData) {
-                if (empty($sData['title']) && empty($sData['date_start']) && empty($sData['date_end']) && empty($sData['location'])) continue;
+                if (empty($sData['title']) && empty($sData['date_start']) && empty($sData['date_end']) && empty($sData['location'])) {
+                    continue;
+                }
 
-                $title = !empty($sData['title']) ? $sData['title'] : 'Sesi Pelatihan';
+                $title = ! empty($sData['title']) ? $sData['title'] : 'Sesi Pelatihan';
 
                 // Automatically detect session type
                 $titleLower = strtolower($title);
                 $inferredType = 'inclass';
-                
+
                 if (isset($sData['ojt']) && is_array($sData['ojt']) && count($sData['ojt']) > 0) {
                     if (str_contains($titleLower, 'supervisi') || str_contains($titleLower, 'zoom')) {
                         $inferredType = 'supervisi_ojt';
@@ -375,34 +389,34 @@ class WeeklyReportController extends Controller
                 );
 
                 // Process Trainer Photo
-                if (isset($sData['trainer_photo']) && $sData['trainer_photo'] instanceof \Illuminate\Http\UploadedFile) {
+                if (isset($sData['trainer_photo']) && $sData['trainer_photo'] instanceof UploadedFile) {
                     $path = $sData['trainer_photo']->store('session_photos', 'public');
                     $session->update(['trainer_photo_path' => $path]);
                 } elseif (isset($sData['delete_trainer_photo']) && $sData['delete_trainer_photo'] == '1') {
                     $session->update(['trainer_photo_path' => null]);
                 }
-                
+
                 // Process Banner Photos
                 if (isset($sData['photos']) && is_array($sData['photos'])) {
                     // explicitly handle delete logic for banners
-                    if (!empty($sData['delete_photo_0']) && $sData['delete_photo_0'] == '1') {
-                        \App\Models\SessionPhoto::where('training_session_id', $session->id)->where('photo_type', 'banner_left')->delete();
+                    if (! empty($sData['delete_photo_0']) && $sData['delete_photo_0'] == '1') {
+                        SessionPhoto::where('training_session_id', $session->id)->where('photo_type', 'banner_left')->delete();
                     }
-                    if (!empty($sData['delete_photo_1']) && $sData['delete_photo_1'] == '1') {
-                        \App\Models\SessionPhoto::where('training_session_id', $session->id)->where('photo_type', 'banner_right')->delete();
+                    if (! empty($sData['delete_photo_1']) && $sData['delete_photo_1'] == '1') {
+                        SessionPhoto::where('training_session_id', $session->id)->where('photo_type', 'banner_right')->delete();
                     }
 
                     foreach ($sData['photos'] as $idx => $photo) {
-                        if ($photo instanceof \Illuminate\Http\UploadedFile) {
+                        if ($photo instanceof UploadedFile) {
                             $type = ($idx == 0) ? 'banner_left' : 'banner_right';
                             // delete existing if replacing
-                            \App\Models\SessionPhoto::where('training_session_id', $session->id)->where('photo_type', $type)->delete();
-                            
+                            SessionPhoto::where('training_session_id', $session->id)->where('photo_type', $type)->delete();
+
                             $path = $photo->store('session_photos', 'public');
-                            \App\Models\SessionPhoto::create([
+                            SessionPhoto::create([
                                 'training_session_id' => $session->id,
                                 'photo_path' => $path,
-                                'photo_type' => $type
+                                'photo_type' => $type,
                             ]);
                         }
                     }
@@ -410,13 +424,13 @@ class WeeklyReportController extends Controller
 
                 // Process Grid (Dokumentasi) Photos
                 if (isset($sData['deleted_grid_photos']) && is_array($sData['deleted_grid_photos'])) {
-                    \App\Models\SessionPhoto::whereIn('id', $sData['deleted_grid_photos'])->delete();
+                    SessionPhoto::whereIn('id', $sData['deleted_grid_photos'])->delete();
                 }
 
                 if (isset($sData['dokumentasi_types']) && is_array($sData['dokumentasi_types'])) {
                     foreach ($sData['dokumentasi_types'] as $photoId => $type) {
                         if ($photoId !== 'undefined' && $photoId !== '') {
-                            $photo = \App\Models\SessionPhoto::find($photoId);
+                            $photo = SessionPhoto::find($photoId);
                             if ($photo) {
                                 $photo->update(['photo_type' => $type]);
                             }
@@ -426,26 +440,26 @@ class WeeklyReportController extends Controller
 
                 if (isset($sData['dokumentasi']) && is_array($sData['dokumentasi'])) {
                     foreach (array_values($sData['dokumentasi']) as $photo) {
-                        if ($photo instanceof \Illuminate\Http\UploadedFile) {
+                        if ($photo instanceof UploadedFile) {
                             $path = $photo->store('session_photos', 'public');
-                            \App\Models\SessionPhoto::create([
+                            SessionPhoto::create([
                                 'training_session_id' => $session->id,
                                 'photo_path' => $path,
-                                'photo_type' => 'training'
+                                'photo_type' => 'training',
                             ]);
                         }
                     }
                 }
-                
+
                 // Evaluations
                 SessionEvaluation::where('training_session_id', $session->id)->delete();
                 $categories = ['baik_sekali' => 'Baik Sekali', 'baik' => 'Baik', 'cukup_baik' => 'Cukup Baik', 'kurang_baik' => 'Kurang Baik', 'tidak_baik' => 'Tidak Baik'];
                 foreach ($categories as $key => $label) {
                     if (isset($sData['evaluations'][$key])) {
-                        $m = (float)str_replace(',', '.', $sData['evaluations'][$key]['materi'] ?? 0);
-                        $t = (float)str_replace(',', '.', $sData['evaluations'][$key]['trainer'] ?? 0);
-                        $f = (float)str_replace(',', '.', $sData['evaluations'][$key]['fasilitas'] ?? 0);
-                        
+                        $m = (float) str_replace(',', '.', $sData['evaluations'][$key]['materi'] ?? 0);
+                        $t = (float) str_replace(',', '.', $sData['evaluations'][$key]['trainer'] ?? 0);
+                        $f = (float) str_replace(',', '.', $sData['evaluations'][$key]['fasilitas'] ?? 0);
+
                         if ($m > 0 || $t > 0 || $f > 0) {
                             SessionEvaluation::create([
                                 'training_session_id' => $session->id,
@@ -478,7 +492,7 @@ class WeeklyReportController extends Controller
                 OjtPlacement::where('training_session_id', $session->id)->delete();
                 if (isset($sData['ojt']) && is_array($sData['ojt'])) {
                     foreach ($sData['ojt'] as $tId => $oData) {
-                        if (!empty($oData['location_code']) || !empty($oData['region'])) {
+                        if (! empty($oData['location_code']) || ! empty($oData['region'])) {
                             OjtPlacement::create([
                                 'training_session_id' => $session->id,
                                 'trainee_id' => $tId,
@@ -500,7 +514,7 @@ class WeeklyReportController extends Controller
                             'weekly_report_id' => $weeklyReport->id,
                             'trainee_id' => $tId,
                             'materi_name' => $subjects[$sIdx],
-                            'score' => $score
+                            'score' => $score,
                         ]);
                     }
                 }
@@ -523,14 +537,16 @@ class WeeklyReportController extends Controller
 
             // Update Resignations
             // Delete missing
-            $requestResignIds = collect($request->resignees ?? [])->pluck('id')->filter(function($id) { return is_numeric($id) && $id < 1000000; })->toArray(); // 1000000 to filter JS date.now()
-            
-            $deletedResignations = Resignation::whereHas('trainee', function($q) use ($weeklyReport) {
-                    $q->where('training_program_id', $weeklyReport->training_program_id);
-                })
+            $requestResignIds = collect($request->resignees ?? [])->pluck('id')->filter(function ($id) {
+                return is_numeric($id) && $id < 1000000;
+            })->toArray(); // 1000000 to filter JS date.now()
+
+            $deletedResignations = Resignation::whereHas('trainee', function ($q) use ($weeklyReport) {
+                $q->where('training_program_id', $weeklyReport->training_program_id);
+            })
                 ->whereNotIn('id', $requestResignIds)
                 ->get();
-                
+
             foreach ($deletedResignations as $delRes) {
                 $delTrainee = Trainee::find($delRes->trainee_id);
                 if ($delTrainee) {
@@ -540,19 +556,19 @@ class WeeklyReportController extends Controller
             }
 
             foreach ($request->resignees ?? [] as $idx => $resData) {
-                if (!empty($resData['trainee_id'])) {
+                if (! empty($resData['trainee_id'])) {
                     $trainee = Trainee::find($resData['trainee_id']);
                     if ($trainee) {
                         $trainee->update(['status' => 'resign']);
                     }
 
                     $resig = null;
-                    if (!empty($resData['id']) && is_numeric($resData['id']) && $resData['id'] < 1000000) {
+                    if (! empty($resData['id']) && is_numeric($resData['id']) && $resData['id'] < 1000000) {
                         $resig = Resignation::find($resData['id']);
                     }
-                    
-                    if (!$resig) {
-                        $resig = new Resignation();
+
+                    if (! $resig) {
+                        $resig = new Resignation;
                         $resig->weekly_report_id = $weeklyReport->id;
                     }
 
@@ -565,34 +581,36 @@ class WeeklyReportController extends Controller
                     $resig->avg_practice_score = $resData['avg_practice_score'] ?: 0;
                     $resig->practice_rank = $resData['practice_rank'] ?: 0;
 
-                    if (!empty($resData['photo']) && $resData['photo'] instanceof \Illuminate\Http\UploadedFile && $resData['photo']->isValid()) {
+                    if (! empty($resData['photo']) && $resData['photo'] instanceof UploadedFile && $resData['photo']->isValid()) {
                         if ($resig->photo_path) {
                             Storage::disk('public')->delete($resig->photo_path);
                         }
                         $resig->photo_path = $resData['photo']->store('resignation_photos', 'public');
-                    } elseif (!empty($resData['delete_photo'])) {
+                    } elseif (! empty($resData['delete_photo'])) {
                         if ($resig->photo_path) {
                             Storage::disk('public')->delete($resig->photo_path);
                             $resig->photo_path = null;
                         }
                     }
-                    
+
                     $resig->save();
                 }
             }
 
             DB::commit();
+
             return redirect()->route('training-reguler.weekly-reports.index')->with('success', 'Laporan Mingguan berhasil diperbarui!');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+
+            return back()->with('error', 'Terjadi kesalahan: '.$e->getMessage())->withInput();
         }
     }
 
     public function merge(Request $request)
     {
         $ids = $request->input('report_ids', []);
-        
+
         if (count($ids) < 2) {
             return back()->with('error', 'Pilih minimal 2 laporan untuk digabungkan.');
         }
@@ -604,7 +622,7 @@ class WeeklyReportController extends Controller
 
         DB::beginTransaction();
         try {
-            $mergedProgramNames = $reports->map(function($r) {
+            $mergedProgramNames = $reports->map(function ($r) {
                 return $r->trainingProgram->name ?? 'Unknown';
             })->unique()->implode(' & ');
 
@@ -612,41 +630,43 @@ class WeeklyReportController extends Controller
 
             $mergedReport = WeeklyReport::create([
                 'training_program_id' => $firstReport->training_program_id,
-                'trainer_id'          => $firstReport->trainer_id,
-                'week_start_date'     => $firstReport->week_start_date,
-                'week_end_date'       => $firstReport->week_end_date,
-                'theme'               => $firstReport->theme,
-                'status'              => 'submitted',
-                'is_merged'           => true,
+                'trainer_id' => $firstReport->trainer_id,
+                'week_start_date' => $firstReport->week_start_date,
+                'week_end_date' => $firstReport->week_end_date,
+                'theme' => $firstReport->theme,
+                'status' => 'submitted',
+                'is_merged' => true,
                 'merged_program_names' => $mergedProgramNames,
-                'training_purpose'    => $firstReport->training_purpose,
-                'quote'               => $firstReport->quote,
+                'training_purpose' => $firstReport->training_purpose,
+                'quote' => $firstReport->quote,
                 'cover_photo_1' => $firstReport->cover_photo_1,
                 'cover_photo_2' => $firstReport->cover_photo_2,
                 'cover_photo_3' => $firstReport->cover_photo_3,
                 'cover_photo_4' => $firstReport->cover_photo_4,
                 'cover_photo_5' => $firstReport->cover_photo_5,
                 'cover_photo_6' => $firstReport->cover_photo_6,
-                'strip_photos'  => $firstReport->strip_photos,
+                'strip_photos' => $firstReport->strip_photos,
             ]);
 
             foreach ($reports as $report) {
                 $report->parent_report_id = $mergedReport->id;
                 $report->save();
-                $report->delete(); 
+                $report->delete();
             }
 
             DB::commit();
+
             return redirect()->route('training-reguler.weekly-reports.index')->with('success', 'Laporan berhasil digabungkan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal menggabungkan: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal menggabungkan: '.$e->getMessage());
         }
     }
 
     public function unmerge(WeeklyReport $weeklyReport)
     {
-        if (!$weeklyReport->is_merged) {
+        if (! $weeklyReport->is_merged) {
             return back()->with('error', 'Laporan ini bukan hasil gabungan.');
         }
 
@@ -663,33 +683,34 @@ class WeeklyReportController extends Controller
             foreach ($originalReports as $oldReport) {
                 $oldReport->restore();
 
-                $sessions = $weeklyReport->trainingSessions()->with('sessionParticipants.trainee')->get()->filter(function($session) use ($oldReport) {
+                $sessions = $weeklyReport->trainingSessions()->with('sessionParticipants.trainee')->get()->filter(function ($session) use ($oldReport) {
                     $programName = $oldReport->trainingProgram->name ?? null;
                     if ($session->program_source && $session->program_source === $programName) {
                         return true;
                     }
                     $firstParticipant = $session->sessionParticipants->first();
+
                     return $firstParticipant && $firstParticipant->trainee && $firstParticipant->trainee->training_program_id == $oldReport->training_program_id;
                 });
                 foreach ($sessions as $session) {
                     $session->update(['weekly_report_id' => $oldReport->id]);
                 }
 
-                $quizScores = $weeklyReport->quizScores()->whereHas('trainee', function($q) use ($oldReport) {
+                $quizScores = $weeklyReport->quizScores()->whereHas('trainee', function ($q) use ($oldReport) {
                     $q->where('training_program_id', $oldReport->training_program_id);
                 })->get();
                 foreach ($quizScores as $qs) {
                     $qs->update(['weekly_report_id' => $oldReport->id]);
                 }
 
-                $rankings = $weeklyReport->rankings()->whereHas('trainee', function($q) use ($oldReport) {
+                $rankings = $weeklyReport->rankings()->whereHas('trainee', function ($q) use ($oldReport) {
                     $q->where('training_program_id', $oldReport->training_program_id);
                 })->get();
                 foreach ($rankings as $rank) {
                     $rank->update(['weekly_report_id' => $oldReport->id]);
                 }
 
-                $resignations = $weeklyReport->resignations()->whereHas('trainee', function($q) use ($oldReport) {
+                $resignations = $weeklyReport->resignations()->whereHas('trainee', function ($q) use ($oldReport) {
                     $q->where('training_program_id', $oldReport->training_program_id);
                 })->get();
                 foreach ($resignations as $resig) {
@@ -703,10 +724,12 @@ class WeeklyReportController extends Controller
             $weeklyReport->forceDelete();
 
             DB::commit();
+
             return redirect()->route('training-reguler.weekly-reports.index')->with('success', 'Berhasil membatalkan penggabungan laporan.');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Gagal membatalkan penggabungan: ' . $e->getMessage());
+
+            return back()->with('error', 'Gagal membatalkan penggabungan: '.$e->getMessage());
         }
     }
 }

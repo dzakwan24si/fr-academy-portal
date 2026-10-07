@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class WeeklyReport extends Model
@@ -15,9 +14,10 @@ class WeeklyReport extends Model
 
     protected $casts = [
         'week_start_date' => 'date',
-        'week_end_date'   => 'date',
-        'strip_photos'    => 'array',
+        'week_end_date' => 'date',
+        'strip_photos' => 'array',
     ];
+
     public function trainingProgram()
     {
         return $this->belongsTo(TrainingProgram::class);

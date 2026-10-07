@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\Program;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Program\TrainingRecord;
-use App\Models\Program\ProgramReguler;
-use App\Models\Program\ProgramNonReguler;
-use App\Models\Monitoring\MonitoringEmployee;
+use App\Models\AppSetting;
 use App\Models\Monitoring\MonitoringAngkatan;
 use App\Models\Monitoring\MonitoringCulled;
+use App\Models\Monitoring\MonitoringEmployee;
 use App\Models\Monitoring\MonitoringTalent;
-use App\Models\AppSetting;
+use App\Models\Program\ProgramNonReguler;
+use App\Models\Program\ProgramReguler;
+use App\Models\Program\TrainingRecord;
 use App\Services\SpreadsheetReader;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -26,9 +26,12 @@ class DashboardRealisasiController extends Controller
 
     public function parseMonthNumber($value): ?int
     {
-        if ($value === null || $value === '' || $value === 'all') return null;
+        if ($value === null || $value === '' || $value === 'all') {
+            return null;
+        }
         if (is_numeric($value)) {
             $num = (int) $value;
+
             return ($num >= 1 && $num <= 12) ? $num : null;
         }
 
@@ -39,19 +42,29 @@ class DashboardRealisasiController extends Controller
             'AGU' => 8, 'AGS' => 8, 'AUG' => 8, 'SEP' => 9,
             'OKT' => 10, 'OCT' => 10, 'NOV' => 11, 'DES' => 12, 'DEC' => 12,
         ];
+
         return $map[$upper] ?? null;
     }
 
     public function extractYearFromField($val): ?int
     {
-        if (empty($val)) return null;
-        if ($val instanceof \DateTimeInterface) return (int) $val->format('Y');
-        if (is_numeric($val) && (int)$val >= 2000 && (int)$val <= 2100) return (int) $val;
+        if (empty($val)) {
+            return null;
+        }
+        if ($val instanceof \DateTimeInterface) {
+            return (int) $val->format('Y');
+        }
+        if (is_numeric($val) && (int) $val >= 2000 && (int) $val <= 2100) {
+            return (int) $val;
+        }
         if (is_array($val)) {
             foreach ($val as $item) {
                 $y = $this->extractYearFromField($item);
-                if ($y) return $y;
+                if ($y) {
+                    return $y;
+                }
             }
+
             return null;
         }
         if (is_string($val)) {
@@ -70,60 +83,97 @@ class DashboardRealisasiController extends Controller
                 return (int) date('Y', $time);
             }
         }
+
         return null;
     }
 
     public function resolveProgramRegulerYear($p): int
     {
-        if ($p->Mulai_program && ($y = $this->extractYearFromField($p->Mulai_program))) return $y;
-        if (!empty($p->Training_Program) && preg_match('/\b(20\d{2})\b/', $p->Training_Program, $m)) return (int) $m[1];
-        if (!empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) return $y;
-        if (!empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) return $y;
-        if ($p->Selesai_program && ($y = $this->extractYearFromField($p->Selesai_program))) return $y;
-        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) return $y;
+        if ($p->Mulai_program && ($y = $this->extractYearFromField($p->Mulai_program))) {
+            return $y;
+        }
+        if (! empty($p->Training_Program) && preg_match('/\b(20\d{2})\b/', $p->Training_Program, $m)) {
+            return (int) $m[1];
+        }
+        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
+            return $y;
+        }
+        if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
+            return $y;
+        }
+        if ($p->Selesai_program && ($y = $this->extractYearFromField($p->Selesai_program))) {
+            return $y;
+        }
+        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) {
+            return $y;
+        }
+
         return 2026;
     }
 
     public function resolveProgramNonRegulerYear($p): int
     {
-        if ($p->start_date && ($y = $this->extractYearFromField($p->start_date))) return $y;
-        if (!empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) return $y;
-        if (!empty($p->jenis_pelatihan) && preg_match('/\b(20\d{2})\b/', $p->jenis_pelatihan, $m)) return (int) $m[1];
-        if (!empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) return $y;
-        if ($p->end_date && ($y = $this->extractYearFromField($p->end_date))) return $y;
-        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) return $y;
+        if ($p->start_date && ($y = $this->extractYearFromField($p->start_date))) {
+            return $y;
+        }
+        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
+            return $y;
+        }
+        if (! empty($p->jenis_pelatihan) && preg_match('/\b(20\d{2})\b/', $p->jenis_pelatihan, $m)) {
+            return (int) $m[1];
+        }
+        if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
+            return $y;
+        }
+        if ($p->end_date && ($y = $this->extractYearFromField($p->end_date))) {
+            return $y;
+        }
+        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) {
+            return $y;
+        }
+
         return 2026;
     }
 
     protected function filterRegulerByYear($programs, int $year)
     {
-        return $programs->filter(function($p) use ($year) {
+        return $programs->filter(function ($p) use ($year) {
             $mulaiYear = $p->Mulai_program ? $this->extractYearFromField($p->Mulai_program) : null;
             $selesaiYear = $p->Selesai_program ? $this->extractYearFromField($p->Selesai_program) : null;
-            $titleYear = (!empty($p->Training_Program) && preg_match('/\b(20\d{2})\b/', $p->Training_Program, $m)) ? (int) $m[1] : null;
+            $titleYear = (! empty($p->Training_Program) && preg_match('/\b(20\d{2})\b/', $p->Training_Program, $m)) ? (int) $m[1] : null;
 
             if ($year === 2026) {
                 // Include programs from 2025 carry-over, 2026, and 2027 planned (like TAT I 2027, MAT I 2027)
                 if ($p->Mulai_program) {
                     $mY = (int) date('Y', strtotime($p->Mulai_program));
-                    if ($mY === 2026 || $mY === 2025) return true;
+                    if ($mY === 2026 || $mY === 2025) {
+                        return true;
+                    }
                 }
-                if ($titleYear === 2026 || $titleYear === 2025) return true;
-                if (!empty($p->Training_Program) && (str_contains($p->Training_Program, 'TAT I 2027') || str_contains($p->Training_Program, 'MAT I 2027'))) {
+                if ($titleYear === 2026 || $titleYear === 2025) {
+                    return true;
+                }
+                if (! empty($p->Training_Program) && (str_contains($p->Training_Program, 'TAT I 2027') || str_contains($p->Training_Program, 'MAT I 2027'))) {
                     return true;
                 }
             }
 
-            if ($titleYear === $year) return true;
+            if ($titleYear === $year) {
+                return true;
+            }
 
             if ($mulaiYear && $selesaiYear) {
                 if ($mulaiYear <= $year && $selesaiYear >= $year) {
                     return true;
                 }
             } elseif ($mulaiYear) {
-                if ($mulaiYear === $year) return true;
+                if ($mulaiYear === $year) {
+                    return true;
+                }
             } elseif ($selesaiYear) {
-                if ($selesaiYear === $year) return true;
+                if ($selesaiYear === $year) {
+                    return true;
+                }
             }
 
             return $this->resolveProgramRegulerYear($p) === $year;
@@ -132,19 +182,19 @@ class DashboardRealisasiController extends Controller
 
     protected function filterNonRegulerByYear($programs, int $year)
     {
-        return $programs->filter(function($p) use ($year) {
+        return $programs->filter(function ($p) use ($year) {
             return $this->resolveProgramNonRegulerYear($p) === $year;
         });
     }
 
     protected function filterRecordsByYearAndCumulativeMonth($records, int $year, ?int $selectedMonthNum)
     {
-        return $records->filter(function($r) use ($year, $selectedMonthNum) {
+        return $records->filter(function ($r) use ($year, $selectedMonthNum) {
             // 1. Year filter
             $rYear = null;
-            if (!empty($r->tahun)) {
+            if (! empty($r->tahun)) {
                 $rYear = (int) $r->tahun;
-            } elseif (!empty($r->training_date)) {
+            } elseif (! empty($r->training_date)) {
                 $rYear = (int) date('Y', strtotime($r->training_date));
             } elseif (method_exists($r, 'activityDates')) {
                 $dates = $r->activityDates();
@@ -154,7 +204,7 @@ class DashboardRealisasiController extends Controller
                         break;
                     }
                 }
-            } elseif (!empty($r->created_at)) {
+            } elseif (! empty($r->created_at)) {
                 $rYear = (int) date('Y', strtotime($r->created_at));
             } else {
                 $rYear = 2026;
@@ -162,7 +212,7 @@ class DashboardRealisasiController extends Controller
 
             if ($rYear !== $year) {
                 // Allow carry-over training records (from previous year) for reguler programs
-                if (!($r->program_type === 'reguler' && $rYear === $year - 1)) {
+                if (! ($r->program_type === 'reguler' && $rYear === $year - 1)) {
                     return false;
                 }
             }
@@ -173,10 +223,10 @@ class DashboardRealisasiController extends Controller
                 if ($r->bulan) {
                     $mNum = $this->parseMonthNumber($r->bulan);
                 }
-                if (!$mNum && $r->training_date) {
+                if (! $mNum && $r->training_date) {
                     $mNum = (int) date('n', strtotime($r->training_date));
                 }
-                if (!$mNum && method_exists($r, 'activityDates')) {
+                if (! $mNum && method_exists($r, 'activityDates')) {
                     $dates = $r->activityDates();
                     foreach ($dates as $d) {
                         if ($d) {
@@ -197,23 +247,23 @@ class DashboardRealisasiController extends Controller
 
     public function index(Request $request)
     {
-        $trYears = TrainingRecord::whereNotNull('tahun')->pluck('tahun')->map(fn($y) => (int)$y)->filter()->all();
-        $trDateYears = TrainingRecord::whereNotNull('training_date')->get()->map(fn($r) => (int) date('Y', strtotime($r->training_date)))->filter()->all();
-        $regYears = ProgramReguler::all()->map(fn($p) => $this->resolveProgramRegulerYear($p))->filter()->all();
-        $nonRegYears = ProgramNonReguler::all()->map(fn($p) => $this->resolveProgramNonRegulerYear($p))->filter()->all();
+        $trYears = TrainingRecord::whereNotNull('tahun')->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
+        $trDateYears = TrainingRecord::whereNotNull('training_date')->get()->map(fn ($r) => (int) date('Y', strtotime($r->training_date)))->filter()->all();
+        $regYears = ProgramReguler::all()->map(fn ($p) => $this->resolveProgramRegulerYear($p))->filter()->all();
+        $nonRegYears = ProgramNonReguler::all()->map(fn ($p) => $this->resolveProgramNonRegulerYear($p))->filter()->all();
 
         $years = collect([2024, 2025, 2026, 2027])
             ->merge($trYears)
             ->merge($trDateYears)
             ->merge($regYears)
             ->merge($nonRegYears)
-            ->filter(fn($y) => $y >= 2000 && $y <= 2100)
+            ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
             ->unique()
             ->sort()
             ->values()
             ->all();
 
-        $yearDefault = in_array(2026, $years, true) ? 2026 : ($years[count($years)-1] ?? (int)date('Y'));
+        $yearDefault = in_array(2026, $years, true) ? 2026 : ($years[count($years) - 1] ?? (int) date('Y'));
         $year = (int) $request->input('year', $yearDefault);
 
         $rawMonth = $request->input('month', 'all');
@@ -232,16 +282,25 @@ class DashboardRealisasiController extends Controller
         $level = trim((string) $request->input('level', 'all'));
 
         // Collect distinct available regions from databases
-        $regulerRegions = ProgramReguler::distinct()->pluck('Region')->filter()->map(fn($r) => trim((string)$r));
-        $nonRegulerRegions = ProgramNonReguler::distinct()->pluck('region')->filter()->map(fn($r) => trim((string)$r));
-        $recordRegions = TrainingRecord::distinct()->pluck('region')->filter()->map(fn($r) => trim((string)$r));
+        $regulerRegions = ProgramReguler::distinct()->pluck('Region')->filter()->map(fn ($r) => trim((string) $r));
+        $nonRegulerRegions = ProgramNonReguler::distinct()->pluck('region')->filter()->map(fn ($r) => trim((string) $r));
+        $recordRegions = TrainingRecord::distinct()->pluck('region')->filter()->map(fn ($r) => trim((string) $r));
 
         $allRegions = $regulerRegions->merge($nonRegulerRegions)->merge($recordRegions)
-            ->map(function($r) {
-                if (strcasecmp($r, 'riau') === 0) return 'Riau';
-                if (strcasecmp($r, 'kalbar') === 0) return 'Kalbar';
-                if (strcasecmp($r, 'kaltim') === 0 || strcasecmp($r, 'kaltim fr') === 0) return 'Kaltim FR';
-                if (strcasecmp($r, 'corporate') === 0) return 'Corporate';
+            ->map(function ($r) {
+                if (strcasecmp($r, 'riau') === 0) {
+                    return 'Riau';
+                }
+                if (strcasecmp($r, 'kalbar') === 0) {
+                    return 'Kalbar';
+                }
+                if (strcasecmp($r, 'kaltim') === 0 || strcasecmp($r, 'kaltim fr') === 0) {
+                    return 'Kaltim FR';
+                }
+                if (strcasecmp($r, 'corporate') === 0) {
+                    return 'Corporate';
+                }
+
                 return $r;
             })
             ->unique()
@@ -251,20 +310,20 @@ class DashboardRealisasiController extends Controller
         // Program Options & Category Options for Dropdown Filter
         $regulerProgramOptions = ProgramReguler::pluck('Training_Program')
             ->toBase()
-            ->map(function($p) {
+            ->map(function ($p) {
                 return trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p));
             })->filter()->unique()->values();
 
         $nonRegulerProgramOptions = ProgramNonReguler::pluck('jenis_pelatihan')
             ->toBase()
-            ->map(function($p) {
+            ->map(function ($p) {
                 return trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p));
             })->filter()->unique()->values();
 
         $nonRegulerCategoryOptions = ProgramNonReguler::pluck('kategori_pelatihan')
             ->concat(ProgramNonReguler::pluck('sub_kategori'))
             ->filter()
-            ->map(fn($c) => trim((string)$c))
+            ->map(fn ($c) => trim((string) $c))
             ->unique()
             ->values()
             ->all();
@@ -282,31 +341,34 @@ class DashboardRealisasiController extends Controller
         if ($region !== 'all') {
             $searchRegion = $region;
             if (strcasecmp($region, 'Kaltim FR') === 0) {
-                $trainingRecordQuery->where(function($q) {
+                $trainingRecordQuery->where(function ($q) {
                     $q->where('region', 'LIKE', '%kaltim%')
-                      ->orWhere('region', 'LIKE', '%Kaltim FR%');
+                        ->orWhere('region', 'LIKE', '%Kaltim FR%');
                 });
             } else {
-                $trainingRecordQuery->where('region', 'LIKE', '%' . $searchRegion . '%');
+                $trainingRecordQuery->where('region', 'LIKE', '%'.$searchRegion.'%');
             }
         }
         if ($level !== 'all' && $level !== '') {
-            $trainingRecordQuery->where('level', 'LIKE', '%' . $level . '%');
+            $trainingRecordQuery->where('level', 'LIKE', '%'.$level.'%');
         }
 
         // 1. Progress MT Per Program Tables (Separated into Staf & Mandor)
-        $cleanStr = fn($str) => SpreadsheetReader::cleanString($str);
+        $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
 
-        $normalizeName = function(?string $name): string {
-            if (!$name) return '';
+        $normalizeName = function (?string $name): string {
+            if (! $name) {
+                return '';
+            }
             $clean = strtolower(trim($name));
             $clean = preg_replace('/[.\-_,]/', ' ', $clean);
             $clean = preg_replace('/\s+/', ' ', $clean);
             $clean = str_replace('deofinka', 'df', $clean);
+
             return trim($clean);
         };
 
-        $normalizeAngkatan = function(string $name): string {
+        $normalizeAngkatan = function (string $name): string {
             $str = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', $name)));
             $str = str_replace(
                 ['FIELD ASSISTANT', 'ESTATE CADET TRAINEE', 'ESTATE CADET', 'MILL ASSISTANT', 'ADMIN ASSISTANT', 'PROCESSING', 'PABRIK'],
@@ -315,34 +377,35 @@ class DashboardRealisasiController extends Controller
             );
             $str = preg_replace('/[^A-Z0-9]/', ' ', $str);
             $parts = array_values(array_filter(explode(' ', $str)));
+
             return implode('-', $parts);
         };
 
         $allEmployees = MonitoringEmployee::all();
         $allCulled = MonitoringCulled::all();
         $allAngkatans = MonitoringAngkatan::all();
-        $allTrainingRecords = (clone $trainingRecordQuery)->where(function($q) {
+        $allTrainingRecords = (clone $trainingRecordQuery)->where(function ($q) {
             $q->where('program_type', 'reguler')
-              ->orWhere('notes', 'LIKE', 'FAT%')
-              ->orWhere('notes', 'LIKE', 'MAT%')
-              ->orWhere('notes', 'LIKE', 'TAT%')
-              ->orWhere('notes', 'LIKE', 'AAT%')
-              ->orWhere('notes', 'LIKE', 'DMT%')
-              ->orWhere('notes', 'LIKE', 'ECT%')
-              ->orWhere('notes', 'LIKE', 'PMT%')
-              ->orWhere('notes', 'LIKE', 'PKT%');
+                ->orWhere('notes', 'LIKE', 'FAT%')
+                ->orWhere('notes', 'LIKE', 'MAT%')
+                ->orWhere('notes', 'LIKE', 'TAT%')
+                ->orWhere('notes', 'LIKE', 'AAT%')
+                ->orWhere('notes', 'LIKE', 'DMT%')
+                ->orWhere('notes', 'LIKE', 'ECT%')
+                ->orWhere('notes', 'LIKE', 'PMT%')
+                ->orWhere('notes', 'LIKE', 'PKT%');
         })->get();
         $allTrainingRecords = $this->filterRecordsByYearAndCumulativeMonth($allTrainingRecords, $year, $selectedMonthNum);
 
         $regulerProgramsQuery = ProgramReguler::query();
         if ($region !== 'all') {
             if (strcasecmp($region, 'Kaltim FR') === 0) {
-                $regulerProgramsQuery->where(function($q) {
+                $regulerProgramsQuery->where(function ($q) {
                     $q->where('Region', 'LIKE', '%kaltim%')
-                      ->orWhere('Region', 'LIKE', '%Kaltim FR%');
+                        ->orWhere('Region', 'LIKE', '%Kaltim FR%');
                 });
             } else {
-                $regulerProgramsQuery->where('Region', 'LIKE', '%' . $region . '%');
+                $regulerProgramsQuery->where('Region', 'LIKE', '%'.$region.'%');
             }
         }
         $regulerPrograms = $regulerProgramsQuery->get();
@@ -352,22 +415,25 @@ class DashboardRealisasiController extends Controller
             $regulerPrograms = collect();
         } else {
             if ($category === 'staf') {
-                $regulerPrograms = $regulerPrograms->filter(function($p) use ($cleanStr) {
+                $regulerPrograms = $regulerPrograms->filter(function ($p) use ($cleanStr) {
                     $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
                     $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
-                    return !$isMandor;
+
+                    return ! $isMandor;
                 });
             } elseif ($category === 'mandor') {
-                $regulerPrograms = $regulerPrograms->filter(function($p) use ($cleanStr) {
+                $regulerPrograms = $regulerPrograms->filter(function ($p) use ($cleanStr) {
                     $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
                     $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
+
                     return $isMandor;
                 });
             }
 
             if ($selectedProgram !== 'all' && $selectedProgram !== '') {
-                $regulerPrograms = $regulerPrograms->filter(function($p) use ($selectedProgram, $cleanStr) {
+                $regulerPrograms = $regulerPrograms->filter(function ($p) use ($selectedProgram, $cleanStr) {
                     $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
+
                     return strcasecmp($pName, $selectedProgram) === 0 || str_contains($cleanStr($pName), $cleanStr($selectedProgram));
                 });
             }
@@ -390,35 +456,41 @@ class DashboardRealisasiController extends Controller
             $normPName = $normalizeAngkatan($pName);
 
             // Matching helper strictly for this program batch
-            $isMatch = function(string $rawCandidate) use ($normPName, $normalizeAngkatan) {
-                if (trim($rawCandidate) === '') return false;
+            $isMatch = function (string $rawCandidate) use ($normPName, $normalizeAngkatan) {
+                if (trim($rawCandidate) === '') {
+                    return false;
+                }
                 $candidate = $normalizeAngkatan($rawCandidate);
-                if ($candidate === $normPName) return true;
-                
+                if ($candidate === $normPName) {
+                    return true;
+                }
+
                 // Special case for AAT II 2025 (Carry Over) which has records labeled AAT II 2026
                 if (str_starts_with($normPName, 'AAT-II') && str_starts_with($candidate, 'AAT-II')) {
                     return true;
                 }
+
                 return false;
             };
 
             // 1. Matched Training Records (Unique participant names)
-            $trNames = $allTrainingRecords->filter(fn($r) => $isMatch((string)$r->notes))
+            $trNames = $allTrainingRecords->filter(fn ($r) => $isMatch((string) $r->notes))
                 ->pluck('participant_name')
                 ->map($normalizeName)
                 ->filter()
                 ->unique();
 
             // 2. Matched Employees (Unique participant names)
-            $empNames = $allEmployees->filter(fn($e) => $isMatch((string)$e->angkatan_fr_academy))
+            $empNames = $allEmployees->filter(fn ($e) => $isMatch((string) $e->angkatan_fr_academy))
                 ->pluck('nama')
                 ->map($normalizeName)
                 ->filter()
                 ->unique();
 
             // 3. Matched Culled (Unique names)
-            $culledNames = $allCulled->filter(function($c) use ($allAngkatans, $isMatch) {
+            $culledNames = $allCulled->filter(function ($c) use ($allAngkatans, $isMatch) {
                 $ang = $allAngkatans->firstWhere('id_angkatan', $c->id_angkatan);
+
                 return $ang && $isMatch((string) $ang->angkatan);
             })->pluck('nama')->map($normalizeName)->filter()->unique();
 
@@ -427,10 +499,11 @@ class DashboardRealisasiController extends Controller
             $kelas = $allInClass->count();
 
             // 5. Resigned participants (Deduplicated)
-            $matchingEmps = $allEmployees->filter(fn($e) => $isMatch((string)$e->angkatan_fr_academy));
-            $resignedEmpNames = $matchingEmps->filter(function($e) {
+            $matchingEmps = $allEmployees->filter(fn ($e) => $isMatch((string) $e->angkatan_fr_academy));
+            $resignedEmpNames = $matchingEmps->filter(function ($e) {
                 $stat = strtoupper(trim($e->status ?: $e->kategori ?: ''));
-                return in_array($stat, ['RESIGN', 'TERMINATE']) || !empty($e->date_terminate) || !empty($e->alasan_resign);
+
+                return in_array($stat, ['RESIGN', 'TERMINATE']) || ! empty($e->date_terminate) || ! empty($e->alasan_resign);
             })->pluck('nama')->map($normalizeName)->filter()->unique();
 
             $allResigned = $resignedEmpNames->concat($culledNames)->unique()->values();
@@ -491,19 +564,26 @@ class DashboardRealisasiController extends Controller
         // 1. Progres Reguler Staff (Management Trainee) KPI Card - Excludes Mandor
         // Kalkulasi persentase = (jumlah peserta di kelas / target rencana) * 100
         $now = Carbon::now();
-        $regulerStaffPrograms = $regulerPrograms->filter(function($p) use ($cleanStr) {
+        $regulerStaffPrograms = $regulerPrograms->filter(function ($p) use ($cleanStr) {
             $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
             $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
-            return !$isMandor;
+
+            return ! $isMandor;
         });
 
-        $regulerBerjalan = $regulerStaffPrograms->filter(function($p) use ($now) {
-            if (!$p->Mulai_program) return true;
-            return $p->Mulai_program <= $now && ($p->Selesai_program >= $now || !$p->Selesai_program);
+        $regulerBerjalan = $regulerStaffPrograms->filter(function ($p) use ($now) {
+            if (! $p->Mulai_program) {
+                return true;
+            }
+
+            return $p->Mulai_program <= $now && ($p->Selesai_program >= $now || ! $p->Selesai_program);
         })->count();
 
-        $regulerSelesai = $regulerStaffPrograms->filter(function($p) use ($now) {
-            if (!$p->Selesai_program) return false;
+        $regulerSelesai = $regulerStaffPrograms->filter(function ($p) use ($now) {
+            if (! $p->Selesai_program) {
+                return false;
+            }
+
             return $p->Selesai_program < $now;
         })->count();
 
@@ -526,7 +606,7 @@ class DashboardRealisasiController extends Controller
         }
 
         $totalTalent = $talentQuery->count();
-        $sudahPenugasan = (clone $talentQuery)->where(function($sub) {
+        $sudahPenugasan = (clone $talentQuery)->where(function ($sub) {
             $sub->where('status', 'LIKE', '%sudah penugasan%')
                 ->orWhere('status', 'LIKE', '%confirm%');
         })->count();
@@ -541,7 +621,7 @@ class DashboardRealisasiController extends Controller
             ->groupBy('talent_to')
             ->orderByDesc('total')
             ->get()
-            ->map(fn($item) => [
+            ->map(fn ($item) => [
                 'role' => $item->talent_to,
                 'count' => (int) $item->total,
             ])
@@ -561,30 +641,36 @@ class DashboardRealisasiController extends Controller
         $nonRegulerProgramsQuery = ProgramNonReguler::query();
         if ($region !== 'all') {
             if (strcasecmp($region, 'Kaltim FR') === 0) {
-                $nonRegulerProgramsQuery->where(function($q) {
+                $nonRegulerProgramsQuery->where(function ($q) {
                     $q->where('region', 'LIKE', '%kaltim%')
-                      ->orWhere('region', 'LIKE', '%Kaltim FR%');
+                        ->orWhere('region', 'LIKE', '%Kaltim FR%');
                 });
             } else {
-                $nonRegulerProgramsQuery->where('region', 'LIKE', '%' . $region . '%');
+                $nonRegulerProgramsQuery->where('region', 'LIKE', '%'.$region.'%');
             }
         }
         $regulerPrefixes = ['FAT', 'MAT', 'TAT', 'AAT', 'DMT', 'ECT', 'PMT', 'PKT'];
         $nonRegulerPrograms = $nonRegulerProgramsQuery->get();
-        $nonRegulerPrograms = $this->filterNonRegulerByYear($nonRegulerPrograms, $year)->filter(function($p) use ($regulerPrefixes) {
+        $nonRegulerPrograms = $this->filterNonRegulerByYear($nonRegulerPrograms, $year)->filter(function ($p) use ($regulerPrefixes) {
             $name = strtoupper(trim($p->jenis_pelatihan));
             foreach ($regulerPrefixes as $prefix) {
-                if (str_starts_with($name, $prefix)) return false;
+                if (str_starts_with($name, $prefix)) {
+                    return false;
+                }
             }
+
             return true;
         });
 
         $trNonReg = (clone $trainingRecordQuery)->where('program_type', 'non_reguler')->get();
-        $trNonReg = $this->filterRecordsByYearAndCumulativeMonth($trNonReg, $year, $selectedMonthNum)->filter(function($r) use ($regulerPrefixes) {
-            $notes = strtoupper(trim((string)$r->notes));
+        $trNonReg = $this->filterRecordsByYearAndCumulativeMonth($trNonReg, $year, $selectedMonthNum)->filter(function ($r) use ($regulerPrefixes) {
+            $notes = strtoupper(trim((string) $r->notes));
             foreach ($regulerPrefixes as $prefix) {
-                if (str_starts_with($notes, $prefix)) return false;
+                if (str_starts_with($notes, $prefix)) {
+                    return false;
+                }
             }
+
             return true;
         });
 
@@ -592,12 +678,12 @@ class DashboardRealisasiController extends Controller
             $nonRegulerPrograms = collect();
         } else {
             if ($category === 'managerial' || strcasecmp($category, 'Managerial and Leadership') === 0 || strcasecmp($category, 'Softskill') === 0) {
-                $nonRegulerPrograms = $nonRegulerPrograms->filter(fn($p) => $p->isSoftSkill() || str_contains($cleanStr($p->kategori_pelatihan), 'managerial') || str_contains($cleanStr($p->sub_kategori), 'soft'));
+                $nonRegulerPrograms = $nonRegulerPrograms->filter(fn ($p) => $p->isSoftSkill() || str_contains($cleanStr($p->kategori_pelatihan), 'managerial') || str_contains($cleanStr($p->sub_kategori), 'soft'));
             } elseif ($category === 'technical' || strcasecmp($category, 'Technical') === 0) {
-                $nonRegulerPrograms = $nonRegulerPrograms->filter(fn($p) => !$p->isSoftSkill() || str_contains($cleanStr($p->kategori_pelatihan), 'technical'));
+                $nonRegulerPrograms = $nonRegulerPrograms->filter(fn ($p) => ! $p->isSoftSkill() || str_contains($cleanStr($p->kategori_pelatihan), 'technical'));
             } elseif ($category !== 'all' && $category !== '') {
                 $searchCat = $cleanStr($category);
-                $nonRegulerPrograms = $nonRegulerPrograms->filter(function($p) use ($searchCat, $cleanStr) {
+                $nonRegulerPrograms = $nonRegulerPrograms->filter(function ($p) use ($searchCat, $cleanStr) {
                     return str_contains($cleanStr($p->sub_kategori), $searchCat)
                         || str_contains($cleanStr($p->kategori_pelatihan), $searchCat)
                         || str_contains($cleanStr($p->jenis_pelatihan), $searchCat);
@@ -605,8 +691,9 @@ class DashboardRealisasiController extends Controller
             }
 
             if ($selectedProgram !== 'all' && $selectedProgram !== '') {
-                $nonRegulerPrograms = $nonRegulerPrograms->filter(function($p) use ($selectedProgram, $cleanStr) {
+                $nonRegulerPrograms = $nonRegulerPrograms->filter(function ($p) use ($selectedProgram, $cleanStr) {
                     $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->jenis_pelatihan));
+
                     return strcasecmp($pName, $selectedProgram) === 0 || str_contains($cleanStr($pName), $cleanStr($selectedProgram));
                 });
             }
@@ -623,7 +710,7 @@ class DashboardRealisasiController extends Controller
             }
         }
 
-        $calcMetrics = function($progList) use ($trNonReg, $year) {
+        $calcMetrics = function ($progList) use ($trNonReg) {
             $targPeserta = 0;
             $targBatch = 0;
             $realPeserta = 0;
@@ -665,7 +752,7 @@ class DashboardRealisasiController extends Controller
         // 6. Monthly Chart Data (Jan - Des) - Real-time Per Bulan from TrainingRecord
         $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         $monthMap = ['JAN' => 1, 'FEB' => 2, 'MAR' => 3, 'APR' => 4, 'MEI' => 5, 'MAY' => 5, 'JUN' => 6, 'JUL' => 7, 'AGU' => 8, 'AGS' => 8, 'AUG' => 8, 'SEP' => 9, 'OKT' => 10, 'OCT' => 10, 'NOV' => 11, 'DES' => 12, 'DEC' => 12];
-        
+
         $allYearRecords = $this->filterRecordsByYearAndCumulativeMonth((clone $trainingRecordQuery)->get(), $year, null);
 
         $monthlyPesertaMap = array_fill(1, 12, 0);
@@ -674,12 +761,12 @@ class DashboardRealisasiController extends Controller
         foreach ($allYearRecords as $r) {
             $mCode = strtoupper(substr(trim((string) $r->bulan), 0, 3));
             $mNum = $monthMap[$mCode] ?? null;
-            if (!$mNum && $r->training_date) {
+            if (! $mNum && $r->training_date) {
                 $mNum = (int) date('n', strtotime($r->training_date));
             }
             if ($mNum && isset($monthlyPesertaMap[$mNum])) {
                 $monthlyPesertaMap[$mNum]++;
-                $monthlyProgramSets[$mNum][$r->program_type . ':' . $r->program_id] = true;
+                $monthlyProgramSets[$mNum][$r->program_type.':'.$r->program_id] = true;
             }
         }
 
@@ -714,7 +801,7 @@ class DashboardRealisasiController extends Controller
                 'responden' => '3.248 org',
                 'pelatihan' => '129 prg',
                 'respon_rate' => '92%',
-            ]
+            ],
         ];
 
         return view('Administrasi.Pages.Dashboard.dashboard_realisasi', compact(

@@ -10,6 +10,7 @@ class MonitoringAfdeling extends Model
     use HasFactory;
 
     protected $table = 'monitoring_afdeling';
+
     protected $primaryKey = 'afeliding_id';
 
     protected $fillable = [

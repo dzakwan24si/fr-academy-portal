@@ -6,12 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Program\ProgramNonReguler;
 use App\Models\Program\ProgramReguler;
-use App\Models\Program\RealisasiVsBatch;
 use App\Models\Program\TrainingRecord;
 use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class ProgramBatchController extends Controller
 {
@@ -23,11 +21,15 @@ class ProgramBatchController extends Controller
         $search = strtolower(trim((string) $request->input('search')));
         $region = strtolower(trim((string) $request->input('region')));
         $groups = $this->programGroups($year, $type, $region)->filter(function ($group) use ($search) {
-            if ($search !== '' && !str_contains(strtolower($group['search_text']), $search)) return false;
+            if ($search !== '' && ! str_contains(strtolower($group['search_text']), $search)) {
+                return false;
+            }
+
             return true;
         })->values();
         $regions = $this->programGroups(null, 'all')->pluck('region')->filter()->unique()->sort()->values();
         $availableYears = $this->allProgramYears();
+
         return view('Administrasi.Pages.Program.program', compact('groups', 'year', 'type', 'search', 'region', 'regions', 'availableYears'));
     }
 
@@ -38,6 +40,7 @@ class ProgramBatchController extends Controller
         $group = $this->programGroups($year, $type, trim((string) $request->input('region', '')))->first(fn ($item) => $item['name'] === $name);
         abort_unless($group, 404);
         $availableYears = $this->allProgramYears();
+
         return view('Administrasi.Pages.Program.program_detail', ['group' => $group, 'year' => $year, 'availableYears' => $availableYears]);
     }
 
@@ -48,19 +51,20 @@ class ProgramBatchController extends Controller
 
     public function data()
     {
-        $records = TrainingRecord::where('status', 'valid')->get()->groupBy(fn ($record) => $record->program_type . ':' . $record->program_id);
+        $records = TrainingRecord::where('status', 'valid')->get()->groupBy(fn ($record) => $record->program_type.':'.$record->program_id);
 
-        $nonReguler = ProgramNonReguler::query()->latest('start_date')->get()->map(fn ($item) => $this->normalizeNonReguler($item, $records->get('non_reguler:' . $item->id_nonreguler, collect())));
-        $reguler = ProgramReguler::query()->latest('Mulai_program')->get()->map(fn ($item) => $this->normalizeReguler($item, $records->get('reguler:' . $item->Program_reguler_id, collect())));
+        $nonReguler = ProgramNonReguler::query()->latest('start_date')->get()->map(fn ($item) => $this->normalizeNonReguler($item, $records->get('non_reguler:'.$item->id_nonreguler, collect())));
+        $reguler = ProgramReguler::query()->latest('Mulai_program')->get()->map(fn ($item) => $this->normalizeReguler($item, $records->get('reguler:'.$item->Program_reguler_id, collect())));
 
         return response()->json($nonReguler->concat($reguler)->values());
     }
 
     private function programGroups(?int $year, string $type, string $region = '')
     {
-        $cleanStr = fn($str) => strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', '', (string) $str)));
-        $isSoft = function($item) use ($cleanStr) {
-            $kat = $cleanStr(($item->kategori_pelatihan ?? '') . ' ' . ($item->sub_kategori ?? '') . ' ' . ($item->jenis_pelatihan ?? ''));
+        $cleanStr = fn ($str) => strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', '', (string) $str)));
+        $isSoft = function ($item) use ($cleanStr) {
+            $kat = $cleanStr(($item->kategori_pelatihan ?? '').' '.($item->sub_kategori ?? '').' '.($item->jenis_pelatihan ?? ''));
+
             return str_contains($kat, 'managerial') || str_contains($kat, 'leadership') || str_contains($kat, 'soft');
         };
 
@@ -77,6 +81,7 @@ class ProgramBatchController extends Controller
 
             $batches = $batches->concat($nonRegQuery->map(function ($item) use ($isSoft) {
                 $soft = $isSoft($item);
+
                 return [
                     'type' => 'non_reguler',
                     'sub_type' => $soft ? 'soft_skill' : 'teknikal',
@@ -89,7 +94,7 @@ class ProgramBatchController extends Controller
                     'location' => $item->lokasi_training,
                     'start' => $item->start_date,
                     'end' => $item->end_date,
-                    'model' => $item
+                    'model' => $item,
                 ];
             }));
         }
@@ -108,18 +113,20 @@ class ProgramBatchController extends Controller
                 'location' => $item->Lokasi_training,
                 'start' => $item->Mulai_program,
                 'end' => $item->Selesai_program,
-                'model' => $item
+                'model' => $item,
             ]));
         }
 
-        if ($region !== '') $batches = $batches->filter(fn ($batch) => $this->normalizeRegion($batch['region']) === $this->normalizeRegion($region));
+        if ($region !== '') {
+            $batches = $batches->filter(fn ($batch) => $this->normalizeRegion($batch['region']) === $this->normalizeRegion($region));
+        }
         $batches = $batches->filter(fn ($batch) => $this->batchInYear($batch, $year));
-        $records = TrainingRecord::where('status', 'valid')->get()->groupBy(fn ($record) => $record->program_type . ':' . $record->program_id);
+        $records = TrainingRecord::where('status', 'valid')->get()->groupBy(fn ($record) => $record->program_type.':'.$record->program_id);
 
-        return $batches->groupBy(fn ($batch) => $batch['type'] . ':' . $batch['name'])->map(function ($items) use ($records, $year) {
+        return $batches->groupBy(fn ($batch) => $batch['type'].':'.$batch['name'])->map(function ($items) use ($records, $year) {
             $first = $items->first();
             $related = $items->map(function ($batch) use ($records, $year) {
-                $key = $batch['type'] . ':' . $batch['id'];
+                $key = $batch['type'].':'.$batch['id'];
                 $actualRecords = $records->get($key, collect())->filter(fn ($record) => $this->recordInYear($record, $year));
                 $actualParticipants = $actualRecords->count();
                 if ($batch['type'] === 'reguler') {
@@ -128,6 +135,7 @@ class ProgramBatchController extends Controller
                     $explicitBatch = (int) ($batch['model']->realisasi_batch ?? $batch['model']->total_batch ?? 0);
                     $realizedBatch = $explicitBatch > 0 ? $explicitBatch : ($actualRecords->isNotEmpty() ? 1 : 0);
                 }
+
                 return $batch + ['actual_participants' => $actualParticipants, 'realized_batch' => $realizedBatch, 'period' => $this->period($batch)];
             });
             $targetBatch = $items->sum('batch');
@@ -136,8 +144,9 @@ class ProgramBatchController extends Controller
             $realizedParticipants = $related->sum('actual_participants');
             $regions = $items->pluck('region')->filter()->map(fn ($value) => trim((string) $value))->unique()->values()->all();
             $searchText = $items->flatMap(fn ($item) => [$item['name'], $item['region'], $item['location'], $item['model']->Batch ?? null])->filter()->implode(' ');
+
             return [
-                'key' => $first['type'] . '|' . $first['name'],
+                'key' => $first['type'].'|'.$first['name'],
                 'type' => $first['type'],
                 'sub_type' => $first['sub_type'] ?? 'reguler',
                 'type_label' => $first['type_label'] ?? ($first['type'] === 'reguler' ? 'Reguler' : 'Non Reguler'),
@@ -151,32 +160,48 @@ class ProgramBatchController extends Controller
                 'realized_participants' => $realizedParticipants,
                 'batch_percent' => $this->percent($realizedBatch, $targetBatch),
                 'participant_percent' => $this->percent($realizedParticipants, $targetParticipants),
-                'batches' => $related->values()
+                'batches' => $related->values(),
             ];
         })->values();
     }
 
     private function extractYearFromField($val): ?int
     {
-        if (empty($val)) return null;
-        if ($val instanceof \DateTimeInterface) return (int) $val->format('Y');
-        if (is_numeric($val) && (int)$val >= 2000 && (int)$val <= 2100) return (int) $val;
+        if (empty($val)) {
+            return null;
+        }
+        if ($val instanceof \DateTimeInterface) {
+            return (int) $val->format('Y');
+        }
+        if (is_numeric($val) && (int) $val >= 2000 && (int) $val <= 2100) {
+            return (int) $val;
+        }
         if (is_array($val)) {
             foreach ($val as $item) {
-                if ($y = $this->extractYearFromField($item)) return $y;
+                if ($y = $this->extractYearFromField($item)) {
+                    return $y;
+                }
             }
+
             return null;
         }
         if (is_string($val)) {
             $trimmed = trim($val);
             if (str_starts_with($trimmed, '[') && str_ends_with($trimmed, ']')) {
                 if ($decoded = json_decode($trimmed, true)) {
-                    if ($y = $this->extractYearFromField($decoded)) return $y;
+                    if ($y = $this->extractYearFromField($decoded)) {
+                        return $y;
+                    }
                 }
             }
-            if (preg_match('/\b(20\d{2})\b/', $trimmed, $m)) return (int) $m[1];
-            if (($time = strtotime($trimmed)) !== false && $time > 0) return (int) date('Y', $time);
+            if (preg_match('/\b(20\d{2})\b/', $trimmed, $m)) {
+                return (int) $m[1];
+            }
+            if (($time = strtotime($trimmed)) !== false && $time > 0) {
+                return (int) date('Y', $time);
+            }
         }
+
         return null;
     }
 
@@ -184,30 +209,55 @@ class ProgramBatchController extends Controller
     {
         $model = $batch['model'] ?? null;
         if ($batch['type'] === 'reguler') {
-            if (!empty($batch['start'])) return (int) date('Y', strtotime($batch['start']));
-            if ($model && !empty($model->tahun)) return (int) $model->tahun;
-            if ($model && !empty($model->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($model->tanggal_pelaksanaan))) return $y;
-            if (!empty($batch['end'])) return (int) date('Y', strtotime($batch['end']));
+            if (! empty($batch['start'])) {
+                return (int) date('Y', strtotime($batch['start']));
+            }
+            if ($model && ! empty($model->tahun)) {
+                return (int) $model->tahun;
+            }
+            if ($model && ! empty($model->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($model->tanggal_pelaksanaan))) {
+                return $y;
+            }
+            if (! empty($batch['end'])) {
+                return (int) date('Y', strtotime($batch['end']));
+            }
         } else {
-            if ($model && !empty($model->tahun)) return (int) $model->tahun;
-            if (!empty($batch['start'])) return (int) date('Y', strtotime($batch['start']));
-            if ($model && !empty($model->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($model->tanggal_pelaksanaan))) return $y;
-            if (!empty($batch['end'])) return (int) date('Y', strtotime($batch['end']));
+            if ($model && ! empty($model->tahun)) {
+                return (int) $model->tahun;
+            }
+            if (! empty($batch['start'])) {
+                return (int) date('Y', strtotime($batch['start']));
+            }
+            if ($model && ! empty($model->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($model->tanggal_pelaksanaan))) {
+                return $y;
+            }
+            if (! empty($batch['end'])) {
+                return (int) date('Y', strtotime($batch['end']));
+            }
         }
+
         return null;
     }
 
     private function batchInYear(array $batch, ?int $year): bool
     {
-        if ($year === null) return true;
+        if ($year === null) {
+            return true;
+        }
         $bYear = $this->getBatchYear($batch);
-        if ($bYear !== null) return $bYear === $year;
+        if ($bYear !== null) {
+            return $bYear === $year;
+        }
+
         return collect([$batch['start'], $batch['end']])->contains(fn ($date) => $date && (int) date('Y', strtotime($date)) === $year);
     }
 
     private function recordInYear(TrainingRecord $record, ?int $year): bool
     {
-        if ($year === null) return true;
+        if ($year === null) {
+            return true;
+        }
+
         return collect($record->activityDates())->contains(fn ($date) => $date && (int) date('Y', strtotime($date)) === $year);
     }
 
@@ -218,24 +268,42 @@ class ProgramBatchController extends Controller
 
     private function period(array $batch): string
     {
-        return ($batch['start'] ? date('d M Y', strtotime($batch['start'])) : '-') . ' - ' . ($batch['end'] ? date('d M Y', strtotime($batch['end'])) : '-');
+        return ($batch['start'] ? date('d M Y', strtotime($batch['start'])) : '-').' - '.($batch['end'] ? date('d M Y', strtotime($batch['end'])) : '-');
     }
 
     public function allProgramYears(): array
     {
         $regYears = ProgramReguler::all()->map(function ($item) {
-            if ($item->Mulai_program) return (int) $item->Mulai_program->format('Y');
-            if ($item->tahun) return (int) $item->tahun;
-            if (!empty($item->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($item->tanggal_pelaksanaan))) return $y;
-            if ($item->Selesai_program) return (int) $item->Selesai_program->format('Y');
+            if ($item->Mulai_program) {
+                return (int) $item->Mulai_program->format('Y');
+            }
+            if ($item->tahun) {
+                return (int) $item->tahun;
+            }
+            if (! empty($item->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($item->tanggal_pelaksanaan))) {
+                return $y;
+            }
+            if ($item->Selesai_program) {
+                return (int) $item->Selesai_program->format('Y');
+            }
+
             return null;
         });
 
         $nonRegYears = ProgramNonReguler::all()->map(function ($item) {
-            if ($item->tahun) return (int) $item->tahun;
-            if ($item->start_date) return (int) $item->start_date->format('Y');
-            if (!empty($item->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($item->tanggal_pelaksanaan))) return $y;
-            if ($item->end_date) return (int) $item->end_date->format('Y');
+            if ($item->tahun) {
+                return (int) $item->tahun;
+            }
+            if ($item->start_date) {
+                return (int) $item->start_date->format('Y');
+            }
+            if (! empty($item->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($item->tanggal_pelaksanaan))) {
+                return $y;
+            }
+            if ($item->end_date) {
+                return (int) $item->end_date->format('Y');
+            }
+
             return null;
         });
 
@@ -263,24 +331,27 @@ class ProgramBatchController extends Controller
     public function store(Request $request, string $type)
     {
         abort_unless(in_array($type, ['reguler', 'non_reguler'], true), 404);
-        $model = $type === 'reguler' ? new ProgramReguler() : new ProgramNonReguler();
+        $model = $type === 'reguler' ? new ProgramReguler : new ProgramNonReguler;
         $model->newQuery()->create($this->preparePayload($request->all(), $type));
+
         return response()->json(['message' => 'Data berhasil disimpan.'], 201);
     }
 
     public function update(Request $request, string $type, int $id)
     {
         abort_unless(in_array($type, ['reguler', 'non_reguler'], true), 404);
-        $model = $type === 'reguler' ? new ProgramReguler() : new ProgramNonReguler();
+        $model = $type === 'reguler' ? new ProgramReguler : new ProgramNonReguler;
         $model->newQuery()->findOrFail($id)->update($this->preparePayload($request->all(), $type));
+
         return response()->json(['message' => 'Data berhasil diperbarui.']);
     }
 
     public function destroy(string $type, int $id)
     {
         abort_unless(in_array($type, ['reguler', 'non_reguler'], true), 404);
-        $model = $type === 'reguler' ? new ProgramReguler() : new ProgramNonReguler();
+        $model = $type === 'reguler' ? new ProgramReguler : new ProgramNonReguler;
         $model->newQuery()->findOrFail($id)->delete();
+
         return response()->json(['message' => 'Data berhasil dihapus.']);
     }
 
@@ -289,16 +360,19 @@ class ProgramBatchController extends Controller
         $type = $request->input('type'); // 'reguler', 'non_reguler', or null/all
         if ($type === 'reguler') {
             ProgramReguler::truncate();
-            ActivityLog::log('Hapus', 'Program Batch', "Menghapus seluruh data Program Reguler");
+            ActivityLog::log('Hapus', 'Program Batch', 'Menghapus seluruh data Program Reguler');
+
             return response()->json(['message' => 'Seluruh data Program Reguler berhasil dihapus.']);
         } elseif ($type === 'non_reguler') {
             ProgramNonReguler::truncate();
-            ActivityLog::log('Hapus', 'Program Batch', "Menghapus seluruh data Program Non Reguler");
+            ActivityLog::log('Hapus', 'Program Batch', 'Menghapus seluruh data Program Non Reguler');
+
             return response()->json(['message' => 'Seluruh data Program Non Reguler berhasil dihapus.']);
         } else {
             ProgramReguler::truncate();
             ProgramNonReguler::truncate();
-            ActivityLog::log('Hapus', 'Program Batch', "Menghapus seluruh data Program Batch (Reguler & Non Reguler)");
+            ActivityLog::log('Hapus', 'Program Batch', 'Menghapus seluruh data Program Batch (Reguler & Non Reguler)');
+
             return response()->json(['message' => 'Seluruh data Program Batch (Reguler & Non Reguler) berhasil dihapus.']);
         }
     }
@@ -312,6 +386,7 @@ class ProgramBatchController extends Controller
             if ($request->wantsJson() || $request->ajax() || $request->isJson()) {
                 return response()->json(['message' => 'File tidak memiliki data.'], 422);
             }
+
             return back()->withErrors(['file' => 'File tidak memiliki data.']);
         }
 
@@ -334,18 +409,24 @@ class ProgramBatchController extends Controller
         }
 
         $table = null;
-        if ($isReg) $table = 'reg';
-        elseif ($isNonReg) $table = 'non';
-        else {
+        if ($isReg) {
+            $table = 'reg';
+        } elseif ($isNonReg) {
+            $table = 'non';
+        } else {
             // Fallback check
-            if (in_array('jenis_pelatihan', $rawHeaders, true)) $table = 'non';
-            elseif (in_array('Training_Program', $rawHeaders, true) || in_array('Nama_Program_reguler', $rawHeaders, true)) $table = 'reg';
+            if (in_array('jenis_pelatihan', $rawHeaders, true)) {
+                $table = 'non';
+            } elseif (in_array('Training_Program', $rawHeaders, true) || in_array('Nama_Program_reguler', $rawHeaders, true)) {
+                $table = 'reg';
+            }
         }
 
-        if (!$table) {
+        if (! $table) {
             if ($request->wantsJson() || $request->ajax() || $request->isJson()) {
                 return response()->json(['message' => 'Header tidak dikenali. Gunakan template batch non-reguler atau reguler.'], 422);
             }
+
             return back()->withErrors(['file' => 'Header tidak dikenali. Gunakan template batch non-reguler atau reguler.']);
         }
 
@@ -354,21 +435,25 @@ class ProgramBatchController extends Controller
         $seenNonRegIds = [];
         DB::transaction(function () use ($rows, $normalizedHeaders, $table, &$imported, &$seenRegIds, &$seenNonRegIds) {
             foreach ($rows as $row) {
-                if (empty(array_filter($row, fn ($val) => trim((string) $val) !== ''))) continue;
+                if (empty(array_filter($row, fn ($val) => trim((string) $val) !== ''))) {
+                    continue;
+                }
                 $item = [];
                 foreach ($normalizedHeaders as $idx => $h) {
                     $clean = str_replace(['_', ' ', '-'], '', $h);
                     $item[$clean] = trim((string) ($row[$idx] ?? ''));
                 }
                 $stored = $this->storeRowMapped($item, $table, $seenRegIds, $seenNonRegIds);
-                if ($stored) $imported++;
+                if ($stored) {
+                    $imported++;
+                }
             }
         });
 
         ActivityLog::log(
             'Import',
             'Program Batch',
-            "Mengimport {$imported} data program batch dari file " . $file->getClientOriginalName(),
+            "Mengimport {$imported} data program batch dari file ".$file->getClientOriginalName(),
             ['filename' => $file->getClientOriginalName(), 'count' => $imported]
         );
 
@@ -384,10 +469,12 @@ class ProgramBatchController extends Controller
     {
         if ($table === 'reg') {
             $trainingProgram = $item['trainingprogram'] ?? $item['namaprogramreguler'] ?? $item['namaprogram'] ?? $item['pelatihan'] ?? $item['namapelatihan'] ?? '';
-            if ($trainingProgram === '') return false;
+            if ($trainingProgram === '') {
+                return false;
+            }
 
             $record = [
-                'Kategori_Program' => !empty($item['kategoriprogram']) ? $item['kategoriprogram'] : (!empty($item['kategori']) ? $item['kategori'] : 'REGULER'),
+                'Kategori_Program' => ! empty($item['kategoriprogram']) ? $item['kategoriprogram'] : (! empty($item['kategori']) ? $item['kategori'] : 'REGULER'),
                 'Training_Program' => $trainingProgram,
                 'Batch' => $item['batch'] ?? $item['angkatan'] ?? null,
                 'Lokasi_training' => $item['lokasitraining'] ?? $item['lokasi'] ?? null,
@@ -412,7 +499,7 @@ class ProgramBatchController extends Controller
             $id = $item['programregulerid'] ?? $item['programid'] ?? $item['id'] ?? null;
             if (is_numeric($id) && (int) $id > 0) {
                 $intId = (int) $id;
-                if (!in_array($intId, $seenRegIds, true)) {
+                if (! in_array($intId, $seenRegIds, true)) {
                     $seenRegIds[] = $intId;
                     $record['Program_reguler_id'] = $intId;
                     ProgramReguler::query()->updateOrCreate(['Program_reguler_id' => $intId], $record);
@@ -422,10 +509,13 @@ class ProgramBatchController extends Controller
             } else {
                 ProgramReguler::query()->create($record);
             }
+
             return true;
         } else {
             $jenisPelatihan = $item['jenispelatihan'] ?? $item['namapelatihan'] ?? $item['pelatihan'] ?? $item['trainingprogram'] ?? '';
-            if ($jenisPelatihan === '') return false;
+            if ($jenisPelatihan === '') {
+                return false;
+            }
 
             $record = [
                 'kategori_pelatihan' => $item['kategoripelatihan'] ?? $item['kategoriprogram'] ?? $item['kategori'] ?? null,
@@ -468,7 +558,7 @@ class ProgramBatchController extends Controller
             $id = $item['idnonreguler'] ?? $item['programid'] ?? $item['id'] ?? null;
             if (is_numeric($id) && (int) $id > 0) {
                 $intId = (int) $id;
-                if (!in_array($intId, $seenNonRegIds, true)) {
+                if (! in_array($intId, $seenNonRegIds, true)) {
                     $seenNonRegIds[] = $intId;
                     $record['id_nonreguler'] = $intId;
                     ProgramNonReguler::query()->updateOrCreate(['id_nonreguler' => $intId], $record);
@@ -478,6 +568,7 @@ class ProgramBatchController extends Controller
             } else {
                 ProgramNonReguler::query()->create($record);
             }
+
             return true;
         }
     }
@@ -485,27 +576,37 @@ class ProgramBatchController extends Controller
     private function preparePayload(array $payload, string $type): array
     {
         if ($type === 'reguler') {
-            if (array_key_exists('Nama_Program_reguler', $payload) && !empty($payload['Nama_Program_reguler'])) {
+            if (array_key_exists('Nama_Program_reguler', $payload) && ! empty($payload['Nama_Program_reguler'])) {
                 $payload['Training_Program'] = $payload['Nama_Program_reguler'];
             }
             if (array_key_exists('Total_orang', $payload)) {
                 $payload['target_peserta'] = $payload['Total_orang'];
             }
         } else {
-            if (array_key_exists('total_batch', $payload) && !array_key_exists('realisasi_batch', $payload)) {
+            if (array_key_exists('total_batch', $payload) && ! array_key_exists('realisasi_batch', $payload)) {
                 $payload['realisasi_batch'] = $payload['total_batch'];
             }
         }
 
         $dateFields = $type === 'reguler' ? ['Mulai_program', 'Selesai_program'] : ['start_date', 'end_date'];
-        foreach ($dateFields as $field) $payload[$field] = $this->dateValue($payload[$field] ?? null);
-        if (array_key_exists('tanggal_pelaksanaan', $payload)) $payload['tanggal_pelaksanaan'] = $this->jsonValue($payload['tanggal_pelaksanaan']);
+        foreach ($dateFields as $field) {
+            $payload[$field] = $this->dateValue($payload[$field] ?? null);
+        }
+        if (array_key_exists('tanggal_pelaksanaan', $payload)) {
+            $payload['tanggal_pelaksanaan'] = $this->jsonValue($payload['tanggal_pelaksanaan']);
+        }
 
         $numericFields = $type === 'reguler'
             ? ['jumlah_bulan_training', 'jumlah_hari', 'Total_training_days', 'Promosi_mandor', 'Fresh_Graduate', 'target_peserta', 'tahun']
             : ['total_jam', 'total_hari', 'peserta_non_staf', 'peserta_ast', 'peserta_askep', 'peserta_mgr', 'peserta_gm', 'peserta_head', 'target_staf', 'target_non_staf', 'target_total', 'training_staf', 'training_non_staf', 'training_total', 'td_staf', 'td_non_staf', 'td_total', 'realisasi_batch', 'total_batch', 'TARGET_BATCH', 'TARGET_PESERTA', 'tahun'];
-        foreach ($numericFields as $field) if (array_key_exists($field, $payload)) $payload[$field] = is_numeric($payload[$field]) ? (int) $payload[$field] : null;
-        if ($type === 'reguler' && array_key_exists('Uang_saku', $payload)) $payload['Uang_saku'] = is_numeric($payload['Uang_saku']) ? (float) $payload['Uang_saku'] : 0;
+        foreach ($numericFields as $field) {
+            if (array_key_exists($field, $payload)) {
+                $payload[$field] = is_numeric($payload[$field]) ? (int) $payload[$field] : null;
+            }
+        }
+        if ($type === 'reguler' && array_key_exists('Uang_saku', $payload)) {
+            $payload['Uang_saku'] = is_numeric($payload['Uang_saku']) ? (float) $payload['Uang_saku'] : 0;
+        }
 
         $allowedColumns = $type === 'reguler'
             ? ['Kategori_Program', 'Training_Program', 'Batch', 'Lokasi_training', 'Mulai_program', 'Selesai_program', 'jumlah_bulan_training', 'jumlah_hari', 'Total_training_days', 'Promosi_mandor', 'Fresh_Graduate', 'target_peserta', 'Uang_saku', 'jenis_program_reguler', 'Region', 'tanggal_pelaksanaan', 'tahun']
@@ -520,15 +621,15 @@ class ProgramBatchController extends Controller
         $orig = $item->toArray();
 
         // 1. Hitung berdasarkan Jabatan (Position)
-        $orig['peserta_ast'] = $actualRecords->filter(fn($r) => str_contains(strtolower($r->position), 'asisten') && !str_contains(strtolower($r->position), 'kepala'))->count();
-        $orig['peserta_askep'] = $actualRecords->filter(fn($r) => str_contains(strtolower($r->position), 'askep') || (str_contains(strtolower($r->position), 'asisten') && str_contains(strtolower($r->position), 'kepala')))->count();
-        $orig['peserta_mgr'] = $actualRecords->filter(fn($r) => str_contains(strtolower($r->position), 'manager') && !str_contains(strtolower($r->position), 'general'))->count();
-        $orig['peserta_gm'] = $actualRecords->filter(fn($r) => str_contains(strtolower($r->position), 'general manager') || str_contains(strtolower($r->position), 'gm'))->count();
-        $orig['peserta_head'] = $actualRecords->filter(fn($r) => str_contains(strtolower($r->position), 'head'))->count();
+        $orig['peserta_ast'] = $actualRecords->filter(fn ($r) => str_contains(strtolower($r->position), 'asisten') && ! str_contains(strtolower($r->position), 'kepala'))->count();
+        $orig['peserta_askep'] = $actualRecords->filter(fn ($r) => str_contains(strtolower($r->position), 'askep') || (str_contains(strtolower($r->position), 'asisten') && str_contains(strtolower($r->position), 'kepala')))->count();
+        $orig['peserta_mgr'] = $actualRecords->filter(fn ($r) => str_contains(strtolower($r->position), 'manager') && ! str_contains(strtolower($r->position), 'general'))->count();
+        $orig['peserta_gm'] = $actualRecords->filter(fn ($r) => str_contains(strtolower($r->position), 'general manager') || str_contains(strtolower($r->position), 'gm'))->count();
+        $orig['peserta_head'] = $actualRecords->filter(fn ($r) => str_contains(strtolower($r->position), 'head'))->count();
 
         // 2. Hitung berdasarkan Golongan (Staf vs Non-Staf)
-        $orig['training_staf'] = $actualRecords->filter(fn($r) => strtolower(trim($r->gol)) === 'staf')->count();
-        $orig['training_non_staf'] = $actualRecords->filter(fn($r) => strtolower(trim($r->gol)) !== 'staf')->count();
+        $orig['training_staf'] = $actualRecords->filter(fn ($r) => strtolower(trim($r->gol)) === 'staf')->count();
+        $orig['training_non_staf'] = $actualRecords->filter(fn ($r) => strtolower(trim($r->gol)) !== 'staf')->count();
         $orig['training_total'] = $actualRecords->count();
 
         // 3. Hitung Training Days (TD)
@@ -539,9 +640,10 @@ class ProgramBatchController extends Controller
 
         $batchCount = (int) ($item->TARGET_BATCH ?? $item->total_batch ?? 0);
         $participants = (int) ($item->TARGET_PESERTA ?? $item->target_total ?? 0);
-        $year = $item->tahun ?: ($item->start_date ? (int)$item->start_date->format('Y') : ($item->end_date ? (int)$item->end_date->format('Y') : null));
+        $year = $item->tahun ?: ($item->start_date ? (int) $item->start_date->format('Y') : ($item->end_date ? (int) $item->end_date->format('Y') : null));
+
         return [
-            'id' => 'non-reg-' . $item->id_nonreguler,
+            'id' => 'non-reg-'.$item->id_nonreguler,
             'title' => $item->jenis_pelatihan,
             'start' => $item->start_date,
             'end' => $item->end_date,
@@ -554,7 +656,7 @@ class ProgramBatchController extends Controller
             'batchCount' => $batchCount,
             'participants' => $participants,
             'trainer' => $item->trainer,
-            'originalData' => $orig
+            'originalData' => $orig,
         ];
     }
 
@@ -564,8 +666,8 @@ class ProgramBatchController extends Controller
         $orig = $item->toArray();
 
         // 1. Hitung berdasarkan Golongan
-        $orig['training_staf'] = $actualRecords->filter(fn($r) => strtolower(trim($r->gol)) === 'staf')->count();
-        $orig['training_non_staf'] = $actualRecords->filter(fn($r) => strtolower(trim($r->gol)) !== 'staf')->count();
+        $orig['training_staf'] = $actualRecords->filter(fn ($r) => strtolower(trim($r->gol)) === 'staf')->count();
+        $orig['training_non_staf'] = $actualRecords->filter(fn ($r) => strtolower(trim($r->gol)) !== 'staf')->count();
         $orig['training_total'] = $actualRecords->count();
 
         // 2. Hitung Training Days (TD)
@@ -576,9 +678,10 @@ class ProgramBatchController extends Controller
 
         $orig['Nama_Program_reguler'] = $item->Training_Program;
         $orig['Total_orang'] = $item->target_peserta;
-        $year = $item->Mulai_program ? (int)$item->Mulai_program->format('Y') : ($item->tahun ?: ($item->Selesai_program ? (int)$item->Selesai_program->format('Y') : null));
+        $year = $item->Mulai_program ? (int) $item->Mulai_program->format('Y') : ($item->tahun ?: ($item->Selesai_program ? (int) $item->Selesai_program->format('Y') : null));
+
         return [
-            'id' => 'reg-' . $item->Program_reguler_id,
+            'id' => 'reg-'.$item->Program_reguler_id,
             'title' => $item->Training_Program,
             'start' => $item->Mulai_program,
             'end' => $item->Selesai_program,
@@ -591,7 +694,7 @@ class ProgramBatchController extends Controller
             'batchCount' => 1,
             'participants' => $item->target_peserta,
             'trainer' => 'Internal',
-            'originalData' => $orig
+            'originalData' => $orig,
         ];
     }
 
@@ -602,9 +705,14 @@ class ProgramBatchController extends Controller
 
     private function jsonValue($value): ?array
     {
-        if (is_array($value)) return $value;
-        if ($value === null || trim((string) $value) === '' || trim((string) $value) === 'null') return null;
+        if (is_array($value)) {
+            return $value;
+        }
+        if ($value === null || trim((string) $value) === '' || trim((string) $value) === 'null') {
+            return null;
+        }
         $decoded = json_decode((string) $value, true);
+
         return is_array($decoded) ? $decoded : null;
     }
 }

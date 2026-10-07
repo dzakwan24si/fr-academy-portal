@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\Cost\BiayaRekruit;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class BiayaRekruitTest extends TestCase
 {
     use DatabaseTransactions;
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -16,11 +18,11 @@ class BiayaRekruitTest extends TestCase
         BiayaRekruit::query()->delete();
 
         BiayaRekruit::create([
-            'tahun'            => 2026,
-            'tanggal'          => '2026-08-05',
-            'nama'             => 'Ticket Pekanbaru - Jakarta',
-            'total_biaya'      => 3250000,
-            'jenis_rekruit'    => 'REKRUT FAT II 2026',
+            'tahun' => 2026,
+            'tanggal' => '2026-08-05',
+            'nama' => 'Ticket Pekanbaru - Jakarta',
+            'total_biaya' => 3250000,
+            'jenis_rekruit' => 'REKRUT FAT II 2026',
             'penanggung_jawab' => 'HR Recruiter Lead',
         ]);
     }
@@ -82,7 +84,7 @@ class BiayaRekruitTest extends TestCase
     {
         $response = $this->get('/administrasi/biaya-rekruit/export/report');
         $response->assertStatus(200);
-        $response->assertHeader('Content-Disposition', 'attachment; filename="Biaya_Rekruit_Report_' . date('Y-m-d') . '.xlsx"');
+        $response->assertHeader('Content-Disposition', 'attachment; filename="Biaya_Rekruit_Report_'.date('Y-m-d').'.xlsx"');
     }
 
     public function test_can_download_template()
@@ -106,9 +108,9 @@ class BiayaRekruitTest extends TestCase
     public function test_can_import_csv()
     {
         $csvContent = "cost_rekruit_id,tanggal,nama,pic_rekruiter,total_biaya\n"
-                    . "999,2026-06-30,TEST IMPORT CSV BIAYA REKRUIT MCU,RS Prima Test,850000\n";
+                    ."999,2026-06-30,TEST IMPORT CSV BIAYA REKRUIT MCU,RS Prima Test,850000\n";
 
-        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('biaya_rekruit.csv', $csvContent);
+        $file = UploadedFile::fake()->createWithContent('biaya_rekruit.csv', $csvContent);
 
         $response = $this->post('/administrasi/biaya-rekruit/import', [
             'csv_file' => $file,

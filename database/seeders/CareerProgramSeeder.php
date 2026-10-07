@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
 use App\Models\CareerProgram;
+use Illuminate\Database\Seeder;
 
 class CareerProgramSeeder extends Seeder
 {
@@ -69,7 +68,7 @@ class CareerProgramSeeder extends Seeder
                 'qualifications' => '<ul><li>Pendidikan minimal S1 semua jurusan dari universitas terkemuka</li><li>IPK minimal 3.00</li><li>Aktif berorganisasi dan fasih berbahasa Inggris</li></ul>',
                 'is_active' => true,
                 'gform_url' => 'https://forms.gle/placeholder_ma',
-            ]
+            ],
         ];
 
         foreach ($programs as $program) {

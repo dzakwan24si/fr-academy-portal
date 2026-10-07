@@ -2,6 +2,7 @@
 
 namespace App\Models\Monitoring;
 
+use App\Services\RegionHelper;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -39,9 +40,10 @@ class MonitoringTalent extends Model
      */
     public function scopeCategory($query, $category)
     {
-        if (!empty($category) && $category !== 'all') {
+        if (! empty($category) && $category !== 'all') {
             return $query->where('kategori', $category);
         }
+
         return $query;
     }
 
@@ -50,7 +52,7 @@ class MonitoringTalent extends Model
      */
     public function scopeRegion($query, $region)
     {
-        return \App\Services\RegionHelper::applyQueryFilter($query, 'region', $region);
+        return RegionHelper::applyQueryFilter($query, 'region', $region);
     }
 
     /**
@@ -58,9 +60,10 @@ class MonitoringTalent extends Model
      */
     public function scopeStatus($query, $status)
     {
-        if (!empty($status) && $status !== 'all') {
+        if (! empty($status) && $status !== 'all') {
             return $query->where('status', 'like', "%{$status}%");
         }
+
         return $query;
     }
 }

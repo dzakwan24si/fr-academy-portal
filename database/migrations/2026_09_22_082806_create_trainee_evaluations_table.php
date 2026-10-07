@@ -19,7 +19,7 @@ return new class extends Migration
             $table->text('explanation_de')->nullable(); // Optional explanation for D & E
             $table->text('kesan_pesan'); // Required feedback
             $table->timestamps();
-            
+
             // A trainee can only submit one evaluation per session
             $table->unique(['trainee_id', 'daily_class_id']);
         });

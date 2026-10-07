@@ -9,6 +9,7 @@ use App\Models\Cost\CapexRab;
 use App\Models\Cost\CapexRealisasi;
 use App\Models\Cost\Cost;
 use App\Models\Cost\Vra;
+use App\Services\ExcelExporter;
 use App\Traits\HandlesCsvImports;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -18,9 +19,9 @@ class CostController extends Controller
     use HandlesCsvImports;
 
     public const MONTH_NAMES = [
-        1  => 'Januari',   2  => 'Februari', 3  => 'Maret',
-        4  => 'April',     5  => 'Mei',       6  => 'Juni',
-        7  => 'Juli',      8  => 'Agustus',   9  => 'September',
+        1 => 'Januari',   2 => 'Februari', 3 => 'Maret',
+        4 => 'April',     5 => 'Mei',       6 => 'Juni',
+        7 => 'Juli',      8 => 'Agustus',   9 => 'September',
         10 => 'Oktober',   11 => 'November',  12 => 'Desember',
     ];
 
@@ -41,15 +42,15 @@ class CostController extends Controller
         $search = trim($request->get('search', ''));
 
         // Optionally perform auto-aggregation sync on page load
-        $this->syncAggregatedCosts($selectedYear, is_numeric($selectedMonth) ? (int)$selectedMonth : null);
+        $this->syncAggregatedCosts($selectedYear, is_numeric($selectedMonth) ? (int) $selectedMonth : null);
 
         // 2. Query Costs
         $query = Cost::where('tahun', $selectedYear);
 
-        if (is_numeric($selectedMonth) && (int)$selectedMonth >= 1 && (int)$selectedMonth <= 12) {
+        if (is_numeric($selectedMonth) && (int) $selectedMonth >= 1 && (int) $selectedMonth <= 12) {
             $query->where(function ($q) use ($selectedMonth) {
-                $q->where('bulan', (int)$selectedMonth)
-                  ->orWhereNull('bulan');
+                $q->where('bulan', (int) $selectedMonth)
+                    ->orWhereNull('bulan');
             });
         }
 
@@ -57,11 +58,11 @@ class CostController extends Controller
             $query->where('jenis_cost', $selectedJenis);
         }
 
-        if (!empty($search)) {
+        if (! empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('account_name', 'like', "%{$search}%")
-                  ->orWhere('jenis_cost', 'like', "%{$search}%")
-                  ->orWhere('GL_ACCOUNT', 'like', "%{$search}%");
+                    ->orWhere('jenis_cost', 'like', "%{$search}%")
+                    ->orWhere('GL_ACCOUNT', 'like', "%{$search}%");
             });
         }
 
@@ -77,9 +78,9 @@ class CostController extends Controller
                 DB::raw('MAX(budget_tahunan) as budget_tahunan'),
                 DB::raw('MAX(tahun) as tahun')
             )
-            ->groupBy('jenis_cost', 'GL_ACCOUNT', 'account_name')
-            ->orderBy(DB::raw('MIN(cost_id)'), 'asc')
-            ->get();
+                ->groupBy('jenis_cost', 'GL_ACCOUNT', 'account_name')
+                ->orderBy(DB::raw('MIN(cost_id)'), 'asc')
+                ->get();
         } else {
             $allCosts = $query->orderBy('cost_id', 'asc')->get();
         }
@@ -95,11 +96,11 @@ class CostController extends Controller
         $jenisList = Cost::where('tahun', $selectedYear)->select('jenis_cost')->distinct()->pluck('jenis_cost')->filter()->values();
 
         // 5. Summary Totals
-        $totalBudget        = (float) $allCosts->sum('budget');
-        $totalRealisasi     = (float) $allCosts->sum('realisasi');
+        $totalBudget = (float) $allCosts->sum('budget');
+        $totalRealisasi = (float) $allCosts->sum('realisasi');
         $totalBudgetTahunan = (float) $allCosts->sum('budget_tahunan');
-        $sisaBudget         = $totalBudgetTahunan > 0 ? ($totalBudgetTahunan - $totalRealisasi) : ($totalBudget - $totalRealisasi);
-        $pctRealisasi       = $totalBudgetTahunan > 0 ? round(($totalRealisasi / $totalBudgetTahunan) * 100, 1) : ($totalBudget > 0 ? round(($totalRealisasi / $totalBudget) * 100, 1) : 0);
+        $sisaBudget = $totalBudgetTahunan > 0 ? ($totalBudgetTahunan - $totalRealisasi) : ($totalBudget - $totalRealisasi);
+        $pctRealisasi = $totalBudgetTahunan > 0 ? round(($totalRealisasi / $totalBudgetTahunan) * 100, 1) : ($totalBudget > 0 ? round(($totalRealisasi / $totalBudget) * 100, 1) : 0);
 
         $summary = compact(
             'totalBudget',
@@ -131,7 +132,7 @@ class CostController extends Controller
     {
         $year = (int) $request->get('year', 2026);
         $month = $request->get('month');
-        $monthNum = (is_numeric($month) && $month >= 1 && $month <= 12) ? (int)$month : null;
+        $monthNum = (is_numeric($month) && $month >= 1 && $month <= 12) ? (int) $month : null;
 
         $stats = $this->syncAggregatedCosts($year, $monthNum);
 
@@ -166,20 +167,20 @@ class CostController extends Controller
                 DB::raw('SUM(preventif_maintenance) as total_maint'),
                 DB::raw('SUM(biaya_lainnya) as total_lain')
             )
-            ->groupBy('kendaraan')
-            ->get();
+                ->groupBy('kendaraan')
+                ->get();
 
             // Standard accounts map
             $standardMap = [
-                'Bus'      => '1. Alokasi Bus',
-                'Hilux'    => '2. Alokasi Hilux',
+                'Bus' => '1. Alokasi Bus',
+                'Hilux' => '2. Alokasi Hilux',
                 'Fortuner' => '3. Alokasi Fortuner',
             ];
 
             // Initialize standard vehicle totals to 0
             $vehicleTotals = [
-                'Bus'      => 0.0,
-                'Hilux'    => 0.0,
+                'Bus' => 0.0,
+                'Hilux' => 0.0,
                 'Fortuner' => 0.0,
             ];
             $customVehicles = [];
@@ -209,7 +210,7 @@ class CostController extends Controller
                 $matchingRows = Cost::where('tahun', $year)
                     ->where(function ($q) use ($accountName, $catKey) {
                         $q->where('account_name', $accountName)
-                          ->orWhere('account_name', 'like', "%Alokasi%{$catKey}%");
+                            ->orWhere('account_name', 'like', "%Alokasi%{$catKey}%");
                     })
                     ->orderBy('cost_id', 'asc')
                     ->get();
@@ -218,10 +219,10 @@ class CostController extends Controller
                     $masterRow = $matchingRows->first();
                     if ($matchingRows->count() > 1) {
                         foreach ($matchingRows->slice(1) as $dup) {
-                            if ((float)$masterRow->budget == 0 && (float)$dup->budget > 0) {
+                            if ((float) $masterRow->budget == 0 && (float) $dup->budget > 0) {
                                 $masterRow->budget = $dup->budget;
                             }
-                            if ((float)$masterRow->budget_tahunan == 0 && (float)$dup->budget_tahunan > 0) {
+                            if ((float) $masterRow->budget_tahunan == 0 && (float) $dup->budget_tahunan > 0) {
                                 $masterRow->budget_tahunan = $dup->budget_tahunan;
                             }
                             $dup->delete();
@@ -229,22 +230,22 @@ class CostController extends Controller
                     }
 
                     $masterRow->update([
-                        'account_name'   => $accountName,
-                        'realisasi'      => $totalVal,
-                        'jenis_cost'     => 'BIAYA PERJALANAN DINAS',
-                        'budget'         => $masterRow->budget,
+                        'account_name' => $accountName,
+                        'realisasi' => $totalVal,
+                        'jenis_cost' => 'BIAYA PERJALANAN DINAS',
+                        'budget' => $masterRow->budget,
                         'budget_tahunan' => $masterRow->budget_tahunan,
                     ]);
                     $syncedVraAccountNames[] = $masterRow->account_name;
                 } else {
                     $newCost = Cost::create([
-                        'tahun'          => $year,
-                        'bulan'          => null,
-                        'GL_ACCOUNT'     => '135.80.00005/850.91.05000/850.91.02002/850.91.04001/850.91.05002/850.91.05003/850.91.06001/850.91.06002',
-                        'jenis_cost'     => 'BIAYA PERJALANAN DINAS',
-                        'account_name'   => $accountName,
-                        'budget'         => 0,
-                        'realisasi'      => $totalVal,
+                        'tahun' => $year,
+                        'bulan' => null,
+                        'GL_ACCOUNT' => '135.80.00005/850.91.05000/850.91.02002/850.91.04001/850.91.05002/850.91.05003/850.91.06001/850.91.06002',
+                        'jenis_cost' => 'BIAYA PERJALANAN DINAS',
+                        'account_name' => $accountName,
+                        'budget' => 0,
+                        'realisasi' => $totalVal,
                         'budget_tahunan' => 0,
                     ]);
                     $syncedVraAccountNames[] = $newCost->account_name;
@@ -262,10 +263,10 @@ class CostController extends Controller
                     $masterRow = $matchingRows->first();
                     if ($matchingRows->count() > 1) {
                         foreach ($matchingRows->slice(1) as $dup) {
-                            if ((float)$masterRow->budget == 0 && (float)$dup->budget > 0) {
+                            if ((float) $masterRow->budget == 0 && (float) $dup->budget > 0) {
                                 $masterRow->budget = $dup->budget;
                             }
-                            if ((float)$masterRow->budget_tahunan == 0 && (float)$dup->budget_tahunan > 0) {
+                            if ((float) $masterRow->budget_tahunan == 0 && (float) $dup->budget_tahunan > 0) {
                                 $masterRow->budget_tahunan = $dup->budget_tahunan;
                             }
                             $dup->delete();
@@ -273,21 +274,21 @@ class CostController extends Controller
                     }
 
                     $masterRow->update([
-                        'realisasi'      => $totalVal,
-                        'jenis_cost'     => 'BIAYA PERJALANAN DINAS',
-                        'budget'         => $masterRow->budget,
+                        'realisasi' => $totalVal,
+                        'jenis_cost' => 'BIAYA PERJALANAN DINAS',
+                        'budget' => $masterRow->budget,
                         'budget_tahunan' => $masterRow->budget_tahunan,
                     ]);
                     $syncedVraAccountNames[] = $masterRow->account_name;
                 } else {
                     $newCost = Cost::create([
-                        'tahun'          => $year,
-                        'bulan'          => null,
-                        'GL_ACCOUNT'     => '135.80.00005/850.91.05000/850.91.02002/850.91.04001/850.91.05002/850.91.05003/850.91.06001/850.91.06002',
-                        'jenis_cost'     => 'BIAYA PERJALANAN DINAS',
-                        'account_name'   => "Alokasi {$cName}",
-                        'budget'         => 0,
-                        'realisasi'      => $totalVal,
+                        'tahun' => $year,
+                        'bulan' => null,
+                        'GL_ACCOUNT' => '135.80.00005/850.91.05000/850.91.02002/850.91.04001/850.91.05002/850.91.05003/850.91.06001/850.91.06002',
+                        'jenis_cost' => 'BIAYA PERJALANAN DINAS',
+                        'account_name' => "Alokasi {$cName}",
+                        'budget' => 0,
+                        'realisasi' => $totalVal,
                         'budget_tahunan' => 0,
                     ]);
                     $syncedVraAccountNames[] = $newCost->account_name;
@@ -306,11 +307,11 @@ class CostController extends Controller
             // =========================================================================
             $capexMap = [
                 'kantor' => 'Capex Kantor',
-                'mess'   => 'Capex Mess',
+                'mess' => 'Capex Mess',
             ];
 
             foreach ($capexMap as $lokasi => $accName) {
-                $rabTotal  = (float) CapexRab::where('tahun', $year)->where('lokasi', $lokasi)->sum('total_rp');
+                $rabTotal = (float) CapexRab::where('tahun', $year)->where('lokasi', $lokasi)->sum('total_rp');
 
                 $realQuery = CapexRealisasi::where('tahun', $year)->where('lokasi', $lokasi);
                 if ($month !== null) {
@@ -321,7 +322,7 @@ class CostController extends Controller
                 $matchingRows = Cost::where('tahun', $year)
                     ->where(function ($q) use ($accName, $lokasi) {
                         $q->where('account_name', $accName)
-                          ->orWhere('account_name', 'like', "%Capex%{$lokasi}%");
+                            ->orWhere('account_name', 'like', "%Capex%{$lokasi}%");
                     })
                     ->orderBy('cost_id', 'asc')
                     ->get();
@@ -330,10 +331,10 @@ class CostController extends Controller
                     $masterRow = $matchingRows->first();
                     if ($matchingRows->count() > 1) {
                         foreach ($matchingRows->slice(1) as $dup) {
-                            if ((float)$masterRow->budget == 0 && (float)$dup->budget > 0) {
+                            if ((float) $masterRow->budget == 0 && (float) $dup->budget > 0) {
                                 $masterRow->budget = $dup->budget;
                             }
-                            if ((float)$masterRow->budget_tahunan == 0 && (float)$dup->budget_tahunan > 0) {
+                            if ((float) $masterRow->budget_tahunan == 0 && (float) $dup->budget_tahunan > 0) {
                                 $masterRow->budget_tahunan = $dup->budget_tahunan;
                             }
                             $dup->delete();
@@ -343,21 +344,21 @@ class CostController extends Controller
                     $finalBudgetTahunan = $rabTotal > 0 ? $rabTotal : $masterRow->budget_tahunan;
 
                     $masterRow->update([
-                        'account_name'   => $accName,
+                        'account_name' => $accName,
                         'budget_tahunan' => $finalBudgetTahunan,
-                        'realisasi'      => $realTotal,
-                        'jenis_cost'     => 'CAPEX',
-                        'budget'         => $masterRow->budget,
+                        'realisasi' => $realTotal,
+                        'jenis_cost' => 'CAPEX',
+                        'budget' => $masterRow->budget,
                     ]);
                 } else {
                     Cost::create([
-                        'tahun'          => $year,
-                        'bulan'          => null,
-                        'GL_ACCOUNT'     => '135.80.00010',
-                        'jenis_cost'     => 'CAPEX',
-                        'account_name'   => $accName,
-                        'budget'         => 0,
-                        'realisasi'      => $realTotal,
+                        'tahun' => $year,
+                        'bulan' => null,
+                        'GL_ACCOUNT' => '135.80.00010',
+                        'jenis_cost' => 'CAPEX',
+                        'account_name' => $accName,
+                        'budget' => 0,
+                        'realisasi' => $realTotal,
                         'budget_tahunan' => $rabTotal,
                     ]);
                 }
@@ -368,7 +369,7 @@ class CostController extends Controller
             // =========================================================================
             $rekruitQuery = BiayaRekruit::query()->where(function ($q) use ($year) {
                 $q->where('tahun', $year)
-                  ->orWhereYear('tanggal', $year);
+                    ->orWhereYear('tanggal', $year);
             });
             if ($month !== null) {
                 $rekruitQuery->whereMonth('tanggal', $month);
@@ -379,7 +380,7 @@ class CostController extends Controller
             $matchingRows = Cost::where('tahun', $year)
                 ->where(function ($q) {
                     $q->where('account_name', 'REKRUT')
-                      ->orWhere('account_name', 'like', '%REKRUT%');
+                        ->orWhere('account_name', 'like', '%REKRUT%');
                 })
                 ->orderBy('cost_id', 'asc')
                 ->get();
@@ -388,10 +389,10 @@ class CostController extends Controller
                 $masterRow = $matchingRows->first();
                 if ($matchingRows->count() > 1) {
                     foreach ($matchingRows->slice(1) as $dup) {
-                        if ((float)$masterRow->budget == 0 && (float)$dup->budget > 0) {
+                        if ((float) $masterRow->budget == 0 && (float) $dup->budget > 0) {
                             $masterRow->budget = $dup->budget;
                         }
-                        if ((float)$masterRow->budget_tahunan == 0 && (float)$dup->budget_tahunan > 0) {
+                        if ((float) $masterRow->budget_tahunan == 0 && (float) $dup->budget_tahunan > 0) {
                             $masterRow->budget_tahunan = $dup->budget_tahunan;
                         }
                         $dup->delete();
@@ -399,21 +400,21 @@ class CostController extends Controller
                 }
 
                 $masterRow->update([
-                    'account_name'   => 'REKRUT',
-                    'realisasi'      => $totalRekruit,
-                    'jenis_cost'     => 'REKRUT',
-                    'budget'         => $masterRow->budget,
+                    'account_name' => 'REKRUT',
+                    'realisasi' => $totalRekruit,
+                    'jenis_cost' => 'REKRUT',
+                    'budget' => $masterRow->budget,
                     'budget_tahunan' => $masterRow->budget_tahunan,
                 ]);
             } else {
                 Cost::create([
-                    'tahun'          => $year,
-                    'bulan'          => null,
-                    'GL_ACCOUNT'     => '135.80.00008',
-                    'jenis_cost'     => 'REKRUT',
-                    'account_name'   => 'REKRUT',
-                    'budget'         => 0,
-                    'realisasi'      => $totalRekruit,
+                    'tahun' => $year,
+                    'bulan' => null,
+                    'GL_ACCOUNT' => '135.80.00008',
+                    'jenis_cost' => 'REKRUT',
+                    'account_name' => 'REKRUT',
+                    'budget' => 0,
+                    'realisasi' => $totalRekruit,
                     'budget_tahunan' => 0,
                 ]);
             }
@@ -428,22 +429,22 @@ class CostController extends Controller
     public function importCsv(Request $request)
     {
         $request->validate([
-            'csv_file'    => 'required|file|mimes:csv,txt,text|max:10240',
+            'csv_file' => 'required|file|mimes:csv,txt,text|max:10240',
             'import_mode' => 'nullable|string|in:append,replace',
-            'tahun'       => 'nullable|integer|min:2000|max:2099',
-            'bulan'       => 'nullable',
+            'tahun' => 'nullable|integer|min:2000|max:2099',
+            'bulan' => 'nullable',
         ]);
 
         $file = $request->file('csv_file');
         $filePath = $file->getRealPath();
         $importMode = $request->get('import_mode', 'append');
         $defaultYear = (int) $request->get('tahun', date('Y'));
-        
+
         $rawTargetMonth = $request->get('bulan');
-        $targetMonth = (is_numeric($rawTargetMonth) && (int)$rawTargetMonth >= 1 && (int)$rawTargetMonth <= 12) ? (int)$rawTargetMonth : null;
+        $targetMonth = (is_numeric($rawTargetMonth) && (int) $rawTargetMonth >= 1 && (int) $rawTargetMonth <= 12) ? (int) $rawTargetMonth : null;
 
         $handle = fopen($filePath, 'r');
-        if (!$handle) {
+        if (! $handle) {
             return back()->with('error', 'Gagal membuka file CSV yang diunggah.');
         }
 
@@ -451,8 +452,9 @@ class CostController extends Controller
 
         // Read header
         $rawHeaders = fgetcsv($handle, 0, $delimiter);
-        if (!$rawHeaders) {
+        if (! $rawHeaders) {
             fclose($handle);
+
             return back()->with('error', 'Format file CSV tidak valid atau kosong.');
         }
 
@@ -462,15 +464,33 @@ class CostController extends Controller
         // Map column indices
         $headerMap = [];
         foreach ($cleanHeaders as $idx => $col) {
-            if (in_array($col, ['costid', 'id'])) $headerMap['cost_id'] = $idx;
-            if (in_array($col, ['glaccount', 'gl', 'noaccount', 'kodeaccount'])) $headerMap['GL_ACCOUNT'] = $idx;
-            if (in_array($col, ['jeniscost', 'kategori', 'jenispengeluaran', 'kelompok'])) $headerMap['jenis_cost'] = $idx;
-            if (in_array($col, ['accountname', 'namaaccount', 'namaitem', 'uraian', 'keterangan'])) $headerMap['account_name'] = $idx;
-            if (in_array($col, ['bulan', 'month', 'bln'])) $headerMap['bulan'] = $idx;
-            if (in_array($col, ['tahun', 'year', 'thn'])) $headerMap['tahun'] = $idx;
-            if (in_array($col, ['budget', 'anggaran', 'budgetbulan'])) $headerMap['budget'] = $idx;
-            if (in_array($col, ['realisasi', 'aktual', 'actual'])) $headerMap['realisasi'] = $idx;
-            if (in_array($col, ['budgettahunan', 'budgettahun', 'annualbudget', 'totalbudget'])) $headerMap['budget_tahunan'] = $idx;
+            if (in_array($col, ['costid', 'id'])) {
+                $headerMap['cost_id'] = $idx;
+            }
+            if (in_array($col, ['glaccount', 'gl', 'noaccount', 'kodeaccount'])) {
+                $headerMap['GL_ACCOUNT'] = $idx;
+            }
+            if (in_array($col, ['jeniscost', 'kategori', 'jenispengeluaran', 'kelompok'])) {
+                $headerMap['jenis_cost'] = $idx;
+            }
+            if (in_array($col, ['accountname', 'namaaccount', 'namaitem', 'uraian', 'keterangan'])) {
+                $headerMap['account_name'] = $idx;
+            }
+            if (in_array($col, ['bulan', 'month', 'bln'])) {
+                $headerMap['bulan'] = $idx;
+            }
+            if (in_array($col, ['tahun', 'year', 'thn'])) {
+                $headerMap['tahun'] = $idx;
+            }
+            if (in_array($col, ['budget', 'anggaran', 'budgetbulan'])) {
+                $headerMap['budget'] = $idx;
+            }
+            if (in_array($col, ['realisasi', 'aktual', 'actual'])) {
+                $headerMap['realisasi'] = $idx;
+            }
+            if (in_array($col, ['budgettahunan', 'budgettahun', 'annualbudget', 'totalbudget'])) {
+                $headerMap['budget_tahunan'] = $idx;
+            }
         }
 
         // Handle Replace mode
@@ -483,13 +503,13 @@ class CostController extends Controller
         }
 
         $importedCount = 0;
-        $updatedCount  = 0;
+        $updatedCount = 0;
 
         DB::beginTransaction();
         try {
             while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
                 // Skip empty rows
-                if (empty(array_filter($row, fn($v) => trim($v) !== ''))) {
+                if (empty(array_filter($row, fn ($v) => trim($v) !== ''))) {
                     continue;
                 }
 
@@ -497,35 +517,38 @@ class CostController extends Controller
                     if (isset($headerMap[$key]) && isset($row[$headerMap[$key]])) {
                         return trim($row[$headerMap[$key]]);
                     }
+
                     return $default;
                 };
 
-                $costId        = $getVal('cost_id');
-                $glAccount     = $getVal('GL_ACCOUNT', null);
-                $jenisCost     = $getVal('jenis_cost', 'BIAYA UMUM LAINNYA');
-                $accountName   = $getVal('account_name', 'Item Biaya');
-                $rawBulan      = $getVal('bulan');
-                if ($rawBulan !== null && $rawBulan !== '' && is_numeric($rawBulan) && (int)$rawBulan >= 1 && (int)$rawBulan <= 12) {
-                    $bulan = (int)$rawBulan;
+                $costId = $getVal('cost_id');
+                $glAccount = $getVal('GL_ACCOUNT', null);
+                $jenisCost = $getVal('jenis_cost', 'BIAYA UMUM LAINNYA');
+                $accountName = $getVal('account_name', 'Item Biaya');
+                $rawBulan = $getVal('bulan');
+                if ($rawBulan !== null && $rawBulan !== '' && is_numeric($rawBulan) && (int) $rawBulan >= 1 && (int) $rawBulan <= 12) {
+                    $bulan = (int) $rawBulan;
                 } else {
                     $bulan = $targetMonth;
                 }
 
-                $tahun         = (int) $getVal('tahun', $defaultYear);
-                if ($tahun <= 0) $tahun = $defaultYear;
+                $tahun = (int) $getVal('tahun', $defaultYear);
+                if ($tahun <= 0) {
+                    $tahun = $defaultYear;
+                }
 
-                $budget        = $this->cleanNumeric($getVal('budget', 0));
-                $realisasi     = $this->cleanNumeric($getVal('realisasi', 0));
+                $budget = $this->cleanNumeric($getVal('budget', 0));
+                $realisasi = $this->cleanNumeric($getVal('realisasi', 0));
                 $budgetTahunan = $this->cleanNumeric($getVal('budget_tahunan', $budget * 12));
 
                 $data = [
-                    'GL_ACCOUNT'     => $glAccount,
-                    'jenis_cost'     => $jenisCost,
-                    'account_name'   => $accountName,
-                    'bulan'          => $bulan,
-                    'tahun'          => $tahun,
-                    'budget'         => $budget,
-                    'realisasi'      => $realisasi,
+                    'GL_ACCOUNT' => $glAccount,
+                    'jenis_cost' => $jenisCost,
+                    'account_name' => $accountName,
+                    'bulan' => $bulan,
+                    'tahun' => $tahun,
+                    'budget' => $budget,
+                    'realisasi' => $realisasi,
                     'budget_tahunan' => $budgetTahunan,
                 ];
 
@@ -540,13 +563,13 @@ class CostController extends Controller
                     $existing = $this->findExistingAutomatedCost($tahun, $accountName);
                     if ($existing) {
                         $existing->update([
-                            'GL_ACCOUNT'     => $glAccount ?: $existing->GL_ACCOUNT,
-                            'jenis_cost'     => $jenisCost ?: $existing->jenis_cost,
-                            'account_name'   => $accountName ?: $existing->account_name,
-                            'budget'         => $budget,
+                            'GL_ACCOUNT' => $glAccount ?: $existing->GL_ACCOUNT,
+                            'jenis_cost' => $jenisCost ?: $existing->jenis_cost,
+                            'account_name' => $accountName ?: $existing->account_name,
+                            'budget' => $budget,
                             'budget_tahunan' => $budgetTahunan > 0 ? $budgetTahunan : ($budget * 12),
                             // Keep dynamic calculated realisasi if already non-zero, otherwise update
-                            'realisasi'      => (float)$existing->realisasi > 0 ? $existing->realisasi : $realisasi,
+                            'realisasi' => (float) $existing->realisasi > 0 ? $existing->realisasi : $realisasi,
                         ]);
                         $updatedCount++;
                     } else {
@@ -567,8 +590,11 @@ class CostController extends Controller
                     $existing = Cost::where('tahun', $tahun)
                         ->where('account_name', $accountName)
                         ->where(function ($q) use ($bulan) {
-                            if ($bulan === null) $q->whereNull('bulan');
-                            else $q->where('bulan', $bulan);
+                            if ($bulan === null) {
+                                $q->whereNull('bulan');
+                            } else {
+                                $q->where('bulan', $bulan);
+                            }
                         })
                         ->first();
 
@@ -592,16 +618,17 @@ class CostController extends Controller
             if (is_resource($handle)) {
                 fclose($handle);
             }
-            return back()->with('error', 'Terjadi kesalahan saat import data: ' . $e->getMessage());
+
+            return back()->with('error', 'Terjadi kesalahan saat import data: '.$e->getMessage());
         }
 
-        $monthLabel = $targetMonth ? ' (' . (self::MONTH_NAMES[$targetMonth] ?? 'Bulan ' . $targetMonth) . ')' : '';
+        $monthLabel = $targetMonth ? ' ('.(self::MONTH_NAMES[$targetMonth] ?? 'Bulan '.$targetMonth).')' : '';
         $msg = "Import Data Cost{$monthLabel} berhasil! ({$importedCount} data baru ditambahkan, {$updatedCount} data diperbarui).";
 
         ActivityLog::log(
             'Import',
             'Cost',
-            "Mengimport data Cost dari file " . $file->getClientOriginalName() . " ({$importedCount} baru, {$updatedCount} diperbarui)",
+            'Mengimport data Cost dari file '.$file->getClientOriginalName()." ({$importedCount} baru, {$updatedCount} diperbarui)",
             ['filename' => $file->getClientOriginalName(), 'imported' => $importedCount, 'updated' => $updatedCount]
         );
 
@@ -630,7 +657,7 @@ class CostController extends Controller
             [39, '135.80.00010', 'CAPEX', 'Capex Mess', '', 0, 0, 0],
         ];
 
-        return \App\Services\ExcelExporter::download('Template_Import_Cost.xlsx', $headers, $sampleRows, 'Template Cost');
+        return ExcelExporter::download('Template_Import_Cost.xlsx', $headers, $sampleRows, 'Template Cost');
     }
 
     /**
@@ -639,13 +666,13 @@ class CostController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'tahun'          => 'required|integer|min:2000|max:2099',
-            'bulan'          => 'nullable|integer|min:1|max:12',
-            'GL_ACCOUNT'     => 'nullable|string|max:255',
-            'jenis_cost'     => 'required|string|max:100',
-            'account_name'   => 'required|string|max:150',
-            'budget'         => 'nullable|numeric|min:0',
-            'realisasi'      => 'nullable|numeric|min:0',
+            'tahun' => 'required|integer|min:2000|max:2099',
+            'bulan' => 'nullable|integer|min:1|max:12',
+            'GL_ACCOUNT' => 'nullable|string|max:255',
+            'jenis_cost' => 'required|string|max:100',
+            'account_name' => 'required|string|max:150',
+            'budget' => 'nullable|numeric|min:0',
+            'realisasi' => 'nullable|numeric|min:0',
             'budget_tahunan' => 'nullable|numeric|min:0',
         ]);
 
@@ -662,6 +689,7 @@ class CostController extends Controller
     public function show($id)
     {
         $record = Cost::findOrFail($id);
+
         return response()->json(['success' => true, 'data' => $record]);
     }
 
@@ -673,13 +701,13 @@ class CostController extends Controller
         $record = Cost::findOrFail($id);
 
         $validated = $request->validate([
-            'tahun'          => 'required|integer|min:2000|max:2099',
-            'bulan'          => 'nullable|integer|min:1|max:12',
-            'GL_ACCOUNT'     => 'nullable|string|max:255',
-            'jenis_cost'     => 'required|string|max:100',
-            'account_name'   => 'required|string|max:150',
-            'budget'         => 'nullable|numeric|min:0',
-            'realisasi'      => 'nullable|numeric|min:0',
+            'tahun' => 'required|integer|min:2000|max:2099',
+            'bulan' => 'nullable|integer|min:1|max:12',
+            'GL_ACCOUNT' => 'nullable|string|max:255',
+            'jenis_cost' => 'required|string|max:100',
+            'account_name' => 'required|string|max:150',
+            'budget' => 'nullable|numeric|min:0',
+            'realisasi' => 'nullable|numeric|min:0',
             'budget_tahunan' => 'nullable|numeric|min:0',
         ]);
 
@@ -714,10 +742,10 @@ class CostController extends Controller
 
         $query = Cost::where('tahun', $year);
 
-        if (is_numeric($month) && (int)$month >= 1 && (int)$month <= 12) {
-            $query->where('bulan', (int)$month);
+        if (is_numeric($month) && (int) $month >= 1 && (int) $month <= 12) {
+            $query->where('bulan', (int) $month);
             $deleted = $query->delete();
-            $monthName = self::MONTH_NAMES[(int)$month] ?? "Bulan {$month}";
+            $monthName = self::MONTH_NAMES[(int) $month] ?? "Bulan {$month}";
             $msg = "Seluruh data Cost pada {$monthName} {$year} ({$deleted} data) berhasil dihapus.";
         } else {
             $deleted = $query->delete();
@@ -726,7 +754,7 @@ class CostController extends Controller
 
         ActivityLog::log('Hapus', 'Cost', $msg, [
             'count' => $deleted,
-            'year'  => $year,
+            'year' => $year,
             'month' => $month,
         ]);
 
@@ -740,12 +768,12 @@ class CostController extends Controller
      */
     public function export(Request $request)
     {
-        $year  = (int) $request->get('year', 2026);
+        $year = (int) $request->get('year', 2026);
         $month = $request->get('month', 'all');
 
         $query = Cost::where('tahun', $year);
         if (is_numeric($month) && $month >= 1 && $month <= 12) {
-            $query->where('bulan', (int)$month);
+            $query->where('bulan', (int) $month);
         }
 
         $records = $query->orderBy('jenis_cost')->orderBy('cost_id')->get();
@@ -767,7 +795,8 @@ class CostController extends Controller
         }
 
         $filename = "Cost_Report_{$year}.xlsx";
-        return \App\Services\ExcelExporter::download($filename, $headers, $dataRows, 'Cost Report');
+
+        return ExcelExporter::download($filename, $headers, $dataRows, 'Cost Report');
     }
 
     /**
@@ -785,10 +814,11 @@ class CostController extends Controller
                 str_contains($upper, 'FORTUNER') => 'Fortuner',
                 default => '',
             };
+
             return Cost::where('tahun', $tahun)
                 ->where(function ($q) use ($accountName, $keyword) {
                     $q->where('account_name', $accountName)
-                      ->orWhere('account_name', 'like', "%Alokasi%{$keyword}%");
+                        ->orWhere('account_name', 'like', "%Alokasi%{$keyword}%");
                 })
                 ->orderBy('cost_id', 'asc')
                 ->first();
@@ -797,10 +827,11 @@ class CostController extends Controller
         // Capex (Kantor, Mess)
         if (str_contains($upper, 'CAPEX') && (str_contains($upper, 'KANTOR') || str_contains($upper, 'MESS') || str_contains($upper, 'MES'))) {
             $lokasi = (str_contains($upper, 'MESS') || str_contains($upper, 'MES')) ? 'mess' : 'kantor';
+
             return Cost::where('tahun', $tahun)
                 ->where(function ($q) use ($accountName, $lokasi) {
                     $q->where('account_name', $accountName)
-                      ->orWhere('account_name', 'like', "%Capex%{$lokasi}%");
+                        ->orWhere('account_name', 'like', "%Capex%{$lokasi}%");
                 })
                 ->orderBy('cost_id', 'asc')
                 ->first();
@@ -811,7 +842,7 @@ class CostController extends Controller
             return Cost::where('tahun', $tahun)
                 ->where(function ($q) {
                     $q->where('account_name', 'REKRUT')
-                      ->orWhere('account_name', 'like', '%REKRUT%');
+                        ->orWhere('account_name', 'like', '%REKRUT%');
                 })
                 ->orderBy('cost_id', 'asc')
                 ->first();

@@ -13,6 +13,7 @@ class MonitoringEmployee extends Model
     protected static $logModuleName = 'Monitoring Alumni';
 
     protected $table = 'monitoring_employees';
+
     protected $primaryKey = 'id_monitoring';
 
     protected $fillable = [

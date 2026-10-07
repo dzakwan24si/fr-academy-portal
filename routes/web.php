@@ -1,110 +1,104 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Admin\CompetencyController;
 use App\Http\Controllers\AuthController;
-
+use App\Http\Controllers\CompetencyPublicController;
+use App\Models\Article;
+use App\Models\Category;
+use App\Models\Competency\CompetencyDictionary;
+use App\Models\HomepageEvent;
 use App\Models\TvPlaylist;
+use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    $latest_articles = \App\Models\Article::where('status', 'published')->latest()->take(3)->get();
-    $active_event = \App\Models\HomepageEvent::where('is_active', true)->first();
+    $latest_articles = Article::where('status', 'published')->latest()->take(3)->get();
+    $active_event = HomepageEvent::where('is_active', true)->first();
+
     return view('welcome', compact('latest_articles', 'active_event'));
 });
 
 Route::get('/sitemap.xml', function () {
-    $articles = \App\Models\Article::where('status', 'published')->get();
-    return response()->view('sitemap', compact('articles'))
-                     ->header('Content-Type', 'text/xml');
+    $articles = Article::where('status', 'published')->get();
+    $competencyDictionaries = CompetencyDictionary::published()
+        ->get(['code', 'year', 'updated_at']);
+
+    return response()->view('sitemap', compact('articles', 'competencyDictionaries'))
+        ->header('Content-Type', 'text/xml');
 })->name('sitemap');
-
-// RUTE SEMENTARA UNTUK SETUP HOSTING
-Route::get('/setup-superadmin', function () {
-    try {
-        \Illuminate\Support\Facades\Artisan::call('db:seed', ['--class' => 'RoleSeeder']);
-        
-        $user = \App\Models\User::where('name', 'Yogie Hizkia')->first();
-        if (!$user) {
-            $user = \App\Models\User::first(); // Fallback ke user pertama
-        }
-
-        if ($user) {
-            $user->assignRole('Superadmin');
-            return 'Sukses! Role Superadmin dan Permissions telah dibuat, dan akses penuh telah diberikan ke akun: ' . $user->name;
-        }
-        
-        return 'Role dibuat, tapi gagal memberikan akses karena tabel User kosong.';
-    } catch (\Exception $e) {
-        return 'Terjadi kesalahan: ' . $e->getMessage();
-    }
-});
 
 Route::get('/program', function () {
     return view('program');
 })->name('program');
+
+Route::get('/standar-kompetensi/{code?}', [CompetencyPublicController::class, 'show'])
+    ->where('code', 'estate|mill')
+    ->name('competency.public');
 
 Route::get('/tentang-kami', function () {
     return view('about');
 })->name('about');
 
 Route::get('/career', function () {
-    $programs = \App\Models\CareerProgram::where('is_active', true)->get();
+    $programs = CareerProgram::where('is_active', true)->get();
+
     return view('career.index', compact('programs'));
 })->name('career.index');
 
-Route::get('/career-qr', function (\Illuminate\Http\Request $request) {
+Route::get('/career-qr', function (Request $request) {
     $url = $request->query('url', 'https://fr-academy.com');
-    $qrCode = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(200)->generate($url);
+    $qrCode = QrCode::size(200)->generate($url);
+
     return response($qrCode)->header('Content-Type', 'image/svg+xml');
 })->name('career.qr');
 
 Route::get('/tv-display', function () {
     $playlists = TvPlaylist::with('article.author', 'article.category')->orderBy('order')->get();
-    
+
     // Stable hash based on latest updates and count
     $playlistUpdate = TvPlaylist::max('updated_at');
-    $articleUpdate = \App\Models\Article::max('updated_at');
+    $articleUpdate = Article::max('updated_at');
     $playlistCount = TvPlaylist::count();
-    $currentHash = md5($playlistUpdate . $articleUpdate . $playlistCount);
-    
-    $playlists->transform(function($item) {
+    $currentHash = md5($playlistUpdate.$articleUpdate.$playlistCount);
+
+    $playlists->transform(function ($item) {
         $url = route('artikel.show', $item->article->slug);
-        $item->qr_code = \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->margin(1)->generate($url)->toHtml();
+        $item->qr_code = QrCode::size(120)->margin(1)->generate($url)->toHtml();
+
         return $item;
     });
-    
+
     return view('tv.display', compact('playlists', 'currentHash'));
 })->name('tv.display');
 
 Route::get('/tv-display/check', function () {
     $playlistUpdate = TvPlaylist::max('updated_at');
-    $articleUpdate = \App\Models\Article::max('updated_at');
+    $articleUpdate = Article::max('updated_at');
     $playlistCount = TvPlaylist::count();
-    $currentHash = md5($playlistUpdate . $articleUpdate . $playlistCount);
-    
+    $currentHash = md5($playlistUpdate.$articleUpdate.$playlistCount);
+
     return response()->json([
-        'hash' => $currentHash
+        'hash' => $currentHash,
     ]);
 })->name('tv.check');
 
 Route::get('/artikel', function () {
-    $query = \App\Models\Article::where('status', 'published')->latest();
-    
+    $query = Article::where('status', 'published')->latest();
+
     if (request()->has('category')) {
         $query->where('category_id', request('category'));
     }
-    
+
     $articles = $query->paginate(9)->withQueryString();
-    $categories = \App\Models\Category::all();
+    $categories = Category::all();
+
     return view('article.index', compact('articles', 'categories'));
 });
-
-use App\Models\Article;
-use App\Models\Category;
 
 Route::get('/artikel/{slug}', function ($slug) {
     $article = Article::with(['author', 'category'])->where('slug', $slug)->firstOrFail();
     $categories = Category::all();
     $latest_articles = Article::where('status', 'published')->where('id', '!=', $article->id)->latest()->take(3)->get();
+
     return view('article.show', compact('article', 'categories', 'latest_articles'));
 })->name('artikel.show');
 
@@ -114,9 +108,8 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
-
-use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\UserController;
 
 // Admin Routes (Protected)
 Route::middleware('auth')->prefix('admin')->group(function () {
@@ -127,72 +120,118 @@ Route::middleware('auth')->prefix('admin')->group(function () {
         }
 
         // If user cannot manage articles/users/tv/events and has access to administrasi, redirect to administrasi dashboard
-        if (!$user->canAny(['manage_articles', 'manage_users', 'manage_tv_display', 'manage_events']) && $user->can('access_administrasi')) {
+        if (! $user->canAny(['manage_articles', 'manage_users', 'manage_tv_display', 'manage_events']) && $user->can('access_administrasi')) {
             return redirect()->route('administrasi.dashboard-realisasi.index');
         }
 
-        $totalArticles = \App\Models\Article::count();
-        $totalPlaylists = \App\Models\TvPlaylist::count();
-        $totalUsers = \App\Models\User::count();
-        $totalEvents = \App\Models\HomepageEvent::count();
+        $totalArticles = Article::count();
+        $totalPlaylists = TvPlaylist::count();
+        $totalUsers = User::count();
+        $totalEvents = HomepageEvent::count();
+
         return view('admin.dashboard', compact('totalArticles', 'totalPlaylists', 'totalUsers', 'totalEvents'));
     })->name('admin.dashboard');
 
     Route::resource('artikel', AdminArticleController::class)->names('admin.artikel')->middleware('can:manage_articles');
-    
+
     // User Management Routes
     Route::resource('users', UserController::class)->names('admin.users')->middleware('can:manage_users');
-    Route::resource('roles', \App\Http\Controllers\Admin\RoleController::class)->names('admin.roles')->middleware('can:manage_roles');
+    Route::resource('roles', RoleController::class)->names('admin.roles')->middleware('can:manage_roles');
 
     // Event Themes Management
-    Route::resource('events', \App\Http\Controllers\Admin\HomepageEventController::class)->names('admin.events')->middleware('can:manage_events');
+    Route::resource('events', HomepageEventController::class)->names('admin.events')->middleware('can:manage_events');
 
     // Profile Management Routes
     Route::get('profile', [ProfileController::class, 'edit'])->name('admin.profile.edit');
     Route::put('profile', [ProfileController::class, 'update'])->name('admin.profile.update');
-    
+
     Route::get('tv', function () {
         return view('admin.tv.index');
     })->name('admin.tv.index')->middleware('can:manage_tv_display');
 
     // Career Programs Management
-    Route::resource('career-programs', \App\Http\Controllers\Admin\CareerProgramController::class)
+    Route::resource('career-programs', CareerProgramController::class)
         ->names('admin.career_programs');
+
+    // Standar Kompetensi Management
+    Route::middleware('can:manage_competency')->prefix('kompetensi')->name('admin.competency.')->group(function () {
+        Route::get('/', [CompetencyController::class, 'index'])->name('index');
+        Route::post('/', [CompetencyController::class, 'store'])->name('store');
+        Route::get('/{dictionary}', [CompetencyController::class, 'show'])->name('show');
+        Route::put('/{dictionary}', [CompetencyController::class, 'update'])->name('update');
+        Route::delete('/{dictionary}', [CompetencyController::class, 'destroy'])->name('destroy');
+        Route::patch('/{dictionary}/toggle-publish', [CompetencyController::class, 'togglePublish'])->name('toggle_publish');
+        Route::post('/{dictionary}/copy', [CompetencyController::class, 'copy'])->name('copy');
+
+        // Positions
+        Route::post('/{dictionary}/positions', [CompetencyController::class, 'storePosition'])->name('positions.store');
+        Route::put('/positions/{position}', [CompetencyController::class, 'updatePosition'])->name('positions.update');
+        Route::delete('/positions/{position}', [CompetencyController::class, 'destroyPosition'])->name('positions.destroy');
+        Route::post('/{dictionary}/positions/reorder', [CompetencyController::class, 'reorderPositions'])->name('positions.reorder');
+
+        // Competencies
+        Route::post('/{dictionary}/competencies', [CompetencyController::class, 'storeCompetency'])->name('competencies.store');
+        Route::get('/competencies/{competency}/edit', [CompetencyController::class, 'editCompetency'])->name('competencies.edit');
+        Route::put('/competencies/{competency}', [CompetencyController::class, 'updateCompetency'])->name('competencies.update');
+        Route::delete('/competencies/{competency}', [CompetencyController::class, 'destroyCompetency'])->name('competencies.destroy');
+        Route::post('/{dictionary}/competencies/reorder', [CompetencyController::class, 'reorderCompetencies'])->name('competencies.reorder');
+    });
 });
 
 // Monitoring Controllers
+use App\Http\Controllers\Admin\CareerProgramController;
+use App\Http\Controllers\Admin\DailyClassController;
+// Program Controllers
+use App\Http\Controllers\Admin\HomepageEventController;
+use App\Http\Controllers\Admin\MoaController;
+use App\Http\Controllers\Admin\NonRegulerDailyClassController;
+use App\Http\Controllers\Admin\NonRegulerMoaController;
+use App\Http\Controllers\Admin\NonRegulerTraineeController;
+// Cost Controllers
+use App\Http\Controllers\Admin\NonRegulerTrainerController;
+use App\Http\Controllers\Admin\NonRegulerTrainingProgramController;
+use App\Http\Controllers\Admin\NonRegulerWeeklyReportController;
+use App\Http\Controllers\Admin\RoleController;
+// Administrasi Controllers
+use App\Http\Controllers\Admin\TraineeController;
+use App\Http\Controllers\Admin\TrainerController;
+use App\Http\Controllers\Admin\TrainingProgramController;
+use App\Http\Controllers\Admin\WeeklyReportController;
+// Inventaris Controllers
+use App\Http\Controllers\Administrasi\ActivityLogController;
+use App\Http\Controllers\Administrasi\CutiController;
+use App\Http\Controllers\Administrasi\MppController;
+use App\Http\Controllers\Administrasi\RekrutmenController;
+use App\Http\Controllers\Cost\BiayaRekruitController;
+use App\Http\Controllers\Cost\CapexController;
+use App\Http\Controllers\Cost\CostController;
+use App\Http\Controllers\Cost\VraController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Inventaris\InventarisController;
+use App\Http\Controllers\Inventaris\InventarisDashboardController;
+use App\Http\Controllers\Inventaris\InventarisGudangController;
+use App\Http\Controllers\Inventaris\InventarisKantorController;
+use App\Http\Controllers\Inventaris\InventarisMessController;
+use App\Http\Controllers\Inventaris\InventarisSummaryController;
 use App\Http\Controllers\Monitoring\AsistenController;
 use App\Http\Controllers\Monitoring\MonitoringDashboardController;
 use App\Http\Controllers\Monitoring\MonitoringTalentController;
-
-// Program Controllers
+use App\Http\Controllers\Monitoring\ResignedStaffController;
 use App\Http\Controllers\Program\DashboardMonitoringTahunanController;
 use App\Http\Controllers\Program\DashboardRealisasiController;
 use App\Http\Controllers\Program\ProgramBatchController;
 use App\Http\Controllers\Program\RealisasiVsBatchController;
 use App\Http\Controllers\Program\TrainingRecordController;
-
-// Cost Controllers
-use App\Http\Controllers\Cost\BiayaRekruitController;
-use App\Http\Controllers\Cost\CapexController;
-use App\Http\Controllers\Cost\CostController;
-use App\Http\Controllers\Cost\VraController;
-
-// Administrasi Controllers
-use App\Http\Controllers\Administrasi\ActivityLogController;
-use App\Http\Controllers\Administrasi\CutiController;
-use App\Http\Controllers\Administrasi\MppController;
-use App\Http\Controllers\Administrasi\RekrutmenController;
-
-// Inventaris Controllers
-use App\Http\Controllers\Inventaris\InventarisController;
-use App\Http\Controllers\Inventaris\InventarisGudangController;
-use App\Http\Controllers\Inventaris\InventarisKantorController;
-use App\Http\Controllers\Inventaris\InventarisMessController;
-use App\Http\Controllers\Inventaris\InventarisDashboardController;
-use App\Http\Controllers\Inventaris\InventarisSummaryController;
-
-use App\Http\Controllers\DashboardController;
+use App\Models\Attendance;
+use App\Models\CareerProgram;
+use App\Models\DailyClass;
+use App\Models\Trainee;
+use App\Models\TrainingProgram;
+use App\Models\User;
+use App\Models\WeeklyReport;
+use App\Notifications\WebPushBlastNotification;
+use Illuminate\Http\Request;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 // Mengamankan rute dashboard & administrasi agar memerlukan auth dan permission access_administrasi
 Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
@@ -589,13 +628,13 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
     });
 
     // Administrasi - Staf Resign
-    Route::get('/administrasi/staf-resign', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'index'])->name('administrasi.staf-resign.index');
-    Route::post('/administrasi/staf-resign', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'store'])->name('administrasi.staf-resign.store');
-    Route::put('/administrasi/staf-resign/{id}', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'update'])->name('administrasi.staf-resign.update');
-    Route::delete('/administrasi/staf-resign/{id}', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'destroy'])->name('administrasi.staf-resign.destroy');
-    Route::get('/administrasi/staf-resign/template', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'downloadTemplate'])->name('administrasi.staf-resign.template');
-    Route::post('/administrasi/staf-resign/import/preview', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'previewImport'])->name('administrasi.staf-resign.import-preview');
-    Route::post('/administrasi/staf-resign/import/process', [\App\Http\Controllers\Monitoring\ResignedStaffController::class, 'processImport'])->name('administrasi.staf-resign.import-process');
+    Route::get('/administrasi/staf-resign', [ResignedStaffController::class, 'index'])->name('administrasi.staf-resign.index');
+    Route::post('/administrasi/staf-resign', [ResignedStaffController::class, 'store'])->name('administrasi.staf-resign.store');
+    Route::put('/administrasi/staf-resign/{id}', [ResignedStaffController::class, 'update'])->name('administrasi.staf-resign.update');
+    Route::delete('/administrasi/staf-resign/{id}', [ResignedStaffController::class, 'destroy'])->name('administrasi.staf-resign.destroy');
+    Route::get('/administrasi/staf-resign/template', [ResignedStaffController::class, 'downloadTemplate'])->name('administrasi.staf-resign.template');
+    Route::post('/administrasi/staf-resign/import/preview', [ResignedStaffController::class, 'previewImport'])->name('administrasi.staf-resign.import-preview');
+    Route::post('/administrasi/staf-resign/import/process', [ResignedStaffController::class, 'processImport'])->name('administrasi.staf-resign.import-process');
 
     // Administrasi - Monitoring Karyawan (React SPA) Routes
     Route::get('/administrasi/monitoring/{any?}', function () {
@@ -607,147 +646,144 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
     })->where('any', '.*');
 });
 
-Route::get('/clear-opcache', function() {
+Route::get('/clear-opcache', function () {
     if (function_exists('opcache_reset')) {
         opcache_reset();
     }
-    \Artisan::call('optimize:clear');
+    Artisan::call('optimize:clear');
+
     return 'Cache server berhasil dibersihkan! Silakan kembali ke halaman Edit dan Refresh (F5).';
 });
 
 Route::prefix('training-reguler')->group(function () {
     Route::get('/', function () {
-        $totalTrainees = \App\Models\Trainee::where('status', 'aktif')->count();
-        $totalPrograms = \App\Models\TrainingProgram::count();
-        $draftReports = \App\Models\WeeklyReport::where('status', 'draft')->count();
-        $recentReports = \App\Models\WeeklyReport::with('trainingProgram', 'trainer')->latest()->take(5)->get();
+        $totalTrainees = Trainee::where('status', 'aktif')->count();
+        $totalPrograms = TrainingProgram::count();
+        $draftReports = WeeklyReport::where('status', 'draft')->count();
+        $recentReports = WeeklyReport::with('trainingProgram', 'trainer')->latest()->take(5)->get();
+
         return view('admin.training-dashboard', compact('totalTrainees', 'totalPrograms', 'draftReports', 'recentReports'));
     })->name('training-reguler.dashboard');
 
-    Route::resource('training-programs', \App\Http\Controllers\Admin\TrainingProgramController::class)->names('training-reguler.training-programs');
-    Route::resource('trainees', \App\Http\Controllers\Admin\TraineeController::class)->names('training-reguler.trainees');
-    Route::post('trainees/import', [\App\Http\Controllers\Admin\TraineeController::class, 'import'])->name('training-reguler.trainees.import');
-    Route::get('trainees/template', [\App\Http\Controllers\Admin\TraineeController::class, 'downloadTemplate'])->name('training-reguler.trainees.template');
-    Route::resource('trainers', \App\Http\Controllers\Admin\TrainerController::class)->names('training-reguler.trainers');
-    Route::post('weekly-reports/merge', [\App\Http\Controllers\Admin\WeeklyReportController::class, 'merge'])->name('training-reguler.weekly-reports.merge');
-    Route::post('weekly-reports/{weekly_report}/unmerge', [\App\Http\Controllers\Admin\WeeklyReportController::class, 'unmerge'])->name('training-reguler.weekly-reports.unmerge');
-    Route::resource('weekly-reports', \App\Http\Controllers\Admin\WeeklyReportController::class)->names('training-reguler.weekly-reports');
-    Route::get('weekly-reports/{weekly_report}/export-pdf', [\App\Http\Controllers\Admin\WeeklyReportController::class, 'exportPdf'])->name('training-reguler.weekly-reports.export-pdf');
-    Route::resource('moas', \App\Http\Controllers\Admin\MoaController::class)->names('training-reguler.moas');
-    
+    Route::resource('training-programs', TrainingProgramController::class)->names('training-reguler.training-programs');
+    Route::resource('trainees', TraineeController::class)->names('training-reguler.trainees');
+    Route::post('trainees/import', [TraineeController::class, 'import'])->name('training-reguler.trainees.import');
+    Route::get('trainees/template', [TraineeController::class, 'downloadTemplate'])->name('training-reguler.trainees.template');
+    Route::resource('trainers', TrainerController::class)->names('training-reguler.trainers');
+    Route::post('weekly-reports/merge', [WeeklyReportController::class, 'merge'])->name('training-reguler.weekly-reports.merge');
+    Route::post('weekly-reports/{weekly_report}/unmerge', [WeeklyReportController::class, 'unmerge'])->name('training-reguler.weekly-reports.unmerge');
+    Route::resource('weekly-reports', WeeklyReportController::class)->names('training-reguler.weekly-reports');
+    Route::get('weekly-reports/{weekly_report}/export-pdf', [WeeklyReportController::class, 'exportPdf'])->name('training-reguler.weekly-reports.export-pdf');
+    Route::resource('moas', MoaController::class)->names('training-reguler.moas');
+
     // Dummy Print Routes
-    Route::get('print/attendance', function() {
+    Route::get('print/attendance', function () {
         return view('admin.print_dummy.attendance');
     })->name('training-reguler.print.attendance');
-    
-    Route::get('print/tasks', function() {
+
+    Route::get('print/tasks', function () {
         return view('admin.print_dummy.tasks');
     })->name('training-reguler.print.tasks.dummy');
 
-    Route::post('daily-classes/{daily_class}/attendance', [\App\Http\Controllers\Admin\DailyClassController::class, 'updateAttendance'])->name('training-reguler.daily-classes.attendance.update');
-    Route::post('daily-classes/{daily_class}/generate-qr', [\App\Http\Controllers\Admin\DailyClassController::class, 'generateQr'])->name('training-reguler.daily-classes.generate-qr');
-    Route::post('daily-classes/{daily_class}/toggle-evaluation', [\App\Http\Controllers\Admin\DailyClassController::class, 'toggleEvaluation'])->name('training-reguler.daily-classes.toggle-evaluation');
-    Route::get('daily-classes/{daily_class}/print-qr', [\App\Http\Controllers\Admin\DailyClassController::class, 'printQr'])->name('training-reguler.daily-classes.print-qr');
-    Route::get('daily-classes/{daily_class}/print-tasks', [\App\Http\Controllers\Admin\DailyClassController::class, 'printTasks'])->name('training-reguler.daily-classes.print-tasks');
-    Route::post('daily-classes/{daily_class}/tasks', [\App\Http\Controllers\Admin\DailyClassController::class, 'storeTask'])->name('training-reguler.daily-classes.tasks.store');
-    Route::get('tasks/{task}', [\App\Http\Controllers\Admin\DailyClassController::class, 'showTask'])->name('training-reguler.tasks.show');
-    Route::delete('tasks/{task}', [\App\Http\Controllers\Admin\DailyClassController::class, 'destroyTask'])->name('training-reguler.daily-classes.tasks.destroy');
-    Route::resource('daily-classes', \App\Http\Controllers\Admin\DailyClassController::class)->names('training-reguler.daily-classes');
+    Route::post('daily-classes/{daily_class}/attendance', [DailyClassController::class, 'updateAttendance'])->name('training-reguler.daily-classes.attendance.update');
+    Route::post('daily-classes/{daily_class}/generate-qr', [DailyClassController::class, 'generateQr'])->name('training-reguler.daily-classes.generate-qr');
+    Route::post('daily-classes/{daily_class}/toggle-evaluation', [DailyClassController::class, 'toggleEvaluation'])->name('training-reguler.daily-classes.toggle-evaluation');
+    Route::get('daily-classes/{daily_class}/print-qr', [DailyClassController::class, 'printQr'])->name('training-reguler.daily-classes.print-qr');
+    Route::get('daily-classes/{daily_class}/print-tasks', [DailyClassController::class, 'printTasks'])->name('training-reguler.daily-classes.print-tasks');
+    Route::post('daily-classes/{daily_class}/tasks', [DailyClassController::class, 'storeTask'])->name('training-reguler.daily-classes.tasks.store');
+    Route::get('tasks/{task}', [DailyClassController::class, 'showTask'])->name('training-reguler.tasks.show');
+    Route::delete('tasks/{task}', [DailyClassController::class, 'destroyTask'])->name('training-reguler.daily-classes.tasks.destroy');
+    Route::resource('daily-classes', DailyClassController::class)->names('training-reguler.daily-classes');
 });
-
-
 
 Route::prefix('training-non-reguler')->group(function () {
     Route::get('/', function () {
         $today = now()->format('Y-m-d');
-        
+
         // Menghitung total peserta yang materi/kelasnya berjalan hari ini
-        $totalTrainees = \App\Models\Attendance::whereHas('dailyClass', function ($query) use ($today) {
+        $totalTrainees = Attendance::whereHas('dailyClass', function ($query) use ($today) {
             $query->where(function ($q) use ($today) {
                 $q->whereNotNull('end_date')
-                  ->whereDate('date', '<=', $today)
-                  ->whereDate('end_date', '>=', $today);
+                    ->whereDate('date', '<=', $today)
+                    ->whereDate('end_date', '>=', $today);
             })->orWhere(function ($q) use ($today) {
                 $q->whereNull('end_date')
-                  ->whereDate('date', '=', $today);
+                    ->whereDate('date', '=', $today);
             });
         })->distinct('trainee_id')->count('trainee_id');
-        $totalSesi = \App\Models\DailyClass::count();
-        $totalPrograms = \App\Models\TrainingProgram::count();
-        
-        $recentSesi = \App\Models\DailyClass::with('trainingProgram')
+        $totalSesi = DailyClass::count();
+        $totalPrograms = TrainingProgram::count();
+
+        $recentSesi = DailyClass::with('trainingProgram')
             ->whereDate('date', '<=', $today)
             ->where(function ($q) use ($today) {
                 $q->whereDate('end_date', '>=', $today)
-                  ->orWhere(function ($sq) use ($today) {
-                      $sq->whereNull('end_date')->whereDate('date', '>=', $today);
-                  });
+                    ->orWhere(function ($sq) use ($today) {
+                        $sq->whereNull('end_date')->whereDate('date', '>=', $today);
+                    });
             })
             ->orderBy('date', 'desc')
             ->take(5)
             ->get();
-            
+
         return view('admin.non-reguler.training-dashboard', compact('totalTrainees', 'totalSesi', 'totalPrograms', 'recentSesi'));
     })->name('training-non-reguler.dashboard');
 
-    Route::resource('training-programs', \App\Http\Controllers\Admin\NonRegulerTrainingProgramController::class)->names('training-non-reguler.training-programs');
-    Route::resource('trainees', \App\Http\Controllers\Admin\NonRegulerTraineeController::class)->names('training-non-reguler.trainees');
-    Route::post('trainees/import', [\App\Http\Controllers\Admin\NonRegulerTraineeController::class, 'import'])->name('training-non-reguler.trainees.import');
-    Route::get('trainees/template', [\App\Http\Controllers\Admin\NonRegulerTraineeController::class, 'downloadTemplate'])->name('training-non-reguler.trainees.template');
-    Route::resource('trainers', \App\Http\Controllers\Admin\NonRegulerTrainerController::class)->names('training-non-reguler.trainers');
-    Route::post('weekly-reports/merge', [\App\Http\Controllers\Admin\NonRegulerWeeklyReportController::class, 'merge'])->name('training-non-reguler.weekly-reports.merge');
-    Route::post('weekly-reports/{weekly_report}/unmerge', [\App\Http\Controllers\Admin\NonRegulerWeeklyReportController::class, 'unmerge'])->name('training-non-reguler.weekly-reports.unmerge');
-    Route::resource('weekly-reports', \App\Http\Controllers\Admin\NonRegulerWeeklyReportController::class)->names('training-non-reguler.weekly-reports');
-    Route::get('weekly-reports/{weekly_report}/export-pdf', [\App\Http\Controllers\Admin\NonRegulerWeeklyReportController::class, 'exportPdf'])->name('training-non-reguler.weekly-reports.export-pdf');
-    Route::resource('moas', \App\Http\Controllers\Admin\NonRegulerMoaController::class)->names('training-non-reguler.moas');
-    
+    Route::resource('training-programs', NonRegulerTrainingProgramController::class)->names('training-non-reguler.training-programs');
+    Route::resource('trainees', NonRegulerTraineeController::class)->names('training-non-reguler.trainees');
+    Route::post('trainees/import', [NonRegulerTraineeController::class, 'import'])->name('training-non-reguler.trainees.import');
+    Route::get('trainees/template', [NonRegulerTraineeController::class, 'downloadTemplate'])->name('training-non-reguler.trainees.template');
+    Route::resource('trainers', NonRegulerTrainerController::class)->names('training-non-reguler.trainers');
+    Route::post('weekly-reports/merge', [NonRegulerWeeklyReportController::class, 'merge'])->name('training-non-reguler.weekly-reports.merge');
+    Route::post('weekly-reports/{weekly_report}/unmerge', [NonRegulerWeeklyReportController::class, 'unmerge'])->name('training-non-reguler.weekly-reports.unmerge');
+    Route::resource('weekly-reports', NonRegulerWeeklyReportController::class)->names('training-non-reguler.weekly-reports');
+    Route::get('weekly-reports/{weekly_report}/export-pdf', [NonRegulerWeeklyReportController::class, 'exportPdf'])->name('training-non-reguler.weekly-reports.export-pdf');
+    Route::resource('moas', NonRegulerMoaController::class)->names('training-non-reguler.moas');
+
     // Dummy Print Routes
-    Route::get('print/attendance', function() {
+    Route::get('print/attendance', function () {
         return view('admin.print_dummy.attendance');
     })->name('training-non-reguler.print.attendance');
-    
-    Route::get('print/tasks', function() {
+
+    Route::get('print/tasks', function () {
         return view('admin.print_dummy.tasks');
     })->name('training-non-reguler.print.tasks.dummy');
 
-    Route::post('daily-classes/{daily_class}/import', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'importTrainees'])->name('training-non-reguler.daily-classes.import');
-    Route::post('daily-classes/{daily_class}/add-manual', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'addManualTrainee'])->name('training-non-reguler.daily-classes.add-manual');
-    Route::post('daily-classes/{daily_class}/attendance', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'updateAttendance'])->name('training-non-reguler.daily-classes.attendance.update');
-    Route::post('daily-classes/{daily_class}/generate-qr', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'generateQr'])->name('training-non-reguler.daily-classes.generate-qr');
-    Route::post('daily-classes/{daily_class}/generate-certificates', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'generateCertificates'])->name('training-non-reguler.daily-classes.generate-certificates');
-    Route::post('daily-classes/{daily_class}/preview-certificate', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'previewCertificate'])->name('training-non-reguler.daily-classes.preview-certificate');
-    Route::post('daily-classes/{daily_class}/toggle-evaluation', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'toggleEvaluation'])->name('training-non-reguler.daily-classes.toggle-evaluation');
-      Route::delete('daily-classes/{daily_class}/clear-evaluation', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'clearEvaluation'])->name('training-non-reguler.daily-classes.clear-evaluation');
-    Route::get('daily-classes/{daily_class}/print-qr', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'printQr'])->name('training-non-reguler.daily-classes.print-qr');
-    Route::get('daily-classes/{daily_class}/print-tasks', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'printTasks'])->name('training-non-reguler.daily-classes.print-tasks');
-    Route::get('daily-classes/{daily_class}/print-attendance', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'printAttendance'])->name('training-non-reguler.daily-classes.print-attendance');
-    Route::get('daily-classes/{daily_class}/export-training-record', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'exportTrainingRecord'])->name('training-non-reguler.daily-classes.export-training-record');
-    Route::post('daily-classes/{daily_class}/tasks', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'storeTask'])->name('training-non-reguler.daily-classes.tasks.store');
-    Route::get('tasks/{task}', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'showTask'])->name('training-non-reguler.tasks.show');
-    Route::delete('tasks/{task}', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'destroyTask'])->name('training-non-reguler.daily-classes.tasks.destroy');
-    Route::delete('daily-classes/{daily_class}/trainees', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'removeAllTrainees'])->name('training-non-reguler.daily-classes.trainees.destroy-all');
-    Route::delete('daily-classes/{daily_class}/trainees/{trainee}', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'removeTrainee'])->name('training-non-reguler.daily-classes.trainees.destroy');
-    
-Route::post('daily-classes/{daily_class}/notify', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'notifyTrainees'])->name('training-non-reguler.daily-classes.notify');
-    
-Route::get('history', [\App\Http\Controllers\Admin\NonRegulerDailyClassController::class, 'history'])->name('training-non-reguler.history.index');
-    Route::resource('daily-classes', \App\Http\Controllers\Admin\NonRegulerDailyClassController::class)->names('training-non-reguler.daily-classes');
+    Route::post('daily-classes/{daily_class}/import', [NonRegulerDailyClassController::class, 'importTrainees'])->name('training-non-reguler.daily-classes.import');
+    Route::post('daily-classes/{daily_class}/add-manual', [NonRegulerDailyClassController::class, 'addManualTrainee'])->name('training-non-reguler.daily-classes.add-manual');
+    Route::post('daily-classes/{daily_class}/attendance', [NonRegulerDailyClassController::class, 'updateAttendance'])->name('training-non-reguler.daily-classes.attendance.update');
+    Route::post('daily-classes/{daily_class}/generate-qr', [NonRegulerDailyClassController::class, 'generateQr'])->name('training-non-reguler.daily-classes.generate-qr');
+    Route::post('daily-classes/{daily_class}/generate-certificates', [NonRegulerDailyClassController::class, 'generateCertificates'])->name('training-non-reguler.daily-classes.generate-certificates');
+    Route::post('daily-classes/{daily_class}/preview-certificate', [NonRegulerDailyClassController::class, 'previewCertificate'])->name('training-non-reguler.daily-classes.preview-certificate');
+    Route::post('daily-classes/{daily_class}/toggle-evaluation', [NonRegulerDailyClassController::class, 'toggleEvaluation'])->name('training-non-reguler.daily-classes.toggle-evaluation');
+    Route::delete('daily-classes/{daily_class}/clear-evaluation', [NonRegulerDailyClassController::class, 'clearEvaluation'])->name('training-non-reguler.daily-classes.clear-evaluation');
+    Route::get('daily-classes/{daily_class}/print-qr', [NonRegulerDailyClassController::class, 'printQr'])->name('training-non-reguler.daily-classes.print-qr');
+    Route::get('daily-classes/{daily_class}/print-tasks', [NonRegulerDailyClassController::class, 'printTasks'])->name('training-non-reguler.daily-classes.print-tasks');
+    Route::get('daily-classes/{daily_class}/print-attendance', [NonRegulerDailyClassController::class, 'printAttendance'])->name('training-non-reguler.daily-classes.print-attendance');
+    Route::get('daily-classes/{daily_class}/export-training-record', [NonRegulerDailyClassController::class, 'exportTrainingRecord'])->name('training-non-reguler.daily-classes.export-training-record');
+    Route::post('daily-classes/{daily_class}/tasks', [NonRegulerDailyClassController::class, 'storeTask'])->name('training-non-reguler.daily-classes.tasks.store');
+    Route::get('tasks/{task}', [NonRegulerDailyClassController::class, 'showTask'])->name('training-non-reguler.tasks.show');
+    Route::delete('tasks/{task}', [NonRegulerDailyClassController::class, 'destroyTask'])->name('training-non-reguler.daily-classes.tasks.destroy');
+    Route::delete('daily-classes/{daily_class}/trainees', [NonRegulerDailyClassController::class, 'removeAllTrainees'])->name('training-non-reguler.daily-classes.trainees.destroy-all');
+    Route::delete('daily-classes/{daily_class}/trainees/{trainee}', [NonRegulerDailyClassController::class, 'removeTrainee'])->name('training-non-reguler.daily-classes.trainees.destroy');
+
+    Route::post('daily-classes/{daily_class}/notify', [NonRegulerDailyClassController::class, 'notifyTrainees'])->name('training-non-reguler.daily-classes.notify');
+
+    Route::get('history', [NonRegulerDailyClassController::class, 'history'])->name('training-non-reguler.history.index');
+    Route::resource('daily-classes', NonRegulerDailyClassController::class)->names('training-non-reguler.daily-classes');
 });
 
-
-Route::middleware(['auth', 'verified'])->post('/admin/notifications/blast', function(Illuminate\Http\Request $request) {
+Route::middleware(['auth', 'verified'])->post('/admin/notifications/blast', function (Request $request) {
     $request->validate([
         'title' => 'required|string',
         'body' => 'required|string',
     ]);
-    
-    $trainees = App\Models\Trainee::all();
-    
+
+    $trainees = Trainee::all();
+
     foreach ($trainees as $trainee) {
-        $trainee->notify(new App\Notifications\WebPushBlastNotification($request->title, $request->body));
+        $trainee->notify(new WebPushBlastNotification($request->title, $request->body));
     }
-    
+
     return back()->with('success', 'Notifikasi berhasil dikirim ke seluruh peserta!');
 })->name('admin.notifications.blast');
-
-

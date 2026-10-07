@@ -19,16 +19,16 @@ return new class extends Migration
             $table->string('jenis_jabatan', 50)->nullable();
             $table->date('tmk')->nullable(); // Tanggal Mulai Kerja
             $table->integer('tahun'); // Periode tahun aktif (misal 2026)
-            
+
             // Hak Cuti (Hak cuti tahun Y-1, diinput manual dengan default)
             $table->integer('hak_cuti')->default(12);
-            
+
             // Sisa Hak Cuti Carryover (2 tahun sebelumnya, default 0 atau dihitung dari histori)
             $table->integer('sisa_hak_cuti_carryover')->default(0);
-            
+
             // Total cuti yang sudah diambil di tahun tersebut
             $table->integer('cuti_diambil')->default(0);
-            
+
             // Penggunaan cuti per bulan (Periode Pengambilan Cuti)
             $table->integer('jan')->default(0);
             $table->integer('feb')->default(0);
@@ -42,7 +42,7 @@ return new class extends Migration
             $table->integer('okt')->default(0);
             $table->integer('nov')->default(0);
             $table->integer('des')->default(0);
-            
+
             $table->text('keterangan')->nullable();
             $table->timestamps();
 

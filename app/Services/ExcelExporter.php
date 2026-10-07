@@ -2,12 +2,12 @@
 
 namespace App\Services;
 
-use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
-use PhpOffice\PhpSpreadsheet\Style\Alignment;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ExcelExporter
@@ -16,22 +16,21 @@ class ExcelExporter
      * Download styled Excel (.xlsx) file matching the standard green header design.
      * If ZipArchive is not installed on the server, automatically falls back to clean UTF-8 CSV.
      *
-     * @param string $filename Output filename (e.g. "Template_Monitoring_Alumni.xlsx")
-     * @param array $headers List of header column titles
-     * @param array $dataRows List of data rows (each row is an array of values)
-     * @param string $sheetTitle Sheet title name
-     * @return StreamedResponse
+     * @param  string  $filename  Output filename (e.g. "Template_Monitoring_Alumni.xlsx")
+     * @param  array  $headers  List of header column titles
+     * @param  array  $dataRows  List of data rows (each row is an array of values)
+     * @param  string  $sheetTitle  Sheet title name
      */
     public static function download(string $filename, array $headers, array $dataRows = [], string $sheetTitle = 'Sheet1'): StreamedResponse
     {
         // 1. Fallback to CSV if PHP zip extension (ZipArchive) is missing on hosting server
-        if (!class_exists('\ZipArchive')) {
-            $csvFilename = preg_replace('/\.[^.]+$/', '', $filename) . '.csv';
+        if (! class_exists('\ZipArchive')) {
+            $csvFilename = preg_replace('/\.[^.]+$/', '', $filename).'.csv';
             $responseHeaders = [
-                'Content-Type'        => 'text/csv; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="' . $csvFilename . '"',
-                'Cache-Control'       => 'max-age=0, must-revalidate',
-                'Pragma'              => 'public',
+                'Content-Type' => 'text/csv; charset=UTF-8',
+                'Content-Disposition' => 'attachment; filename="'.$csvFilename.'"',
+                'Cache-Control' => 'max-age=0, must-revalidate',
+                'Pragma' => 'public',
             ];
 
             return new StreamedResponse(function () use ($headers, $dataRows) {
@@ -40,16 +39,16 @@ class ExcelExporter
                 }
                 $handle = fopen('php://output', 'w');
                 // UTF-8 BOM so Excel opens with proper characters
-                fprintf($handle, chr(0xEF) . chr(0xBB) . chr(0xBF));
+                fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
                 fputcsv($handle, $headers);
                 foreach ($dataRows as $row) {
-                    fputcsv($handle, (array)$row);
+                    fputcsv($handle, (array) $row);
                 }
                 fclose($handle);
             }, 200, $responseHeaders);
         }
 
-        $spreadsheet = new Spreadsheet();
+        $spreadsheet = new Spreadsheet;
         $sheet = $spreadsheet->getActiveSheet();
         $sheet->setTitle(substr($sheetTitle, 0, 31)); // Max sheet name length
 
@@ -99,11 +98,11 @@ class ExcelExporter
             $colLetter = Coordinate::stringFromColumnIndex($colIndex);
             $sheet->getCell("{$colLetter}1")->setValue($header);
 
-            $cleanH = strtolower(trim((string)$header));
-            if (in_array($cleanH, ['budget', 'realisasi', 'budget_tahunan', 'total_biaya', 'biaya', 'harga', 'total_rp', 'upah', 'bbm', 'preventif_maintenance', 'biaya_lainnya', 'total_biaya_bulan', 'debit', 'kredit', 'nominal', 'amount', 'total_budget', 'total_realisasi']) 
-                || str_contains($cleanH, 'biaya') 
-                || str_contains($cleanH, 'budget') 
-                || str_contains($cleanH, 'realisasi') 
+            $cleanH = strtolower(trim((string) $header));
+            if (in_array($cleanH, ['budget', 'realisasi', 'budget_tahunan', 'total_biaya', 'biaya', 'harga', 'total_rp', 'upah', 'bbm', 'preventif_maintenance', 'biaya_lainnya', 'total_biaya_bulan', 'debit', 'kredit', 'nominal', 'amount', 'total_budget', 'total_realisasi'])
+                || str_contains($cleanH, 'biaya')
+                || str_contains($cleanH, 'budget')
+                || str_contains($cleanH, 'realisasi')
                 || str_contains($cleanH, 'harga')) {
                 $currencyCols[] = $colLetter;
             }
@@ -118,7 +117,7 @@ class ExcelExporter
         $rowIndex = 2;
         foreach ($dataRows as $row) {
             $colIndex = 1;
-            foreach ((array)$row as $val) {
+            foreach ((array) $row as $val) {
                 $colLetter = Coordinate::stringFromColumnIndex($colIndex);
                 $sheet->getCell("{$colLetter}{$rowIndex}")->setValue($val);
                 $colIndex++;
@@ -160,15 +159,15 @@ class ExcelExporter
         }
 
         // Ensure extension is .xlsx
-        if (!str_ends_with(strtolower($filename), '.xlsx')) {
-            $filename = preg_replace('/\.[^.]+$/', '', $filename) . '.xlsx';
+        if (! str_ends_with(strtolower($filename), '.xlsx')) {
+            $filename = preg_replace('/\.[^.]+$/', '', $filename).'.xlsx';
         }
 
         $responseHeaders = [
-            'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-            'Cache-Control'       => 'max-age=0, must-revalidate',
-            'Pragma'              => 'public',
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
+            'Cache-Control' => 'max-age=0, must-revalidate',
+            'Pragma' => 'public',
         ];
 
         return new StreamedResponse(function () use ($spreadsheet) {

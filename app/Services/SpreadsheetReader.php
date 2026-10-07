@@ -28,13 +28,14 @@ class SpreadsheetReader
     public static function readCsv(string $path): array
     {
         $handle = fopen($path, 'rb');
-        if (!$handle) {
+        if (! $handle) {
             throw new \RuntimeException('File CSV tidak dapat dibuka.');
         }
 
         $firstLine = fgets($handle);
         if ($firstLine === false) {
             fclose($handle);
+
             return [];
         }
 
@@ -55,18 +56,19 @@ class SpreadsheetReader
 
         $rows = [];
         $firstRow = str_getcsv($firstLine, $bestDelim, '"', '\\');
-        if (!empty(array_filter($firstRow, fn($v) => trim((string) $v) !== ''))) {
+        if (! empty(array_filter($firstRow, fn ($v) => trim((string) $v) !== ''))) {
             $rows[] = $firstRow;
         }
 
         while (($data = fgetcsv($handle, 0, $bestDelim, '"', '\\')) !== false) {
-            if ($data === [null] || empty(array_filter($data, fn($v) => trim((string) $v) !== ''))) {
+            if ($data === [null] || empty(array_filter($data, fn ($v) => trim((string) $v) !== ''))) {
                 continue;
             }
             $rows[] = $data;
         }
 
         fclose($handle);
+
         return $rows;
     }
 
@@ -75,7 +77,7 @@ class SpreadsheetReader
      */
     public static function readXlsx(string $path): array
     {
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
         if ($zip->open($path) !== true) {
             throw new \RuntimeException('File Excel (.xlsx) tidak dapat dibaca.');
         }
@@ -94,7 +96,9 @@ class SpreadsheetReader
         if ($sheetXml === false) {
             for ($i = 1; $i <= 10; $i++) {
                 $sheetXml = $zip->getFromName("xl/worksheets/sheet{$i}.xml");
-                if ($sheetXml !== false) break;
+                if ($sheetXml !== false) {
+                    break;
+                }
             }
         }
 
@@ -120,7 +124,9 @@ class SpreadsheetReader
                         $column = $column * 26 + ord($letter) - 64;
                     }
                     $idx = $column - 1;
-                    if ($idx > $maxIdx) $maxIdx = $idx;
+                    if ($idx > $maxIdx) {
+                        $maxIdx = $idx;
+                    }
 
                     $value = (string) ($cell->v ?? '');
                     if ((string) $cell['t'] === 's') {
@@ -132,13 +138,15 @@ class SpreadsheetReader
                 }
 
                 if ($maxIdx >= 0) {
-                    if ($headerWidth === 0) $headerWidth = $maxIdx + 1;
+                    if ($headerWidth === 0) {
+                        $headerWidth = $maxIdx + 1;
+                    }
                     $rowWidth = max($headerWidth, $maxIdx + 1);
                     $fullRow = [];
                     for ($c = 0; $c < $rowWidth; $c++) {
                         $fullRow[$c] = $cells[$c] ?? '';
                     }
-                    if (!empty(array_filter($fullRow, fn($v) => trim((string) $v) !== ''))) {
+                    if (! empty(array_filter($fullRow, fn ($v) => trim((string) $v) !== ''))) {
                         $rows[] = $fullRow;
                     }
                 }
@@ -146,6 +154,7 @@ class SpreadsheetReader
         }
 
         $zip->close();
+
         return $rows;
     }
 
@@ -154,12 +163,15 @@ class SpreadsheetReader
      */
     public static function parseDate($value): ?string
     {
-        if ($value === null || trim((string) $value) === '') return null;
+        if ($value === null || trim((string) $value) === '') {
+            return null;
+        }
         $val = trim((string) $value);
         if (is_numeric($val) && (float) $val > 10000 && (float) $val < 70000) {
             return gmdate('Y-m-d', ((int) $val - 25569) * 86400);
         }
         $time = strtotime($val);
+
         return $time ? date('Y-m-d', $time) : null;
     }
 

@@ -2,22 +2,24 @@
 
 namespace App\Jobs;
 
+use App\Models\DailyClass;
+use App\Models\Trainee;
+use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\DB;
-use App\Models\Trainee;
-use App\Models\DailyClass;
-use Carbon\Carbon;
 
 class UpdateTrainingRecordJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $traineeId;
+
     protected $dailyClassId;
+
     protected $attendanceDate;
 
     public function __construct($traineeId, $dailyClassId, $attendanceDate)
@@ -32,7 +34,7 @@ class UpdateTrainingRecordJob implements ShouldQueue
         $trainee = Trainee::find($this->traineeId);
         $dailyClass = DailyClass::find($this->dailyClassId);
 
-        if (!$trainee || !$dailyClass) {
+        if (! $trainee || ! $dailyClass) {
             return;
         }
 
@@ -43,11 +45,13 @@ class UpdateTrainingRecordJob implements ShouldQueue
 
         // Kalkulasi Periode (Q1, Q2, Q3, Q4)
         $monthNum = $dateObj->month;
-        $periode = 'Q' . ceil($monthNum / 3);
+        $periode = 'Q'.ceil($monthNum / 3);
 
         $parentProgramNonReg = DB::table('program_non_reguler')->where('jenis_pelatihan', $dailyClass->title)->first();
-        if (!$parentProgramNonReg) return;
-        
+        if (! $parentProgramNonReg) {
+            return;
+        }
+
         $idNonReguler = $parentProgramNonReg->id_nonreguler;
         $subKategori = $parentProgramNonReg->sub_kategori;
 
@@ -61,7 +65,7 @@ class UpdateTrainingRecordJob implements ShouldQueue
         if ($existingRecord) {
             // Update record: Tambahkan tanggal baru jika belum ada
             $tanggalArray = explode(', ', $existingRecord->tanggal);
-            if (!in_array($hariAbsen, $tanggalArray)) {
+            if (! in_array($hariAbsen, $tanggalArray)) {
                 $tanggalArray[] = $hariAbsen;
                 // Urutkan tanggal agar rapi
                 sort($tanggalArray);
@@ -83,7 +87,7 @@ class UpdateTrainingRecordJob implements ShouldQueue
                 ->orderBy('created_at', 'desc')
                 ->value('gol');
 
-            if (!$gol) {
+            if (! $gol) {
                 // Mapping sederhana tebak golongan jika tidak ada history
                 $jabatan = strtolower($trainee->talent_to ?? '');
                 if (str_contains($jabatan, 'askep') || str_contains($jabatan, 'asst') || str_contains($jabatan, 'manager') || str_contains($jabatan, 'staff') || str_contains($jabatan, 'ktu')) {

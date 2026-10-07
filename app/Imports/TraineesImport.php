@@ -3,13 +3,16 @@
 namespace App\Imports;
 
 use App\Models\Trainee;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use Illuminate\Http\UploadedFile;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class TraineesImport
 {
     protected int $programId;
+
     protected array $errors = [];
+
     protected int $imported = 0;
 
     public function __construct(int $programId)
@@ -78,37 +81,37 @@ class TraineesImport
         // Resolve birth_date
         $birthDate = null;
         $rawDate = trim($row['tgl_lahir'] ?? '');
-        if (!empty($rawDate)) {
+        if (! empty($rawDate)) {
             // Try to parse common date formats
             $timestamp = strtotime($rawDate);
             if ($timestamp !== false) {
                 $birthDate = date('Y-m-d', $timestamp);
             } elseif (is_numeric($rawDate)) {
                 // Excel serial date
-                $birthDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float)$rawDate)->format('Y-m-d');
+                $birthDate = Date::excelToDateTimeObject((float) $rawDate)->format('Y-m-d');
             }
         }
 
         $status = strtolower(trim($row['status'] ?? 'aktif'));
-        if (!in_array($status, ['aktif', 'pasif', 'resign'])) {
+        if (! in_array($status, ['aktif', 'pasif', 'resign'])) {
             $status = 'aktif';
         }
 
         try {
             Trainee::create([
                 'training_program_id' => $this->programId,
-                'nik'         => trim($row['nik'] ?? '') ?: null,
-                'name'        => $name,
+                'nik' => trim($row['nik'] ?? '') ?: null,
+                'name' => $name,
                 'birth_place' => trim($row['tempat_lahir'] ?? '') ?: null,
-                'birth_date'  => $birthDate,
-                'origin'      => trim($row['asal_daerah'] ?? '') ?: null,
-                'university'  => trim($row['universitas'] ?? '') ?: null,
-                'major'       => trim($row['jurusan'] ?? '') ?: null,
-                'status'      => $status,
+                'birth_date' => $birthDate,
+                'origin' => trim($row['asal_daerah'] ?? '') ?: null,
+                'university' => trim($row['universitas'] ?? '') ?: null,
+                'major' => trim($row['jurusan'] ?? '') ?: null,
+                'status' => $status,
             ]);
             $this->imported++;
         } catch (\Exception $e) {
-            $this->errors[] = "Baris {$rowNum} ({$name}): " . $e->getMessage();
+            $this->errors[] = "Baris {$rowNum} ({$name}): ".$e->getMessage();
         }
     }
 

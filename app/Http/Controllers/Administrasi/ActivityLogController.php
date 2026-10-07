@@ -17,8 +17,8 @@ class ActivityLogController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('user_name', 'like', "%{$search}%")
-                  ->orWhere('description', 'like', "%{$search}%")
-                  ->orWhere('ip_address', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('ip_address', 'like', "%{$search}%");
             });
         }
 
@@ -51,10 +51,10 @@ class ActivityLogController extends Controller
 
         // Statistics Summary
         $stats = [
-            'total_today'  => ActivityLog::whereDate('created_at', today())->count(),
+            'total_today' => ActivityLog::whereDate('created_at', today())->count(),
             'total_tambah' => ActivityLog::where('action', 'Tambah')->count(),
-            'total_edit'   => ActivityLog::where('action', 'Edit')->count(),
-            'total_hapus'  => ActivityLog::where('action', 'Hapus')->count(),
+            'total_edit' => ActivityLog::where('action', 'Edit')->count(),
+            'total_hapus' => ActivityLog::where('action', 'Hapus')->count(),
             'total_import' => ActivityLog::where('action', 'Import')->count(),
         ];
 
@@ -67,7 +67,7 @@ class ActivityLogController extends Controller
 
         return response()->json([
             'status' => 'success',
-            'data'   => $log,
+            'data' => $log,
         ]);
     }
 }

@@ -10,9 +10,13 @@ class ProgramNonReguler extends Model
     use LogsActivity;
 
     protected static $logModuleName = 'Program Non-Reguler';
+
     protected $table = 'program_non_reguler';
+
     protected $primaryKey = 'id_nonreguler';
+
     protected $guarded = [];
+
     protected $casts = [
         'tanggal_pelaksanaan' => 'array',
         'start_date' => 'date:Y-m-d',
@@ -37,7 +41,8 @@ class ProgramNonReguler extends Model
 
     public function isSoftSkill(): bool
     {
-        $kat = strtolower(trim(($this->kategori_pelatihan ?? '') . ' ' . ($this->sub_kategori ?? '') . ' ' . ($this->jenis_pelatihan ?? '')));
+        $kat = strtolower(trim(($this->kategori_pelatihan ?? '').' '.($this->sub_kategori ?? '').' '.($this->jenis_pelatihan ?? '')));
+
         return str_contains($kat, 'managerial') || str_contains($kat, 'leadership') || str_contains($kat, 'soft');
     }
 
@@ -45,8 +50,8 @@ class ProgramNonReguler extends Model
     {
         return $query->where(function ($q) {
             $q->where('kategori_pelatihan', 'like', '%managerial%')
-              ->orWhere('kategori_pelatihan', 'like', '%leadership%')
-              ->orWhere('kategori_pelatihan', 'like', '%soft%');
+                ->orWhere('kategori_pelatihan', 'like', '%leadership%')
+                ->orWhere('kategori_pelatihan', 'like', '%soft%');
         });
     }
 
@@ -54,8 +59,8 @@ class ProgramNonReguler extends Model
     {
         return $query->where(function ($q) {
             $q->where('kategori_pelatihan', 'not like', '%managerial%')
-              ->orWhere('kategori_pelatihan', 'not like', '%leadership%')
-              ->orWhere('kategori_pelatihan', 'not like', '%soft%');
+                ->orWhere('kategori_pelatihan', 'not like', '%leadership%')
+                ->orWhere('kategori_pelatihan', 'not like', '%soft%');
         });
     }
 }

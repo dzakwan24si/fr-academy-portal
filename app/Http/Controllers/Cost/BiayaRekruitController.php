@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cost;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Cost\BiayaRekruit;
+use App\Services\ExcelExporter;
 use App\Traits\HandlesCsvImports;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -14,9 +15,9 @@ class BiayaRekruitController extends Controller
     use HandlesCsvImports;
 
     public const MONTHS = [
-        1  => 'Januari',   2  => 'Februari', 3  => 'Maret',
-        4  => 'April',     5  => 'Mei',       6  => 'Juni',
-        7  => 'Juli',      8  => 'Agustus',   9  => 'September',
+        1 => 'Januari',   2 => 'Februari', 3 => 'Maret',
+        4 => 'April',     5 => 'Mei',       6 => 'Juni',
+        7 => 'Juli',      8 => 'Agustus',   9 => 'September',
         10 => 'Oktober',   11 => 'November',  12 => 'Desember',
     ];
 
@@ -27,15 +28,15 @@ class BiayaRekruitController extends Controller
     {
         $search = trim($request->get('search', ''));
 
-        $selectedYear  = $request->get('year', 2026);
+        $selectedYear = $request->get('year', 2026);
         $selectedMonth = $request->get('month', 'all');
-        $months        = self::MONTHS;
+        $months = self::MONTHS;
 
         // 1. Dynamic Year Selection
         $dbYears = BiayaRekruit::select('tahun')->distinct()->whereNotNull('tahun')->pluck('tahun')->toArray();
         $dateYears = BiayaRekruit::selectRaw('YEAR(tanggal) as yr')->distinct()->whereNotNull('tanggal')->pluck('yr')->toArray();
         $baseYears = range(date('Y') - 3, date('Y') + 2);
-        $extraYear = ($selectedYear !== 'all' && is_numeric($selectedYear)) ? [(int)$selectedYear] : [];
+        $extraYear = ($selectedYear !== 'all' && is_numeric($selectedYear)) ? [(int) $selectedYear] : [];
         $years = array_values(array_unique(array_filter(array_merge($baseYears, $dbYears, $dateYears, $extraYear))));
         sort($years);
 
@@ -45,24 +46,24 @@ class BiayaRekruitController extends Controller
             ->orderBy('penanggung_jawab')
             ->orderBy('tanggal', 'desc');
 
-        if ($selectedYear !== 'all' && !empty($selectedYear)) {
+        if ($selectedYear !== 'all' && ! empty($selectedYear)) {
             $yearInt = (int) $selectedYear;
             $query->where(function ($q) use ($yearInt) {
                 $q->where('tahun', $yearInt)
-                  ->orWhereYear('tanggal', $yearInt);
+                    ->orWhereYear('tanggal', $yearInt);
             });
         }
 
-        if (is_numeric($selectedMonth) && (int)$selectedMonth >= 1 && (int)$selectedMonth <= 12) {
+        if (is_numeric($selectedMonth) && (int) $selectedMonth >= 1 && (int) $selectedMonth <= 12) {
             $monthInt = (int) $selectedMonth;
             $query->whereMonth('tanggal', $monthInt);
         }
 
-        if (!empty($search)) {
+        if (! empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('nama', 'like', "%{$search}%")
-                  ->orWhere('jenis_rekruit', 'like', "%{$search}%")
-                  ->orWhere('penanggung_jawab', 'like', "%{$search}%");
+                    ->orWhere('jenis_rekruit', 'like', "%{$search}%")
+                    ->orWhere('penanggung_jawab', 'like', "%{$search}%");
             });
         }
 
@@ -72,13 +73,13 @@ class BiayaRekruitController extends Controller
         $grouped = [];
         foreach ($allRecords as $row) {
             $jenis = $row->jenis_rekruit ?: 'Biaya Operasional Rekrutmen';
-            $pj    = $row->penanggung_jawab ?: 'Umum / Non-PIC';
+            $pj = $row->penanggung_jawab ?: 'Umum / Non-PIC';
             $grouped[$jenis][$pj][] = $row;
         }
 
         // Summary totals
         $summary = [
-            'total_biaya'     => (float) $allRecords->sum('total_biaya'),
+            'total_biaya' => (float) $allRecords->sum('total_biaya'),
             'total_transaksi' => $allRecords->count(),
         ];
 
@@ -111,18 +112,18 @@ class BiayaRekruitController extends Controller
 
         $record = BiayaRekruit::create($validated);
 
-        (new CostController())->syncAggregatedCosts((int)$validated['tahun']);
+        (new CostController)->syncAggregatedCosts((int) $validated['tahun']);
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Biaya rekruit berhasil ditambahkan.',
-                'data' => $record
+                'data' => $record,
             ]);
         }
 
         return redirect()->route('administrasi.biaya-rekruit.index')
-            ->with('success', 'Biaya rekruit "' . $validated['nama'] . '" berhasil ditambahkan.');
+            ->with('success', 'Biaya rekruit "'.$validated['nama'].'" berhasil ditambahkan.');
     }
 
     /**
@@ -134,7 +135,7 @@ class BiayaRekruitController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $record
+            'data' => $record,
         ]);
     }
 
@@ -161,18 +162,18 @@ class BiayaRekruitController extends Controller
 
         $record->update($validated);
 
-        (new CostController())->syncAggregatedCosts((int)$validated['tahun']);
+        (new CostController)->syncAggregatedCosts((int) $validated['tahun']);
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
                 'message' => 'Biaya rekruit berhasil diperbarui.',
-                'data' => $record
+                'data' => $record,
             ]);
         }
 
         return redirect()->route('administrasi.biaya-rekruit.index')
-            ->with('success', 'Biaya rekruit "' . $record->nama . '" berhasil diperbarui.');
+            ->with('success', 'Biaya rekruit "'.$record->nama.'" berhasil diperbarui.');
     }
 
     /**
@@ -186,12 +187,12 @@ class BiayaRekruitController extends Controller
 
         $record->delete();
 
-        (new CostController())->syncAggregatedCosts($tahun);
+        (new CostController)->syncAggregatedCosts($tahun);
 
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => "Biaya rekruit '{$name}' berhasil dihapus."
+                'message' => "Biaya rekruit '{$name}' berhasil dihapus.",
             ]);
         }
 
@@ -210,7 +211,7 @@ class BiayaRekruitController extends Controller
             [3, '2026-01-31', 'MAT I 2026 : KLAIM BY PERJDIN AN.BENYAMIN BY DLM RANGKA REKRUT MAT I 2026 & TAT I 2026 KE MEDAN DAN YOGYA', 'Benyamin Basuki Yulianto & Pinondang Lindarto Simanungkalit', 2460660],
         ];
 
-        return \App\Services\ExcelExporter::download('Template_Import_Biaya_Rekruit.xlsx', $headers, $sampleRows, 'Biaya Rekruit');
+        return ExcelExporter::download('Template_Import_Biaya_Rekruit.xlsx', $headers, $sampleRows, 'Biaya Rekruit');
     }
 
     /**
@@ -232,14 +233,15 @@ class BiayaRekruitController extends Controller
         }
 
         $handle = fopen($filePath, 'r');
-        if (!$handle) {
+        if (! $handle) {
             return back()->with('error', 'Gagal membuka file CSV yang diunggah.');
         }
 
         $delimiter = $this->detectCsvDelimiter($filePath);
         $rawHeaders = fgetcsv($handle, 0, $delimiter);
-        if (!$rawHeaders) {
+        if (! $rawHeaders) {
             fclose($handle);
+
             return back()->with('error', 'Format file CSV tidak valid atau file kosong.');
         }
 
@@ -283,7 +285,7 @@ class BiayaRekruitController extends Controller
             $tanggal = null;
             $tahun = (int) date('Y');
 
-            if (!empty($rawDate)) {
+            if (! empty($rawDate)) {
                 try {
                     $parsed = Carbon::parse($rawDate);
                     $tanggal = $parsed->format('Y-m-d');
@@ -295,13 +297,13 @@ class BiayaRekruitController extends Controller
                 $tanggal = date('Y-m-d');
             }
 
-            if (isset($headerMap['tahun']) && !empty($row[$headerMap['tahun']])) {
+            if (isset($headerMap['tahun']) && ! empty($row[$headerMap['tahun']])) {
                 $tahun = (int) $row[$headerMap['tahun']];
             }
 
             $totalBiaya = isset($headerMap['total_biaya']) ? $this->cleanNumeric($row[$headerMap['total_biaya']], 0) : 0;
             $penanggungJawab = isset($headerMap['penanggung_jawab']) && isset($row[$headerMap['penanggung_jawab']]) ? trim($row[$headerMap['penanggung_jawab']]) : '';
-            
+
             if (empty($penanggungJawab)) {
                 $penanggungJawab = 'Umum / Non-PIC';
             }
@@ -313,12 +315,12 @@ class BiayaRekruitController extends Controller
 
             // Check existing record
             $existing = null;
-            if (isset($headerMap['id']) && !empty($row[$headerMap['id']])) {
-                $id = (int)$row[$headerMap['id']];
+            if (isset($headerMap['id']) && ! empty($row[$headerMap['id']])) {
+                $id = (int) $row[$headerMap['id']];
                 $existing = BiayaRekruit::find($id);
             }
 
-            if (!$existing) {
+            if (! $existing) {
                 $existing = BiayaRekruit::where('nama', $nama)
                     ->where('tanggal', $tanggal)
                     ->first();
@@ -344,18 +346,18 @@ class BiayaRekruitController extends Controller
 
         fclose($handle);
 
-        (new CostController())->syncAggregatedCosts((int)date('Y'));
+        (new CostController)->syncAggregatedCosts((int) date('Y'));
 
         $msg = "Import CSV Biaya Rekruit berhasil: {$insertedCount} data baru ditambahkan";
         if ($updatedCount > 0) {
             $msg .= ", {$updatedCount} data diperbarui";
         }
-        $msg .= ".";
+        $msg .= '.';
 
         ActivityLog::log(
             'Import',
             'Biaya Rekruit',
-            "Mengimport data Biaya Rekruit dari file " . $file->getClientOriginalName() . " ({$insertedCount} baru, {$updatedCount} diperbarui)",
+            'Mengimport data Biaya Rekruit dari file '.$file->getClientOriginalName()." ({$insertedCount} baru, {$updatedCount} diperbarui)",
             ['filename' => $file->getClientOriginalName(), 'inserted' => $insertedCount, 'updated' => $updatedCount]
         );
 
@@ -393,7 +395,7 @@ class BiayaRekruitController extends Controller
      */
     public function export(Request $request)
     {
-        $selectedYear  = $request->get('year');
+        $selectedYear = $request->get('year');
         $selectedMonth = $request->get('month', 'all');
         $headers = [
             'cost_rekruit_id',
@@ -401,21 +403,21 @@ class BiayaRekruitController extends Controller
             'nama',
             'pic_rekruiter',
             'jenis_rekruit',
-            'total_biaya'
+            'total_biaya',
         ];
 
         $query = BiayaRekruit::orderBy('tanggal', 'desc');
 
-        if ($selectedYear !== 'all' && !empty($selectedYear)) {
+        if ($selectedYear !== 'all' && ! empty($selectedYear)) {
             $yearInt = (int) $selectedYear;
             $query->where(function ($q) use ($yearInt) {
                 $q->where('tahun', $yearInt)
-                  ->orWhereYear('tanggal', $yearInt);
+                    ->orWhereYear('tanggal', $yearInt);
             });
         }
 
-        if (is_numeric($selectedMonth) && (int)$selectedMonth >= 1 && (int)$selectedMonth <= 12) {
-            $query->whereMonth('tanggal', (int)$selectedMonth);
+        if (is_numeric($selectedMonth) && (int) $selectedMonth >= 1 && (int) $selectedMonth <= 12) {
+            $query->whereMonth('tanggal', (int) $selectedMonth);
         }
 
         $records = $query->get();
@@ -428,12 +430,13 @@ class BiayaRekruitController extends Controller
                 $row->nama,
                 $row->penanggung_jawab ?? '-',
                 $row->jenis_rekruit ?? '-',
-                $row->total_biaya
+                $row->total_biaya,
             ];
         }
 
-        $filename = "Biaya_Rekruit_Report_" . date('Y-m-d') . ".xlsx";
-        return \App\Services\ExcelExporter::download($filename, $headers, $dataRows, 'Biaya Rekruit');
+        $filename = 'Biaya_Rekruit_Report_'.date('Y-m-d').'.xlsx';
+
+        return ExcelExporter::download($filename, $headers, $dataRows, 'Biaya Rekruit');
     }
 
     /**
@@ -443,7 +446,7 @@ class BiayaRekruitController extends Controller
     {
         $deleted = BiayaRekruit::query()->delete();
 
-        (new CostController())->syncAggregatedCosts((int)date('Y'));
+        (new CostController)->syncAggregatedCosts((int) date('Y'));
 
         ActivityLog::log('Hapus', 'Biaya Rekruit', "Seluruh data Biaya Rekruit ({$deleted} data) berhasil dihapus.", [
             'count' => $deleted,
@@ -452,7 +455,7 @@ class BiayaRekruitController extends Controller
         if ($request->wantsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => "Seluruh data Biaya Rekruit ({$deleted} data) berhasil dihapus."
+                'message' => "Seluruh data Biaya Rekruit ({$deleted} data) berhasil dihapus.",
             ]);
         }
 

@@ -28,7 +28,7 @@ return new class extends Migration
             $table->enum('status', ['hadir', 'sakit', 'izin', 'alpha'])->default('alpha');
             $table->timestamp('scanned_at')->nullable();
             $table->timestamps();
-            
+
             // A trainee can only have one attendance record per daily class
             $table->unique(['daily_class_id', 'trainee_id']);
         });

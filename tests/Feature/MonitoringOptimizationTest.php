@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use Tests\TestCase;
 use App\Models\Monitoring\MonitoringTalent;
+use Tests\TestCase;
 
 class MonitoringOptimizationTest extends TestCase
 {
@@ -60,7 +60,7 @@ class MonitoringOptimizationTest extends TestCase
         $this->assertNotNull($talent);
 
         $talentData['employee_name'] = 'John Doe Updated';
-        $putResponse = $this->put('/administrasi/monitoring-talent/' . $talent->id, $talentData);
+        $putResponse = $this->put('/administrasi/monitoring-talent/'.$talent->id, $talentData);
         $putResponse->assertSessionHasNoErrors();
         $this->assertDatabaseHas('monitoring_talents', [
             'id' => $talent->id,
@@ -73,7 +73,7 @@ class MonitoringOptimizationTest extends TestCase
         $exportResponse = $this->get('/administrasi/monitoring-talent/export');
         $exportResponse->assertStatus(200);
 
-        $delResponse = $this->delete('/administrasi/monitoring-talent/' . $talent->id);
+        $delResponse = $this->delete('/administrasi/monitoring-talent/'.$talent->id);
         $delResponse->assertSessionHasNoErrors();
         $this->assertDatabaseMissing('monitoring_talents', ['id' => $talent->id]);
     }
@@ -92,12 +92,12 @@ class MonitoringOptimizationTest extends TestCase
         $storeEmp->assertStatus(201)->assertJson(['status' => 'success']);
         $createdEmpId = $storeEmp->json('data.ID_MONITORING');
 
-        $updateEmp = $this->putJson('/administrasi/monitoring/api/employees/' . $createdEmpId, [
+        $updateEmp = $this->putJson('/administrasi/monitoring/api/employees/'.$createdEmpId, [
             'NAMA' => 'Karyawan Test Monitoring Edit',
         ]);
         $updateEmp->assertStatus(200)->assertJson(['status' => 'success']);
 
-        $delEmp = $this->deleteJson('/administrasi/monitoring/api/employees/' . $createdEmpId);
+        $delEmp = $this->deleteJson('/administrasi/monitoring/api/employees/'.$createdEmpId);
         $delEmp->assertStatus(200)->assertJson(['status' => 'success']);
 
         $angkatanRes = $this->getJson('/administrasi/monitoring/api/angkatan');

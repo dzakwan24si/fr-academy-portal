@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Moa;
-use App\Models\TrainingProgram;
 use App\Models\Trainer;
+use App\Models\TrainingProgram;
 use Illuminate\Http\Request;
 
 class NonRegulerMoaController extends Controller
@@ -16,6 +16,7 @@ class NonRegulerMoaController extends Controller
         $total = Moa::count();
         $draft = Moa::where('status', 'draft')->count();
         $submitted = Moa::where('status', 'submitted')->count();
+
         return view('admin.non-reguler.moas.index', compact('moas', 'total', 'draft', 'submitted'));
     }
 
@@ -23,6 +24,7 @@ class NonRegulerMoaController extends Controller
     {
         $programs = TrainingProgram::all();
         $trainers = Trainer::all();
+
         return view('admin.non-reguler.moas.create', compact('programs', 'trainers'));
     }
 
@@ -37,6 +39,7 @@ class NonRegulerMoaController extends Controller
             'status' => 'required|string',
         ]);
         Moa::create($validated);
+
         return redirect()->route('training-non-reguler.moas.index')->with('success', 'MOA berhasil ditambahkan.');
     }
 
@@ -44,6 +47,7 @@ class NonRegulerMoaController extends Controller
     {
         $programs = TrainingProgram::all();
         $trainers = Trainer::all();
+
         return view('admin.non-reguler.moas.edit', compact('moa', 'programs', 'trainers'));
     }
 
@@ -58,12 +62,14 @@ class NonRegulerMoaController extends Controller
             'status' => 'required|string',
         ]);
         $moa->update($validated);
+
         return redirect()->route('training-non-reguler.moas.index')->with('success', 'MOA berhasil diperbarui.');
     }
 
     public function destroy(Moa $moa)
     {
         $moa->delete();
+
         return redirect()->route('training-non-reguler.moas.index')->with('success', 'MOA berhasil dihapus.');
     }
 }

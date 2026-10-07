@@ -4,13 +4,13 @@ namespace App\Http\Controllers\Monitoring;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
-use App\Models\Monitoring\MonitoringTalent;
 use App\Models\AppSetting;
+use App\Models\Monitoring\MonitoringTalent;
 use App\Services\ExcelExporter;
+use App\Services\RegionHelper;
 use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class MonitoringTalentController extends Controller
 {
@@ -37,14 +37,14 @@ class MonitoringTalentController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('employee_name', 'like', "%{$search}%")
-                  ->orWhere('employee_id', 'like', "%{$search}%")
-                  ->orWhere('posisi_asal', 'like', "%{$search}%")
-                  ->orWhere('talent_to', 'like', "%{$search}%")
-                  ->orWhere('unit', 'like', "%{$search}%")
-                  ->orWhere('mentor_lapangan', 'like', "%{$search}%")
-                  ->orWhere('mentor_frlc', 'like', "%{$search}%")
-                  ->orWhere('keterangan', 'like', "%{$search}%")
-                  ->orWhere('lokasi_penugasan_baru', 'like', "%{$search}%");
+                    ->orWhere('employee_id', 'like', "%{$search}%")
+                    ->orWhere('posisi_asal', 'like', "%{$search}%")
+                    ->orWhere('talent_to', 'like', "%{$search}%")
+                    ->orWhere('unit', 'like', "%{$search}%")
+                    ->orWhere('mentor_lapangan', 'like', "%{$search}%")
+                    ->orWhere('mentor_frlc', 'like', "%{$search}%")
+                    ->orWhere('keterangan', 'like', "%{$search}%")
+                    ->orWhere('lokasi_penugasan_baru', 'like', "%{$search}%");
             });
         }
 
@@ -52,10 +52,10 @@ class MonitoringTalentController extends Controller
         $allTalents = MonitoringTalent::all();
         $totalAll = $allTalents->count();
 
-        $countSudah = $allTalents->filter(fn($t) => str_contains(strtolower($t->status ?? ''), 'sudah penugasan'))->count();
-        $countAkan = $allTalents->filter(fn($t) => str_contains(strtolower($t->status ?? ''), 'akan penugasan'))->count();
-        $countBelum = $allTalents->filter(fn($t) => str_contains(strtolower($t->status ?? ''), 'belum penugasan'))->count();
-        $countConfirm = $allTalents->filter(fn($t) => str_contains(strtolower($t->status ?? ''), 'confirm'))->count();
+        $countSudah = $allTalents->filter(fn ($t) => str_contains(strtolower($t->status ?? ''), 'sudah penugasan'))->count();
+        $countAkan = $allTalents->filter(fn ($t) => str_contains(strtolower($t->status ?? ''), 'akan penugasan'))->count();
+        $countBelum = $allTalents->filter(fn ($t) => str_contains(strtolower($t->status ?? ''), 'belum penugasan'))->count();
+        $countConfirm = $allTalents->filter(fn ($t) => str_contains(strtolower($t->status ?? ''), 'confirm'))->count();
 
         // Manual Progress Materi Setting
         $progressMateri = (float) AppSetting::get('talent_program_progress_materi', 83);
@@ -69,7 +69,7 @@ class MonitoringTalentController extends Controller
 
         // Filter Dropdown Lists
         $statuses = MonitoringTalent::distinct()->pluck('status')->filter()->values();
-        $regions = \App\Services\RegionHelper::getCanonicalRegions(MonitoringTalent::distinct()->pluck('region'));
+        $regions = RegionHelper::getCanonicalRegions(MonitoringTalent::distinct()->pluck('region'));
         $talentToList = MonitoringTalent::distinct()->pluck('talent_to')->filter()->values();
 
         $perPage = (int) $request->input('per_page', 25);
@@ -206,7 +206,7 @@ class MonitoringTalentController extends Controller
             $file = $request->file('file');
             $rows = SpreadsheetReader::read($file->getRealPath(), $file->getClientOriginalExtension());
         } catch (\Exception $e) {
-            return back()->withErrors(['file' => 'Gagal membaca file: ' . $e->getMessage()]);
+            return back()->withErrors(['file' => 'Gagal membaca file: '.$e->getMessage()]);
         }
 
         if (empty($rows)) {
@@ -218,23 +218,41 @@ class MonitoringTalentController extends Controller
 
         foreach ($rawHeaders as $idx => $h) {
             $clean = SpreadsheetReader::cleanString($h);
-            if (in_array($clean, ['no', 'id', 'nomor'])) $headerMap['no'] = $idx;
-            elseif (in_array($clean, ['employee id', 'nik', 'id karyawan', 'nip', 'badge'])) $headerMap['employee_id'] = $idx;
-            elseif (in_array($clean, ['employee name', 'nama', 'nama karyawan', 'nama peserta', 'name'])) $headerMap['employee_name'] = $idx;
-            elseif (in_array($clean, ['posisi asal', 'posisi', 'jabatan', 'jabatan asal'])) $headerMap['posisi_asal'] = $idx;
-            elseif (in_array($clean, ['talent to', 'posisi tujuan', 'target posisi', 'to'])) $headerMap['talent_to'] = $idx;
-            elseif (in_array($clean, ['unit', 'kebun/pabrik', 'lokasi', 'work location', 'estate'])) $headerMap['unit'] = $idx;
-            elseif (in_array($clean, ['region', 'wilayah'])) $headerMap['region'] = $idx;
-            elseif (in_array($clean, ['mentor lapangan', 'mentor lap', 'mentor lap.'])) $headerMap['mentor_lapangan'] = $idx;
-            elseif (in_array($clean, ['mentor frlc', 'mentor fr', 'mentor'])) $headerMap['mentor_frlc'] = $idx;
-            elseif (in_array($clean, ['status', 'status penugasan'])) $headerMap['status'] = $idx;
-            elseif (in_array($clean, ['keterangan', 'ket', 'notes', 'note'])) $headerMap['keterangan'] = $idx;
-            elseif (in_array($clean, ['periode penugasan lama', 'periode lama', 'periode asal'])) $headerMap['periode_penugasan_lama'] = $idx;
-            elseif (in_array($clean, ['alasan', 'alasan penugasan'])) $headerMap['alasan'] = $idx;
-            elseif (in_array($clean, ['periode penugasan baru', 'periode baru', 'periode tujuan'])) $headerMap['periode_penugasan_baru'] = $idx;
-            elseif (in_array($clean, ['lokasi penugasan baru', 'lokasi baru', 'lokasi tugas baru', 'penugasan baru'])) $headerMap['lokasi_penugasan_baru'] = $idx;
-            elseif (in_array($clean, ['catatan tambahan', 'catatan', 'keterangan tambahan'])) $headerMap['catatan_tambahan'] = $idx;
-            elseif (in_array($clean, ['kategori', 'category', 'kategori talent'])) $headerMap['kategori'] = $idx;
+            if (in_array($clean, ['no', 'id', 'nomor'])) {
+                $headerMap['no'] = $idx;
+            } elseif (in_array($clean, ['employee id', 'nik', 'id karyawan', 'nip', 'badge'])) {
+                $headerMap['employee_id'] = $idx;
+            } elseif (in_array($clean, ['employee name', 'nama', 'nama karyawan', 'nama peserta', 'name'])) {
+                $headerMap['employee_name'] = $idx;
+            } elseif (in_array($clean, ['posisi asal', 'posisi', 'jabatan', 'jabatan asal'])) {
+                $headerMap['posisi_asal'] = $idx;
+            } elseif (in_array($clean, ['talent to', 'posisi tujuan', 'target posisi', 'to'])) {
+                $headerMap['talent_to'] = $idx;
+            } elseif (in_array($clean, ['unit', 'kebun/pabrik', 'lokasi', 'work location', 'estate'])) {
+                $headerMap['unit'] = $idx;
+            } elseif (in_array($clean, ['region', 'wilayah'])) {
+                $headerMap['region'] = $idx;
+            } elseif (in_array($clean, ['mentor lapangan', 'mentor lap', 'mentor lap.'])) {
+                $headerMap['mentor_lapangan'] = $idx;
+            } elseif (in_array($clean, ['mentor frlc', 'mentor fr', 'mentor'])) {
+                $headerMap['mentor_frlc'] = $idx;
+            } elseif (in_array($clean, ['status', 'status penugasan'])) {
+                $headerMap['status'] = $idx;
+            } elseif (in_array($clean, ['keterangan', 'ket', 'notes', 'note'])) {
+                $headerMap['keterangan'] = $idx;
+            } elseif (in_array($clean, ['periode penugasan lama', 'periode lama', 'periode asal'])) {
+                $headerMap['periode_penugasan_lama'] = $idx;
+            } elseif (in_array($clean, ['alasan', 'alasan penugasan'])) {
+                $headerMap['alasan'] = $idx;
+            } elseif (in_array($clean, ['periode penugasan baru', 'periode baru', 'periode tujuan'])) {
+                $headerMap['periode_penugasan_baru'] = $idx;
+            } elseif (in_array($clean, ['lokasi penugasan baru', 'lokasi baru', 'lokasi tugas baru', 'penugasan baru'])) {
+                $headerMap['lokasi_penugasan_baru'] = $idx;
+            } elseif (in_array($clean, ['catatan tambahan', 'catatan', 'keterangan tambahan'])) {
+                $headerMap['catatan_tambahan'] = $idx;
+            } elseif (in_array($clean, ['kategori', 'category', 'kategori talent'])) {
+                $headerMap['kategori'] = $idx;
+            }
         }
 
         $imported = 0;
@@ -243,23 +261,28 @@ class MonitoringTalentController extends Controller
         DB::beginTransaction();
         try {
             foreach ($rows as $row) {
-                if (empty(array_filter($row, fn($v) => trim((string)$v) !== ''))) continue;
+                if (empty(array_filter($row, fn ($v) => trim((string) $v) !== ''))) {
+                    continue;
+                }
 
-                $getVal = function($key, $fallbackIndex = null) use ($row, $headerMap) {
+                $getVal = function ($key, $fallbackIndex = null) use ($row, $headerMap) {
                     if (isset($headerMap[$key]) && isset($row[$headerMap[$key]])) {
                         return trim((string) $row[$headerMap[$key]]);
                     }
                     if ($fallbackIndex !== null && isset($row[$fallbackIndex])) {
                         return trim((string) $row[$fallbackIndex]);
                     }
+
                     return '';
                 };
 
                 $empName = $getVal('employee_name', 2);
-                if (empty($empName)) continue;
+                if (empty($empName)) {
+                    continue;
+                }
 
                 $noVal = $getVal('no', 0);
-                $no = (!empty($noVal) && is_numeric($noVal)) ? (int) $noVal : ($imported + 1);
+                $no = (! empty($noVal) && is_numeric($noVal)) ? (int) $noVal : ($imported + 1);
                 $empId = $getVal('employee_id', 1) ?: null;
                 $posisiAsal = $getVal('posisi_asal', 3) ?: null;
                 $talentTo = $getVal('talent_to', 4) ?: null;
@@ -273,13 +296,13 @@ class MonitoringTalentController extends Controller
                 $alasan = $getVal('alasan', 12) ?: null;
                 $periodeBaru = $getVal('periode_penugasan_baru', 13) ?: null;
                 $lokasiBaru = $getVal('lokasi_penugasan_baru', 14) ?: null;
-                
+
                 $kategori = $getVal('kategori', count($row) - 1);
-                if (empty($kategori) || !str_starts_with(strtoupper($kategori), 'TALENT')) {
+                if (empty($kategori) || ! str_starts_with(strtoupper($kategori), 'TALENT')) {
                     $kategori = 'TALENT ESTATE TAHUN 2026';
                 }
 
-                if (strcasecmp((string)$talentTo, 'PC') === 0) {
+                if (strcasecmp((string) $talentTo, 'PC') === 0) {
                     if (str_contains(strtoupper($kategori), 'MILL') || str_contains($posisiAsal ?? '', 'Mill')) {
                         $talentTo = 'PC (Production Controller)';
                     } else {
@@ -293,12 +316,12 @@ class MonitoringTalentController extends Controller
                 } else {
                     $notes = [];
                     for ($i = 15; $i < count($row) - 1; $i++) {
-                        $val = trim((string)($row[$i] ?? ''));
-                        if (!empty($val) && $val !== '-') {
+                        $val = trim((string) ($row[$i] ?? ''));
+                        if (! empty($val) && $val !== '-') {
                             $notes[] = $val;
                         }
                     }
-                    $catatan = !empty($notes) ? implode(' | ', $notes) : null;
+                    $catatan = ! empty($notes) ? implode(' | ', $notes) : null;
                 }
 
                 $insertBatch[] = [
@@ -331,7 +354,7 @@ class MonitoringTalentController extends Controller
                 }
             }
 
-            if (!empty($insertBatch)) {
+            if (! empty($insertBatch)) {
                 MonitoringTalent::insert($insertBatch);
             }
 
@@ -340,14 +363,15 @@ class MonitoringTalentController extends Controller
             ActivityLog::log(
                 'Import',
                 'Monitoring Talent',
-                "Mengimport {$imported} data peserta talent dari file " . $file->getClientOriginalName(),
+                "Mengimport {$imported} data peserta talent dari file ".$file->getClientOriginalName(),
                 ['filename' => $file->getClientOriginalName(), 'count' => $imported]
             );
 
             return back()->with('success', "{$imported} data peserta talent berhasil diimpor.");
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->withErrors(['file' => 'Gagal mengimpor file: ' . $e->getMessage()]);
+
+            return back()->withErrors(['file' => 'Gagal mengimpor file: '.$e->getMessage()]);
         }
     }
 
@@ -375,9 +399,9 @@ class MonitoringTalentController extends Controller
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
                 $q->where('employee_name', 'like', "%{$search}%")
-                  ->orWhere('employee_id', 'like', "%{$search}%")
-                  ->orWhere('posisi_asal', 'like', "%{$search}%")
-                  ->orWhere('unit', 'like', "%{$search}%");
+                    ->orWhere('employee_id', 'like', "%{$search}%")
+                    ->orWhere('posisi_asal', 'like', "%{$search}%")
+                    ->orWhere('unit', 'like', "%{$search}%");
             });
         }
 
@@ -425,7 +449,8 @@ class MonitoringTalentController extends Controller
             ];
         }
 
-        $filename = 'Monitoring_Talent_' . date('Ymd_His') . '.xlsx';
+        $filename = 'Monitoring_Talent_'.date('Ymd_His').'.xlsx';
+
         return ExcelExporter::download($filename, $headers, $dataRows, 'Monitoring Talent');
     }
 

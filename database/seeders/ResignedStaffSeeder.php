@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Monitoring\ResignedStaff;
 use Illuminate\Database\Seeder;
 
 class ResignedStaffSeeder extends Seeder
@@ -18,7 +18,7 @@ class ResignedStaffSeeder extends Seeder
         $regions = ['Riau', 'Kalbar', 'Kubar'];
         $jenis = ['Voluntary', 'Involuntary'];
         $alumnis = ['Alumni', 'Non Alumni'];
-        
+
         $data = [];
         for ($i = 1; $i <= 100; $i++) {
             $year = rand(2025, 2026);
@@ -26,11 +26,11 @@ class ResignedStaffSeeder extends Seeder
             $day = rand(1, 28);
             $resignDate = sprintf('%04d-%02d-%02d', $year, $month, $day);
             $joinDate = sprintf('%04d-%02d-%02d', rand(2020, 2024), rand(1, 12), rand(1, 28));
-            
+
             // Bias: Voluntary usually means Pindah Perusahaan, Working Condition. Involuntary usually Under Perform, Kasus, dll.
             $isVoluntary = (rand(1, 100) <= 70); // 70% voluntary
             $jenisResign = $isVoluntary ? 'Voluntary' : 'Involuntary';
-            
+
             if ($isVoluntary) {
                 $clusterKeys = ['Pindah perusahaan', 'Working Condition', 'Keluarga'];
                 $cluster = $clusterKeys[array_rand($clusterKeys)];
@@ -38,10 +38,10 @@ class ResignedStaffSeeder extends Seeder
                 $clusterKeys = ['Under perform', 'Efisiensi', 'Kasus', 'Indisipliner'];
                 $cluster = $clusterKeys[array_rand($clusterKeys)];
             }
-            
+
             $data[] = [
-                'employee_id' => 'EMP' . rand(10000, 99999),
-                'nama' => 'Dummy Staf ' . $i,
+                'employee_id' => 'EMP'.rand(10000, 99999),
+                'nama' => 'Dummy Staf '.$i,
                 'join_date' => $joinDate,
                 'resign_date' => $resignDate,
                 'jabatan' => $jabatans[array_rand($jabatans)],
@@ -56,7 +56,7 @@ class ResignedStaffSeeder extends Seeder
                 'updated_at' => now(),
             ];
         }
-        
-        \App\Models\Monitoring\ResignedStaff::insert($data);
+
+        ResignedStaff::insert($data);
     }
 }
