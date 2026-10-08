@@ -48,19 +48,25 @@ class UpdateTrainingRecordJob implements ShouldQueue
         $periode = 'Q'.ceil($monthNum / 3);
 
         $parentProgramNonReg = DB::table('program_non_reguler')->where('jenis_pelatihan', $dailyClass->title)->first();
-        if (! $parentProgramNonReg) {
-            return;
-        }
-
-        $idNonReguler = $parentProgramNonReg->id_nonreguler;
-        $subKategori = $parentProgramNonReg->sub_kategori;
+        
+        $idNonReguler = $parentProgramNonReg ? $parentProgramNonReg->id_nonreguler : null;
+        $subKategori = $parentProgramNonReg ? $parentProgramNonReg->sub_kategori : '-';
+        $trainer = $dailyClass->trainer_name ?: ($parentProgramNonReg ? $parentProgramNonReg->trainer : '-');
 
         // Cari record yang sudah ada
-        $existingRecord = DB::table('training_records')
+        $existingQuery = DB::table('training_records')
             ->where('participant_identifier', $trainee->nik)
-            ->where('program_id', $idNonReguler)
-            ->where('program_type', 'non_reguler')
-            ->first();
+            ->where('nama_pelatihan', $dailyClass->title);
+            
+        if ($idNonReguler) {
+            $existingQuery->orWhere(function($q) use ($trainee, $idNonReguler) {
+                $q->where('participant_identifier', $trainee->nik)
+                  ->where('program_id', $idNonReguler)
+                  ->where('program_type', 'non_reguler');
+            });
+        }
+        
+        $existingRecord = $existingQuery->first();
 
         if ($existingRecord) {
             // Update record: Tambahkan tanggal baru jika belum ada
@@ -111,28 +117,65 @@ class UpdateTrainingRecordJob implements ShouldQueue
             $group = ($pastRecord && $pastRecord->group_name && $pastRecord->group_name !== '-') ? $pastRecord->group_name : ($trainee->group ?: '-');
             $region = ($pastRecord && $pastRecord->region && $pastRecord->region !== '-') ? $pastRecord->region : ($trainee->origin ?: '-');
             $level = ($pastRecord && $pastRecord->level && $pastRecord->level !== '-') ? $pastRecord->level : '-';
+            $department = ($pastRecord && $pastRecord->department && $pastRecord->department !== '-') ? $pastRecord->department : '-';
+
+            // Menghitung Jumlah Hari
+            $jmlHari = 1;
+            if ($parentProgramNonReg && $parentProgramNonReg->total_hari) {
+                $jmlHari = $parentProgramNonReg->total_hari;
+            } elseif ($dailyClass->end_date && $dailyClass->date) {
+                $jmlHari = Carbon::parse($dailyClass->date)->diffInDays(Carbon::parse($dailyClass->end_date)) + 1;
+            }
+
+            // Menghitung Jam Pelatihan
+            $jamPelatihan = 0;
+            if ($parentProgramNonReg && $parentProgramNonReg->total_jam) {
+                $jamPelatihan = $parentProgramNonReg->total_jam;
+            } elseif ($dailyClass->start_time && $dailyClass->end_time) {
+                $st = Carbon::parse($dailyClass->start_time);
+                $et = Carbon::parse($dailyClass->end_time);
+                $jamPelatihan = round($st->diffInRealHours($et));
+            }
+
+            // Menentukan Keterangan (Notes) berdasarkan Nama Program
+            $judul = strtolower($dailyClass->title . ' ' . ($dailyClass->trainingProgram->name ?? ''));
+            if (str_contains($judul, 'managerial') || str_contains($judul, 'leadership')) {
+                $keterangan = 'Softskill';
+            } elseif (str_contains($judul, 'estate')) {
+                $keterangan = 'Estate';
+            } elseif (str_contains($judul, 'traksi')) {
+                $keterangan = 'Traksi';
+            } else {
+                $keterangan = $subKategori ?: '-';
+            }
 
             // Create record baru
             DB::table('training_records')->insert([
-                'program_type' => 'non_reguler',
+                'program_type' => $idNonReguler ? 'non_reguler' : null,
                 'program_id' => $idNonReguler,
+                'nama_pelatihan' => $dailyClass->title,
+                'tempat_pelatihan' => $dailyClass->location ?? '-',
+                'reg_non_reg' => 'Non Reguler',
                 'participant_identifier' => $trainee->nik,
                 'participant_name' => $trainee->name,
                 'gender' => $gender,
                 'company' => $company,
+                'department' => $department,
                 'work_location' => $workLoc,
                 'group_name' => $group,
                 'region' => $region,
                 'gol' => $gol,
                 'position' => $trainee->talent_to ?? '-',
-                'instructor' => $dailyClass->trainer_name ?: ($parentProgramNonReg->trainer ?? '-'),
-                'notes' => $subKategori ?: '-',
+                'instructor' => $trainer,
+                'notes' => $keterangan,
                 'internal_external' => $dailyClass->provider ?: 'Internal',
                 'level' => $level,
                 'periode' => $periode,
                 'bulan' => $bulanAbsen,
                 'tahun' => $tahunAbsen,
                 'tanggal' => $hariAbsen,
+                'jml_hari' => $jmlHari,
+                'total_jam' => $jamPelatihan,
                 'training_date' => $this->attendanceDate,
                 'status' => 'hadir',
                 'created_at' => now(),

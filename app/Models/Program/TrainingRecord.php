@@ -85,7 +85,7 @@ class TrainingRecord extends Model
     {
         $activity = $this->activity();
         if (! $activity) {
-            return null;
+            return $this->nama_pelatihan;
         }
 
         if ($this->program_type !== 'reguler') {

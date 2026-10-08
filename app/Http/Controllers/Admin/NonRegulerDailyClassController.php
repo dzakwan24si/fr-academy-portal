@@ -202,6 +202,20 @@ class NonRegulerDailyClassController extends Controller
             'certificate_link' => 'nullable|url|max:500',
         ]);
 
+        $validated['location'] = $request->input('location') ?: null;
+        $validated['room'] = $request->input('room') ?: null;
+        $validated['provider'] = $request->input('provider') ?: null;
+        $validated['region'] = $request->input('region') ?: null;
+        $validated['start_time'] = $request->input('start_time') ?: null;
+        $validated['end_time'] = $request->input('end_time') ?: null;
+        $validated['trainer_name'] = $request->input('trainer_name') ?: null;
+        $validated['date'] = $request->input('date') ?: null;
+        $validated['end_date'] = $request->input('end_date') ?: null;
+        $validated['material_url'] = $request->input('material_url') ?: null;
+        $validated['mess_url'] = $request->input('mess_url') ?: null;
+        $validated['certificate_link'] = $request->input('certificate_link') ?: null;
+
+
         $dailyClass->update($validated);
 
         $startDateObj = Carbon::parse($dailyClass->date);
@@ -667,6 +681,7 @@ class NonRegulerDailyClassController extends Controller
             'end_date' => null,
             'trainer_name' => null,
             'room' => null,
+            'location' => null,
             'start_time' => null,
             'end_time' => null,
             'provider' => null,
@@ -792,11 +807,19 @@ class NonRegulerDailyClassController extends Controller
             $trainee = $attendance->trainee;
             if ($trainee) {
                 // Coba cari record di tabel training_records yang sudah dibuat oleh Job
-                $trRecord = DB::table('training_records')
+                $trQuery = DB::table('training_records')
                     ->where('participant_identifier', $trainee->nik)
-                    ->where('program_id', $dailyClass->training_program_id)
-                    ->where('program_type', 'Non reguler')
-                    ->first();
+                    ->where('nama_pelatihan', $namaPelatihan);
+                    
+                if ($dailyClass->training_program_id) {
+                    $trQuery->orWhere(function($q) use ($trainee, $dailyClass) {
+                        $q->where('participant_identifier', $trainee->nik)
+                          ->where('program_id', $dailyClass->training_program_id)
+                          ->where('program_type', 'non_reguler');
+                    });
+                }
+                
+                $trRecord = $trQuery->first();
 
                 if ($trRecord) {
                     $gender = $trRecord->gender;

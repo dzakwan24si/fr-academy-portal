@@ -223,15 +223,12 @@ use App\Http\Controllers\Program\ProgramBatchController;
 use App\Http\Controllers\Program\RealisasiVsBatchController;
 use App\Http\Controllers\Program\TrainingRecordController;
 use App\Models\Attendance;
-use App\Models\CareerProgram;
 use App\Models\DailyClass;
 use App\Models\Trainee;
 use App\Models\TrainingProgram;
-use App\Models\User;
 use App\Models\WeeklyReport;
 use App\Notifications\WebPushBlastNotification;
 use Illuminate\Http\Request;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 // Mengamankan rute dashboard & administrasi agar memerlukan auth dan permission access_administrasi
 Route::middleware(['auth', 'can:access_administrasi'])->group(function () {

@@ -217,18 +217,28 @@ class TrainingRecordController extends Controller
                     continue;
                 }
 
-                $activity = $this->findActivityCached($activities, $item);
-                if (! $activity) {
-                    $skipped++;
-
-                    continue;
+                $data = $this->importData($item);
+                
+                // Cek NIK atau Nama
+                $condition = [];
+                if (!empty($data['participant_identifier'])) {
+                    $condition['participant_identifier'] = $data['participant_identifier'];
+                } else {
+                    $condition['participant_name'] = $data['participant_name'];
                 }
+                $condition['nama_pelatihan'] = $data['nama_pelatihan'];
 
-                $data = $this->importData($item, $activity);
                 $data['status'] = 'valid';
-                $data['created_at'] = $now;
                 $data['updated_at'] = $now;
-                $insertBatch[] = $data;
+
+                $existing = TrainingRecord::where($condition)->first();
+                if ($existing) {
+                    $existing->update($data);
+                } else {
+                    $data['created_at'] = $now;
+                    $insertBatch[] = $data;
+                }
+                
                 $count++;
 
                 // Insert in chunks of 500
@@ -411,9 +421,9 @@ class TrainingRecordController extends Controller
             $year = ($rawYear === 'all' || $rawYear === '' || $rawYear === '0') ? null : (int) $rawYear;
             $month = (int) $clone->input('month', 0);
 
-            $activity = $activities->get($record->program_type.':'.$record->program_id);
-            if (! $activity) {
-                return false;
+            $activity = null;
+            if ($record->program_type && $record->program_id) {
+                $activity = $activities->get($record->program_type.':'.$record->program_id);
             }
 
             // 1. Filter Type
@@ -765,7 +775,7 @@ class TrainingRecordController extends Controller
         return $name;
     }
 
-    private function importData(array $item, array $activity): array
+    private function importData(array $item): array
     {
         $tgl = trim((string) ($item['tgl'] ?? $item['tanggal'] ?? ''));
         $bulan = trim((string) ($item['bulan'] ?? $item['bln'] ?? $item['month'] ?? ''));
@@ -794,8 +804,11 @@ class TrainingRecordController extends Controller
         }
 
         return [
-            'program_type' => $activity['type'],
-            'program_id' => $activity['id'],
+            'program_type' => null,
+            'program_id' => null,
+            'nama_pelatihan' => $item['nama pelatihan'] ?? null,
+            'tempat_pelatihan' => $item['tempat pelatihan'] ?? null,
+            'reg_non_reg' => $item['reg / non reg'] ?? null,
             'participant_identifier' => $identifier,
             'participant_name' => $finalNama,
             'gender' => $item['jenis kelamin'] ?? null,
