@@ -1,14 +1,66 @@
 <?php
 
+use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
+use App\Http\Controllers\Admin\CareerProgramController;
 use App\Http\Controllers\Admin\CompetencyController;
+use App\Http\Controllers\Admin\DailyClassController;
+use App\Http\Controllers\Admin\HomepageEventController;
+use App\Http\Controllers\Admin\MoaController;
+use App\Http\Controllers\Admin\NonRegulerDailyClassController;
+use App\Http\Controllers\Admin\NonRegulerMoaController;
+use App\Http\Controllers\Admin\NonRegulerTraineeController;
+use App\Http\Controllers\Admin\NonRegulerTrainerController;
+use App\Http\Controllers\Admin\NonRegulerTrainingProgramController;
+use App\Http\Controllers\Admin\NonRegulerWeeklyReportController;
+use App\Http\Controllers\Admin\ProfileController;
+use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\TraineeController;
+use App\Http\Controllers\Admin\TrainerController;
+use App\Http\Controllers\Admin\TrainingProgramController;
+use App\Http\Controllers\Admin\UserController;
+use App\Http\Controllers\Admin\WeeklyReportController;
+use App\Http\Controllers\Administrasi\ActivityLogController;
+use App\Http\Controllers\Administrasi\CutiController;
+use App\Http\Controllers\Administrasi\MppController;
+use App\Http\Controllers\Administrasi\RekrutmenController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompetencyPublicController;
+use App\Http\Controllers\Cost\BiayaRekruitController;
+use App\Http\Controllers\Cost\CapexController;
+use App\Http\Controllers\Cost\CostController;
+use App\Http\Controllers\Cost\VraController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Inventaris\InventarisController;
+use App\Http\Controllers\Inventaris\InventarisDashboardController;
+use App\Http\Controllers\Inventaris\InventarisGudangController;
+use App\Http\Controllers\Inventaris\InventarisKantorController;
+use App\Http\Controllers\Inventaris\InventarisMessController;
+use App\Http\Controllers\Inventaris\InventarisSummaryController;
+use App\Http\Controllers\Monitoring\AsistenController;
+use App\Http\Controllers\Monitoring\MonitoringDashboardController;
+use App\Http\Controllers\Monitoring\MonitoringTalentController;
+use App\Http\Controllers\Monitoring\ResignedStaffController;
+use App\Http\Controllers\Program\DashboardMonitoringTahunanController;
+use App\Http\Controllers\Program\DashboardRealisasiController;
+use App\Http\Controllers\Program\ProgramBatchController;
+use App\Http\Controllers\Program\RealisasiVsBatchController;
+use App\Http\Controllers\Program\TrainingRecordController;
 use App\Models\Article;
+use App\Models\Attendance;
+use App\Models\CareerProgram;
 use App\Models\Category;
 use App\Models\Competency\CompetencyDictionary;
+use App\Models\DailyClass;
 use App\Models\HomepageEvent;
+use App\Models\Trainee;
+use App\Models\TrainingProgram;
 use App\Models\TvPlaylist;
+use App\Models\User;
+use App\Models\WeeklyReport;
+use App\Notifications\WebPushBlastNotification;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 Route::get('/', function () {
     $latest_articles = Article::where('status', 'published')->latest()->take(3)->get();
@@ -107,10 +159,6 @@ Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login')->m
 Route::post('/login', [AuthController::class, 'login'])->middleware('guest');
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-use App\Http\Controllers\Admin\ArticleController as AdminArticleController;
-use App\Http\Controllers\Admin\ProfileController;
-use App\Http\Controllers\Admin\UserController;
-
 // Admin Routes (Protected)
 Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/', function () {
@@ -177,58 +225,6 @@ Route::middleware('auth')->prefix('admin')->group(function () {
         Route::post('/{dictionary}/competencies/reorder', [CompetencyController::class, 'reorderCompetencies'])->name('competencies.reorder');
     });
 });
-
-// Monitoring Controllers
-use App\Http\Controllers\Admin\CareerProgramController;
-use App\Http\Controllers\Admin\DailyClassController;
-// Program Controllers
-use App\Http\Controllers\Admin\HomepageEventController;
-use App\Http\Controllers\Admin\MoaController;
-use App\Http\Controllers\Admin\NonRegulerDailyClassController;
-use App\Http\Controllers\Admin\NonRegulerMoaController;
-use App\Http\Controllers\Admin\NonRegulerTraineeController;
-// Cost Controllers
-use App\Http\Controllers\Admin\NonRegulerTrainerController;
-use App\Http\Controllers\Admin\NonRegulerTrainingProgramController;
-use App\Http\Controllers\Admin\NonRegulerWeeklyReportController;
-use App\Http\Controllers\Admin\RoleController;
-// Administrasi Controllers
-use App\Http\Controllers\Admin\TraineeController;
-use App\Http\Controllers\Admin\TrainerController;
-use App\Http\Controllers\Admin\TrainingProgramController;
-use App\Http\Controllers\Admin\WeeklyReportController;
-// Inventaris Controllers
-use App\Http\Controllers\Administrasi\ActivityLogController;
-use App\Http\Controllers\Administrasi\CutiController;
-use App\Http\Controllers\Administrasi\MppController;
-use App\Http\Controllers\Administrasi\RekrutmenController;
-use App\Http\Controllers\Cost\BiayaRekruitController;
-use App\Http\Controllers\Cost\CapexController;
-use App\Http\Controllers\Cost\CostController;
-use App\Http\Controllers\Cost\VraController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\Inventaris\InventarisController;
-use App\Http\Controllers\Inventaris\InventarisDashboardController;
-use App\Http\Controllers\Inventaris\InventarisGudangController;
-use App\Http\Controllers\Inventaris\InventarisKantorController;
-use App\Http\Controllers\Inventaris\InventarisMessController;
-use App\Http\Controllers\Inventaris\InventarisSummaryController;
-use App\Http\Controllers\Monitoring\AsistenController;
-use App\Http\Controllers\Monitoring\MonitoringDashboardController;
-use App\Http\Controllers\Monitoring\MonitoringTalentController;
-use App\Http\Controllers\Monitoring\ResignedStaffController;
-use App\Http\Controllers\Program\DashboardMonitoringTahunanController;
-use App\Http\Controllers\Program\DashboardRealisasiController;
-use App\Http\Controllers\Program\ProgramBatchController;
-use App\Http\Controllers\Program\RealisasiVsBatchController;
-use App\Http\Controllers\Program\TrainingRecordController;
-use App\Models\Attendance;
-use App\Models\DailyClass;
-use App\Models\Trainee;
-use App\Models\TrainingProgram;
-use App\Models\WeeklyReport;
-use App\Notifications\WebPushBlastNotification;
-use Illuminate\Http\Request;
 
 // Mengamankan rute dashboard & administrasi agar memerlukan auth dan permission access_administrasi
 Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
