@@ -218,27 +218,11 @@ class TrainingRecordController extends Controller
                 }
 
                 $data = $this->importData($item);
-                
-                // Cek NIK atau Nama
-                $condition = [];
-                if (!empty($data['participant_identifier'])) {
-                    $condition['participant_identifier'] = $data['participant_identifier'];
-                } else {
-                    $condition['participant_name'] = $data['participant_name'];
-                }
-                $condition['nama_pelatihan'] = $data['nama_pelatihan'];
-
                 $data['status'] = 'valid';
+                $data['created_at'] = $now;
                 $data['updated_at'] = $now;
 
-                $existing = TrainingRecord::where($condition)->first();
-                if ($existing) {
-                    $existing->update($data);
-                } else {
-                    $data['created_at'] = $now;
-                    $insertBatch[] = $data;
-                }
-                
+                $insertBatch[] = $data;
                 $count++;
 
                 // Insert in chunks of 500

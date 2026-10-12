@@ -74,10 +74,10 @@ class TrainingRecordExportController extends Controller
                 'tahun' => (string) ($record->tahun ?? ''),
                 'jml_hari' => $jmlHari,
                 'jam_pelatihan' => $jamPelatihan,
-                'nama_pelatihan' => (string) ($record->activityName() ?? ''),
+                'nama_pelatihan' => (string) ($record->nama_pelatihan ?: ($record->activityName() ?? '')),
                 'instruktur' => (string) ($record->instructor ?: ($record->activityTrainer() ?? '')),
-                'tempat_pelatihan' => (string) ($record->program_type === 'reguler' ? ($act?->Lokasi_training ?? '') : ($act?->lokasi_training ?? '')),
-                'reg_non_reg' => $record->program_type === 'reguler' ? 'Reguler' : 'Non Reguler',
+                'tempat_pelatihan' => (string) ($record->tempat_pelatihan ?: ($record->program_type === 'reguler' ? ($act?->Lokasi_training ?? '') : ($act?->lokasi_training ?? ''))),
+                'reg_non_reg' => (string) ($record->reg_non_reg ?: ($record->program_type === 'reguler' ? 'Reguler' : 'Non Reguler')),
                 'internal_eksternal' => (string) ($record->internal_external ?? ''),
                 'level' => (string) ($record->level ?? ''),
                 'periode' => (string) ($record->periode ?? ''),
@@ -95,3 +95,4 @@ class TrainingRecordExportController extends Controller
         ], 200, [], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     }
 }
+
