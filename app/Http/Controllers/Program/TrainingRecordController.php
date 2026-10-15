@@ -217,7 +217,8 @@ class TrainingRecordController extends Controller
                     continue;
                 }
 
-                $data = $this->importData($item);
+                $matched = $this->findActivityCached($activities, $item);
+                $data = $this->importData($item, $matched);
                 $data['status'] = 'valid';
                 $data['created_at'] = $now;
                 $data['updated_at'] = $now;
@@ -759,7 +760,7 @@ class TrainingRecordController extends Controller
         return $name;
     }
 
-    private function importData(array $item): array
+    private function importData(array $item, ?array $matched = null): array
     {
         $tgl = trim((string) ($item['tgl'] ?? $item['tanggal'] ?? ''));
         $bulan = trim((string) ($item['bulan'] ?? $item['bln'] ?? $item['month'] ?? ''));
@@ -787,9 +788,22 @@ class TrainingRecordController extends Controller
             $tahunVal = ($yInt > 2030) ? 2026 : $yInt;
         }
 
+        $progType = $matched['type'] ?? null;
+        $progId = $matched['id'] ?? null;
+
+        if (! $progType) {
+            $regNonReg = strtolower(trim((string) ($item['reg / non reg'] ?? '')));
+            $notes = strtoupper(trim((string) ($item['keterangan'] ?? '')));
+            $pelatihan = strtoupper(trim((string) ($item['nama pelatihan'] ?? '')));
+            $isReg = ($regNonReg === 'reguler')
+                || preg_match('/\b(FAT|MAT|TAT|AAT|DMT|ECT|PMT|PKT|OAT)\b/', $notes)
+                || preg_match('/\b(FAT|MAT|TAT|AAT|DMT|ECT|PMT|PKT|OAT)\b/', $pelatihan);
+            $progType = $isReg ? 'reguler' : 'non_reguler';
+        }
+
         return [
-            'program_type' => null,
-            'program_id' => null,
+            'program_type' => $progType,
+            'program_id' => $progId,
             'nama_pelatihan' => $item['nama pelatihan'] ?? null,
             'tempat_pelatihan' => $item['tempat pelatihan'] ?? null,
             'reg_non_reg' => $item['reg / non reg'] ?? null,

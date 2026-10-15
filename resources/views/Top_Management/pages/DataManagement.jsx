@@ -899,6 +899,14 @@ const DataManagement = () => {
             <Upload size={17} className="text-[#4B6A34]" />
             <span>Import Data</span>
           </button>
+          <a
+            href={`/administrasi/program-batch/template?type=${activeMainTab === 'reguler' ? 'reguler' : 'non_reguler'}`}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white border border-slate-300 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition shadow-2xs cursor-pointer"
+            title={`Download Template Excel ${activeMainTab === 'reguler' ? 'Program Reguler' : 'Program Non-Reguler'}`}
+          >
+            <Download size={17} className="text-[#4B6A34]" />
+            <span>Template Excel</span>
+          </a>
           <button
             onClick={exportAllToExcel}
             className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2 text-sm"
@@ -2191,6 +2199,37 @@ const DataManagement = () => {
                   <span>{importMessage.text}</span>
                 </div>
               )}
+
+              {/* Template Download Option */}
+              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100/70 text-[#4B6A34] flex items-center justify-center shrink-0">
+                    <FileSpreadsheet size={17} />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-800">Template Excel Import</p>
+                    <p className="text-[11px] text-slate-500">
+                      Unduh template resmi agar susunan kolom sesuai.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
+                  <a
+                    href={`/administrasi/program-batch/template?type=${activeMainTab === 'reguler' ? 'reguler' : 'non_reguler'}`}
+                    className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#4B6A34] bg-white hover:bg-emerald-50 border border-emerald-200 rounded-lg transition shadow-2xs cursor-pointer"
+                  >
+                    <Download size={13} />
+                    <span>Template {activeMainTab === 'reguler' ? 'Reguler' : 'Non-Reguler'}</span>
+                  </a>
+                  <a
+                    href={`/administrasi/program-batch/template?type=${activeMainTab === 'reguler' ? 'non_reguler' : 'reguler'}`}
+                    className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-[11px] font-semibold text-slate-500 hover:text-slate-700 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg transition cursor-pointer"
+                    title={`Unduh alternatif template ${activeMainTab === 'reguler' ? 'Non-Reguler' : 'Reguler'}`}
+                  >
+                    <span>{activeMainTab === 'reguler' ? 'Non-Reguler' : 'Reguler'}</span>
+                  </a>
+                </div>
+              </div>
 
               {/* File Input */}
               <div>

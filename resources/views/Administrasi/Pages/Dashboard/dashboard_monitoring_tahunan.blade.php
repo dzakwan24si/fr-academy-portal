@@ -530,10 +530,17 @@
                         @endphp
                         <tr class="{{ $rowBg }} hover:bg-emerald-50/40 transition-colors">
                             <td class="py-3 px-5 font-semibold text-slate-800">
-                                <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => $tab, 'category' => $category, 'program' => $prog['name'], 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}" 
-                                   class="hover:text-green-700 hover:underline">
-                                    {{ $prog['name'] }}
-                                </a>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <a href="{{ route('administrasi.dashboard-monitoring-tahunan.index', ['tab' => $tab, 'category' => $category, 'program' => $prog['name'], 'month' => $selectedMonthCode, 'year' => $year, 'region' => $selectedRegion]) }}" 
+                                       class="hover:text-green-700 hover:underline">
+                                        {{ $prog['name'] }}
+                                    </a>
+                                    @if(!empty($prog['is_unbudget']))
+                                        <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 uppercase tracking-wider shrink-0">
+                                            Unbudget
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="py-3 px-3 text-center text-slate-700 border-l border-slate-100 font-medium">{{ $prog['target_batch'] }}</td>
                             <td class="py-3 px-3 text-center text-slate-700 border-l border-slate-100 font-medium">{{ $prog['realized_batch'] }}</td>
@@ -607,11 +614,23 @@
                     <tbody class="divide-y divide-slate-100">
                         @forelse($relatedBatches as $batch)
                             @php
-                                $batchLabel = $batch['model']->Batch ?? ($batch['model']->total_batch ?? '0');
+                                $batchLabel = $batch['model']->Batch ?? ($batch['model']->total_batch ?? null);
+                                if (!$batchLabel || $batchLabel === '0') {
+                                    $batchLabel = !empty($batch['region']) ? 'Batch ' . $batch['region'] : 'Batch 1';
+                                }
                             @endphp
                             <tr class="hover:bg-slate-50 transition-colors">
                                 <td class="py-3.5 px-4 font-semibold text-slate-800">{{ $batchLabel }}</td>
-                                <td class="py-3.5 px-4 font-bold text-slate-900">{{ $batch['name'] }}</td>
+                                <td class="py-3.5 px-4 font-bold text-slate-900">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span>{{ $batch['name'] }}</span>
+                                        @if(!empty($batch['is_unbudget']))
+                                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200 uppercase tracking-wider shrink-0">
+                                                Unbudget
+                                            </span>
+                                        @endif
+                                    </div>
+                                </td>
                                 <td class="py-3.5 px-4 text-center font-semibold text-slate-700">{{ $batch['target'] }}</td>
                                 <td class="py-3.5 px-4 text-slate-600 font-medium">{{ $batch['period'] }}</td>
                                 <td class="py-3.5 px-4 text-slate-600 font-medium">{{ $batch['location'] }}</td>

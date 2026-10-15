@@ -259,6 +259,7 @@ class DashboardController extends Controller
         $regPlanBatch = (int) $regulerPrograms->count();
         $regPlanPart = (int) $regulerPrograms->sum('target_peserta');
         $regRecords = $records->where('program_type', 'reguler');
+        $regRecordIds = array_flip($regRecords->pluck('id')->all());
         $regRealPart = (int) $regRecords->pluck('participant_identifier')->filter()->unique()->count() ?: (int) $regRecords->count();
         $regRealBatch = (int) $regRecords->pluck('notes')->filter()->unique()->count() ?: ($regRealPart > 0 ? $regPlanBatch : 0);
         $regPctBatch = $regPlanBatch > 0 ? round(($regRealBatch / $regPlanBatch) * 100) : 0;
@@ -267,38 +268,51 @@ class DashboardController extends Controller
         $softPrograms = $nonRegulerPrograms->filter(fn ($p) => $p->isSoftSkill());
         $softPlanBatch = (int) $softPrograms->sum(fn ($p) => (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0));
         $softPlanPart = (int) $softPrograms->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0));
-        $softRecords = $records->where('program_type', 'non_reguler')->filter(function ($r) use ($softPrograms) {
-            return $softPrograms->contains('id_nonreguler', $r->program_id);
+        $softProgramIds = $softPrograms->pluck('id_nonreguler')->all();
+        $regulerPrefixes = ['FAT', 'MAT', 'TAT', 'AAT', 'DMT', 'ECT', 'PMT', 'PKT'];
+        $technicalNotes = ['ESTATE', 'MILL', 'TRACTION', 'TRAKSI', 'DOWNSTREAM', 'ADMINISTRASI', 'ADMIN'];
+        $softRecords = $records->filter(function ($r) use ($softPrograms, $softProgramIds, $regulerPrefixes, $regRecordIds, $technicalNotes) {
+            if (isset($regRecordIds[$r->id])) {
+                return false;
+            }
+            $notes = strtoupper(trim((string) $r->notes));
+            foreach ($regulerPrefixes as $prefix) {
+                if (str_starts_with($notes, $prefix)) {
+                    return false;
+                }
+            }
+            if (in_array($notes, $technicalNotes, true)) {
+                return false;
+            }
+            $nama = strtolower(trim((string) $r->nama_pelatihan));
+            $isSoft = ($notes === 'SOFTSKILL')
+                || str_contains($notes, 'SOFT')
+                || str_contains($nama, 'soft')
+                || str_contains($nama, 'leadership')
+                || str_contains($nama, 'supervisory')
+                || str_contains($nama, 'problem solving')
+                || str_contains($nama, 'communication')
+                || str_contains($nama, 'talent development')
+                || str_contains($nama, 'more precious than gold')
+                || str_contains($nama, 'training of trainers')
+                || (bool) preg_match('/\b(tot)\b/i', $nama)
+                || str_contains($nama, 'fr mengajar')
+                || ($r->program_id && in_array((int) $r->program_id, $softProgramIds, true));
+
+            return $isSoft;
         });
         $softRealPart = (int) $softRecords->count();
-        $softRealBatch = (int) $softPrograms->sum(function ($p) use ($softRecords) {
-            $explicitBatch = (int) ($p->realisasi_batch ?? $p->total_batch ?? 0);
-            if ($explicitBatch > 0) {
-                return $explicitBatch;
-            }
-            $hasRecords = $softRecords->contains('program_id', $p->id_nonreguler);
-
-            return $hasRecords ? 1 : 0;
-        });
+        $softRealBatch = (int) $softPrograms->sum(fn ($p) => (int) ($p->realisasi_batch ?? 0)) ?: (int) $softRecords->pluck('nama_pelatihan')->filter()->unique()->count();
         $softPctBatch = $softPlanBatch > 0 ? round(($softRealBatch / $softPlanBatch) * 100) : 0;
         $softPctPart = $softPlanPart > 0 ? round(($softRealPart / $softPlanPart) * 100) : 0;
 
         $tekPrograms = $nonRegulerPrograms->filter(fn ($p) => ! $p->isSoftSkill());
         $tekPlanBatch = (int) $tekPrograms->sum(fn ($p) => (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0));
         $tekPlanPart = (int) $tekPrograms->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0));
-        $tekRecords = $records->where('program_type', 'non_reguler')->filter(function ($r) use ($tekPrograms) {
-            return $tekPrograms->contains('id_nonreguler', $r->program_id);
-        });
+        $softRecordIds = array_flip($softRecords->pluck('id')->all());
+        $tekRecords = $records->filter(fn ($r) => ! isset($regRecordIds[$r->id]) && ! isset($softRecordIds[$r->id]));
         $tekRealPart = (int) $tekRecords->count();
-        $tekRealBatch = (int) $tekPrograms->sum(function ($p) use ($tekRecords) {
-            $explicitBatch = (int) ($p->realisasi_batch ?? $p->total_batch ?? 0);
-            if ($explicitBatch > 0) {
-                return $explicitBatch;
-            }
-            $hasRecords = $tekRecords->contains('program_id', $p->id_nonreguler);
-
-            return $hasRecords ? 1 : 0;
-        });
+        $tekRealBatch = (int) $tekPrograms->sum(fn ($p) => (int) ($p->realisasi_batch ?? 0)) ?: (int) $tekRecords->pluck('nama_pelatihan')->filter()->unique()->count();
         $tekPctBatch = $tekPlanBatch > 0 ? round(($tekRealBatch / $tekPlanBatch) * 100) : 0;
         $tekPctPart = $tekPlanPart > 0 ? round(($tekRealPart / $tekPlanPart) * 100) : 0;
 
@@ -644,8 +658,43 @@ class DashboardController extends Controller
             $planBatch = (int) $matchingProgs->sum(fn ($p) => (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0));
             $planPart = (int) $matchingProgs->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0));
 
-            $matchingRecs = $records->filter(function ($r) use ($matchingProgs, $regKey) {
-                return $matchingProgs->contains('id_nonreguler', $r->program_id) || str_contains(strtolower((string) $r->region), $regKey);
+            $regulerPrefixes = ['FAT', 'MAT', 'TAT', 'AAT', 'DMT', 'ECT', 'PMT', 'PKT'];
+            $technicalNotes = ['ESTATE', 'MILL', 'TRACTION', 'TRAKSI', 'DOWNSTREAM', 'ADMINISTRASI', 'ADMIN'];
+            $matchingRecs = $records->filter(function ($r) use ($matchingProgs, $regKey, $regulerPrefixes, $technicalNotes) {
+                $notes = strtoupper(trim((string) $r->notes));
+                foreach ($regulerPrefixes as $prefix) {
+                    if (str_starts_with($notes, $prefix)) {
+                        return false;
+                    }
+                }
+                if (in_array($notes, $technicalNotes, true)) {
+                    return false;
+                }
+                $nama = strtolower(trim((string) $r->nama_pelatihan));
+                $isSoft = ($notes === 'SOFTSKILL')
+                    || str_contains($notes, 'SOFT')
+                    || str_contains($nama, 'soft')
+                    || str_contains($nama, 'leadership')
+                    || str_contains($nama, 'supervisory')
+                    || str_contains($nama, 'problem solving')
+                    || str_contains($nama, 'communication')
+                    || str_contains($nama, 'talent development')
+                    || str_contains($nama, 'more precious than gold')
+                    || str_contains($nama, 'training of trainers')
+                    || (bool) preg_match('/\b(tot)\b/i', $nama)
+                    || str_contains($nama, 'fr mengajar')
+                    || ($r->program_id && $matchingProgs->contains('id_nonreguler', $r->program_id));
+
+                if (! $isSoft) {
+                    return false;
+                }
+
+                $rReg = strtolower((string) $r->region);
+                if ($regKey === 'kaltim' || $regKey === 'kubar') {
+                    return str_contains($rReg, 'kaltim') || str_contains($rReg, 'kubar');
+                }
+
+                return str_contains($rReg, $regKey);
             });
             $realPart = (int) $matchingRecs->count();
             $realBatch = (int) $matchingProgs->sum(function ($p) use ($matchingRecs) {

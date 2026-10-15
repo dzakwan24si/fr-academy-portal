@@ -151,44 +151,130 @@ class DashboardMonitoringTahunanController extends Controller
         $regulerAll = ProgramReguler::all()->filter(fn ($p) => $this->resolveProgramRegulerYear($p) === $year);
         $nonRegulerAll = ProgramNonReguler::all()->filter(fn ($p) => $this->resolveProgramNonRegulerYear($p) === $year);
 
-        // Dynamic Counts for Category Cards (Gambar 2)
-        $regulerTotalCount = $regulerAll->count();
-        $regulerStafCount = $regulerAll->filter(fn ($p) => str_contains($cleanStr($p->jenis_program_reguler), 'staf'))->count();
-        $regulerMandorCount = $regulerAll->filter(fn ($p) => str_contains($cleanStr($p->jenis_program_reguler), 'mandor'))->count();
+        // 2. Fetch Records from TrainingRecord & Pre-filter for Current Tab, Year & Cumulative Month
+        $allTrainingRecords = TrainingRecord::where('status', 'valid')->get();
 
-        $nonRegulerTotalCount = $nonRegulerAll->count();
-        $nonRegulerManagerialCount = $nonRegulerAll->filter(fn ($p) => str_contains($cleanStr($p->kategori_pelatihan), 'managerial') || str_contains($cleanStr($p->sub_kategori), 'soft'))->count();
-        $nonRegulerTechnicalCount = $nonRegulerAll->filter(fn ($p) => str_contains($cleanStr($p->kategori_pelatihan), 'technical') && ! str_contains($cleanStr($p->sub_kategori), 'soft'))->count();
+        $normName = function ($str) {
+            $str = strtolower(trim((string) $str));
+            $str = preg_replace('/\s*\(.*?\)\s*/', '', $str);
 
-        $nonRegulerSubCategories = ProgramNonReguler::pluck('sub_kategori')
-            ->filter()
-            ->map(fn ($c) => trim((string) $c))
-            ->unique()
-            ->values()
-            ->all();
+            return preg_replace('/[^a-z0-9]/', '', $str);
+        };
 
-        $subCategoryCounts = [];
-        foreach ($nonRegulerSubCategories as $subCat) {
-            $search = $cleanStr($subCat);
-            $subCategoryCounts[$subCat] = $nonRegulerAll->filter(function ($p) use ($search, $cleanStr) {
-                return str_contains($cleanStr($p->sub_kategori), $search)
-                    || str_contains($cleanStr($p->kategori_pelatihan), $search);
-            })->count();
+        $matchesProg = function ($rNorm, $bNorm, $rRaw, $bRaw) {
+            if ($rNorm === $bNorm) {
+                return true;
+            }
+            if (str_starts_with($rNorm, 'frmengajar') && (str_starts_with($bNorm, 'frmengajar') || str_contains($bRaw, 'fr mengajar'))) {
+                return true;
+            }
+
+            $isRTot = (preg_match('/\b(tot)\b/i', $rRaw) || str_contains(strtolower($rRaw), 'training of trainers')) && ! str_contains(strtolower($rRaw), 'total productive maintenance');
+            $isBTot = (preg_match('/\b(tot)\b/i', $bRaw) || str_contains(strtolower($bRaw), 'training of trainers')) && ! str_contains(strtolower($bRaw), 'total productive maintenance');
+            if ($isRTot && $isBTot) {
+                return true;
+            }
+
+            if (str_contains($rNorm, 'bearing') && str_contains($bNorm, 'bearing')) {
+                return true;
+            }
+            if (str_contains($rNorm, 'mentoringasistantadmin') && str_contains($bNorm, 'mentoringasistantadmin')) {
+                return true;
+            }
+            if ((str_contains($rNorm, 'klinikkerjamandor') || str_contains($rNorm, 'klinikkinerjamandor')) && str_contains($bNorm, 'klinikkerjamandor')) {
+                return true;
+            }
+            if (str_contains($rNorm, 'pamongtpa') && str_contains($bNorm, 'pamongtpa')) {
+                return true;
+            }
+            if (str_contains($rNorm, 'dumptruckmitsubi') && str_contains($bNorm, 'dumptruckmitsubi')) {
+                return true;
+            }
+            if (str_contains($rNorm, 'analisapekerjaan') && str_contains($bNorm, 'analisapekerjaan')) {
+                return true;
+            }
+            if (str_contains($rNorm, 'yieldmaking') && str_contains($bNorm, 'yieldmaking')) {
+                return true;
+            }
+
+            return false;
+        };
+
+        // Filter training records by current tab, year, and cumulative month
+        $filteredRecords = $allTrainingRecords->filter(function ($r) use ($tab, $year, $selectedMonthNum) {
+            if ($r->program_type !== $tab) {
+                return false;
+            }
+
+            // Year check
+            $rYear = null;
+            if (! empty($r->tahun)) {
+                $rYear = (int) $r->tahun;
+            } elseif (! empty($r->training_date)) {
+                $rYear = (int) date('Y', strtotime($r->training_date));
+            } elseif (method_exists($r, 'activityDates')) {
+                $dates = $r->activityDates();
+                foreach ($dates as $d) {
+                    if ($d) {
+                        $rYear = (int) date('Y', strtotime($d));
+                        break;
+                    }
+                }
+            } elseif (! empty($r->created_at)) {
+                $rYear = (int) date('Y', strtotime($r->created_at));
+            } else {
+                $rYear = 2026;
+            }
+
+            if ($rYear !== $year) {
+                $isCarryOver = ($tab === 'reguler' && $rYear === $year - 1 && (
+                    str_contains(strtoupper((string) $r->notes), (string) $year)
+                ));
+                if (! $isCarryOver) {
+                    return false;
+                }
+            }
+
+            // Month cumulative check (Januari s/d Bulan Terpilih)
+            if ($selectedMonthNum !== null) {
+                $mNum = null;
+                if ($r->bulan) {
+                    $mNum = $this->parseMonthNumber($r->bulan);
+                }
+                if (! $mNum && $r->training_date) {
+                    $mNum = (int) date('n', strtotime($r->training_date));
+                }
+                if (! $mNum && method_exists($r, 'activityDates')) {
+                    foreach ($r->activityDates() as $d) {
+                        if ($d) {
+                            $mNum = (int) date('n', strtotime($d));
+                            break;
+                        }
+                    }
+                }
+
+                if ($mNum !== null && $mNum > $selectedMonthNum) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        // 3. Build Master Batches & Virtual Batches for Unbudgeted Programs
+        $recordsByProgId = [];
+        $unassignedRecords = [];
+        foreach ($filteredRecords as $r) {
+            if ($r->program_id) {
+                $recordsByProgId[(int) $r->program_id][] = $r;
+            } else {
+                $unassignedRecords[] = $r;
+            }
         }
 
-        // 2. Fetch Records from TrainingRecord
-        $trainingRecords = TrainingRecord::where('status', 'valid')->get();
-
-        // 3. Build Distinct Programs List for Current Tab & Category
-        $currentBatches = collect();
+        $masterBatches = collect();
         if ($tab === 'reguler') {
-            $filteredReg = $regulerAll;
-            if ($category === 'staf') {
-                $filteredReg = $filteredReg->filter(fn ($p) => str_contains($cleanStr($p->jenis_program_reguler), 'staf'));
-            } elseif ($category === 'mandor') {
-                $filteredReg = $filteredReg->filter(fn ($p) => str_contains($cleanStr($p->jenis_program_reguler), 'mandor'));
-            }
-            $currentBatches = $filteredReg->map(fn ($item) => [
+            $masterBatches = $regulerAll->map(fn ($item) => [
                 'type' => 'reguler',
                 'id' => $item->getKey(),
                 'name' => trim((string) $item->Training_Program),
@@ -196,27 +282,15 @@ class DashboardMonitoringTahunanController extends Controller
                 'batch' => 1,
                 'target' => (int) $item->target_peserta,
                 'region' => trim((string) $item->Region),
-                'location' => $item->Lokasi_training ?: '-',
+                'location' => $item->Lokasi_training ?: ($item->Region ?: '-'),
                 'start' => $item->Mulai_program,
                 'end' => $item->Selesai_program,
                 'sub_category' => $item->jenis_program_reguler ?: 'Reguler',
+                'kategori_pelatihan' => $item->jenis_program_reguler ?: 'Reguler',
                 'model' => $item,
             ]);
         } else {
-            $filteredNon = $nonRegulerAll;
-            if ($category === 'managerial' || strcasecmp($category, 'softskill') === 0) {
-                $filteredNon = $filteredNon->filter(fn ($p) => str_contains($cleanStr($p->kategori_pelatihan), 'managerial') || str_contains($cleanStr($p->sub_kategori), 'soft'));
-            } elseif ($category === 'technical') {
-                $filteredNon = $filteredNon->filter(fn ($p) => str_contains($cleanStr($p->kategori_pelatihan), 'technical') && ! str_contains($cleanStr($p->sub_kategori), 'soft'));
-            } elseif ($category !== 'all' && $category !== '') {
-                $searchCat = $cleanStr($category);
-                $filteredNon = $filteredNon->filter(function ($p) use ($searchCat, $cleanStr) {
-                    return str_contains($cleanStr($p->sub_kategori), $searchCat)
-                        || str_contains($cleanStr($p->kategori_pelatihan), $searchCat)
-                        || str_contains($cleanStr($p->jenis_pelatihan), $searchCat);
-                });
-            }
-            $currentBatches = $filteredNon->map(fn ($item) => [
+            $masterBatches = $nonRegulerAll->map(fn ($item) => [
                 'type' => 'non_reguler',
                 'id' => $item->getKey(),
                 'name' => trim((string) $item->jenis_pelatihan),
@@ -224,12 +298,147 @@ class DashboardMonitoringTahunanController extends Controller
                 'batch' => (int) ($item->TARGET_BATCH ?? $item->total_batch ?? 0),
                 'target' => (int) ($item->TARGET_PESERTA ?? $item->target_total ?? 0),
                 'region' => trim((string) $item->region),
-                'location' => $item->lokasi_training ?: '-',
+                'location' => $item->lokasi_training ?: ($item->region ?: '-'),
                 'start' => $item->start_date,
                 'end' => $item->end_date,
                 'sub_category' => $item->sub_kategori ?: 'Technical',
+                'kategori_pelatihan' => $item->kategori_pelatihan ?: 'Technical',
                 'model' => $item,
             ]);
+        }
+
+        // Match records to master batches
+        $matchedUnassignedIds = [];
+        $batchRecordsMap = [];
+
+        foreach ($masterBatches as $batch) {
+            $bId = (int) $batch['id'];
+            $bNorm = $normName($batch['clean_name']);
+            $bRaw = strtolower($batch['name']);
+            $bRegion = $batch['region'];
+
+            $list = $recordsByProgId[$bId] ?? [];
+
+            foreach ($unassignedRecords as $r) {
+                if (isset($matchedUnassignedIds[$r->id])) {
+                    continue;
+                }
+                if ($bRegion !== '' && ! RegionHelper::matches($r->region, $bRegion)) {
+                    continue;
+                }
+
+                $rNorm = $normName($tab === 'reguler' ? $r->notes : $r->nama_pelatihan);
+                $rRaw = (string) ($tab === 'reguler' ? $r->notes : $r->nama_pelatihan);
+
+                if ($matchesProg($rNorm, $bNorm, $rRaw, $bRaw)) {
+                    $list[] = $r;
+                    $matchedUnassignedIds[$r->id] = true;
+                }
+            }
+            $batchRecordsMap[$bId] = $list;
+        }
+
+        // Collect remaining unbudgeted records and generate virtual batches for them
+        $remainingUnbudget = [];
+        foreach ($unassignedRecords as $r) {
+            if (! isset($matchedUnassignedIds[$r->id])) {
+                $remainingUnbudget[] = $r;
+            }
+        }
+
+        $virtualBatches = collect();
+        $vId = 90000;
+        $groupedRemaining = collect($remainingUnbudget)->groupBy(fn ($r) => trim($r->nama_pelatihan ?: $r->notes ?: 'Program Unbudget').'|'.trim($r->region ?: ''));
+
+        foreach ($groupedRemaining as $groupKey => $recs) {
+            $first = $recs->first();
+            $name = trim($first->nama_pelatihan ?: $first->notes ?: 'Program Unbudget');
+            $reg = trim($first->region ?: '');
+            $notes = trim($first->notes ?: '');
+
+            $subCat = 'Technical';
+            $katPel = 'Technical';
+            $technicalNotes = ['ESTATE', 'MILL', 'TRACTION', 'TRAKSI', 'DOWNSTREAM', 'ADMINISTRASI', 'ADMIN'];
+            if (strcasecmp($notes, 'softskill') === 0 || preg_match('/\b(tot)\b/i', $name) || str_contains(strtolower($name), 'leadership') || str_contains(strtolower($name), 'communication') || str_contains(strtolower($name), 'fr mengajar')) {
+                $subCat = 'Softskill';
+                $katPel = 'Managerial and Leadership';
+            } elseif ($notes !== '') {
+                $subCat = ucfirst(strtolower($notes));
+            }
+
+            $vId++;
+            $firstRecDate = $recs->pluck('training_date')->filter()->first();
+            $batchObj = (object) [
+                'Batch' => $reg ? 'Batch '.$reg : 'Batch 1',
+                'total_batch' => 1,
+                'realisasi_batch' => 1,
+            ];
+
+            $virtualBatches->push([
+                'type' => $tab,
+                'id' => $vId,
+                'name' => $name,
+                'clean_name' => trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $name)),
+                'batch' => 0,
+                'target' => 0,
+                'region' => $reg,
+                'location' => $reg ?: '-',
+                'start' => $firstRecDate,
+                'end' => null,
+                'sub_category' => $subCat,
+                'kategori_pelatihan' => $katPel,
+                'model' => $batchObj,
+                'is_unbudget' => true,
+            ]);
+            $batchRecordsMap[$vId] = $recs->all();
+        }
+
+        $allBatches = $masterBatches->concat($virtualBatches);
+
+        // Dynamic Counts for Category Cards (Gambar 2)
+        $regulerTotalCount = $regulerAll->count();
+        $regulerStafCount = $regulerAll->filter(fn ($p) => str_contains($cleanStr($p->jenis_program_reguler), 'staf'))->count();
+        $regulerMandorCount = $regulerAll->filter(fn ($p) => str_contains($cleanStr($p->jenis_program_reguler), 'mandor'))->count();
+
+        $nonRegulerBatches = ($tab === 'non_reguler') ? $allBatches : $nonRegulerAll->map(fn ($p) => [
+            'kategori_pelatihan' => $p->kategori_pelatihan,
+            'sub_category' => $p->sub_kategori,
+        ]);
+        $nonRegulerTotalCount = $nonRegulerBatches->count();
+        $nonRegulerManagerialCount = $nonRegulerBatches->filter(fn ($p) => str_contains($cleanStr($p['kategori_pelatihan'] ?? ''), 'managerial') || str_contains($cleanStr($p['sub_category'] ?? ''), 'soft'))->count();
+        $nonRegulerTechnicalCount = $nonRegulerBatches->filter(fn ($p) => str_contains($cleanStr($p['kategori_pelatihan'] ?? ''), 'technical') && ! str_contains($cleanStr($p['sub_category'] ?? ''), 'soft'))->count();
+
+        $nonRegulerSubCategories = ['Softskill', 'Estate', 'Mill', 'Traksi', 'Administrasi', 'Downstream'];
+        $subCategoryCounts = [];
+        foreach ($nonRegulerSubCategories as $subCat) {
+            $search = $cleanStr($subCat);
+            $subCategoryCounts[$subCat] = $nonRegulerBatches->filter(function ($p) use ($search, $cleanStr) {
+                return str_contains($cleanStr($p['sub_category'] ?? ''), $search)
+                    || str_contains($cleanStr($p['kategori_pelatihan'] ?? ''), $search);
+            })->count();
+        }
+
+        // Filter batches by Category
+        $currentBatches = $allBatches;
+        if ($tab === 'reguler') {
+            if ($category === 'staf') {
+                $currentBatches = $currentBatches->filter(fn ($p) => str_contains($cleanStr($p['sub_category']), 'staf'));
+            } elseif ($category === 'mandor') {
+                $currentBatches = $currentBatches->filter(fn ($p) => str_contains($cleanStr($p['sub_category']), 'mandor'));
+            }
+        } else {
+            if ($category === 'managerial' || strcasecmp($category, 'softskill') === 0) {
+                $currentBatches = $currentBatches->filter(fn ($p) => str_contains($cleanStr($p['kategori_pelatihan']), 'managerial') || str_contains($cleanStr($p['sub_category']), 'soft'));
+            } elseif ($category === 'technical') {
+                $currentBatches = $currentBatches->filter(fn ($p) => str_contains($cleanStr($p['kategori_pelatihan']), 'technical') && ! str_contains($cleanStr($p['sub_category']), 'soft'));
+            } elseif ($category !== 'all' && $category !== '') {
+                $searchCat = $cleanStr($category);
+                $currentBatches = $currentBatches->filter(function ($p) use ($searchCat, $cleanStr) {
+                    return str_contains($cleanStr($p['sub_category']), $searchCat)
+                        || str_contains($cleanStr($p['kategori_pelatihan']), $searchCat)
+                        || str_contains($cleanStr($p['name']), $searchCat);
+                });
+            }
         }
 
         // Filter currentBatches by Region keyword if selected
@@ -240,126 +449,36 @@ class DashboardMonitoringTahunanController extends Controller
         }
 
         // Group by distinct Program Name
-        $programGroups = $currentBatches->groupBy('name')->map(function ($items, $name) use ($trainingRecords, $tab, $year, $selectedMonthNum, $selectedRegion) {
+        $programGroups = $currentBatches->groupBy('name')->map(function ($items, $name) use ($batchRecordsMap, $tab, $selectedRegion) {
             $first = $items->first();
-            $related = $items->map(function ($batch) use ($trainingRecords, $tab, $year, $selectedMonthNum, $selectedRegion) {
-                // Find actual records matching id or program name, filtered cumulatively (Jan s/d selected month)
-                $matchedRecords = $trainingRecords->filter(function ($r) use ($batch, $tab, $year, $selectedMonthNum, $selectedRegion) {
-                    if ($r->program_type !== $tab) {
-                        return false;
-                    }
-
-                    // Match Region keyword if specified
-                    if ($selectedRegion !== 'all' && $selectedRegion !== '') {
-                        $rReg = (string) ($r->region ?: '');
-                        $bReg = (string) ($batch['region'] ?? '');
-                        $rMatches = RegionHelper::matches($rReg, $selectedRegion);
-                        $bMatches = RegionHelper::matches($bReg, $selectedRegion);
-
-                        if ($rReg !== '' && ! $rMatches && $bReg !== '' && ! $bMatches) {
-                            return false;
-                        }
-                        if ($rReg !== '' && ! $rMatches && $bReg === '') {
-                            return false;
-                        }
-                    }
-
-                    // Match program
-                    $matchesProgram = false;
-                    if ($r->program_id && (int) $r->program_id === (int) $batch['id']) {
-                        $matchesProgram = true;
-                    } elseif ($tab === 'reguler') {
-                        $notes = strtolower(trim((string) $r->notes));
-                        $bName = strtolower(trim((string) $batch['clean_name']));
-                        if ($bName !== '' && (str_contains($notes, $bName) || str_contains($bName, $notes))) {
-                            $matchesProgram = true;
-                        } elseif (str_contains(strtolower($batch['name']), 'carry over')) {
-                            $bPrefix = trim((string) preg_replace('/\s+\d{4}.*$/', '', $bName));
-                            $nPrefix = trim((string) preg_replace('/\s+\d{4}.*$/', '', $notes));
-                            if ($bPrefix !== '' && $bPrefix === $nPrefix) {
-                                $matchesProgram = true;
-                            }
-                        }
-                    }
-                    if (! $matchesProgram) {
-                        return false;
-                    }
-
-                    // Match Year
-                    $rYear = null;
-                    if (! empty($r->tahun)) {
-                        $rYear = (int) $r->tahun;
-                    } elseif (! empty($r->training_date)) {
-                        $rYear = (int) date('Y', strtotime($r->training_date));
-                    } elseif (method_exists($r, 'activityDates')) {
-                        $dates = $r->activityDates();
-                        foreach ($dates as $d) {
-                            if ($d) {
-                                $rYear = (int) date('Y', strtotime($d));
-                                break;
-                            }
-                        }
-                    } elseif (! empty($r->created_at)) {
-                        $rYear = (int) date('Y', strtotime($r->created_at));
-                    } else {
-                        $rYear = 2026;
-                    }
-
-                    if ($rYear !== $year) {
-                        return false;
-                    }
-
-                    // Match Month (Cumulative: Jan s/d selectedMonthNum)
-                    if ($selectedMonthNum !== null) {
-                        $mNum = null;
-                        if ($r->bulan) {
-                            $mNum = $this->parseMonthNumber($r->bulan);
-                        }
-                        if (! $mNum && $r->training_date) {
-                            $mNum = (int) date('n', strtotime($r->training_date));
-                        }
-                        if (! $mNum) {
-                            $dates = $r->activityDates();
-                            foreach ($dates as $d) {
-                                if ($d) {
-                                    $mNum = (int) date('n', strtotime($d));
-                                    break;
-                                }
-                            }
-                        }
-
-                        // Must be <= selectedMonthNum (Januari s/d Bulan Terpilih)
-                        if ($mNum !== null) {
-                            return $mNum <= $selectedMonthNum;
-                        }
-
-                        return true;
-                    }
-
-                    return true;
-                });
-
-                // For Reguler programs: distinct participants by identifier/name
-                if ($tab === 'reguler') {
-                    $uniqueRecords = $matchedRecords->unique(function ($r) {
-                        return strtolower(trim($r->participant_identifier ?: $r->participant_name ?: $r->id));
-                    });
-                    $actualParticipants = $uniqueRecords->count();
-                } else {
-                    $actualParticipants = $matchedRecords->count();
+            $related = $items->map(function ($batch) use ($batchRecordsMap, $tab, $selectedRegion) {
+                $records = $batchRecordsMap[$batch['id']] ?? [];
+                if ($selectedRegion !== 'all' && $selectedRegion !== '') {
+                    $records = array_filter($records, fn ($r) => RegionHelper::matches($r->region, $selectedRegion));
                 }
 
                 if ($tab === 'reguler') {
+                    $seen = [];
+                    $uniqueCount = 0;
+                    foreach ($records as $r) {
+                        $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
+                        if (! isset($seen[$ident])) {
+                            $seen[$ident] = true;
+                            $uniqueCount++;
+                        }
+                    }
+                    $actualParticipants = $uniqueCount;
                     $realizedBatch = $actualParticipants > 0 ? 1 : 0;
                 } else {
+                    $actualParticipants = count($records);
                     $explicitBatch = (int) ($batch['model']->realisasi_batch ?? $batch['model']->total_batch ?? 0);
                     $realizedBatch = $explicitBatch > 0 ? $explicitBatch : ($actualParticipants > 0 ? 1 : 0);
                 }
 
                 $periodStr = '- - -';
-                if ($batch['start']) {
+                if (! empty($batch['start'])) {
                     $periodStr = Carbon::parse($batch['start'])->format('d M Y');
-                    if ($batch['end']) {
+                    if (! empty($batch['end'])) {
                         $periodStr .= ' – '.Carbon::parse($batch['end'])->format('d M Y');
                     }
                 }
@@ -376,7 +495,13 @@ class DashboardMonitoringTahunanController extends Controller
             $realizedBatch = $related->sum('realized_batch');
             $realizedParticipants = $related->sum('actual_participants');
 
-            $isUnbudget = ($targetParticipants === 0 && $realizedParticipants > 0);
+            $isUnbudget = ($targetParticipants === 0 && $realizedParticipants > 0) || ! empty($first['is_unbudget']) || str_contains(strtolower($name), 'unbudget');
+
+            // If a virtual unbudget program has 0 realized participants in this filter, exclude it
+            if (! empty($first['is_unbudget']) && $realizedParticipants === 0) {
+                return null;
+            }
+
             $participantPercent = $targetParticipants > 0
                 ? round(($realizedParticipants / $targetParticipants) * 100)
                 : ($isUnbudget ? 100 : 0);
@@ -396,7 +521,7 @@ class DashboardMonitoringTahunanController extends Controller
                 'is_unbudget' => $isUnbudget,
                 'batches' => $related->values(),
             ];
-        })->values();
+        })->filter()->values();
 
         // Sort Programs nicely
         if ($tab === 'reguler') {

@@ -7,9 +7,11 @@ use App\Models\ActivityLog;
 use App\Models\Program\ProgramNonReguler;
 use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
+use App\Services\ExcelExporter;
 use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ProgramBatchController extends Controller
 {
@@ -377,6 +379,99 @@ class ProgramBatchController extends Controller
         }
     }
 
+    public function template(Request $request): StreamedResponse
+    {
+        $type = $request->input('type', 'reguler');
+
+        if ($type === 'non_reguler') {
+            $headers = [
+                'Jenis Pelatihan',
+                'Kategori Pelatihan',
+                'Sub Kategori',
+                'Target Batch',
+                'Type Training',
+                'Region',
+                'Lokasi Training',
+                'Trainer',
+                'Start Date',
+                'End Date',
+                'Total Hari',
+                'Total Jam',
+                'Peserta Non Staf',
+                'Peserta AST',
+                'Peserta Askep',
+                'Peserta Mgr',
+                'Peserta GM',
+                'Peserta Head',
+                'Target Peserta',
+                'Tahun',
+            ];
+
+            $sampleRow = [
+                'Supervisory Management Development',
+                'Managerial and Leadership',
+                'Softskill',
+                1,
+                'In-House',
+                'Riau',
+                'Head Office Pekanbaru',
+                'Internal Trainer',
+                '2026-03-10',
+                '2026-03-12',
+                3,
+                24,
+                0,
+                10,
+                5,
+                2,
+                0,
+                0,
+                17,
+                2026,
+            ];
+
+            return ExcelExporter::download('Template_Program_Batch_Non_Reguler.xlsx', $headers, [$sampleRow], 'Template Batch Non Reguler');
+        }
+
+        $headers = [
+            'Training Program',
+            'Batch',
+            'Jenis Program Reguler',
+            'Region',
+            'Lokasi Training',
+            'Mulai Program',
+            'Selesai Program',
+            'Jumlah Bulan Training',
+            'Jumlah Hari',
+            'Total Training Days',
+            'Promosi Mandor',
+            'Fresh Graduate',
+            'Target Peserta',
+            'Uang Saku',
+            'Tahun',
+        ];
+
+        $sampleRow = [
+            'Field Assistant Training (FAT)',
+            'Batch 1',
+            'Training Reguler - Staf',
+            'Riau',
+            'Training Center Riau',
+            '2026-02-01',
+            '2026-04-01',
+            2,
+            60,
+            60,
+            5,
+            15,
+            20,
+            1500000,
+            2026,
+        ];
+
+        return ExcelExporter::download('Template_Program_Batch_Reguler.xlsx', $headers, [$sampleRow], 'Template Batch Reguler');
+    }
+
     public function import(Request $request)
     {
         $request->validate(['file' => 'required|file|mimes:csv,txt,xlsx|max:20480']);
@@ -487,7 +582,7 @@ class ProgramBatchController extends Controller
                 'Fresh_Graduate' => is_numeric($item['freshgraduate'] ?? null) ? (int) $item['freshgraduate'] : 0,
                 'target_peserta' => is_numeric($item['targetpeserta'] ?? null) ? (int) $item['targetpeserta'] : (is_numeric($item['totalorang'] ?? null) ? (int) $item['totalorang'] : 0),
                 'Uang_saku' => is_numeric($item['uangsaku'] ?? null) ? (float) $item['uangsaku'] : 0,
-                'jenis_program_reguler' => $item['jenisprogramreguler'] ?? $item['subkategori'] ?? null,
+                'jenis_program_reguler' => $item['jenisprogramreguler'] ?? $item['kategorireguler'] ?? $item['subkategori'] ?? null,
                 'Region' => $item['region'] ?? $item['wilayah'] ?? null,
                 'tanggal_pelaksanaan' => $this->jsonValue($item['tanggalpelaksanaan'] ?? null),
                 'tahun' => is_numeric($item['tahun'] ?? null) ? (int) $item['tahun'] : null,
@@ -548,7 +643,7 @@ class ProgramBatchController extends Controller
                 'sub_kategori' => $item['subkategori'] ?? null,
                 'tanggal_pelaksanaan' => $this->jsonValue($item['tanggalpelaksanaan'] ?? null),
                 'TARGET_BATCH' => is_numeric($item['targetbatch'] ?? null) ? (int) $item['targetbatch'] : 0,
-                'TARGET_PESERTA' => is_numeric($item['targetpeserta'] ?? null) ? (int) $item['targetpeserta'] : 0,
+                'TARGET_PESERTA' => is_numeric($item['targetpeserta'] ?? null) ? (int) $item['targetpeserta'] : (is_numeric($item['targettotal'] ?? null) ? (int) $item['targettotal'] : 0),
                 'tahun' => is_numeric($item['tahun'] ?? null) ? (int) $item['tahun'] : null,
             ];
 

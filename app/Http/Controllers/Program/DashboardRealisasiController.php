@@ -662,7 +662,11 @@ class DashboardRealisasiController extends Controller
             return true;
         });
 
-        $trNonReg = (clone $trainingRecordQuery)->where('program_type', 'non_reguler')->get();
+        $trNonReg = (clone $trainingRecordQuery)->where(function ($q) {
+            $q->where('program_type', 'non_reguler')
+                ->orWhere('reg_non_reg', 'LIKE', '%non%')
+                ->orWhereIn('notes', ['Softskill', 'Traksi', 'Administrasi', 'Mill', 'Estate', 'Downstream']);
+        })->get();
         $trNonReg = $this->filterRecordsByYearAndCumulativeMonth($trNonReg, $year, $selectedMonthNum)->filter(function ($r) use ($regulerPrefixes) {
             $notes = strtoupper(trim((string) $r->notes));
             foreach ($regulerPrefixes as $prefix) {
@@ -710,27 +714,82 @@ class DashboardRealisasiController extends Controller
             }
         }
 
-        $calcMetrics = function ($progList) use ($trNonReg) {
+        $allSoftProgramIds = ProgramNonReguler::all()->filter(fn ($p) => $p->isSoftSkill())->pluck('id_nonreguler')->all();
+
+        $calcMetrics = function ($progList, $categoryType = 'softskill') use ($trNonReg, $selectedProgram, $cleanStr, $allSoftProgramIds) {
             $targPeserta = 0;
             $targBatch = 0;
-            $realPeserta = 0;
             $realBatch = 0;
 
             foreach ($progList as $p) {
-                $pId = $p->getKey();
                 $targPeserta += (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0);
                 $targBatch += (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0);
-                // Count all training records regardless of year
-                $pRecords = $trNonReg->where('program_id', $pId);
-
-                $count = $pRecords->count();
-                $realPeserta += $count;
                 $explicitBatch = (int) ($p->realisasi_batch ?? $p->total_batch ?? 0);
                 if ($explicitBatch > 0) {
                     $realBatch += $explicitBatch;
-                } elseif ($count > 0) {
-                    $realBatch += 1;
                 }
+            }
+
+            if (empty($progList)) {
+                return [
+                    'percentage' => 0,
+                    'target' => 100,
+                    'peserta_realisasi' => 0,
+                    'peserta_target' => 0,
+                    'batch_realisasi' => 0,
+                    'batch_target' => 0,
+                    'total_program' => 0,
+                ];
+            }
+
+            $technicalNotes = ['ESTATE', 'MILL', 'TRACTION', 'TRAKSI', 'DOWNSTREAM', 'ADMINISTRASI', 'ADMIN'];
+            $catRecords = $trNonReg->filter(function ($r) use ($allSoftProgramIds, $categoryType, $selectedProgram, $cleanStr, $technicalNotes) {
+                $notes = strtoupper(trim((string) $r->notes));
+                $nama = strtolower(trim((string) $r->nama_pelatihan));
+
+                if (in_array($notes, $technicalNotes, true)) {
+                    $isSoft = false;
+                } else {
+                    $isSoft = ($notes === 'SOFTSKILL')
+                        || str_contains($notes, 'SOFT')
+                        || str_contains($nama, 'soft')
+                        || str_contains($nama, 'leadership')
+                        || str_contains($nama, 'supervisory')
+                        || str_contains($nama, 'problem solving')
+                        || str_contains($nama, 'communication')
+                        || str_contains($nama, 'talent development')
+                        || str_contains($nama, 'more precious than gold')
+                        || str_contains($nama, 'training of trainers')
+                        || (bool) preg_match('/\b(tot)\b/i', $nama)
+                        || str_contains($nama, 'fr mengajar')
+                        || ($r->program_id && in_array((int) $r->program_id, $allSoftProgramIds, true));
+                }
+
+                if ($categoryType === 'softskill' && ! $isSoft) {
+                    return false;
+                }
+                if ($categoryType === 'teknikal' && $isSoft) {
+                    return false;
+                }
+
+                // If specific program is selected in dropdown filter
+                if ($selectedProgram !== 'all' && $selectedProgram !== '') {
+                    $cleanFilter = $cleanStr($selectedProgram);
+                    $matchesSelected = str_contains($cleanStr($r->nama_pelatihan), $cleanFilter)
+                        || str_contains($cleanStr($r->notes), $cleanFilter);
+                    if (! $matchesSelected) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            $realPeserta = (int) $catRecords->count();
+
+            // If realBatch wasn't set explicitly by master programs, infer from distinct training sessions
+            if ($realBatch === 0 && $realPeserta > 0) {
+                $realBatch = (int) $catRecords->map(fn ($r) => ($r->nama_pelatihan ?: $r->notes).'|'.$r->region.'|'.$r->bulan)->unique()->count();
             }
 
             $pct = $targPeserta > 0 ? round(($realPeserta / $targPeserta) * 100) : 0;
@@ -746,8 +805,8 @@ class DashboardRealisasiController extends Controller
             ];
         };
 
-        $softSkill = $calcMetrics($softPrograms);
-        $teknikal = $calcMetrics($tekPrograms);
+        $softSkill = $calcMetrics($softPrograms, 'softskill');
+        $teknikal = $calcMetrics($tekPrograms, 'teknikal');
 
         // 6. Monthly Chart Data (Jan - Des) - Real-time Per Bulan from TrainingRecord
         $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
@@ -766,7 +825,8 @@ class DashboardRealisasiController extends Controller
             }
             if ($mNum && isset($monthlyPesertaMap[$mNum])) {
                 $monthlyPesertaMap[$mNum]++;
-                $monthlyProgramSets[$mNum][$r->program_type.':'.$r->program_id] = true;
+                $progKey = $r->program_id ? ($r->program_type.':'.$r->program_id) : ($r->nama_pelatihan ?: $r->notes);
+                $monthlyProgramSets[$mNum][$progKey] = true;
             }
         }
 

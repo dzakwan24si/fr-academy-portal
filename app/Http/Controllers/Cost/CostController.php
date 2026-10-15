@@ -526,11 +526,8 @@ class CostController extends Controller
                 $jenisCost = $getVal('jenis_cost', 'BIAYA UMUM LAINNYA');
                 $accountName = $getVal('account_name', 'Item Biaya');
                 $rawBulan = $getVal('bulan');
-                if ($rawBulan !== null && $rawBulan !== '' && is_numeric($rawBulan) && (int) $rawBulan >= 1 && (int) $rawBulan <= 12) {
-                    $bulan = (int) $rawBulan;
-                } else {
-                    $bulan = $targetMonth;
-                }
+                $parsedBulan = $this->parseMonthValue($rawBulan);
+                $bulan = $parsedBulan ?? $targetMonth;
 
                 $tahun = (int) $getVal('tahun', $defaultYear);
                 if ($tahun <= 0) {
@@ -576,17 +573,8 @@ class CostController extends Controller
                         Cost::create($data);
                         $importedCount++;
                     }
-                } elseif ($costId && is_numeric($costId)) {
-                    $existing = Cost::find((int) $costId);
-                    if ($existing) {
-                        $existing->update($data);
-                        $updatedCount++;
-                    } else {
-                        $data['cost_id'] = (int) $costId;
-                        Cost::create($data);
-                        $importedCount++;
-                    }
                 } else {
+                    // Match existing record by (tahun, bulan, account_name) to avoid duplicates
                     $existing = Cost::where('tahun', $tahun)
                         ->where('account_name', $accountName)
                         ->where(function ($q) use ($bulan) {
@@ -597,6 +585,13 @@ class CostController extends Controller
                             }
                         })
                         ->first();
+
+                    if (! $existing && $costId && is_numeric($costId)) {
+                        $candidate = Cost::find((int) $costId);
+                        if ($candidate && (int) $candidate->tahun === $tahun && ((int) $candidate->bulan === (int) $bulan || ($candidate->bulan === null && $bulan === null))) {
+                            $existing = $candidate;
+                        }
+                    }
 
                     if ($existing) {
                         $existing->update($data);
@@ -849,5 +844,44 @@ class CostController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Parse month name (Indonesian / English) or numeric string into integer 1-12.
+     */
+    protected function parseMonthValue(?string $val): ?int
+    {
+        if ($val === null) {
+            return null;
+        }
+
+        $clean = trim($val);
+        if ($clean === '') {
+            return null;
+        }
+
+        if (is_numeric($clean)) {
+            $num = (int) $clean;
+
+            return ($num >= 1 && $num <= 12) ? $num : null;
+        }
+
+        $lower = strtolower($clean);
+        $monthMap = [
+            'januari' => 1, 'january' => 1, 'jan' => 1,
+            'februari' => 2, 'february' => 2, 'feb' => 2,
+            'maret' => 3, 'march' => 3, 'mar' => 3,
+            'april' => 4, 'apr' => 4,
+            'mei' => 5, 'may' => 5,
+            'juni' => 6, 'june' => 6, 'jun' => 6,
+            'juli' => 7, 'july' => 7, 'jul' => 7,
+            'agustus' => 8, 'august' => 8, 'aug' => 8, 'agt' => 8,
+            'september' => 9, 'sept' => 9, 'sep' => 9,
+            'oktober' => 10, 'october' => 10, 'okt' => 10, 'oct' => 10,
+            'november' => 11, 'nov' => 11,
+            'desember' => 12, 'december' => 12, 'des' => 12, 'dec' => 12,
+        ];
+
+        return $monthMap[$lower] ?? null;
     }
 }

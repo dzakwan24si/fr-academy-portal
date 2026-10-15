@@ -235,6 +235,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
     Route::prefix('administrasi/program-batch')->name('administrasi.program-batch.')->group(function () {
         Route::get('/', [ProgramBatchController::class, 'index'])->name('index');
         Route::get('/data', [ProgramBatchController::class, 'data'])->name('data');
+        Route::get('/template', [ProgramBatchController::class, 'template'])->name('template');
         Route::post('/import', [ProgramBatchController::class, 'import'])->name('import');
         Route::delete('/destroy-all', [ProgramBatchController::class, 'destroyAll'])->name('destroy-all');
         Route::post('/{type}', [ProgramBatchController::class, 'store'])->whereIn('type', ['reguler', 'non_reguler'])->name('store');
