@@ -582,24 +582,41 @@ class DashboardMonitoringTahunanController extends Controller
             'peserta_percentage' => $pesertaPct,
         ];
 
-        // 5. Build Chart Data (Horizontal Bars: Target vs Realisasi Peserta)
+        // 5. Build Chart Data (Horizontal Bars: Peserta & Batch Modes)
         $chartLabels = [];
-        $chartTargets = [];
-        $chartRealizations = [];
-        $chartPercentages = [];
+        $chartTargetsPeserta = [];
+        $chartRealizationsPeserta = [];
+        $chartPercentagesPeserta = [];
+        $chartTargetsBatch = [];
+        $chartRealizationsBatch = [];
+        $chartPercentagesBatch = [];
 
         foreach ($activePrograms as $prog) {
             $chartLabels[] = $prog['name'];
-            $chartTargets[] = $prog['target_participants'];
-            $chartRealizations[] = $prog['realized_participants'];
-            $chartPercentages[] = $prog['participant_percent'];
+            $chartTargetsPeserta[] = $prog['target_participants'];
+            $chartRealizationsPeserta[] = $prog['realized_participants'];
+            $chartPercentagesPeserta[] = $prog['participant_percent'];
+            $chartTargetsBatch[] = $prog['target_batch'];
+            $chartRealizationsBatch[] = $prog['realized_batch'];
+            $chartPercentagesBatch[] = $prog['batch_percent'];
         }
 
         $chartData = [
             'labels' => $chartLabels,
-            'targets' => $chartTargets,
-            'realizations' => $chartRealizations,
-            'percentages' => $chartPercentages,
+            'peserta' => [
+                'targets' => $chartTargetsPeserta,
+                'realizations' => $chartRealizationsPeserta,
+                'percentages' => $chartPercentagesPeserta,
+            ],
+            'batch' => [
+                'targets' => $chartTargetsBatch,
+                'realizations' => $chartRealizationsBatch,
+                'percentages' => $chartPercentagesBatch,
+            ],
+            // Backward-compatibility keys
+            'targets' => $chartTargetsPeserta,
+            'realizations' => $chartRealizationsPeserta,
+            'percentages' => $chartPercentagesPeserta,
         ];
 
         // Related Batches

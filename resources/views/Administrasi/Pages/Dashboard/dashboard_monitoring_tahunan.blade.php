@@ -458,26 +458,42 @@
 
     {{-- ============================== 5. CHART TARGET VS REALISASI (GAMBAR 1) ============================== --}}
     <div class="bg-white rounded-2xl border border-slate-200/90 p-6 shadow-xs space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
             <div>
-                <h2 class="text-base md:text-lg font-black text-slate-900 tracking-tight">
+                <h2 id="chartTitle" class="text-base md:text-lg font-black text-slate-900 tracking-tight">
                     Target vs realisasi peserta per program
                 </h2>
-                <p class="text-xs text-slate-500 mt-0.5">Perbandingan kuota target vs realisasi aktual peserta pelatihan</p>
+                <p id="chartSubtitle" class="text-xs text-slate-500 mt-0.5">Perbandingan kuota target vs realisasi aktual peserta pelatihan</p>
             </div>
 
-            {{-- Legend Indicators --}}
-            <div class="flex items-center gap-4 text-xs font-bold">
-                <div class="flex items-center gap-2">
-                    <span class="w-4 h-3 rounded-xs bg-[#0284c7]"></span>
-                    <span class="text-slate-600">Target peserta</span>
+            <div class="flex items-center gap-4 flex-wrap">
+                {{-- Mode Switcher (Peserta vs Batch) --}}
+                <div class="flex items-center p-1 bg-slate-100 rounded-xl border border-slate-200 shadow-2xs">
+                    <button type="button" id="btnModePeserta" onclick="switchChartMode('peserta')"
+                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer bg-white text-green-700 shadow-xs">
+                        <i data-lucide="users" class="w-3.5 h-3.5"></i>
+                        <span>Peserta</span>
+                    </button>
+                    <button type="button" id="btnModeBatch" onclick="switchChartMode('batch')"
+                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-600 hover:text-slate-900">
+                        <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+                        <span>Batch</span>
+                    </button>
                 </div>
-                <div class="flex items-center gap-2">
-                    <span class="w-4 h-3 rounded-xs bg-[#059669]"></span>
-                    <span class="text-slate-600">Realisasi peserta</span>
-                </div>
-                <div class="flex items-center gap-1.5 pl-3 border-l border-slate-300 text-slate-500">
-                    <span>% capaian</span>
+
+                {{-- Legend Indicators --}}
+                <div class="flex items-center gap-4 text-xs font-bold">
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-3 rounded-xs bg-[#0284c7]"></span>
+                        <span id="legendTargetLabel" class="text-slate-600">Target peserta</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="w-4 h-3 rounded-xs bg-[#059669]"></span>
+                        <span id="legendRealLabel" class="text-slate-600">Realisasi peserta</span>
+                    </div>
+                    <div class="flex items-center gap-1.5 pl-3 border-l border-slate-300 text-slate-500">
+                        <span>% capaian</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -652,17 +668,77 @@
 
 @push('scripts')
 <script>
+let currentChartMode = 'peserta';
+let myChart = null;
+
+const chartLabels = @json($chartData['labels']);
+const chartDataPeserta = @json($chartData['peserta']);
+const chartDataBatch = @json($chartData['batch']);
+
+window.switchChartMode = function(mode) {
+    if (mode === currentChartMode) return;
+    currentChartMode = mode;
+
+    const btnPeserta = document.getElementById('btnModePeserta');
+    const btnBatch = document.getElementById('btnModeBatch');
+    const chartTitle = document.getElementById('chartTitle');
+    const chartSubtitle = document.getElementById('chartSubtitle');
+    const legendTarget = document.getElementById('legendTargetLabel');
+    const legendReal = document.getElementById('legendRealLabel');
+
+    const activeClasses = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer bg-white text-green-700 shadow-xs";
+    const inactiveClasses = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer text-slate-600 hover:text-slate-900";
+
+    if (mode === 'batch') {
+        if (btnPeserta) btnPeserta.className = inactiveClasses;
+        if (btnBatch) btnBatch.className = activeClasses;
+
+        if (chartTitle) chartTitle.textContent = "Target vs realisasi batch per program";
+        if (chartSubtitle) chartSubtitle.textContent = "Perbandingan target batch vs realisasi aktual batch pelatihan";
+        if (legendTarget) legendTarget.textContent = "Target batch";
+        if (legendReal) legendReal.textContent = "Realisasi batch";
+
+        if (myChart) {
+            myChart.data.datasets[0].label = 'Target batch';
+            myChart.data.datasets[0].data = chartDataBatch.targets;
+            myChart.data.datasets[1].label = 'Realisasi batch';
+            myChart.data.datasets[1].data = chartDataBatch.realizations;
+            if (myChart.options.scales.x.title) {
+                myChart.options.scales.x.title.text = 'Jumlah batch';
+            }
+            myChart.update();
+        }
+    } else {
+        if (btnPeserta) btnPeserta.className = activeClasses;
+        if (btnBatch) btnBatch.className = inactiveClasses;
+
+        if (chartTitle) chartTitle.textContent = "Target vs realisasi peserta per program";
+        if (chartSubtitle) chartSubtitle.textContent = "Perbandingan kuota target vs realisasi aktual peserta pelatihan";
+        if (legendTarget) legendTarget.textContent = "Target peserta";
+        if (legendReal) legendReal.textContent = "Realisasi peserta";
+
+        if (myChart) {
+            myChart.data.datasets[0].label = 'Target peserta';
+            myChart.data.datasets[0].data = chartDataPeserta.targets;
+            myChart.data.datasets[1].label = 'Realisasi peserta';
+            myChart.data.datasets[1].data = chartDataPeserta.realizations;
+            if (myChart.options.scales.x.title) {
+                myChart.options.scales.x.title.text = 'Jumlah peserta';
+            }
+            myChart.update();
+        }
+    }
+
+    if (window.lucide) {
+        window.lucide.createIcons();
+    }
+};
+
 document.addEventListener('DOMContentLoaded', function () {
     // Initialize Lucide Icons
     if (window.lucide) {
         window.lucide.createIcons();
     }
-
-    // Chart.js Configuration
-    const chartLabels = @json($chartData['labels']);
-    const targetData = @json($chartData['targets']);
-    const realisasiData = @json($chartData['realizations']);
-    const percentageData = @json($chartData['percentages']);
 
     const ctx = document.getElementById('targetRealisasiChart');
     if (ctx && chartLabels.length > 0) {
@@ -677,9 +753,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 ctx.textAlign = 'right';
                 ctx.textBaseline = 'middle';
 
+                const activePcts = (currentChartMode === 'batch') ? chartDataBatch.percentages : chartDataPeserta.percentages;
+
                 chartLabels.forEach((label, index) => {
                     const yPos = y.getPixelForTick(index);
-                    const pct = percentageData[index] || 0;
+                    const pct = activePcts[index] || 0;
                     
                     if (pct >= 100) {
                         ctx.fillStyle = '#15803d'; // green-700
@@ -695,14 +773,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         };
 
-        new Chart(ctx, {
+        myChart = new Chart(ctx, {
             type: 'bar',
             data: {
                 labels: chartLabels,
                 datasets: [
                     {
                         label: 'Target peserta',
-                        data: targetData,
+                        data: chartDataPeserta.targets,
                         backgroundColor: '#0284c7', // Vibrant Sky Blue
                         hoverBackgroundColor: '#0369a1',
                         borderRadius: 4,
@@ -711,7 +789,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     },
                     {
                         label: 'Realisasi peserta',
-                        data: realisasiData,
+                        data: chartDataPeserta.realizations,
                         backgroundColor: '#059669', // Vibrant Emerald Green
                         hoverBackgroundColor: '#047857',
                         borderRadius: 4,
@@ -741,6 +819,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         ticks: {
                             font: { size: 11, weight: '500' },
                             color: '#64748b',
+                            precision: 0,
                         },
                         title: {
                             display: true,
@@ -778,7 +857,8 @@ document.addEventListener('DOMContentLoaded', function () {
                         callbacks: {
                             afterBody: function(context) {
                                 const dataIndex = context[0].dataIndex;
-                                return '% Capaian: ' + percentageData[dataIndex] + '%';
+                                const activePcts = (currentChartMode === 'batch') ? chartDataBatch.percentages : chartDataPeserta.percentages;
+                                return '% Capaian: ' + (activePcts[dataIndex] || 0) + '%';
                             }
                         }
                     }

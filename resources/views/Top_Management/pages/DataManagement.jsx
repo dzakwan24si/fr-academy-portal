@@ -583,11 +583,47 @@ const DataManagement = () => {
   const handleNextMonth = () => setCalendarDate(prev => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
 
   // --- Fitur Detail Helpers ---
-  const getMonthlyDayCounts = (dates) => {
+  const getMonthlyDayCounts = (dates, startFallback, endFallback) => {
     const counts = Array(12).fill(0);
-    const uniqueDates = new Set();
+    const dateArray = Array.isArray(dates) ? dates.filter(Boolean) : [];
 
-    (Array.isArray(dates) ? dates : []).forEach(dateValue => {
+    // Jika hanya berisi 2 tanggal (start & end) dengan rentang lebih dari 2 hari
+    if (dateArray.length === 2 && dateArray[0] !== dateArray[1]) {
+      const d1 = new Date(dateArray[0]);
+      const d2 = new Date(dateArray[1]);
+      if (!isNaN(d1.getTime()) && !isNaN(d2.getTime()) && d1 < d2) {
+        const diffDays = Math.round((d2 - d1) / (1000 * 60 * 60 * 24));
+        if (diffDays > 2) {
+          let curr = new Date(d1);
+          while (curr <= d2) {
+            if (curr.getDay() !== 0) { // Exclude Sunday
+              counts[curr.getMonth()] += 1;
+            }
+            curr.setDate(curr.getDate() + 1);
+          }
+          return counts;
+        }
+      }
+    }
+
+    // Jika dates kosong tapi start & end fallback tersedia
+    if (dateArray.length === 0 && startFallback && endFallback) {
+      const d1 = new Date(startFallback);
+      const d2 = new Date(endFallback);
+      if (!isNaN(d1.getTime()) && !isNaN(d2.getTime()) && d1 <= d2) {
+        let curr = new Date(d1);
+        while (curr <= d2) {
+          if (curr.getDay() !== 0) {
+            counts[curr.getMonth()] += 1;
+          }
+          curr.setDate(curr.getDate() + 1);
+        }
+        return counts;
+      }
+    }
+
+    const uniqueDates = new Set();
+    dateArray.forEach(dateValue => {
       const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
       if (Number.isNaN(date.getTime()) || date.getUTCDay() === 0) return;
 
@@ -636,7 +672,7 @@ const DataManagement = () => {
         'Jlh Hari', 'Total Training Days', 'Promosi Mandor', 'Fresh Graduated'
       ];
       const rows = filteredData.map(item => {
-        const monthlyCounts = getMonthlyDayCounts(item.tanggal_pelaksanaan);
+        const monthlyCounts = getMonthlyDayCounts(item.tanggal_pelaksanaan, item.start, item.end);
         const jumlahHari = monthlyCounts.reduce((total, count) => total + count, 0);
         const originalData = item.originalData || {};
         return [
@@ -680,7 +716,7 @@ const DataManagement = () => {
         'Jlh Hari', 'Jam', 'Hari', 'TD Total'
       ];
       const rows = filteredData.map(item => {
-        const monthlyCounts = getMonthlyDayCounts(item.tanggal_pelaksanaan);
+        const monthlyCounts = getMonthlyDayCounts(item.tanggal_pelaksanaan, item.start, item.end);
         const jumlahHari = monthlyCounts.reduce((total, count) => total + count, 0);
         const originalData = item.originalData || {};
         return [
@@ -2024,7 +2060,7 @@ const DataManagement = () => {
                   </thead>
                   <tbody>
                     {filteredData.map((item, index) => {
-                      const monthlyCounts = getMonthlyDayCounts(item.tanggal_pelaksanaan);
+                      const monthlyCounts = getMonthlyDayCounts(item.tanggal_pelaksanaan, item.start, item.end);
                       const jumlahHari = monthlyCounts.reduce((total, count) => total + count, 0);
                       const originalData = item.originalData || {};
                       return (

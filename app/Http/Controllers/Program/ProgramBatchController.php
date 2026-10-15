@@ -393,8 +393,8 @@ class ProgramBatchController extends Controller
                 'Region',
                 'Lokasi Training',
                 'Trainer',
-                'Start Date',
-                'End Date',
+                'Tanggal Mulai Pelaksanaan',
+                'Tanggal Selesai Pelaksanaan',
                 'Total Hari',
                 'Total Jam',
                 'Peserta Non Staf',
@@ -439,8 +439,8 @@ class ProgramBatchController extends Controller
             'Jenis Program Reguler',
             'Region',
             'Lokasi Training',
-            'Mulai Program',
-            'Selesai Program',
+            'Tanggal Mulai Pelaksanaan',
+            'Tanggal Selesai Pelaksanaan',
             'Jumlah Bulan Training',
             'Jumlah Hari',
             'Total Training Days',
@@ -568,13 +568,20 @@ class ProgramBatchController extends Controller
                 return false;
             }
 
+            $mulai = $this->dateValue($item['tanggalmulaipelaksanaan'] ?? $item['tanggalmulai'] ?? $item['mulaiprogram'] ?? $item['startdate'] ?? $item['tglmulai'] ?? null);
+            $selesai = $this->dateValue($item['tanggalselesaipelaksanaan'] ?? $item['tanggalselesai'] ?? $item['selesaiprogram'] ?? $item['enddate'] ?? $item['tglselesai'] ?? null);
+            $tglPelaksanaan = $this->jsonValue($item['tanggalpelaksanaan'] ?? null);
+            if (empty($tglPelaksanaan) && $mulai && $selesai) {
+                $tglPelaksanaan = $this->generateDateRange($mulai, $selesai);
+            }
+
             $record = [
                 'Kategori_Program' => ! empty($item['kategoriprogram']) ? $item['kategoriprogram'] : (! empty($item['kategori']) ? $item['kategori'] : 'REGULER'),
                 'Training_Program' => $trainingProgram,
                 'Batch' => $item['batch'] ?? $item['angkatan'] ?? null,
                 'Lokasi_training' => $item['lokasitraining'] ?? $item['lokasi'] ?? null,
-                'Mulai_program' => $this->dateValue($item['mulaiprogram'] ?? $item['startdate'] ?? $item['tglmulai'] ?? null),
-                'Selesai_program' => $this->dateValue($item['selesaiprogram'] ?? $item['enddate'] ?? $item['tglselesai'] ?? null),
+                'Mulai_program' => $mulai,
+                'Selesai_program' => $selesai,
                 'jumlah_bulan_training' => is_numeric($item['jumlahbulantraining'] ?? null) ? (int) $item['jumlahbulantraining'] : (is_numeric($item['durasi'] ?? null) ? (int) $item['durasi'] : 0),
                 'jumlah_hari' => is_numeric($item['jumlahhari'] ?? null) ? (int) $item['jumlahhari'] : 0,
                 'Total_training_days' => is_numeric($item['totaltrainingdays'] ?? null) ? (int) $item['totaltrainingdays'] : (is_numeric($item['totalhari'] ?? null) ? (int) $item['totalhari'] : 0),
@@ -584,7 +591,7 @@ class ProgramBatchController extends Controller
                 'Uang_saku' => is_numeric($item['uangsaku'] ?? null) ? (float) $item['uangsaku'] : 0,
                 'jenis_program_reguler' => $item['jenisprogramreguler'] ?? $item['kategorireguler'] ?? $item['subkategori'] ?? null,
                 'Region' => $item['region'] ?? $item['wilayah'] ?? null,
-                'tanggal_pelaksanaan' => $this->jsonValue($item['tanggalpelaksanaan'] ?? null),
+                'tanggal_pelaksanaan' => $tglPelaksanaan,
                 'tahun' => is_numeric($item['tahun'] ?? null) ? (int) $item['tahun'] : null,
             ];
 
@@ -612,6 +619,13 @@ class ProgramBatchController extends Controller
                 return false;
             }
 
+            $start = $this->dateValue($item['tanggalmulaipelaksanaan'] ?? $item['tanggalmulai'] ?? $item['startdate'] ?? $item['mulaiprogram'] ?? $item['tglmulai'] ?? null);
+            $end = $this->dateValue($item['tanggalselesaipelaksanaan'] ?? $item['tanggalselesai'] ?? $item['enddate'] ?? $item['selesaiprogram'] ?? $item['tglselesai'] ?? null);
+            $tglPelaksanaan = $this->jsonValue($item['tanggalpelaksanaan'] ?? null);
+            if (empty($tglPelaksanaan) && $start && $end) {
+                $tglPelaksanaan = $this->generateDateRange($start, $end);
+            }
+
             $record = [
                 'kategori_pelatihan' => $item['kategoripelatihan'] ?? $item['kategoriprogram'] ?? $item['kategori'] ?? null,
                 'jenis_pelatihan' => $jenisPelatihan,
@@ -635,13 +649,13 @@ class ProgramBatchController extends Controller
                 'td_staf' => is_numeric($item['tdstaf'] ?? null) ? (int) $item['tdstaf'] : 0,
                 'td_non_staf' => is_numeric($item['tdnonstaf'] ?? null) ? (int) $item['tdnonstaf'] : 0,
                 'td_total' => is_numeric($item['tdtotal'] ?? null) ? (int) $item['tdtotal'] : 0,
-                'start_date' => $this->dateValue($item['startdate'] ?? $item['mulaiprogram'] ?? $item['tglmulai'] ?? null),
-                'end_date' => $this->dateValue($item['enddate'] ?? $item['selesaiprogram'] ?? $item['tglselesai'] ?? null),
+                'start_date' => $start,
+                'end_date' => $end,
                 'realisasi_batch' => is_numeric($item['realisasibatch'] ?? null) ? (int) $item['realisasibatch'] : (is_numeric($item['batch'] ?? null) ? (int) $item['batch'] : (is_numeric($item['totalbatch'] ?? null) ? (int) $item['totalbatch'] : 0)),
                 'lokasi_training' => $item['lokasitraining'] ?? $item['lokasi'] ?? null,
                 'deskripsi' => $item['deskripsi'] ?? $item['keterangan'] ?? null,
                 'sub_kategori' => $item['subkategori'] ?? null,
-                'tanggal_pelaksanaan' => $this->jsonValue($item['tanggalpelaksanaan'] ?? null),
+                'tanggal_pelaksanaan' => $tglPelaksanaan,
                 'TARGET_BATCH' => is_numeric($item['targetbatch'] ?? null) ? (int) $item['targetbatch'] : 0,
                 'TARGET_PESERTA' => is_numeric($item['targetpeserta'] ?? null) ? (int) $item['targetpeserta'] : (is_numeric($item['targettotal'] ?? null) ? (int) $item['targettotal'] : 0),
                 'tahun' => is_numeric($item['tahun'] ?? null) ? (int) $item['tahun'] : null,
@@ -809,5 +823,39 @@ class ProgramBatchController extends Controller
         $decoded = json_decode((string) $value, true);
 
         return is_array($decoded) ? $decoded : null;
+    }
+
+    private function generateDateRange(?string $startDate, ?string $endDate): ?array
+    {
+        if (! $startDate || ! $endDate) {
+            return array_values(array_filter([$startDate, $endDate]));
+        }
+
+        try {
+            $start = new \DateTime($startDate);
+            $end = new \DateTime($endDate);
+
+            if ($start > $end) {
+                return [$startDate, $endDate];
+            }
+
+            $diff = $start->diff($end)->days;
+            if ($diff > 366) {
+                return [$startDate, $endDate];
+            }
+
+            $dates = [];
+            $curr = clone $start;
+            while ($curr <= $end) {
+                if ((int) $curr->format('w') !== 0) { // Exclude Sunday
+                    $dates[] = $curr->format('Y-m-d');
+                }
+                $curr->modify('+1 day');
+            }
+
+            return ! empty($dates) ? $dates : [$startDate, $endDate];
+        } catch (\Throwable $e) {
+            return array_values(array_filter([$startDate, $endDate]));
+        }
     }
 }
