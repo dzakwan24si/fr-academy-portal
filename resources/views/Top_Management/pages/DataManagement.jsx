@@ -757,11 +757,62 @@ const DataManagement = () => {
     document.save(filename);
   };
 
+  const formatDateClean = (dateVal) => {
+    if (!dateVal) return '';
+    if (typeof dateVal === 'string') {
+      const match = dateVal.match(/^(\d{4}-\d{2}-\d{2})/);
+      if (match) return match[1];
+      return dateVal.trim();
+    }
+    if (dateVal instanceof Date && !isNaN(dateVal.getTime())) {
+      return dateVal.toISOString().split('T')[0];
+    }
+    return String(dateVal).trim();
+  };
+
+  const getDates = (item, isReguler) => {
+    const orig = item.originalData || {};
+    let start = isReguler
+      ? (orig.Mulai_program || orig.start_date || item.start)
+      : (orig.start_date || orig.Mulai_program || item.start);
+    let end = isReguler
+      ? (orig.Selesai_program || orig.end_date || item.end)
+      : (orig.end_date || orig.Selesai_program || item.end);
+
+    let origDates = orig.tanggal_pelaksanaan;
+    if (typeof origDates === 'string' && origDates.startsWith('[')) {
+      try { origDates = JSON.parse(origDates); } catch (_) { origDates = []; }
+    }
+    if (!Array.isArray(origDates)) origDates = [];
+
+    let itemDates = item.tanggal_pelaksanaan;
+    if (typeof itemDates === 'string' && itemDates.startsWith('[')) {
+      try { itemDates = JSON.parse(itemDates); } catch (_) { itemDates = []; }
+    }
+    if (!Array.isArray(itemDates)) itemDates = [];
+
+    if (!start && origDates.length > 0) start = origDates[0];
+    if (!end && origDates.length > 0) end = origDates[origDates.length - 1];
+    if (!start && itemDates.length > 0) start = itemDates[0];
+    if (!end && itemDates.length > 0) end = itemDates[itemDates.length - 1];
+
+    return {
+      startDate: formatDateClean(start),
+      endDate: formatDateClean(end),
+    };
+  };
+
   const exportAllToExcel = () => {
+    if (!filteredData || filteredData.length === 0) {
+      alert('Tidak ada data yang sesuai filter untuk diexport.');
+      return;
+    }
+
+    const isReguler = activeMainTab === 'reguler';
     const workbook = XLSX.utils.book_new();
 
     const createSheet = (rows, headerOrder) => {
-      const headers = headerOrder || [...new Set(rows.flatMap(row => Object.keys(row)))];
+      const headers = headerOrder || (rows.length > 0 ? Object.keys(rows[0]) : []);
       const sheet = XLSX.utils.json_to_sheet(rows, { header: headers });
       const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1:A1');
       const border = {
@@ -775,75 +826,117 @@ const DataManagement = () => {
         for (let columnIndex = range.s.c; columnIndex <= range.e.c; columnIndex += 1) {
           const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: columnIndex });
           if (!sheet[cellAddress]) sheet[cellAddress] = { t: 's', v: '' };
+          const isHeader = rowIndex === 0;
           sheet[cellAddress].s = {
             border,
-            alignment: { vertical: 'center', wrapText: true, horizontal: 'center' },
-            ...(rowIndex === 0 ? {
-              fill: { fgColor: { rgb: '008000' } },
+            alignment: {
+              vertical: 'center',
+              wrapText: true,
+              horizontal: columnIndex === 0 ? 'left' : 'center'
+            },
+            ...(isHeader ? {
+              fill: { fgColor: { rgb: '2E7D32' } },
               font: { bold: true, color: { rgb: 'FFFFFF' }, sz: 11 }
             } : {})
           };
         }
       }
 
-      sheet['!cols'] = headers.map(header => ({
-        wch: Math.min(Math.max(header.length + 3, 14), 30)
-      }));
-      sheet['!rows'] = [{ hpt: 24 }];
+      sheet['!cols'] = headers.map(header => {
+        let width = Math.min(Math.max(header.length + 4, 15), 35);
+        if (header.includes('Program') || header.includes('Pelatihan') || header.includes('Lokasi')) {
+          width = 30;
+        } else if (header.includes('Tanggal')) {
+          width = 25;
+        }
+        return { wch: width };
+      });
+      sheet['!rows'] = [{ hpt: 26 }];
       return sheet;
     };
 
-    const regulerRows = data.filter(item => item.type === 'Reguler').map(item => {
-      const orig = item.originalData || {};
-      const dates = Array.isArray(orig.tanggal_pelaksanaan) ? orig.tanggal_pelaksanaan.join(', ') : (orig.tanggal_pelaksanaan || '');
-      return {
-        'Program Pelatihan': orig.Training_Program || item.title || '',
-        'Batch': orig.Batch || '',
-        'Kategori Reguler': orig.jenis_program_reguler || '',
-        'Region': orig.Region || item.region || '',
-        'Lokasi Training': orig.Lokasi_training || item.location || '',
-        'Mulai Program': orig.Mulai_program || '',
-        'Selesai Program': orig.Selesai_program || '',
-        'Tanggal Pelaksanaan': dates,
-        'Jumlah Hari': orig.jumlah_hari || 0,
-        'Promosi Mandor': orig.Promosi_mandor || 0,
-        'Fresh Graduate': orig.Fresh_Graduate || 0,
-        'Target Peserta': orig.Total_orang || orig.target_peserta || item.participants || 0,
-        'Total Training Days': orig.Total_training_days || 0,
-        'Uang Saku': orig.Uang_saku || 0,
-      };
-    });
+    let rows = [];
+    let sheetTitle = '';
+    let defaultFilename = '';
 
-    const nonRegulerRows = data.filter(item => item.type === 'Non-Reguler').map(item => {
-      const orig = item.originalData || {};
-      const dates = Array.isArray(orig.tanggal_pelaksanaan) ? orig.tanggal_pelaksanaan.join(', ') : (orig.tanggal_pelaksanaan || '');
-      return {
-        'Program Pelatihan': orig.jenis_pelatihan || item.title || '',
-        'Kategori Pelatihan': orig.kategori_pelatihan || '',
-        'Sub Kategori': orig.sub_kategori || item.subCategory || '',
-        'Target Batch': orig.total_batch ?? item.batchCount ?? 0,
-        'Type Training': orig.type_training || '',
-        'Region': orig.region || item.region || '',
-        'Lokasi Training': orig.lokasi_training || item.location || '',
-        'Trainer': orig.trainer || item.trainer || '',
-        'Tanggal Pelaksanaan': dates,
-        'Total Hari': orig.total_hari || 0,
-        'Total Jam': orig.total_jam || 0,
-        'Target Peserta': orig.target_total || item.participants || 0,
-        'Total Training Days': orig.td_total || 0,
-      };
-    });
+    if (isReguler) {
+      sheetTitle = 'Program Reguler';
+      defaultFilename = 'data_program_reguler';
+      rows = filteredData.map(item => {
+        const orig = item.originalData || {};
+        const { startDate, endDate } = getDates(item, true);
+        const year = item.tahun || orig.tahun || (startDate ? new Date(startDate).getFullYear() : '');
+        return {
+          'Training Program': orig.Training_Program || item.title || '',
+          'Batch': orig.Batch || '',
+          'Jenis Program Reguler': orig.jenis_program_reguler || '',
+          'Region': orig.Region || item.region || '',
+          'Lokasi Training': orig.Lokasi_training || item.location || '',
+          'Tanggal Mulai Pelaksanaan': startDate,
+          'Tanggal Selesai Pelaksanaan': endDate,
+          'Jumlah Bulan Training': Number(orig.jumlah_bulan_training || 0),
+          'Jumlah Hari': Number(orig.jumlah_hari || 0),
+          'Total Training Days': Number(orig.Total_training_days || 0),
+          'Promosi Mandor': Number(orig.Promosi_mandor || 0),
+          'Fresh Graduate': Number(orig.Fresh_Graduate || 0),
+          'Target Peserta': Number(orig.Total_orang || orig.target_peserta || item.participants || 0),
+          'Uang Saku': Number(orig.Uang_saku || 0),
+          'Tahun': year ? Number(year) : '',
+        };
+      });
+    } else {
+      sheetTitle = 'Program Non-Reguler';
+      defaultFilename = 'data_program_non_reguler';
+      rows = filteredData.map(item => {
+        const orig = item.originalData || {};
+        const { startDate, endDate } = getDates(item, false);
+        const year = item.tahun || orig.tahun || (startDate ? new Date(startDate).getFullYear() : '');
+        return {
+          'Jenis Pelatihan': orig.jenis_pelatihan || item.title || '',
+          'Kategori Pelatihan': orig.kategori_pelatihan || '',
+          'Sub Kategori': orig.sub_kategori || item.subCategory || '',
+          'Target Batch': Number(orig.total_batch ?? item.batchCount ?? 1),
+          'Type Training': orig.type_training || '',
+          'Region': orig.region || item.region || '',
+          'Lokasi Training': orig.lokasi_training || item.location || '',
+          'Trainer': orig.trainer || item.trainer || '',
+          'Tanggal Mulai Pelaksanaan': startDate,
+          'Tanggal Selesai Pelaksanaan': endDate,
+          'Total Hari': Number(orig.total_hari || 0),
+          'Total Jam': Number(orig.total_jam || 0),
+          'Peserta Non Staf': Number(orig.peserta_non_staf || orig.peserta_nonstaf || 0),
+          'Peserta AST': Number(orig.peserta_ast || 0),
+          'Peserta Askep': Number(orig.peserta_askep || 0),
+          'Peserta Mgr': Number(orig.peserta_mgr || 0),
+          'Peserta GM': Number(orig.peserta_gm || 0),
+          'Peserta Head': Number(orig.peserta_head || 0),
+          'Target Peserta': Number(orig.target_total || orig.TARGET_PESERTA || item.participants || 0),
+          'Tahun': year ? Number(year) : '',
+        };
+      });
+    }
 
-    XLSX.utils.book_append_sheet(workbook, createSheet(regulerRows), 'Program Reguler');
-    XLSX.utils.book_append_sheet(workbook, createSheet(nonRegulerRows), 'Program Non-Reguler');
-    XLSX.writeFile(workbook, 'semua-data-program-training.xlsx');
+    XLSX.utils.book_append_sheet(workbook, createSheet(rows), sheetTitle);
+
+    const sanitize = (str) => (str || '').replace(/[^a-z0-9_-]+/gi, '_').toLowerCase();
+    const regionPart = filterRegion && filterRegion !== 'Semua Region' ? `_${sanitize(filterRegion)}` : '';
+    const yearPart = filterTahun && filterTahun !== 'Semua Tahun' ? `_${filterTahun}` : '';
+    const finalFilename = `${defaultFilename}${regionPart}${yearPart}.xlsx`;
+
+    XLSX.writeFile(workbook, finalFilename);
   };
 
   const exportAllToCsv = () => {
     const isReguler = activeMainTab === 'reguler';
     const currentList = filteredData;
+    if (!currentList || currentList.length === 0) {
+      alert('Tidak ada data yang sesuai filter untuk diexport.');
+      return;
+    }
+
     const records = currentList.map(item => {
       const orig = item.originalData || {};
+      const { startDate, endDate } = getDates(item, isReguler);
       if (isReguler) {
         return {
           'Tipe': 'Reguler',
@@ -852,6 +945,8 @@ const DataManagement = () => {
           'Kategori Reguler': orig.jenis_program_reguler || '',
           'Region': orig.Region || item.region || '',
           'Lokasi Training': orig.Lokasi_training || item.location || '',
+          'Tanggal Mulai Pelaksanaan': startDate,
+          'Tanggal Selesai Pelaksanaan': endDate,
           'Hari Training': `${orig.jumlah_hari || 0} Hari`,
           'Promosi Mandor': orig.Promosi_mandor || 0,
           'Fresh Graduate': orig.Fresh_Graduate || 0,
@@ -867,16 +962,13 @@ const DataManagement = () => {
           'Region': orig.region || item.region || '',
           'Lokasi Training': orig.lokasi_training || item.location || '',
           'Trainer': orig.trainer || item.trainer || '',
+          'Tanggal Mulai Pelaksanaan': startDate,
+          'Tanggal Selesai Pelaksanaan': endDate,
           'Total Jam / Hari': `${orig.total_jam || 0} Jam / ${orig.total_hari || 0} Hari`,
           'Target Peserta': orig.target_total || item.participants || 0,
         };
       }
     });
-
-    if (records.length === 0) {
-      alert('Tidak ada data untuk diexport.');
-      return;
-    }
 
     const headers = Object.keys(records[0]);
     const escapeCsvValue = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
@@ -945,7 +1037,8 @@ const DataManagement = () => {
           </a>
           <button
             onClick={exportAllToExcel}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2 text-sm"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg font-medium shadow-sm transition-colors flex items-center gap-2 text-sm cursor-pointer"
+            title={`Export Excel Data ${activeMainTab === 'reguler' ? 'Program Reguler' : 'Program Non-Reguler'} yang sedang difilter`}
           >
             <FileSpreadsheet size={17} /> Export Excel
           </button>
@@ -2132,7 +2225,7 @@ const DataManagement = () => {
                   </thead>
                   <tbody>
                     {filteredData.map((item, index) => {
-                      const monthlyCounts = getMonthlyDayCounts(item.tanggal_pelaksanaan);
+                      const monthlyCounts = getMonthlyDayCounts(item.tanggal_pelaksanaan, item.start, item.end);
                       const jumlahHari = monthlyCounts.reduce((total, count) => total + count, 0);
                       const originalData = item.originalData || {};
                       return (
