@@ -2,22 +2,20 @@
     <x-slot name="title">Program Pelatihan & Pengembangan - FR Academy</x-slot>
 
     <!-- Hero Section -->
-    <section class="relative bg-teal-primary pt-32 pb-24 overflow-hidden">
+    <section class="relative h-[350px] md:h-[400px] pt-20 overflow-hidden flex items-center justify-center">
         <div class="absolute inset-0 z-0">
-            <img src="{{ asset('images/slide2.png') }}" alt="FR Academy Programs" class="w-full h-full object-cover object-center brightness-40">
-            <div class="absolute inset-0 bg-gradient-to-t from-teal-primary via-teal-primary/75 to-black/60"></div>
+            <img src="{{ asset('images/slide2.png') }}" alt="FR Academy Programs" class="w-full h-full object-cover object-center" data-aos="zoom-out" data-aos-duration="2000">
+            <div class="absolute inset-0 bg-black/50"></div>
         </div>
-        <div class="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center" data-aos="fade-up">
-            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/20 text-xs font-semibold text-green-accent uppercase tracking-wider mb-6">
-                <span class="w-2 h-2 rounded-full bg-green-accent animate-pulse"></span>
-                First Resources Academy • Program Center
-            </div>
-            <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-white tracking-tight mb-6 leading-tight">
-                Membentuk Pemimpin & Profesional <br class="hidden sm:inline">
-                <span class="text-green-accent">Industri Kelapa Sawit Masa Depan</span>
+        <div class="relative z-10 text-center px-4 max-w-4xl mx-auto" data-aos="fade-up" data-aos-duration="1000">
+            <span class="text-green-accent font-bold tracking-widest uppercase text-sm mb-4 block">
+                PROGRAM KAMI
+            </span>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6">
+                Program Pelatihan & <span class="text-green-accent">Pengembangan</span>
             </h1>
-            <p class="text-base sm:text-lg md:text-xl text-gray-200 max-w-3xl mx-auto font-normal leading-relaxed">
-                Kurikulum komprehensif yang dirancang langsung di lingkungan operasional nyata—dari bentangan kebun kelapa sawit, pabrik pengolahan PKS, bengkel armada traksi, tata kelola administrasi, hingga kilang hilir downstream.
+            <p class="text-lg md:text-xl text-teal-100 max-w-2xl mx-auto font-light">
+                Pusat pengembangan kompetensi dan pembentukan karakter kerja unggul di industri kelapa sawit.
             </p>
         </div>
     </section>
