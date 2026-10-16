@@ -105,7 +105,7 @@
                     class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.dashboard-monitoring-tahunan.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
                     <i data-lucide="calendar-check" class="w-4 h-4 shrink-0"></i>
-                    <span>Monitoring Progress per Program</span>
+                    <span>Dashboard Progress Tahunan</span>
                 </a>
             </div>
         </details>

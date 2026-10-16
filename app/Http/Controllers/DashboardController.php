@@ -193,14 +193,12 @@ class DashboardController extends Controller
 
     public function index(Request $request)
     {
-        $trYears = TrainingRecord::whereNotNull('tahun')->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
-        $trDateYears = TrainingRecord::whereNotNull('training_date')->get()->map(fn ($r) => (int) date('Y', strtotime($r->training_date)))->filter()->all();
+        $trYears = TrainingRecord::whereNotNull('tahun')->distinct()->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
         $regYears = ProgramReguler::all()->map(fn ($p) => $this->resolveProgramRegulerYear($p))->filter()->all();
         $nonRegYears = ProgramNonReguler::all()->map(fn ($p) => $this->resolveProgramNonRegulerYear($p))->filter()->all();
 
         $years = collect([2024, 2025, 2026, 2027])
             ->merge($trYears)
-            ->merge($trDateYears)
             ->merge($regYears)
             ->merge($nonRegYears)
             ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
@@ -216,8 +214,23 @@ class DashboardController extends Controller
         $selectedMonthCode = $selectedMonthNum ? self::MONTH_3_LETTERS[$selectedMonthNum] : 'all';
         $monthList = self::MONTH_3_LETTERS;
 
+        // Pre-fetch programs and records for this year to avoid repeated full table scans
+        $regulerAll = ProgramReguler::all();
+        $nonRegulerAll = ProgramNonReguler::all();
+        $regulerYear = $this->filterRegulerByYear($regulerAll, $year);
+        $nonRegulerYear = $this->filterNonRegulerByYear($nonRegulerAll, $year);
+
+        // Pre-fetch TrainingRecords for the year (with carry-over for reguler if applicable)
+        $yearRecords = TrainingRecord::where(function ($q) use ($year) {
+            $q->where('tahun', $year)
+                ->orWhereYear('training_date', $year)
+                ->orWhereYear('created_at', $year);
+        })->get();
+        // Fallback: if there are unpopulated tahun/date records, ensure all filtered properly
+        $records = $this->filterRecordsByYearAndCumulativeMonth($yearRecords, $year, $selectedMonthNum);
+
         // 1. REKAP TRAINING REPORT (Reguler, Softskill, Technical)
-        $rekapTraining = $this->computeRekapTrainingReport($year, $selectedMonthNum);
+        $rekapTraining = $this->computeRekapTrainingReport($year, $selectedMonthNum, $regulerYear, $nonRegulerYear, $records);
 
         // 2. MONITORING TRAINEE UNDER 2 YEARS
         $traineeUnder2Years = $this->computeTraineeUnder2Years($year);
@@ -226,13 +239,13 @@ class DashboardController extends Controller
         $karirLulusan = $this->computeKarirLulusan($year);
 
         // 4. STAFF FRESH GRADUATE (Asisten Trainee)
-        $staffFreshGraduate = $this->computeStaffFreshGraduate($year, $selectedMonthNum);
+        $staffFreshGraduate = $this->computeStaffFreshGraduate($year, $selectedMonthNum, $regulerYear, $records);
 
         // 5. PROGRAM SOFTSKILL BY REGION
-        $softskillRegional = $this->computeSoftskillRegional($year, $selectedMonthNum);
+        $softskillRegional = $this->computeSoftskillRegional($year, $selectedMonthNum, $nonRegulerYear, $records);
 
         // 6. PROGRAM NON-REGULER TEKNIKAL BY CATEGORY & REGION
-        $teknikalBreakdown = $this->computeTeknikalBreakdown($year, $selectedMonthNum);
+        $teknikalBreakdown = $this->computeTeknikalBreakdown($year, $selectedMonthNum, $nonRegulerYear, $records);
 
         return view('Administrasi.Pages.Dashboard.dashboard', compact(
             'year',
@@ -250,11 +263,11 @@ class DashboardController extends Controller
         ));
     }
 
-    protected function computeRekapTrainingReport(int $year, ?int $selectedMonthNum = null): array
+    protected function computeRekapTrainingReport(int $year, ?int $selectedMonthNum = null, $regulerPrograms = null, $nonRegulerPrograms = null, $records = null): array
     {
-        $regulerPrograms = $this->filterRegulerByYear(ProgramReguler::all(), $year);
-        $nonRegulerPrograms = $this->filterNonRegulerByYear(ProgramNonReguler::all(), $year);
-        $records = $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::all(), $year, $selectedMonthNum);
+        $regulerPrograms = $regulerPrograms ?? $this->filterRegulerByYear(ProgramReguler::all(), $year);
+        $nonRegulerPrograms = $nonRegulerPrograms ?? $this->filterNonRegulerByYear(ProgramNonReguler::all(), $year);
+        $records = $records ?? $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::all(), $year, $selectedMonthNum);
 
         $regPlanBatch = (int) $regulerPrograms->count();
         $regPlanPart = (int) $regulerPrograms->sum('target_peserta');
@@ -579,10 +592,11 @@ class DashboardController extends Controller
         return ['rows' => $rows, 'total' => $totalRow];
     }
 
-    protected function computeStaffFreshGraduate(int $year, ?int $selectedMonthNum = null): array
+    protected function computeStaffFreshGraduate(int $year, ?int $selectedMonthNum = null, $reguler = null, $records = null): array
     {
-        $reguler = $this->filterRegulerByYear(ProgramReguler::all(), $year);
-        $records = $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::where('program_type', 'reguler')->get(), $year, $selectedMonthNum);
+        $reguler = $reguler ?? $this->filterRegulerByYear(ProgramReguler::all(), $year);
+        $records = $records ?? $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::where('program_type', 'reguler')->get(), $year, $selectedMonthNum);
+        $records = $records->where('program_type', 'reguler');
 
         $programs = ['FAT', 'MAT', 'DMT', 'TAT', 'AAT'];
         $rows = [];
@@ -639,10 +653,12 @@ class DashboardController extends Controller
         ];
     }
 
-    protected function computeSoftskillRegional(int $year, ?int $selectedMonthNum = null): array
+    protected function computeSoftskillRegional(int $year, ?int $selectedMonthNum = null, $nonRegPrograms = null, $records = null): array
     {
-        $nonReg = $this->filterNonRegulerByYear(ProgramNonReguler::all(), $year)->filter(fn ($p) => $p->isSoftSkill());
-        $records = $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::where('program_type', 'non_reguler')->get(), $year, $selectedMonthNum);
+        $nonRegAll = $nonRegPrograms ?? $this->filterNonRegulerByYear(ProgramNonReguler::all(), $year);
+        $nonReg = $nonRegAll->filter(fn ($p) => $p->isSoftSkill());
+        $records = $records ?? $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::where('program_type', 'non_reguler')->get(), $year, $selectedMonthNum);
+        $records = $records->where('program_type', 'non_reguler');
 
         $regions = ['Riau', 'Kalbar', 'Kubar'];
         $rows = [];
@@ -660,7 +676,10 @@ class DashboardController extends Controller
 
             $regulerPrefixes = ['FAT', 'MAT', 'TAT', 'AAT', 'DMT', 'ECT', 'PMT', 'PKT'];
             $technicalNotes = ['ESTATE', 'MILL', 'TRACTION', 'TRAKSI', 'DOWNSTREAM', 'ADMINISTRASI', 'ADMIN'];
-            $matchingRecs = $records->filter(function ($r) use ($matchingProgs, $regKey, $regulerPrefixes, $technicalNotes) {
+            $matchingProgIds = $matchingProgs->pluck('id_nonreguler')->all();
+            $matchingProgIdsFlip = array_flip($matchingProgIds);
+
+            $matchingRecs = $records->filter(function ($r) use ($matchingProgIdsFlip, $regKey, $regulerPrefixes, $technicalNotes) {
                 $notes = strtoupper(trim((string) $r->notes));
                 foreach ($regulerPrefixes as $prefix) {
                     if (str_starts_with($notes, $prefix)) {
@@ -683,7 +702,7 @@ class DashboardController extends Controller
                     || str_contains($nama, 'training of trainers')
                     || (bool) preg_match('/\b(tot)\b/i', $nama)
                     || str_contains($nama, 'fr mengajar')
-                    || ($r->program_id && $matchingProgs->contains('id_nonreguler', $r->program_id));
+                    || ($r->program_id && isset($matchingProgIdsFlip[$r->program_id]));
 
                 if (! $isSoft) {
                     return false;
@@ -697,14 +716,14 @@ class DashboardController extends Controller
                 return str_contains($rReg, $regKey);
             });
             $realPart = (int) $matchingRecs->count();
-            $realBatch = (int) $matchingProgs->sum(function ($p) use ($matchingRecs) {
+            $matchingRecProgIds = array_flip($matchingRecs->pluck('program_id')->filter()->all());
+            $realBatch = (int) $matchingProgs->sum(function ($p) use ($matchingRecProgIds) {
                 $explicitBatch = (int) ($p->realisasi_batch ?? $p->total_batch ?? 0);
                 if ($explicitBatch > 0) {
                     return $explicitBatch;
                 }
-                $hasRecords = $matchingRecs->contains('program_id', $p->id_nonreguler);
 
-                return $hasRecords ? 1 : 0;
+                return isset($matchingRecProgIds[$p->id_nonreguler]) ? 1 : 0;
             });
 
             $pctB = $planBatch > 0 ? round(($realBatch / $planBatch) * 100) : 0;
@@ -746,10 +765,16 @@ class DashboardController extends Controller
         ];
     }
 
-    protected function computeTeknikalBreakdown(int $year, ?int $selectedMonthNum = null): array
+    protected function computeTeknikalBreakdown(int $year, ?int $selectedMonthNum = null, $nonRegPrograms = null, $records = null): array
     {
-        $nonReg = $this->filterNonRegulerByYear(ProgramNonReguler::all(), $year)->filter(fn ($p) => ! $p->isSoftSkill());
-        $records = $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::where('program_type', 'non_reguler')->get(), $year, $selectedMonthNum);
+        $nonRegAll = $nonRegPrograms ?? $this->filterNonRegulerByYear(ProgramNonReguler::all(), $year);
+        $nonReg = $nonRegAll->filter(fn ($p) => ! $p->isSoftSkill());
+        $records = $records ?? $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::where('program_type', 'non_reguler')->get(), $year, $selectedMonthNum);
+        $records = $records->where('program_type', 'non_reguler');
+
+        // Pre-group records by program_id for instant O(1) matching
+        $recordsByProgramId = $records->whereNotNull('program_id')->groupBy('program_id');
+        $recordsWithoutProgId = $records->whereNull('program_id');
 
         $categories = ['ESTATE', 'MILL', 'TRACTION', 'DOWNSTREAM', 'ADMINISTRASI'];
         $groups = [];
@@ -784,13 +809,15 @@ class DashboardController extends Controller
                 return false;
             });
 
-            $planB = (int) $catProgs->sum(fn ($p) => (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0));
-            $planP = (int) $catProgs->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0));
-
-            $catRecs = $records->filter(function ($r) use ($catProgs, $catKey) {
-                if ($r->program_id) {
-                    return $catProgs->contains('id_nonreguler', $r->program_id);
+            $catProgIds = $catProgs->pluck('id_nonreguler')->all();
+            $catRecsProg = collect();
+            foreach ($catProgIds as $pid) {
+                if (isset($recordsByProgramId[$pid])) {
+                    $catRecsProg = $catRecsProg->concat($recordsByProgramId[$pid]);
                 }
+            }
+
+            $unlinkedRecs = $recordsWithoutProgId->filter(function ($r) use ($catKey) {
                 $notes = strtolower((string) $r->notes);
                 if ($catKey === 'estate') {
                     return str_contains($notes, 'estate') || str_contains($notes, 'tanaman') || str_contains($notes, 'agronomi');
@@ -810,15 +837,20 @@ class DashboardController extends Controller
 
                 return false;
             });
+
+            $catRecs = $catRecsProg->concat($unlinkedRecs);
+
+            $planB = (int) $catProgs->sum(fn ($p) => (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0));
+            $planP = (int) $catProgs->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0));
             $realP = (int) $catRecs->count();
-            $realB = (int) $catProgs->sum(function ($p) use ($catRecs) {
+
+            $realB = (int) $catProgs->sum(function ($p) use ($recordsByProgramId) {
                 $explicitBatch = (int) ($p->realisasi_batch ?? $p->total_batch ?? 0);
                 if ($explicitBatch > 0) {
                     return $explicitBatch;
                 }
-                $hasRecords = $catRecs->contains('program_id', $p->id_nonreguler);
 
-                return $hasRecords ? 1 : 0;
+                return isset($recordsByProgramId[$p->id_nonreguler]) ? 1 : 0;
             });
 
             $pctB = $planB > 0 ? round(($realB / $planB) * 100) : 0;
@@ -834,14 +866,13 @@ class DashboardController extends Controller
 
                     $rRecs = $catRecs->filter(fn ($r) => str_contains(strtolower((string) $r->region), $regKey));
                     $rRealP = (int) $rRecs->count();
-                    $rRealB = (int) $regProgs->sum(function ($p) use ($rRecs) {
+                    $rRealB = (int) $regProgs->sum(function ($p) use ($recordsByProgramId) {
                         $explicitBatch = (int) ($p->realisasi_batch ?? $p->total_batch ?? 0);
                         if ($explicitBatch > 0) {
                             return $explicitBatch;
                         }
-                        $hasRecords = $rRecs->contains('program_id', $p->id_nonreguler);
 
-                        return $hasRecords ? 1 : 0;
+                        return isset($recordsByProgramId[$p->id_nonreguler]) ? 1 : 0;
                     });
 
                     $items[] = [
