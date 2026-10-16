@@ -19,33 +19,31 @@ class AuthController extends Controller
         $request->validate([
             'identifier' => ['required', 'string'],
             'password' => ['required', 'string'],
-            // 'cf-turnstile-response' => ['required', 'string'],
-        ]
-            // , [
-            //     'cf-turnstile-response.required' => 'Harap selesaikan verifikasi keamanan Cloudflare.'
-            // ]
-        );
+            'cf-turnstile-response' => ['required', 'string'],
+        ], [
+            'cf-turnstile-response.required' => 'Harap selesaikan verifikasi keamanan Cloudflare.'
+        ]);
 
         // 2. Kirim token ke API Cloudflare untuk divalidasi keasliannya
-        // $http = Http::asForm();
+        $http = Http::asForm();
 
-        // // Bypass verifikasi SSL HANYA saat dijalankan di Localhost/Laragon
-        // if (app()->isLocal()) {
-        //     $http = $http->withoutVerifying();
-        // }
+        // Bypass verifikasi SSL HANYA saat dijalankan di Localhost/Laragon
+        if (app()->isLocal()) {
+            $http = $http->withoutVerifying();
+        }
 
-        // $turnstileResponse = $http->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-        //     'secret' => '0x4AAAAAAEzPGKSsKiRsoVbsX1tzF-N7x8k',
-        //     'response' => $request->input('cf-turnstile-response'),
-        //     'remoteip' => $request->ip(),
-        // ]);
+        $turnstileResponse = $http->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+            'secret' => '0x4AAAAAAEzPGKSsKiRsoVbsX1tzF-N7x8k',
+            'response' => $request->input('cf-turnstile-response'),
+            'remoteip' => $request->ip(),
+        ]);
 
-        // // 3. Jika validasi dari Cloudflare gagal (bot/token kedaluwarsa)
-        // if (! $turnstileResponse->json('success')) {
-        //     return back()->withErrors([
-        //         'identifier' => 'Sistem mendeteksi aktivitas mencurigakan. Silakan refresh halaman dan coba lagi.',
-        //     ])->onlyInput('identifier');
-        // }
+        // 3. Jika validasi dari Cloudflare gagal (bot/token kedaluwarsa)
+        if (! $turnstileResponse->json('success')) {
+            return back()->withErrors([
+                'identifier' => 'Sistem mendeteksi aktivitas mencurigakan. Silakan refresh halaman dan coba lagi.',
+            ])->onlyInput('identifier');
+        }
 
         // 4. Jika Turnstile sukses, lanjutkan ke proses login asli milikmu
         $identifier = $request->input('identifier');
@@ -60,13 +58,13 @@ class AuthController extends Controller
                 return redirect('/Top_Management');
             }
 
-            // Only Superadmin, Admin E-Information, or users with media/user management permissions access Dashboard Overview
-            if ($user->hasRole('Superadmin') || $user->hasRole('Admin E-Information') || $user->canAny(['manage_articles', 'manage_users', 'manage_tv_display', 'manage_events'])) {
-                return redirect('/admin');
+            // Trainer without administrasi access goes to Learning Activity dashboard
+            if (! $user->can('access_administrasi') && ($user->can('access_learning_activity') || $user->hasRole('Trainer'))) {
+                return redirect()->route('training-non-reguler.dashboard');
             }
 
-            // All other roles (Administrasi, Staff, Koordinator Mess, Kepala TU, Atasan, Trainer, etc.) go to Dashboard Utama
-            return redirect('/administrasi/dashboard-realisasi');
+            // All other logged in users go straight to Dashboard Realisasi Program
+            return redirect()->route('administrasi.dashboard-realisasi.index');
         }
 
         return back()->withErrors([

@@ -33,7 +33,7 @@
         
         <div class="relative z-10">
             <h1 class="text-2xl lg:text-3xl font-bold mb-1.5 tracking-tight">Selamat Datang di Dashboard!</h1>
-            <p class="text-green-100 text-sm lg:text-base max-w-xl">Pusat manajemen operasional program pelatihan Non-Reguler.</p>
+            <p class="text-green-100 text-sm lg:text-base max-w-xl">Pusat manajemen operasional program pelatihan Learning Activity.</p>
         </div>
     </div>
 

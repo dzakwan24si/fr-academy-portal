@@ -299,9 +299,9 @@
 
 
 
-                @canany(['manage_articles', 'manage_tv_display', 'manage_events'])
+                @canany(['manage_articles', 'manage_tv_display', 'manage_events', 'manage_career'])
                 <!-- SECTION: Konten & Media -->
-                <details class="group" {{ request()->routeIs('admin.artikel.*', 'admin.tv.*', 'admin.events.*') ? 'open' : '' }}>
+                <details class="group" {{ request()->routeIs('admin.artikel.*', 'admin.tv.*', 'admin.events.*', 'admin.career_programs.*') ? 'open' : '' }}>
                     <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-wider text-gray-400 hover:bg-gray-100 [&::-webkit-details-marker]:hidden transition-colors">
                         <span>Konten & Media</span>
                         <svg class="h-4 w-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -328,18 +328,21 @@
                         </a>
                         @endcan
 
+                        @can('manage_career')
                         <a href="{{ route('admin.career_programs.index') }}" class="{{ request()->routeIs('admin.career_programs.*') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">
                             <i data-lucide="briefcase" class="w-5 h-5 mr-3 {{ request()->routeIs('admin.career_programs.*') ? 'text-white' : 'text-gray-400' }}"></i>
                             Manajemen Karir
                         </a>
+                        @endcan
                     </div>
                 </details>
                 @endcanany
                 
-                <!-- SECTION: Non Reguler Training -->
+                <!-- SECTION: Learning Activity (Non Reguler) -->
+                @if(auth()->user()->can('access_learning_activity') || auth()->user()->hasRole(['Superadmin', 'Trainer']))
                 <details class="group" {{ request()->routeIs('training-non-reguler.*') ? 'open' : '' }}>
                     <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-wider text-gray-400 hover:bg-gray-100 [&::-webkit-details-marker]:hidden transition-colors">
-                        <span>Non Reguler Training</span>
+                        <span>Learning Activity</span>
                         <svg class="h-4 w-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </summary>
                     <div class="space-y-1 mt-1">
@@ -353,6 +356,7 @@
                         </a>
                     </div>
                 </details>
+                @endif
 
                 <!-- SECTION: Standar Kompetensi -->
                 @can('manage_competency')
@@ -381,12 +385,7 @@
                         <svg class="h-4 w-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </summary>
                     <div class="space-y-1 mt-1">
-                        @canany(['manage_articles', 'manage_users', 'manage_tv_display', 'manage_events'])
-                        <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">
-                            <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3 {{ request()->routeIs('admin.dashboard') ? 'text-white' : 'text-gray-400' }}"></i>
-                            Dashboard Overview
-                        </a>
-                        @endcanany
+
 
                         @can('manage_users')
                         <a href="{{ route('admin.users.index') }}" class="{{ request()->routeIs('admin.users.*') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">

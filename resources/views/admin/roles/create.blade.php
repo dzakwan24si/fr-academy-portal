@@ -48,6 +48,8 @@
                                     'manage_events'       => ['title' => 'Manajemen Tema Event', 'desc' => 'Mengelola event & banner di homepage.'],
                                     'manage_roles'        => ['title' => 'Manajemen Role & Akses', 'desc' => 'Mengelola peran & hak akses (permissions).'],
                                     'manage_competency'   => ['title' => 'Kelola Standar Kompetensi', 'desc' => 'Mengelola kamus kompetensi teknis, jabatan, dan butir indikator.'],
+                                    'access_learning_activity' => ['title' => 'Akses Modul Learning Activity', 'desc' => 'Akses ke dashboard dan materi pelatihan modul Learning Activity (Non Reguler).'],
+                                    'manage_career'       => ['title' => 'Manajemen Karir', 'desc' => 'Mengelola program karir, foto banner, persyaratan, kualifikasi, & link pendaftaran.'],
                                 ];
                             @endphp
 

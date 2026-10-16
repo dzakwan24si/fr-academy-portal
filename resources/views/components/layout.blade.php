@@ -37,18 +37,18 @@
             @scroll.window="scrolled = (window.pageYOffset > 20)"
             :class="scrolled ? 'bg-teal-primary shadow-lg' : 'bg-teal-primary lg:bg-transparent'" 
             class="fixed w-full z-50 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-20">
+        <div class="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10">
+            <div class="flex justify-between items-center h-20 gap-4">
                 <!-- Logo -->
                 <div class="flex-shrink-0 flex items-center">
                     <a href="/" class="flex items-center gap-3">
-                        <img src="{{ asset('images/logofr.png') }}" alt="FR Academy Logo" class="h-10 w-auto rounded">
-                        <span class="text-white font-bold text-xl tracking-tight hidden sm:block">FR ACADEMY</span>
+                        <img src="{{ asset('images/logofr.png') }}" alt="FR Academy Logo" class="h-10 w-auto border border-white/50 rounded-none">
+                        <span class="text-white font-bold text-xl tracking-tight hidden sm:block mr-2 lg:mr-4">FR ACADEMY</span>
                     </a>
                 </div>
 
                 <!-- Desktop Menu -->
-                <nav class="hidden md:flex space-x-8">
+                <nav class="hidden md:flex space-x-6 lg:space-x-8">
                     <a href="/" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">BERANDA</a>
                     <a href="/tentang-kami" class="text-white hover:text-green-accent px-3 py-2 text-sm font-medium transition">TENTANG</a>
                     <div x-data="{ open: false }" class="relative flex items-center" @mouseenter="open = true" @mouseleave="open = false" @keydown.escape="open = false">
@@ -71,6 +71,7 @@
                         <div x-show="open" x-transition.opacity class="absolute top-full left-0 mt-0 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700" style="display: none;">
                             <a href="https://e-learning.first-resources.com" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 transition">E-Learning</a>
                             <a href="https://mess-fr-academy.my.id/" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 transition">Mess FR Academy</a>
+                            <a href="https://peta-sdm.fr-academy.my.id/" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 transition">Peta SDM Operasional</a>
                         </div>
                     </div>
                 </nav>
@@ -95,12 +96,12 @@
                         </svg>
                     </button>
 
-                    <!-- Button Aplikasi Learning Activity (Single line, sleek compact) -->
+                    <!-- Button Aplikasi Learning Activity (Solid visible button) -->
                     <a href="{{ route('download.app') }}" 
-                       class="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/25 text-white px-3.5 py-2 rounded-md text-sm font-medium transition duration-300 shadow-xs whitespace-nowrap"
+                       class="inline-flex items-center gap-2 bg-[#59A338] hover:bg-[#4d8d30] text-white px-3.5 py-2 rounded-md text-sm font-semibold transition duration-300 shadow-md whitespace-nowrap"
                        title="Download Aplikasi Learning Activity (APK)">
-                        <svg class="w-4 h-4 text-green-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        <svg class="w-4 h-4 text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                         </svg>
                         <span>Aplikasi Learning Activity</span>
                     </a>
@@ -158,6 +159,7 @@
                 <a href="/artikel" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">ARTIKEL</a>
                 <a href="https://e-learning.first-resources.com" target="_blank" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">E-LEARNING</a>
                 <a href="https://mess-fr-academy.my.id/" target="_blank" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">MESS FR ACADEMY</a>
+                <a href="https://peta-sdm.fr-academy.my.id/" target="_blank" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">PETA SDM OPERASIONAL</a>
                 <a href="{{ route('download.app') }}" class="flex items-center gap-2 px-3 py-3 rounded-md text-base font-semibold text-green-300 hover:bg-teal-700 hover:text-white transition">
                     <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     <span>APLIKASI LEARNING ACTIVITY</span>
@@ -208,6 +210,7 @@
                     <h3 class="text-lg font-semibold mb-6">Pintasan Portal</h3>
                     <ul class="space-y-3 text-sm text-gray-300">
                         <li><a href="/" class="hover:text-green-accent transition">Beranda Utama</a></li>
+                        <li><a href="https://peta-sdm.fr-academy.my.id/" target="_blank" class="hover:text-green-accent transition">Peta SDM Operasional</a></li>
                         <li><a href="{{ route('download.app') }}" class="inline-flex items-center gap-1.5 text-green-300 hover:text-green-accent font-semibold transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Aplikasi Learning Activity</a></li>
                         <li><a href="/artikel" class="hover:text-green-accent transition">Semua Artikel & Berita</a></li>
                         <li><a href="{{ route('competency.public') }}" class="hover:text-green-accent transition">Standar Kompetensi</a></li>

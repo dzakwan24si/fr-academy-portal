@@ -183,17 +183,11 @@ Route::middleware('auth')->prefix('admin')->group(function () {
             return redirect('/Top_Management');
         }
 
-        // If user cannot manage articles/users/tv/events and has access to administrasi, redirect to administrasi dashboard
-        if (! $user->canAny(['manage_articles', 'manage_users', 'manage_tv_display', 'manage_events']) && $user->can('access_administrasi')) {
-            return redirect()->route('administrasi.dashboard-realisasi.index');
+        if (! $user->can('access_administrasi') && ($user->can('access_learning_activity') || $user->hasRole('Trainer'))) {
+            return redirect()->route('training-non-reguler.dashboard');
         }
 
-        $totalArticles = Article::count();
-        $totalPlaylists = TvPlaylist::count();
-        $totalUsers = User::count();
-        $totalEvents = HomepageEvent::count();
-
-        return view('admin.dashboard', compact('totalArticles', 'totalPlaylists', 'totalUsers', 'totalEvents'));
+        return redirect()->route('administrasi.dashboard-realisasi.index');
     })->name('admin.dashboard');
 
     Route::resource('artikel', AdminArticleController::class)->names('admin.artikel')->middleware('can:manage_articles');
@@ -215,7 +209,8 @@ Route::middleware('auth')->prefix('admin')->group(function () {
 
     // Career Programs Management
     Route::resource('career-programs', CareerProgramController::class)
-        ->names('admin.career_programs');
+        ->names('admin.career_programs')
+        ->middleware('can:manage_career');
 
     // Standar Kompetensi Management
     Route::middleware('can:manage_competency')->prefix('kompetensi')->name('admin.competency.')->group(function () {

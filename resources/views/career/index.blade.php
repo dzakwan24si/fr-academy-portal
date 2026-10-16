@@ -34,98 +34,65 @@
                     // Theme config per program
                     $theme = match($code) {
                         'FAT' => [
-                            'tag' => 'Kebun & Agronomi',
-                            'sub' => 'Field Operations',
-                            'badge_bg' => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
-                            'icon_bg' => 'from-emerald-500 to-green-600',
                             'glow' => 'group-hover:shadow-emerald-500/20 group-hover:border-emerald-300',
                             'btn' => 'group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 text-emerald-700 border-emerald-200 bg-emerald-50/50',
                             'top_bar' => 'from-emerald-500 to-teal-500',
                             'illustration' => asset('images/bg_card_fat.jpg'),
-                            'accent_badge' => 'Kebun Kelapa Sawit',
+                            'accent_dot' => 'bg-emerald-400',
                         ],
                         'MAT' => [
-                            'tag' => 'Pabrik Minyak Kelapa Sawit (PMKS)',
-                            'sub' => 'Mill Processing',
-                            'badge_bg' => 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
-                            'icon_bg' => 'from-amber-500 to-orange-600',
                             'glow' => 'group-hover:shadow-amber-500/20 group-hover:border-amber-300',
                             'btn' => 'group-hover:bg-amber-600 group-hover:text-white group-hover:border-amber-600 text-amber-700 border-amber-200 bg-amber-50/50',
                             'top_bar' => 'from-amber-500 to-orange-500',
                             'illustration' => asset('images/bg_card_mat.jpg'),
-                            'accent_badge' => 'Truk Tangki CPO & Mill',
+                            'accent_dot' => 'bg-amber-400',
                         ],
                         'TAT' => [
-                            'tag' => 'Traksi, Bengkel & Alat Berat',
-                            'sub' => 'Traction & Heavy Equipment',
-                            'badge_bg' => 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800',
-                            'icon_bg' => 'from-sky-500 to-blue-600',
                             'glow' => 'group-hover:shadow-sky-500/20 group-hover:border-sky-300',
                             'btn' => 'group-hover:bg-sky-600 group-hover:text-white group-hover:border-sky-600 text-sky-700 border-sky-200 bg-sky-50/50',
                             'top_bar' => 'from-sky-500 to-blue-600',
                             'illustration' => asset('images/bg_card_tat.jpg'),
-                            'accent_badge' => 'Ekskavator & Alat Berat',
+                            'accent_dot' => 'bg-sky-400',
                         ],
                         'AAT' => [
-                            'tag' => 'Administrasi, Keuangan & KTU',
-                            'sub' => 'Administration & Finance',
-                            'badge_bg' => 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800',
-                            'icon_bg' => 'from-indigo-500 to-purple-600',
                             'glow' => 'group-hover:shadow-indigo-500/20 group-hover:border-indigo-300',
                             'btn' => 'group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 text-indigo-700 border-indigo-200 bg-indigo-50/50',
                             'top_bar' => 'from-indigo-500 to-purple-600',
                             'illustration' => asset('images/bg_card_aat.jpg'),
-                            'accent_badge' => 'Staf Administrasi & Kantor',
+                            'accent_dot' => 'bg-indigo-400',
                         ],
                         'DMT' => [
-                            'tag' => 'Data Management & Digitalization',
-                            'sub' => 'Data & Information Technology',
-                            'badge_bg' => 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800',
-                            'icon_bg' => 'from-cyan-500 to-teal-600',
                             'glow' => 'group-hover:shadow-cyan-500/20 group-hover:border-cyan-300',
                             'btn' => 'group-hover:bg-cyan-600 group-hover:text-white group-hover:border-cyan-600 text-cyan-700 border-cyan-200 bg-cyan-50/50',
                             'top_bar' => 'from-cyan-500 to-teal-600',
                             'illustration' => asset('images/bg_card_dmt.jpg'),
-                            'accent_badge' => 'Data Center & Analytics',
+                            'accent_dot' => 'bg-cyan-400',
                         ],
                         'PMT' => [
-                            'tag' => 'Plantation Management & Agronomy',
-                            'sub' => 'Estate Field Leadership',
-                            'badge_bg' => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
-                            'icon_bg' => 'from-emerald-600 to-teal-700',
                             'glow' => 'group-hover:shadow-emerald-500/20 group-hover:border-emerald-300',
                             'btn' => 'group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 text-emerald-700 border-emerald-200 bg-emerald-50/50',
                             'top_bar' => 'from-emerald-600 to-teal-600',
                             'illustration' => asset('images/bg_card_pmt.jpg'),
-                            'accent_badge' => 'Plantation Management',
+                            'accent_dot' => 'bg-emerald-400',
                         ],
                         'MA' => [
-                            'tag' => 'Management Associate & Leadership',
-                            'sub' => 'Future Executive Leaders',
-                            'badge_bg' => 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
-                            'icon_bg' => 'from-purple-600 to-indigo-700',
                             'glow' => 'group-hover:shadow-purple-500/20 group-hover:border-purple-300',
                             'btn' => 'group-hover:bg-purple-600 group-hover:text-white group-hover:border-purple-600 text-purple-700 border-purple-200 bg-purple-50/50',
                             'top_bar' => 'from-purple-600 to-indigo-600',
                             'illustration' => asset('images/bg_card_ma.jpg'),
-                            'accent_badge' => 'Executive Trainee',
+                            'accent_dot' => 'bg-purple-400',
                         ],
                         default => [
-                            'tag' => 'Program Pelatihan Reguler',
-                            'sub' => 'Professional Development',
-                            'badge_bg' => 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800',
-                            'icon_bg' => 'from-teal-600 to-green-600',
                             'glow' => 'group-hover:shadow-green-500/20 group-hover:border-green-300',
                             'btn' => 'group-hover:bg-green-600 group-hover:text-white group-hover:border-green-600 text-teal-700 border-gray-200 bg-gray-50',
                             'top_bar' => 'from-teal-600 to-green-600',
                             'illustration' => asset('images/bg_card_fat.jpg'),
-                            'accent_badge' => 'Pelatihan Terpadu',
+                            'accent_dot' => 'bg-emerald-400',
                         ]
                     };
-                @endphp
-                @php
                     $imageUrl = $program->image ? asset('storage/' . $program->image) : ($theme['illustration'] ?? asset('images/bg_card_fat.jpg'));
                 @endphp
+
                 <!-- Modern Premium Dynamic Card -->
                 <div data-program="{{ json_encode([
                         'id' => $program->id,
@@ -134,8 +101,6 @@
                         'description' => $program->description,
                         'qualifications' => $program->qualifications,
                         'gform_url' => $program->gform_url,
-                        'tag' => $theme['tag'],
-                        'sub' => $theme['sub'],
                     ]) }}" @click.prevent.stop="selectedProgram = JSON.parse($el.dataset.program); modalOpen = true" 
                      class="group relative bg-white dark:bg-gray-800 rounded-3xl transition-all duration-500 hover:-translate-y-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] border border-gray-100/80 dark:border-gray-700/80 flex flex-col justify-between cursor-pointer overflow-hidden {{ $theme['glow'] }}" 
                      data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
@@ -144,7 +109,7 @@
                     <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r {{ $theme['top_bar'] }} z-20"></div>
 
                     <div>
-                        <!-- Program Visual Banner (Curved modern photo header) -->
+                        <!-- Program Visual Banner -->
                         <div class="relative h-48 w-full bg-slate-900 overflow-hidden flex items-center justify-center">
                             <img src="{{ $imageUrl }}" 
                                  alt="{{ $program->name }}" 
@@ -155,22 +120,15 @@
                             <!-- Program Code Badge Pill -->
                             <div class="absolute top-4 left-4 z-10">
                                 <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md bg-black/45 text-white border border-white/25 shadow-sm">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $theme['accent_dot'] }}"></span>
                                     {{ $code ?: 'PROGRAM' }}
-                                </span>
-                            </div>
-
-                            <!-- Subtle Pill Indicator in Banner Bottom -->
-                            <div class="absolute bottom-3 left-4 z-10">
-                                <span class="text-[11px] font-semibold text-white/90 backdrop-blur-sm bg-black/30 px-2.5 py-0.5 rounded-md border border-white/10">
-                                    {{ $theme['sub'] ?? 'Academy Program' }}
                                 </span>
                             </div>
                         </div>
 
                         <!-- Card Content Body -->
                         <div class="p-6 pt-5">
-                            <!-- Title (Clean without category sub-label) -->
+                            <!-- Title -->
                             <div class="mb-3 text-left">
                                 <h3 class="text-base font-bold text-gray-900 dark:text-white leading-snug group-hover:text-green-600 transition-colors">
                                     {{ $program->name }}
@@ -234,7 +192,7 @@
                             <div>
                                 <div class="flex items-center space-x-2 mb-2">
                                     <span class="w-2 h-2 rounded-full bg-green-400"></span>
-                                    <span class="text-teal-200 text-xs font-bold tracking-widest uppercase" x-text="selectedProgram?.tag || 'Detail Program'"></span>
+                                    <span class="text-teal-200 text-xs font-bold tracking-widest uppercase">Detail Program</span>
                                     <span class="text-teal-300/60 text-xs font-mono" x-show="selectedProgram?.code" x-text="'(' + selectedProgram?.code + ')'"></span>
                                 </div>
                                 <h3 class="text-2xl font-bold text-white leading-tight" id="modal-title" x-text="selectedProgram?.name"></h3>
