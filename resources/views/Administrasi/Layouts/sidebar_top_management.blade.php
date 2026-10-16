@@ -121,12 +121,12 @@
                     <span>Monitoring Talent</span>
                 </a>
 
-                <!-- 5. Monitoring Detailed -->
+                <!-- 5. Monitoring Employee -->
                 <a href="{{ $tmUrl('administrasi.monitoring.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.monitoring.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
                     <i data-lucide="line-chart" class="w-4 h-4 shrink-0"></i>
-                    <span>Monitoring Detailed</span>
+                    <span>Monitoring Employee</span>
                 </a>
                 
                 <!-- 6. Staf Resign -->

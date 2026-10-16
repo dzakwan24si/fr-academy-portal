@@ -114,12 +114,12 @@
                     <span>Monitoring Talent</span>
                 </a>
 
-                <!-- 5. Monitoring Detailed (ganti nama dari Monitoring) -->
+                <!-- 5. Monitoring Employee -->
                 <a href="{{ route('administrasi.monitoring.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.monitoring.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
                     <i data-lucide="line-chart" class="w-4 h-4 shrink-0"></i>
-                    <span>Monitoring Detailed</span>
+                    <span>Monitoring Employee</span>
                 </a>
                 
                 <!-- 6. Staf Resign -->
@@ -142,7 +142,7 @@
             </summary>
             <div class="space-y-0.5">
 
-                <!-- Rekrutmen Karyawan -->
+                <!-- 1. Rekrutmen -->
                 <a href="{{ route('administrasi.rekrutmen.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.rekrutmen.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
@@ -150,31 +150,15 @@
                     <span>Rekrutmen</span>
                 </a>
 
-                <!-- Cost -->
-                <a href="{{ route('administrasi.cost.index') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                          {{ request()->routeIs('administrasi.cost.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="banknote" class="w-4 h-4 shrink-0"></i>
-                    <span>Cost</span>
-                </a>
-
-                <!-- VRA -->
-                <a href="{{ route('administrasi.vra.index') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                          {{ request()->routeIs('administrasi.vra.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="truck" class="w-4 h-4 shrink-0"></i>
-                    <span>VRA</span>
-                </a>
-
-                <!-- Biaya Rekruit -->
+                <!-- 2. Biaya Rekrut -->
                 <a href="{{ route('administrasi.biaya-rekruit.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.biaya-rekruit.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
                     <i data-lucide="user-plus" class="w-4 h-4 shrink-0"></i>
-                    <span>Biaya Rekruit</span>
+                    <span>Biaya Rekrut</span>
                 </a>
 
-                <!-- CAPEX -->
+                <!-- 3. CAPEX -->
                 <a href="{{ route('administrasi.capex.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.capex.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
@@ -182,7 +166,23 @@
                     <span>CAPEX</span>
                 </a>
 
-                <!-- Cuti -->
+                <!-- 4. VRA -->
+                <a href="{{ route('administrasi.vra.index') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                          {{ request()->routeIs('administrasi.vra.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                    <i data-lucide="truck" class="w-4 h-4 shrink-0"></i>
+                    <span>VRA</span>
+                </a>
+
+                <!-- 5. Cost -->
+                <a href="{{ route('administrasi.cost.index') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                          {{ request()->routeIs('administrasi.cost.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                    <i data-lucide="banknote" class="w-4 h-4 shrink-0"></i>
+                    <span>Cost</span>
+                </a>
+
+                <!-- 6. Cuti -->
                 <a href="{{ route('administrasi.cuti.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.cuti.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
@@ -190,7 +190,7 @@
                     <span>Cuti</span>
                 </a>
 
-                <!-- MPP -->
+                <!-- 7. MPP -->
                 <a href="{{ route('administrasi.mpp.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.mpp.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">

@@ -65,7 +65,7 @@ const AdminLayout = () => {
         { name: 'Monitoring Alumni', href: '/administrasi/monitoring-alumni', icon: GraduationCap, isExternal: true },
         { name: 'Database Asisten', href: '/administrasi/asisten', icon: Contact, isExternal: true },
         { name: 'Monitoring Talent', href: '/administrasi/monitoring-talent', icon: Sparkles, isExternal: true },
-        { name: 'Monitoring Detailed', href: '/administrasi/monitoring', icon: LineChart, isExternal: true },
+        { name: 'Monitoring Employee', href: '/administrasi/monitoring', icon: LineChart, isExternal: true },
       ]
     },
     {
