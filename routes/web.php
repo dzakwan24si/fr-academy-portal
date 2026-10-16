@@ -103,6 +103,22 @@ Route::get('/career-qr', function (Request $request) {
     return response($qrCode)->header('Content-Type', 'image/svg+xml');
 })->name('career.qr');
 
+Route::get('/download-app', function () {
+    $path = public_path('downloads/LearningActivity.apk');
+    if (! file_exists($path)) {
+        $rootPath = base_path('LearningActivity.apk');
+        if (file_exists($rootPath)) {
+            copy($rootPath, $path);
+        } else {
+            abort(404, 'File APK belum tersedia.');
+        }
+    }
+
+    return response()->download($path, 'FR_Learning_Activity.apk', [
+        'Content-Type' => 'application/vnd.android.package-archive',
+    ]);
+})->name('download.app');
+
 Route::get('/tv-display', function () {
     $playlists = TvPlaylist::with('article.author', 'article.category')->orderBy('order')->get();
 

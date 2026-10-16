@@ -27,49 +27,172 @@
                 <p class="text-gray-600 dark:text-gray-300">Pilih jalur karir yang sesuai dengan latar belakang dan minat Anda.</p>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7">
                 @foreach($programs as $program)
-                <!-- Dynamic Card -->
+                @php
+                    $code = strtoupper(trim($program->code ?? ''));
+                    // Theme config per program
+                    $theme = match($code) {
+                        'FAT' => [
+                            'tag' => 'Kebun & Agronomi',
+                            'sub' => 'Field Operations',
+                            'badge_bg' => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+                            'icon_bg' => 'from-emerald-500 to-green-600',
+                            'glow' => 'group-hover:shadow-emerald-500/20 group-hover:border-emerald-300',
+                            'btn' => 'group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 text-emerald-700 border-emerald-200 bg-emerald-50/50',
+                            'top_bar' => 'from-emerald-500 to-teal-500',
+                            'illustration' => asset('images/bg_card_fat.jpg'),
+                            'accent_badge' => 'Kebun Kelapa Sawit',
+                        ],
+                        'MAT' => [
+                            'tag' => 'Pabrik Minyak Kelapa Sawit (PMKS)',
+                            'sub' => 'Mill Processing',
+                            'badge_bg' => 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
+                            'icon_bg' => 'from-amber-500 to-orange-600',
+                            'glow' => 'group-hover:shadow-amber-500/20 group-hover:border-amber-300',
+                            'btn' => 'group-hover:bg-amber-600 group-hover:text-white group-hover:border-amber-600 text-amber-700 border-amber-200 bg-amber-50/50',
+                            'top_bar' => 'from-amber-500 to-orange-500',
+                            'illustration' => asset('images/bg_card_mat.jpg'),
+                            'accent_badge' => 'Truk Tangki CPO & Mill',
+                        ],
+                        'TAT' => [
+                            'tag' => 'Traksi, Bengkel & Alat Berat',
+                            'sub' => 'Traction & Heavy Equipment',
+                            'badge_bg' => 'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800',
+                            'icon_bg' => 'from-sky-500 to-blue-600',
+                            'glow' => 'group-hover:shadow-sky-500/20 group-hover:border-sky-300',
+                            'btn' => 'group-hover:bg-sky-600 group-hover:text-white group-hover:border-sky-600 text-sky-700 border-sky-200 bg-sky-50/50',
+                            'top_bar' => 'from-sky-500 to-blue-600',
+                            'illustration' => asset('images/bg_card_tat.jpg'),
+                            'accent_badge' => 'Ekskavator & Alat Berat',
+                        ],
+                        'AAT' => [
+                            'tag' => 'Administrasi, Keuangan & KTU',
+                            'sub' => 'Administration & Finance',
+                            'badge_bg' => 'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800',
+                            'icon_bg' => 'from-indigo-500 to-purple-600',
+                            'glow' => 'group-hover:shadow-indigo-500/20 group-hover:border-indigo-300',
+                            'btn' => 'group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 text-indigo-700 border-indigo-200 bg-indigo-50/50',
+                            'top_bar' => 'from-indigo-500 to-purple-600',
+                            'illustration' => asset('images/bg_card_aat.jpg'),
+                            'accent_badge' => 'Staf Administrasi & Kantor',
+                        ],
+                        'DMT' => [
+                            'tag' => 'Data Management & Digitalization',
+                            'sub' => 'Data & Information Technology',
+                            'badge_bg' => 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800',
+                            'icon_bg' => 'from-cyan-500 to-teal-600',
+                            'glow' => 'group-hover:shadow-cyan-500/20 group-hover:border-cyan-300',
+                            'btn' => 'group-hover:bg-cyan-600 group-hover:text-white group-hover:border-cyan-600 text-cyan-700 border-cyan-200 bg-cyan-50/50',
+                            'top_bar' => 'from-cyan-500 to-teal-600',
+                            'illustration' => asset('images/bg_card_dmt.jpg'),
+                            'accent_badge' => 'Data Center & Analytics',
+                        ],
+                        'PMT' => [
+                            'tag' => 'Plantation Management & Agronomy',
+                            'sub' => 'Estate Field Leadership',
+                            'badge_bg' => 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
+                            'icon_bg' => 'from-emerald-600 to-teal-700',
+                            'glow' => 'group-hover:shadow-emerald-500/20 group-hover:border-emerald-300',
+                            'btn' => 'group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 text-emerald-700 border-emerald-200 bg-emerald-50/50',
+                            'top_bar' => 'from-emerald-600 to-teal-600',
+                            'illustration' => asset('images/bg_card_pmt.jpg'),
+                            'accent_badge' => 'Plantation Management',
+                        ],
+                        'MA' => [
+                            'tag' => 'Management Associate & Leadership',
+                            'sub' => 'Future Executive Leaders',
+                            'badge_bg' => 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-800',
+                            'icon_bg' => 'from-purple-600 to-indigo-700',
+                            'glow' => 'group-hover:shadow-purple-500/20 group-hover:border-purple-300',
+                            'btn' => 'group-hover:bg-purple-600 group-hover:text-white group-hover:border-purple-600 text-purple-700 border-purple-200 bg-purple-50/50',
+                            'top_bar' => 'from-purple-600 to-indigo-600',
+                            'illustration' => asset('images/bg_card_ma.jpg'),
+                            'accent_badge' => 'Executive Trainee',
+                        ],
+                        default => [
+                            'tag' => 'Program Pelatihan Reguler',
+                            'sub' => 'Professional Development',
+                            'badge_bg' => 'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-800',
+                            'icon_bg' => 'from-teal-600 to-green-600',
+                            'glow' => 'group-hover:shadow-green-500/20 group-hover:border-green-300',
+                            'btn' => 'group-hover:bg-green-600 group-hover:text-white group-hover:border-green-600 text-teal-700 border-gray-200 bg-gray-50',
+                            'top_bar' => 'from-teal-600 to-green-600',
+                            'illustration' => asset('images/bg_card_fat.jpg'),
+                            'accent_badge' => 'Pelatihan Terpadu',
+                        ]
+                    };
+                @endphp
+                @php
+                    $imageUrl = $program->image ? asset('storage/' . $program->image) : ($theme['illustration'] ?? asset('images/bg_card_fat.jpg'));
+                @endphp
+                <!-- Modern Premium Dynamic Card -->
                 <div data-program="{{ json_encode([
                         'id' => $program->id,
                         'name' => $program->name,
                         'code' => $program->code,
                         'description' => $program->description,
                         'qualifications' => $program->qualifications,
-                        'gform_url' => $program->gform_url
+                        'gform_url' => $program->gform_url,
+                        'tag' => $theme['tag'],
+                        'sub' => $theme['sub'],
                     ]) }}" @click.prevent.stop="selectedProgram = JSON.parse($el.dataset.program); modalOpen = true" 
-                     class="bg-white dark:bg-gray-700 rounded-2xl p-8 text-center transition-transform hover:-translate-y-2 duration-300 shadow-lg border border-gray-100 dark:border-gray-600 flex flex-col items-center cursor-pointer" data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
-                    <div class="w-16 h-16 bg-teal-50 dark:bg-gray-800 rounded-full flex items-center justify-center text-teal-primary dark:text-teal-400 mb-6 shadow-sm">
-                        @switch($program->code)
-                              @case('FAT')
-                                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10a6 6 0 0 0 -6 -6h-3v2a6 6 0 0 0 6 6h3 M12 14a6 6 0 0 1 6 -6h3v1a6 6 0 0 1 -6 6h-3 M12 20v-10"></path></svg>
-                                  @break
-                              @case('MAT')
-                                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                  @break
-                              @case('TAT')
-                                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>
-                                  @break
-                              @case('DMT')
-                                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4"></path></svg>
-                                  @break
-                              @case('AAT')
-                                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                  @break
-                              @case('PMT')
-                                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
-                                  @break
-                              @case('MA')
-                              @case('PMA')
-                                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                  @break
-                              @default
-                                  <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                          @endswitch
+                     class="group relative bg-white dark:bg-gray-800 rounded-3xl transition-all duration-500 hover:-translate-y-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.06)] hover:shadow-[0_20px_40px_rgb(0,0,0,0.12)] border border-gray-100/80 dark:border-gray-700/80 flex flex-col justify-between cursor-pointer overflow-hidden {{ $theme['glow'] }}" 
+                     data-aos="fade-up" data-aos-delay="{{ $loop->index * 100 }}">
+                    
+                    <!-- Decorative Top Highlight Bar -->
+                    <div class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r {{ $theme['top_bar'] }} z-20"></div>
+
+                    <div>
+                        <!-- Program Visual Banner (Curved modern photo header) -->
+                        <div class="relative h-48 w-full bg-slate-900 overflow-hidden flex items-center justify-center">
+                            <img src="{{ $imageUrl }}" 
+                                 alt="{{ $program->name }}" 
+                                 class="w-full h-full object-cover object-center group-hover:scale-108 transition-transform duration-700 ease-out">
+                            <!-- Gradient overlay for cinematic depth -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/15 to-transparent pointer-events-none"></div>
+
+                            <!-- Program Code Badge Pill -->
+                            <div class="absolute top-4 left-4 z-10">
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider backdrop-blur-md bg-black/45 text-white border border-white/25 shadow-sm">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                                    {{ $code ?: 'PROGRAM' }}
+                                </span>
+                            </div>
+
+                            <!-- Subtle Pill Indicator in Banner Bottom -->
+                            <div class="absolute bottom-3 left-4 z-10">
+                                <span class="text-[11px] font-semibold text-white/90 backdrop-blur-sm bg-black/30 px-2.5 py-0.5 rounded-md border border-white/10">
+                                    {{ $theme['sub'] ?? 'Academy Program' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Card Content Body -->
+                        <div class="p-6 pt-5">
+                            <!-- Title (Clean without category sub-label) -->
+                            <div class="mb-3 text-left">
+                                <h3 class="text-base font-bold text-gray-900 dark:text-white leading-snug group-hover:text-green-600 transition-colors">
+                                    {{ $program->name }}
+                                </h3>
+                            </div>
+
+                            <!-- Description Snippet -->
+                            <p class="text-gray-600 dark:text-gray-300 text-xs leading-relaxed text-justify line-clamp-3 mb-2">
+                                {{ $program->description }}
+                            </p>
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3">{{ $program->name }}</h3>
-                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6 flex-grow line-clamp-3">{{ $program->description }}</p>
-                    <button type="button" class="w-full bg-white text-green-accent border border-green-accent hover:bg-green-accent hover:text-white px-6 py-2 rounded-full font-semibold transition duration-300 pointer-events-none">Lihat Detail</button>
+
+                    <!-- Footer Action Button -->
+                    <div class="px-6 pb-6 pt-0 w-full">
+                        <div class="flex items-center justify-between text-xs font-bold py-2.5 px-4 rounded-xl border transition-all duration-300 {{ $theme['btn'] }}">
+                            <span>Lihat Detail Program</span>
+                            <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
                 @endforeach
             </div>
@@ -111,7 +234,8 @@
                             <div>
                                 <div class="flex items-center space-x-2 mb-2">
                                     <span class="w-2 h-2 rounded-full bg-green-400"></span>
-                                    <span class="text-teal-100 text-xs font-semibold tracking-widest uppercase">Detail Program</span>
+                                    <span class="text-teal-200 text-xs font-bold tracking-widest uppercase" x-text="selectedProgram?.tag || 'Detail Program'"></span>
+                                    <span class="text-teal-300/60 text-xs font-mono" x-show="selectedProgram?.code" x-text="'(' + selectedProgram?.code + ')'"></span>
                                 </div>
                                 <h3 class="text-2xl font-bold text-white leading-tight" id="modal-title" x-text="selectedProgram?.name"></h3>
                             </div>
@@ -133,7 +257,7 @@
                                         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                                         Gambaran Umum
                                     </h4>
-                                    <p class="text-gray-700 text-sm leading-relaxed" x-text="selectedProgram?.description"></p>
+                                    <p class="text-gray-700 text-sm leading-relaxed text-justify" x-text="selectedProgram?.description"></p>
                                 </div>
 
                                 <!-- Qualifications -->

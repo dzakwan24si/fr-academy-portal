@@ -27,6 +27,7 @@
             <table class="w-full text-left border-collapse">
                 <thead>
                     <tr class="bg-gray-50 border-b border-gray-200 text-sm">
+                        <th class="px-6 py-4 font-semibold text-gray-700">Visual Card</th>
                         <th class="px-6 py-4 font-semibold text-gray-700">Kode</th>
                         <th class="px-6 py-4 font-semibold text-gray-700">Nama Program</th>
                         <th class="px-6 py-4 font-semibold text-gray-700">Status</th>
@@ -37,6 +38,17 @@
                 <tbody class="divide-y divide-gray-100">
                     @forelse($programs as $program)
                         <tr class="hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4">
+                                <div class="w-16 h-10 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 shrink-0">
+                                    @if($program->image)
+                                        <img src="{{ asset('storage/' . $program->image) }}" alt="{{ $program->name }}" class="w-full h-full object-cover">
+                                    @else
+                                        <img src="{{ asset('images/bg_card_' . strtolower($program->code) . '.jpg') }}" 
+                                             onerror="this.src='{{ asset('images/bg_card_fat.jpg') }}'"
+                                             alt="{{ $program->name }}" class="w-full h-full object-cover">
+                                    @endif
+                                </div>
+                            </td>
                             <td class="px-6 py-4">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
                                     {{ $program->code }}

@@ -68,7 +68,7 @@
                             PORTAL
                             <svg class="w-4 h-4 ml-1 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
-                        <div x-show="open" x-transition.opacity class="absolute top-full left-0 mt-0 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700" style="display: none;">
+                        <div x-show="open" x-transition.opacity class="absolute top-full left-0 mt-0 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700" style="display: none;">
                             <a href="https://e-learning.first-resources.com" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 transition">E-Learning</a>
                             <a href="https://mess-fr-academy.my.id/" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 transition">Mess FR Academy</a>
                         </div>
@@ -76,9 +76,9 @@
                 </nav>
 
                 <!-- Right Actions -->
-                <div class="hidden md:flex items-center space-x-4">
+                <div class="hidden md:flex items-center space-x-3">
                     <!-- Theme Toggle -->
-                    <button @click="darkMode = !darkMode" class="text-white hover:text-green-accent p-2 transition rounded-full focus:outline-none">
+                    <button @click="darkMode = !darkMode" class="text-white hover:text-green-accent p-2 transition rounded-full focus:outline-none" title="Ubah Tema">
                         <!-- Sun Icon (shows when dark mode is active) -->
                         <svg x-show="darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="display: none;">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
@@ -89,18 +89,32 @@
                         </svg>
                     </button>
                     <!-- Search Icon -->
-                    <button class="text-white hover:text-green-accent p-2 transition">
+                    <button class="text-white hover:text-green-accent p-2 transition" title="Cari">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </button>
-                    @auth
-                        <a href="/admin" class="bg-teal-primary hover:bg-teal-700 text-white px-5 py-2 rounded-md text-sm font-medium transition duration-300 shadow">
-                            Dashboard
+
+                    <!-- Button Aplikasi Learning Activity (Single line, sleek compact) -->
+                    <a href="{{ route('download.app') }}" 
+                       class="inline-flex items-center gap-1.5 bg-white/10 hover:bg-white/20 border border-white/25 text-white px-3.5 py-2 rounded-md text-sm font-medium transition duration-300 shadow-xs whitespace-nowrap"
+                       title="Download Aplikasi Learning Activity (APK)">
+                        <svg class="w-4 h-4 text-green-300 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        <span>Aplikasi Learning Activity</span>
+                    </a>
+
+                    @auth('web')
+                        <a href="{{ url('/admin') }}" class="inline-flex items-center gap-1.5 bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300 shadow whitespace-nowrap">
+                            <svg class="w-4 h-4 text-teal-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                            </svg>
+                            <span>Dashboard</span>
                         </a>
                     @else
-                        <a href="/login" class="bg-green-accent hover:bg-green-600 text-white px-5 py-2 rounded-md text-sm font-medium transition duration-300 shadow">
-                            Masuk Portal
+                        <a href="{{ route('login') }}" class="inline-flex items-center gap-1.5 bg-green-accent hover:bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-300 shadow whitespace-nowrap">
+                            <span>Masuk Portal</span>
                         </a>
                     @endauth
                 </div>
@@ -144,6 +158,10 @@
                 <a href="/artikel" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">ARTIKEL</a>
                 <a href="https://e-learning.first-resources.com" target="_blank" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">E-LEARNING</a>
                 <a href="https://mess-fr-academy.my.id/" target="_blank" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">MESS FR ACADEMY</a>
+                <a href="{{ route('download.app') }}" class="flex items-center gap-2 px-3 py-3 rounded-md text-base font-semibold text-green-300 hover:bg-teal-700 hover:text-white transition">
+                    <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <span>APLIKASI LEARNING ACTIVITY</span>
+                </a>
                 <div class="mt-4 pt-4 border-t border-teal-700">
                     @auth
                         <a href="/admin" class="block text-center w-full bg-green-accent hover:bg-green-600 text-white px-5 py-3 rounded-md text-base font-bold transition">Dashboard Admin</a>
@@ -190,6 +208,7 @@
                     <h3 class="text-lg font-semibold mb-6">Pintasan Portal</h3>
                     <ul class="space-y-3 text-sm text-gray-300">
                         <li><a href="/" class="hover:text-green-accent transition">Beranda Utama</a></li>
+                        <li><a href="{{ route('download.app') }}" class="inline-flex items-center gap-1.5 text-green-300 hover:text-green-accent font-semibold transition"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Aplikasi Learning Activity</a></li>
                         <li><a href="/artikel" class="hover:text-green-accent transition">Semua Artikel & Berita</a></li>
                         <li><a href="{{ route('competency.public') }}" class="hover:text-green-accent transition">Standar Kompetensi</a></li>
                         <li><a href="/login" class="hover:text-green-accent transition">Login Admin / Staf</a></li>
