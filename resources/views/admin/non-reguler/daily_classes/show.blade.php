@@ -77,7 +77,7 @@
                         </form> -->
                         
                         
-                        <button type="button" @click="showAddTask = true" class="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
+                        <button type="button" @click="document.getElementById('addTaskModal').classList.remove('hidden'); open = false;" class="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                             <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
                             Tugas
                         </button>
@@ -96,12 +96,7 @@
                             </form>
                         @endif
                         
-                        <a href="{{ $dailyClass->material_url ?: 'https://e-learning.first-resources.com/' }}" target="_blank" class="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 whitespace-nowrap">
-                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                                Buka Modul/Materi di LMS
-                            </a>
-                            
-                            <form action="{{ route('training-non-reguler.daily-classes.toggle-evaluation', $dailyClass->id) }}" method="POST" class="w-full">
+                        <form action="{{ route('training-non-reguler.daily-classes.toggle-evaluation', $dailyClass->id) }}" method="POST" class="w-full">
                             @csrf
                             <button type="submit" class="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
                                 <svg class="w-4 h-4 {{ $dailyClass->is_evaluation_open ? 'text-amber-500' : 'text-emerald-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path></svg>
@@ -109,10 +104,17 @@
                             </button>
                         </form>
 
+                        <a href="{{ $dailyClass->material_url ?: 'https://e-learning.first-resources.com/' }}" target="_blank" class="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 whitespace-nowrap">
+                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                            Buka Modul/Materi di LMS
+                        </a>
+
+                        {{-- 
                         <a href="{{ route('training-non-reguler.daily-classes.export-training-record', $dailyClass->id) }}" class="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 whitespace-nowrap">
                             <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                             Export Data (Format Training Record)
                         </a>
+                        --}}
 
                         @if($trainees->count() > 0)
                         <div class="h-px bg-slate-200 my-1"></div>
@@ -754,6 +756,36 @@
         </div>
     </div>
 
+    <!-- Add Task Modal -->
+    <div id="addTaskModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden bg-slate-900/50 backdrop-blur-sm transition-opacity text-left p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100 opacity-100">
+            <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
+                <h3 class="text-lg font-black text-slate-800">Tambah Tugas</h3>
+                <button type="button" onclick="document.getElementById('addTaskModal').classList.add('hidden')" class="text-slate-400 hover:text-red-500 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <form action="{{ route('training-non-reguler.daily-classes.tasks.store', $dailyClass->id) }}" method="POST" class="p-6">
+                @csrf
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Judul Tugas <span class="text-red-500">*</span></label>
+                        <input type="text" name="title" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] focus:border-[#28844b] font-medium transition-all" required placeholder="Contoh: Resume Materi, Unggah Foto Kegiatan, dll">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tenggat Waktu (Deadline) <span class="text-red-500">*</span></label>
+                        <input type="datetime-local" name="deadline" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] focus:border-[#28844b] font-medium transition-all" required>
+                    </div>
+                </div>
+                <div class="mt-8 flex justify-end gap-3 pt-6 border-t border-slate-100">
+                    <button type="button" onclick="document.getElementById('addTaskModal').classList.add('hidden')" class="px-6 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition-colors">Batal</button>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#28844b] text-white font-bold hover:bg-[#1d6b3a] active:scale-95 transition-all shadow-md">Simpan Tugas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
         <!-- Edit Class Modal -->
     <div id="editClassModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden bg-slate-900/50 backdrop-blur-sm transition-opacity text-left p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all scale-100 opacity-100 max-h-[90vh] flex flex-col">
@@ -801,12 +833,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">LOKASI TRAINING <span class="text-slate-400 font-semibold">(OPSIONAL)</span></label>
-                            <select name="location" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm font-medium">
-                                <option value="" {{ !$dailyClass->location ? 'selected' : '' }}>Pilih Lokasi</option>
-                                @foreach(['Jakarta', 'FRLC', 'FRLS', 'KAL', 'Kandir', 'Online', 'Online/Onsite', 'Onsite'] as $loc)
-                                    <option value="{{ $loc }}" {{ $dailyClass->location == $loc ? 'selected' : '' }}>{{ $loc }}</option>
-                                @endforeach
-                            </select>
+                            <input type="text" name="location" value="{{ $dailyClass->location }}" placeholder="Cth: FRLC / Kandir / Online" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm placeholder:text-slate-400 font-medium">
                         </div>
                         <div>
                             <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">RUANGAN <span class="text-slate-400 font-semibold">(OPSIONAL)</span></label>
@@ -836,15 +863,16 @@
     
     <!-- Import Excel Modal -->
     <div id="importModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden bg-slate-900/50 backdrop-blur-sm transition-opacity text-left p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100 opacity-100">
-            <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all scale-100 opacity-100">
+            <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50 shrink-0">
                 <h3 class="text-lg font-black text-slate-800">Import Peserta (Excel)</h3>
                 <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="text-slate-400 hover:text-red-500 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
             
-            <form action="{{ route('training-non-reguler.daily-classes.import', $dailyClass->id) }}" method="POST" enctype="multipart/form-data" class="p-6">
+            <form action="{{ route('training-non-reguler.daily-classes.import', $dailyClass->id) }}" method="POST" enctype="multipart/form-data" class="flex flex-col flex-1 overflow-hidden">
+                <div class="p-6 overflow-y-auto space-y-4 flex-1">
                 @csrf
                 
                 @if($errors->any())
@@ -900,12 +928,7 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Lokasi Training <span class="text-gray-400 font-normal">(Opsional)</span></label>
-                            <select name="location" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all">
-                                <option value="">Pilih Lokasi</option>
-                                @foreach(['Jakarta', 'FRLC', 'FRLS', 'KAL', 'Kandir', 'Online', 'Online/Onsite', 'Onsite'] as $loc)
-                                    <option value="{{ $loc }}">{{ $loc }}</option>
-                                @endforeach
-                            </select>
+                            <input type="text" name="location" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Cth: FRLC / Kandir / Online">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Ruangan <span class="text-gray-400 font-normal">(Opsional)</span></label>
@@ -929,40 +952,10 @@
                         <input type="file" name="file" accept=".xlsx,.xls,.csv" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required>
                     </div>
                 </div>
-                <div class="mt-8 flex justify-end gap-3 pt-6 border-t border-slate-100">
+                
+                <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3 shrink-0">
                     <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="px-6 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition-colors">Batal</button>
                     <button type="submit" class="px-6 py-2.5 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 active:scale-95 transition-all shadow-md">Mulai Import</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Add Task Modal -->
-    <div x-show="showAddTask" style="display: none;" class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm transition-opacity text-left p-4">
-        <div @click.away="showAddTask = false" class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100 opacity-100">
-            <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
-                <h3 class="text-lg font-black text-slate-800">Tambah Tugas</h3>
-                <button type="button" @click="showAddTask = false" class="text-slate-400 hover:text-red-500 transition-colors">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                </button>
-            </div>
-            
-            <form action="{{ route('training-non-reguler.daily-classes.tasks.store', $dailyClass->id) }}" method="POST" class="p-6">
-                @csrf
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Judul Tugas <span class="text-red-500">*</span></label>
-                        <input type="text" name="title" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] focus:border-[#28844b] font-medium transition-all" required placeholder="Contoh: Resume Materi, Unggah Foto Kegiatan, dll">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tenggat Waktu (Deadline) <span class="text-red-500">*</span></label>
-                        <input type="datetime-local" name="deadline" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] focus:border-[#28844b] font-medium transition-all" required>
-                    </div>
-                </div>
-                <div class="mt-8 flex justify-end gap-3 pt-6 border-t border-slate-100">
-                    <button type="button" @click="showAddTask = false" class="px-6 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition-colors">Batal</button>
-                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#28844b] text-lime-400 font-bold hover:bg-[#1d6b3a] active:scale-95 transition-all shadow-md">Simpan Tugas</button>
-
                 </div>
             </form>
         </div>

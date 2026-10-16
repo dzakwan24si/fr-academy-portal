@@ -4,7 +4,7 @@
     <!-- Include ApexCharts for later -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     
-    <div class="p-6 bg-[#F8FAFC] min-h-screen" x-data="{ activeTab: '{{ session('success') || session('error') || $errors->any() ? 'data' : 'dashboard' }}', showModal: false, showImportModal: false, showDetailModal: false, showEditModal: false, selectedStaff: {} }">
+    <div class="p-6 bg-[#F8FAFC] min-h-screen" x-data="{ activeTab: '{{ request('tab') === 'data' || request()->filled('search') || request()->has('page') || session('success') || session('error') || $errors->any() ? 'data' : 'dashboard' }}', showModal: false, showImportModal: false, showDetailModal: false, showEditModal: false, selectedStaff: {} }">
         <div class="max-w-7xl mx-auto space-y-6">
             
             <!-- Tabs -->
@@ -299,6 +299,7 @@
                         </div>
                         <div class="flex items-center gap-3">
                             <form method="GET" action="{{ route('administrasi.staf-resign.index') }}" class="relative w-64">
+                                <input type="hidden" name="tab" value="data">
                                 <input type="hidden" name="region" value="{{ request('region') }}">
                                 <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                     <svg class="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
