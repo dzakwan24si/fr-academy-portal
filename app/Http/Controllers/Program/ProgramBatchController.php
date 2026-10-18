@@ -449,6 +449,9 @@ class ProgramBatchController extends Controller
             'Target Peserta',
             'Uang Saku',
             'Tahun',
+            'Kelas',
+            'Resign',
+            'Lulus',
         ];
 
         $sampleRow = [
@@ -467,6 +470,9 @@ class ProgramBatchController extends Controller
             20,
             1500000,
             2026,
+            20,
+            0,
+            20,
         ];
 
         return ExcelExporter::download('Template_Program_Batch_Reguler.xlsx', $headers, [$sampleRow], 'Template Batch Reguler');
@@ -593,6 +599,10 @@ class ProgramBatchController extends Controller
                 'Region' => $item['region'] ?? $item['wilayah'] ?? null,
                 'tanggal_pelaksanaan' => $tglPelaksanaan,
                 'tahun' => is_numeric($item['tahun'] ?? null) ? (int) $item['tahun'] : null,
+                'kelas' => is_numeric($item['kelas'] ?? null) ? (int) $item['kelas'] : null,
+                'resign' => is_numeric($item['resign'] ?? null) ? (int) $item['resign'] : null,
+                'staff' => is_numeric($item['staff'] ?? ($item['lulus'] ?? null)) ? (int) ($item['staff'] ?? $item['lulus']) : null,
+                'lulus' => is_numeric($item['lulus'] ?? ($item['staff'] ?? null)) ? (int) ($item['lulus'] ?? $item['staff']) : null,
             ];
 
             // Normalize nulls/empty strings
@@ -706,11 +716,18 @@ class ProgramBatchController extends Controller
         }
 
         $numericFields = $type === 'reguler'
-            ? ['jumlah_bulan_training', 'jumlah_hari', 'Total_training_days', 'Promosi_mandor', 'Fresh_Graduate', 'target_peserta', 'tahun']
+            ? ['jumlah_bulan_training', 'jumlah_hari', 'Total_training_days', 'Promosi_mandor', 'Fresh_Graduate', 'target_peserta', 'tahun', 'kelas', 'resign', 'staff', 'lulus']
             : ['total_jam', 'total_hari', 'peserta_non_staf', 'peserta_ast', 'peserta_askep', 'peserta_mgr', 'peserta_gm', 'peserta_head', 'target_staf', 'target_non_staf', 'target_total', 'training_staf', 'training_non_staf', 'training_total', 'td_staf', 'td_non_staf', 'td_total', 'realisasi_batch', 'total_batch', 'TARGET_BATCH', 'TARGET_PESERTA', 'tahun'];
         foreach ($numericFields as $field) {
             if (array_key_exists($field, $payload)) {
                 $payload[$field] = is_numeric($payload[$field]) ? (int) $payload[$field] : null;
+            }
+        }
+        if ($type === 'reguler') {
+            if (array_key_exists('staff', $payload) && ! array_key_exists('lulus', $payload)) {
+                $payload['lulus'] = $payload['staff'];
+            } elseif (array_key_exists('lulus', $payload) && ! array_key_exists('staff', $payload)) {
+                $payload['staff'] = $payload['lulus'];
             }
         }
         if ($type === 'reguler' && array_key_exists('Uang_saku', $payload)) {
@@ -718,7 +735,7 @@ class ProgramBatchController extends Controller
         }
 
         $allowedColumns = $type === 'reguler'
-            ? ['Kategori_Program', 'Training_Program', 'Batch', 'Lokasi_training', 'Mulai_program', 'Selesai_program', 'jumlah_bulan_training', 'jumlah_hari', 'Total_training_days', 'Promosi_mandor', 'Fresh_Graduate', 'target_peserta', 'Uang_saku', 'jenis_program_reguler', 'Region', 'tanggal_pelaksanaan', 'tahun']
+            ? ['Kategori_Program', 'Training_Program', 'Batch', 'Lokasi_training', 'Mulai_program', 'Selesai_program', 'jumlah_bulan_training', 'jumlah_hari', 'Total_training_days', 'Promosi_mandor', 'Fresh_Graduate', 'target_peserta', 'Uang_saku', 'jenis_program_reguler', 'Region', 'tanggal_pelaksanaan', 'tahun', 'kelas', 'resign', 'staff', 'lulus']
             : ['kategori_pelatihan', 'jenis_pelatihan', 'region', 'trainer', 'type_training', 'total_jam', 'total_hari', 'peserta_non_staf', 'peserta_ast', 'peserta_askep', 'peserta_mgr', 'peserta_gm', 'peserta_head', 'target_staf', 'target_non_staf', 'target_total', 'training_staf', 'training_non_staf', 'training_total', 'td_staf', 'td_non_staf', 'td_total', 'start_date', 'end_date', 'realisasi_batch', 'total_batch', 'lokasi_training', 'deskripsi', 'sub_kategori', 'tanggal_pelaksanaan', 'TARGET_BATCH', 'TARGET_PESERTA', 'tahun'];
 
         return array_filter($payload, fn ($value, $key) => in_array($key, $allowedColumns, true), ARRAY_FILTER_USE_BOTH);

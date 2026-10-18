@@ -5,47 +5,70 @@
 
 
 
-{{-- ============================== TOP SUB-TABS ============================== --}}
-<div class="flex items-center justify-start mb-6">
-    <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm">
-        <a href="{{ route('administrasi.inventaris.summary') }}"
-           class="px-5 py-2 text-xs font-bold rounded-lg transition-all bg-[#4B6A34] text-white shadow-sm">
-            Summary
-        </a>
-        <a href="{{ route('administrasi.inventaris.barang') }}"
-           class="px-5 py-2 text-xs font-bold rounded-lg transition-all text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]">
-            Barang
-        </a>
-        <a href="{{ route('administrasi.inventaris.pembelian') }}"
-           class="px-5 py-2 text-xs font-bold rounded-lg transition-all text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]">
-            Pembelian
-        </a>
-        <a href="{{ route('administrasi.inventaris.stock-opname') }}"
-           class="px-5 py-2 text-xs font-bold rounded-lg transition-all text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]">
-            Stock Opname
-        </a>
+{{-- ============================== HEADER & SUB-TABS ============================== --}}
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-[#18181B] tracking-tight">Inventaris Gudang & Kantor</h1>
+        <p class="text-sm text-[#71717A] mt-0.5">Rekapitulasi kondisi aset berdasarkan jenis lokasi & rincian ruangan kantor.</p>
+    </div>
+
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+        {{-- Location Switcher Pills --}}
+        <div class="inline-flex bg-[#F4F4F5] border border-[#E5E7EB] rounded-xl p-1 shadow-sm">
+            <a href="{{ route('administrasi.inventaris.summary', array_merge(request()->query(), ['jenis_lokasi' => ''])) }}"
+               class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ empty($jenisLokasiFilter) ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-white' }}">
+                Semua
+            </a>
+            <a href="{{ route('administrasi.inventaris.summary', array_merge(request()->query(), ['jenis_lokasi' => 'Gudang'])) }}"
+               class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $jenisLokasiFilter === 'Gudang' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-white' }}">
+                Gudang
+            </a>
+            <a href="{{ route('administrasi.inventaris.summary', array_merge(request()->query(), ['jenis_lokasi' => 'Kantor'])) }}"
+               class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $jenisLokasiFilter === 'Kantor' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-white' }}">
+                Kantor
+            </a>
+        </div>
+
+        {{-- Feature Sub-tabs --}}
+        <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm">
+            <a href="{{ route('administrasi.inventaris.summary', array_merge(request()->query(), ['year' => $selectedYear])) }}"
+               class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'summary' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+                Summary
+            </a>
+            <a href="{{ route('administrasi.inventaris.barang') }}"
+               class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'barang' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+                Barang
+            </a>
+            <a href="{{ route('administrasi.inventaris.pembelian') }}"
+               class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'pembelian' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+                Pembelian
+            </a>
+            <a href="{{ route('administrasi.inventaris.stock-opname') }}"
+               class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'stock_opname' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+                Stock Opname
+            </a>
+        </div>
     </div>
 </div>
 
-{{-- ============================== PAGE TITLE & YEAR SELECTOR ============================== --}}
-<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-    <div>
-        <h1 class="text-2xl font-bold text-[#18181B] tracking-tight">Inventaris — Summary Overview</h1>
-        <p class="text-xs text-[#71717A] mt-0.5">Rekapitulasi kondisi aset berdasarkan jenis lokasi & rincian ruangan kantor</p>
+{{-- ============================== DYNAMIC YEAR FILTER BAR ============================== --}}
+<div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 mb-6 shadow-sm">
+    <div class="text-xs font-bold uppercase tracking-wider text-[#71717A] mb-3 text-center sm:text-left flex items-center gap-2">
+        <i data-lucide="calendar" class="w-4 h-4 text-[#4B6A34]"></i>
+        <span>PERIODE TAHUN SUMMARY INVENTARIS</span>
     </div>
-
-    {{-- Year Filter Pills --}}
-    <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm shrink-0">
+    <div class="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin">
         @foreach($years as $yr)
-        <a href="{{ route('administrasi.inventaris.summary', ['year' => $yr]) }}"
-           class="px-4 py-1.5 text-xs font-bold rounded-lg transition-all {{ $selectedYear === $yr ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
-            {{ $yr }}
+        <a href="{{ route('administrasi.inventaris.summary', array_merge(request()->query(), ['year' => $yr])) }}"
+           class="px-5 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap {{ (int)$selectedYear === (int)$yr ? 'bg-[#4B6A34] text-white shadow-sm' : 'bg-[#F4F4F5] text-[#52525B] hover:bg-[#E4E4E7] hover:text-[#18181B]' }}">
+            Tahun {{ $yr }}
         </a>
         @endforeach
     </div>
 </div>
 
 {{-- ============================== SECTION 1: GUDANG ============================== --}}
+@if(isset($summaryData['Gudang']))
 <div class="bg-white border border-[#E5E7EB] rounded-2xl shadow-sm mb-6 overflow-hidden">
     {{-- Section Header --}}
     <div class="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between bg-[#F9FAFB]">
@@ -111,8 +134,10 @@
         </table>
     </div>
 </div>
+@endif
 
 {{-- ============================== SECTION 2: KANTOR (AGREGAT & BREAKDOWN PER RUANGAN) ============================== --}}
+@if(isset($summaryData['Kantor']))
 <div class="bg-white border border-[#E5E7EB] rounded-2xl shadow-sm mb-6 overflow-hidden">
     {{-- Section Header --}}
     <div class="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between bg-[#F9FAFB]">
@@ -178,9 +203,10 @@
         </table>
     </div>
 </div>
+@endif
 
 {{-- ============================== SECTION 3: BREAKDOWN PER LOKASI SPESIFIK (KANTOR) ============================== --}}
-@if(isset($kantorRoomSummary) && count($kantorRoomSummary) > 0)
+@if(isset($summaryData['Kantor']) && isset($kantorRoomSummary) && count($kantorRoomSummary) > 0)
 <div class="bg-white border border-[#E5E7EB] rounded-2xl shadow-sm mb-6 overflow-hidden">
     {{-- Section Header --}}
     <div class="px-6 py-4 border-b border-[#E5E7EB] flex items-center justify-between bg-amber-50/50">

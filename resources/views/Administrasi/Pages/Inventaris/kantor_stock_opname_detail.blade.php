@@ -16,16 +16,53 @@
     <span class="text-[#18181B] font-semibold">Detail</span>
 </nav>
 
-{{-- ============================== HEADER & ACTION BUTTONS ============================== --}}
-<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
-    <div>
-        <h1 class="text-2xl font-bold text-[#18181B] tracking-tight">Stock Opname Kantor: {{ $formattedDate }}</h1>
-        <p class="text-sm text-[#71717A] mt-0.5">
-            {{ ($sessionMeta->catatan_sesi ?? null) ?: 'Stock Opname rutin kantor' }}
-        </p>
+{{-- ============================== HEADER & SUB-TABS ============================== --}}
+<div class="flex flex-col gap-4 mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-2xl font-bold text-[#18181B] tracking-tight">Stock Opname Kantor: {{ $formattedDate }}</h1>
+            <p class="text-sm text-[#71717A] mt-0.5">
+                {{ ($sessionMeta->catatan_sesi ?? null) ?: 'Stock Opname rutin kantor' }}
+            </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3 shrink-0">
+            {{-- Location Switcher Pills --}}
+            <div class="inline-flex bg-[#F4F4F5] border border-[#E5E7EB] rounded-xl p-1 shadow-sm">
+                <a href="{{ route('administrasi.inventaris.gudang.stock-opname') }}"
+                   class="px-4 py-2 text-xs font-bold rounded-lg transition-all text-[#52525B] hover:text-[#18181B] hover:bg-white">
+                    Gudang
+                </a>
+                <a href="{{ route('administrasi.inventaris.kantor.stock-opname') }}"
+                   class="px-4 py-2 text-xs font-bold rounded-lg transition-all bg-[#4B6A34] text-white shadow-sm">
+                    Kantor
+                </a>
+            </div>
+
+            {{-- Feature Sub-tabs --}}
+            <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm overflow-x-auto max-w-full">
+                <a href="{{ route('administrasi.inventaris.summary') }}"
+                   class="px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]">
+                    Summary
+                </a>
+                <a href="{{ route('administrasi.inventaris.kantor.barang') }}"
+                   class="px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap {{ $activeTab === 'barang' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+                    Barang
+                </a>
+                <a href="{{ route('administrasi.inventaris.kantor.pembelian') }}"
+                   class="px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap {{ $activeTab === 'pembelian' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+                    Pembelian
+                </a>
+                <a href="{{ route('administrasi.inventaris.kantor.stock-opname') }}"
+                   class="px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap {{ $activeTab === 'stock_opname' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+                    Stock Opname
+                </a>
+            </div>
+        </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2.5">
+    {{-- Action Buttons Row --}}
+    <div class="flex flex-wrap items-center justify-start sm:justify-end gap-2.5">
         {{-- Edit Sesi --}}
         <button onclick="document.getElementById('modalEditSession').classList.remove('hidden')"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#E5E7EB] text-[#374151] text-xs font-semibold rounded-xl hover:bg-[#F9FAFB] transition-all shadow-sm">
@@ -51,24 +88,6 @@
             <i data-lucide="plus" class="w-4 h-4"></i>
             <span>Tambah Barang</span>
         </button>
-    </div>
-</div>
-
-{{-- ============================== SUB-TABS ============================== --}}
-<div class="flex items-center justify-start mb-6">
-    <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm">
-        <a href="{{ route('administrasi.inventaris.kantor.barang') }}"
-           class="px-5 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'barang' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
-            Barang
-        </a>
-        <a href="{{ route('administrasi.inventaris.kantor.pembelian') }}"
-           class="px-5 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'pembelian' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
-            Pembelian
-        </a>
-        <a href="{{ route('administrasi.inventaris.kantor.stock-opname') }}"
-           class="px-5 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'stock_opname' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
-            Stock Opname
-        </a>
     </div>
 </div>
 

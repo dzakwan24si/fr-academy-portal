@@ -21,7 +21,29 @@ class ProgramReguler extends Model
         'tanggal_pelaksanaan' => 'array',
         'Mulai_program' => 'date:Y-m-d',
         'Selesai_program' => 'date:Y-m-d',
+        'kelas' => 'integer',
+        'resign' => 'integer',
+        'staff' => 'integer',
+        'lulus' => 'integer',
     ];
+
+    public function setStaffAttribute($value): void
+    {
+        $intVal = ($value !== null && $value !== '') ? (int) $value : null;
+        $this->attributes['staff'] = $intVal;
+        if (! isset($this->attributes['lulus']) || $this->attributes['lulus'] === null) {
+            $this->attributes['lulus'] = $intVal;
+        }
+    }
+
+    public function setLulusAttribute($value): void
+    {
+        $intVal = ($value !== null && $value !== '') ? (int) $value : null;
+        $this->attributes['lulus'] = $intVal;
+        if (! isset($this->attributes['staff']) || $this->attributes['staff'] === null) {
+            $this->attributes['staff'] = $intVal;
+        }
+    }
 
     public function trainingRecords()
     {

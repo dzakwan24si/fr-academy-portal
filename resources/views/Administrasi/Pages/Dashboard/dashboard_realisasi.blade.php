@@ -232,13 +232,13 @@
             <div>
                 <p class="text-[11px] font-bold text-[#71717A] uppercase text-center tracking-wider mb-1">REALISASI PROGRAM MT (PESERTA)</p>
                 <div class="text-center">
-                    <span class="text-4xl font-extrabold text-[#18181B] tracking-tight">{{ $regulerMt['percentage'] }}%</span>
+                    <span id="kpiMtPercentage" class="text-4xl font-extrabold text-[#18181B] tracking-tight">{{ $regulerMt['percentage'] }}%</span>
                 </div>
 
                 {{-- Progress Bar --}}
                 <div class="mt-3">
                     <div class="w-full bg-[#E5E7EB] rounded-full h-3 overflow-hidden">
-                        <div class="bg-[#1b4332] h-full rounded-full transition-all duration-500" style="width: {{ min(100, $regulerMt['percentage']) }}%"></div>
+                        <div id="kpiMtProgressBar" class="bg-[#1b4332] h-full rounded-full transition-all duration-500" style="width: {{ min(100, $regulerMt['percentage']) }}%"></div>
                     </div>
                     <p class="text-[10px] text-right font-bold text-[#71717A] mt-1">Target {{ $regulerMt['target'] }}%</p>
                 </div>
@@ -249,7 +249,8 @@
                 <div>
                     <p class="text-[10px] font-semibold text-[#71717A]">Jumlah Peserta</p>
                     <p class="text-xs font-bold text-[#18181B] flex items-center justify-center gap-1 mt-0.5">
-                        <i data-lucide="users" class="w-3 h-3 text-[#1b4332]"></i> {{ $regulerMt['jumlah_peserta'] }} / {{ $regulerMt['target_peserta'] }}
+                        <i data-lucide="users" class="w-3 h-3 text-[#1b4332]"></i>
+                        <span id="kpiMtJumlahPesertaText">{{ $regulerMt['jumlah_peserta'] }} / {{ $regulerMt['target_peserta'] }}</span>
                     </p>
                     <span class="text-[9px] text-[#A1A1AA]">orang</span>
                 </div>
@@ -441,12 +442,17 @@
                         <i data-lucide="graduation-cap" class="w-3.5 h-3.5 shrink-0"></i>
                         <h3 class="text-[11px] font-extrabold uppercase tracking-wide">TRAINING REGULER - STAF</h3>
                     </div>
-                    <span class="text-[9px] bg-emerald-800/80 border border-emerald-600/50 text-emerald-100 font-bold px-1.5 py-0.5 rounded">
-                        {{ count($mtStafTable) }} Program
-                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] bg-emerald-800/80 border border-emerald-600/50 text-emerald-100 font-bold px-1.5 py-0.5 rounded">
+                            {{ count($mtStafTable) }} Program
+                        </span>
+                        <button type="button" onclick="openRegulerModal('staf')" class="text-[9px] bg-white/20 hover:bg-white/30 text-white font-bold px-2 py-0.5 rounded transition-all flex items-center gap-1 cursor-pointer shadow-2xs" title="Edit Data Program Staf">
+                            <i data-lucide="edit-3" class="w-2.5 h-2.5"></i> Edit Data
+                        </button>
+                    </div>
                 </div>
 
-                {{-- Table (Compact) --}}
+                {{-- Table (Compact with Inline Edit) --}}
                 <div class="overflow-x-auto max-h-56 overflow-y-auto">
                     <table class="w-full text-left text-[11px]">
                         <thead class="bg-[#F9FAFB] text-[#71717A] font-bold border-b border-[#E5E7EB] text-[9px] uppercase sticky top-0 z-10">
@@ -455,24 +461,49 @@
                                 <th class="px-1.5 py-1.5 text-center">RENCANA</th>
                                 <th class="px-1.5 py-1.5 text-center">KELAS</th>
                                 <th class="px-1.5 py-1.5 text-center">RESIGN</th>
-                                <th class="px-1.5 py-1.5 text-center">LULUS</th>
+                                <th class="px-1.5 py-1.5 text-center" title="Staff (Lulus)">STAFF</th>
+                                <th class="px-1 py-1.5 text-center w-12">AKSI</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-[#F4F4F5] text-[#18181B] font-medium text-[10px]">
+                        <tbody id="mtStafTableBody" class="divide-y divide-[#F4F4F5] text-[#18181B] font-medium text-[10px]">
                             @forelse($mtStafTable as $row)
-                                <tr class="hover:bg-emerald-50/50 transition-colors">
-                                    <td class="px-2.5 py-1.5 font-bold flex items-center gap-1 truncate max-w-[140px]" title="{{ $row['name'] }}">
+                                <tr id="reguler-row-{{ $row['id'] }}" data-id="{{ $row['id'] }}" data-name="{{ $row['name'] }}" data-rencana="{{ $row['rencana'] }}" class="hover:bg-emerald-50/50 transition-colors reguler-staf-row">
+                                    <td class="px-2.5 py-1.5 font-bold flex items-center gap-1 truncate max-w-[130px]" title="{{ $row['name'] }}">
                                         <span class="w-1.5 h-1.5 rounded-full bg-[#1b4332] shrink-0"></span>
                                         <span class="truncate">{{ $row['name'] }}</span>
                                     </td>
-                                    <td class="px-1.5 py-1.5 text-center text-[#52525B]">{{ $row['rencana'] }}</td>
-                                    <td class="px-1.5 py-1.5 text-center font-bold text-slate-800">{{ $row['kelas'] }}</td>
-                                    <td class="px-1.5 py-1.5 text-center text-rose-600 font-semibold">{{ $row['resign'] }}</td>
-                                    <td class="px-1.5 py-1.5 text-center text-emerald-600 font-bold">{{ $row['lulus'] }}</td>
+                                    <td class="px-1.5 py-1.5 text-center text-[#52525B] font-semibold cell-rencana">{{ $row['rencana'] }}</td>
+                                    <td class="px-1.5 py-1.5 text-center font-bold text-slate-800 cell-kelas">
+                                        <span class="display-val">{{ $row['kelas'] }}</span>
+                                        <input type="number" min="0" class="edit-input hidden w-11 text-center text-[10px] font-bold p-0.5 border border-emerald-400 rounded focus:ring-1 focus:ring-emerald-500 bg-white" value="{{ $row['kelas'] }}" oninput="autoCalculateRowStaff({{ $row['id'] }})" onkeydown="handleRowKeydown(event, {{ $row['id'] }})">
+                                    </td>
+                                    <td class="px-1.5 py-1.5 text-center text-rose-600 font-semibold cell-resign">
+                                        <span class="display-val">{{ $row['resign'] }}</span>
+                                        <input type="number" min="0" class="edit-input hidden w-11 text-center text-[10px] font-bold p-0.5 border border-rose-400 rounded focus:ring-1 focus:ring-rose-500 bg-white text-rose-600" value="{{ $row['resign'] }}" oninput="autoCalculateRowStaff({{ $row['id'] }})" onkeydown="handleRowKeydown(event, {{ $row['id'] }})">
+                                    </td>
+                                    <td class="px-1.5 py-1.5 text-center text-emerald-600 font-bold cell-staff">
+                                        <span class="display-val">{{ $row['staff'] ?? $row['lulus'] }}</span>
+                                        <input type="number" min="0" class="edit-input hidden w-11 text-center text-[10px] font-bold p-0.5 border border-emerald-400 rounded focus:ring-1 focus:ring-emerald-500 bg-white text-emerald-600" value="{{ $row['staff'] ?? $row['lulus'] }}" onkeydown="handleRowKeydown(event, {{ $row['id'] }})">
+                                    </td>
+                                    <td class="px-1 py-1 text-center whitespace-nowrap cell-actions">
+                                        <div class="display-actions flex items-center justify-center gap-1">
+                                            <button type="button" onclick="startEditRegulerRow({{ $row['id'] }})" class="p-1 text-slate-400 hover:text-emerald-700 hover:bg-emerald-100 rounded transition-colors" title="Edit Baris Ini">
+                                                <i data-lucide="edit-3" class="w-3 h-3"></i>
+                                            </button>
+                                        </div>
+                                        <div class="edit-actions hidden flex items-center justify-center gap-1">
+                                            <button type="button" onclick="saveEditRegulerRow({{ $row['id'] }})" class="p-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded transition-colors shadow-xs" title="Simpan">
+                                                <i data-lucide="check" class="w-3 h-3"></i>
+                                            </button>
+                                            <button type="button" onclick="cancelEditRegulerRow({{ $row['id'] }})" class="p-1 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded transition-colors" title="Batal">
+                                                <i data-lucide="x" class="w-3 h-3"></i>
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-3 py-4 text-center text-[10px] text-slate-400">Tidak ada data program staf</td>
+                                    <td colspan="6" class="px-3 py-4 text-center text-[10px] text-slate-400">Tidak ada data program staf</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -484,9 +515,9 @@
             <div class="bg-[#F9FAFB] border-t border-[#E5E7EB] px-3 py-1.5 flex items-center justify-between text-[10px]">
                 <span class="font-extrabold uppercase text-[#18181B] text-[10px]">TOTAL STAF</span>
                 <div class="flex items-center gap-2.5 font-bold">
-                    <span class="text-slate-700">PESERTA: <span class="font-extrabold text-[#18181B]">{{ $mtStafSummary['peserta'] }} / {{ $mtStafSummary['rencana'] }}</span></span>
-                    <span class="text-rose-600">RESIGN: {{ $mtStafSummary['resign'] }}</span>
-                    <span class="text-emerald-600">LULUS: {{ $mtStafSummary['lulus'] }}</span>
+                    <span class="text-slate-700">PESERTA: <span id="stafSummaryPeserta" class="font-extrabold text-[#18181B]">{{ $mtStafSummary['peserta'] }} / {{ $mtStafSummary['rencana'] }}</span></span>
+                    <span class="text-rose-600">RESIGN: <span id="stafSummaryResign">{{ $mtStafSummary['resign'] }}</span></span>
+                    <span class="text-emerald-600">STAFF: <span id="stafSummaryLulus">{{ $mtStafSummary['lulus'] }}</span></span>
                 </div>
             </div>
         </div>
@@ -500,12 +531,17 @@
                         <i data-lucide="users" class="w-3.5 h-3.5 shrink-0"></i>
                         <h3 class="text-[11px] font-extrabold uppercase tracking-wide">TRAINING REGULER - MANDOR</h3>
                     </div>
-                    <span class="text-[9px] bg-emerald-900/80 border border-emerald-600/50 text-emerald-100 font-bold px-1.5 py-0.5 rounded">
-                        {{ count($mtMandorTable) }} Program
-                    </span>
+                    <div class="flex items-center gap-1.5">
+                        <span class="text-[9px] bg-emerald-900/80 border border-emerald-600/50 text-emerald-100 font-bold px-1.5 py-0.5 rounded">
+                            {{ count($mtMandorTable) }} Program
+                        </span>
+                        <button type="button" onclick="openRegulerModal('mandor')" class="text-[9px] bg-white/20 hover:bg-white/30 text-white font-bold px-2 py-0.5 rounded transition-all flex items-center gap-1 cursor-pointer shadow-2xs" title="Edit Data Program Mandor">
+                            <i data-lucide="edit-3" class="w-2.5 h-2.5"></i> Edit Data
+                        </button>
+                    </div>
                 </div>
 
-                {{-- Table (Compact) --}}
+                {{-- Table (Compact with Inline Edit) --}}
                 <div class="overflow-x-auto max-h-56 overflow-y-auto">
                     <table class="w-full text-left text-[11px]">
                         <thead class="bg-[#F9FAFB] text-[#71717A] font-bold border-b border-[#E5E7EB] text-[9px] uppercase sticky top-0 z-10">
@@ -515,24 +551,49 @@
                                 <th class="px-1.5 py-1.5 text-center">KELAS</th>
                                 <th class="px-1.5 py-1.5 text-center">RESIGN</th>
                                 <th class="px-1.5 py-1.5 text-center">LULUS</th>
+                                <th class="px-1 py-1.5 text-center w-12">AKSI</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-[#F4F4F5] text-[#18181B] font-medium text-[10px]">
+                        <tbody id="mtMandorTableBody" class="divide-y divide-[#F4F4F5] text-[#18181B] font-medium text-[10px]">
                             @forelse($mtMandorTable as $row)
-                                <tr class="hover:bg-emerald-50/50 transition-colors">
-                                    <td class="px-2.5 py-1.5 font-bold flex items-center gap-1 truncate max-w-[140px]" title="{{ $row['name'] }} ({{ $row['region'] }})">
+                                <tr id="reguler-row-{{ $row['id'] }}" data-id="{{ $row['id'] }}" data-name="{{ $row['name'] }}" data-rencana="{{ $row['rencana'] }}" class="hover:bg-emerald-50/50 transition-colors reguler-mandor-row">
+                                    <td class="px-2.5 py-1.5 font-bold flex items-center gap-1 truncate max-w-[130px]" title="{{ $row['name'] }} ({{ $row['region'] }})">
                                         <span class="w-1.5 h-1.5 rounded-full bg-[#2d5a27] shrink-0"></span>
                                         <span class="truncate">{{ $row['name'] }}</span>
                                         <span class="text-[8px] font-semibold text-slate-400">({{ $row['region'] }})</span>
                                     </td>
-                                    <td class="px-1.5 py-1.5 text-center text-[#52525B]">{{ $row['rencana'] }}</td>
-                                    <td class="px-1.5 py-1.5 text-center font-bold text-slate-800">{{ $row['kelas'] }}</td>
-                                    <td class="px-1.5 py-1.5 text-center text-rose-600 font-semibold">{{ $row['resign'] }}</td>
-                                    <td class="px-1.5 py-1.5 text-center text-emerald-600 font-bold">{{ $row['lulus'] }}</td>
+                                    <td class="px-1.5 py-1.5 text-center text-[#52525B] font-semibold cell-rencana">{{ $row['rencana'] }}</td>
+                                    <td class="px-1.5 py-1.5 text-center font-bold text-slate-800 cell-kelas">
+                                        <span class="display-val">{{ $row['kelas'] }}</span>
+                                        <input type="number" min="0" class="edit-input hidden w-11 text-center text-[10px] font-bold p-0.5 border border-emerald-400 rounded focus:ring-1 focus:ring-emerald-500 bg-white" value="{{ $row['kelas'] }}" oninput="autoCalculateRowStaff({{ $row['id'] }})" onkeydown="handleRowKeydown(event, {{ $row['id'] }})">
+                                    </td>
+                                    <td class="px-1.5 py-1.5 text-center text-rose-600 font-semibold cell-resign">
+                                        <span class="display-val">{{ $row['resign'] }}</span>
+                                        <input type="number" min="0" class="edit-input hidden w-11 text-center text-[10px] font-bold p-0.5 border border-rose-400 rounded focus:ring-1 focus:ring-rose-500 bg-white text-rose-600" value="{{ $row['resign'] }}" oninput="autoCalculateRowStaff({{ $row['id'] }})" onkeydown="handleRowKeydown(event, {{ $row['id'] }})">
+                                    </td>
+                                    <td class="px-1.5 py-1.5 text-center text-emerald-600 font-bold cell-staff">
+                                        <span class="display-val">{{ $row['lulus'] }}</span>
+                                        <input type="number" min="0" class="edit-input hidden w-11 text-center text-[10px] font-bold p-0.5 border border-emerald-400 rounded focus:ring-1 focus:ring-emerald-500 bg-white text-emerald-600" value="{{ $row['lulus'] }}" onkeydown="handleRowKeydown(event, {{ $row['id'] }})">
+                                    </td>
+                                    <td class="px-1 py-1 text-center whitespace-nowrap cell-actions">
+                                        <div class="display-actions flex items-center justify-center gap-1">
+                                            <button type="button" onclick="startEditRegulerRow({{ $row['id'] }})" class="p-1 text-slate-400 hover:text-emerald-700 hover:bg-emerald-100 rounded transition-colors" title="Edit Baris Ini">
+                                                <i data-lucide="edit-3" class="w-3 h-3"></i>
+                                            </button>
+                                        </div>
+                                        <div class="edit-actions hidden flex items-center justify-center gap-1">
+                                            <button type="button" onclick="saveEditRegulerRow({{ $row['id'] }})" class="p-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded transition-colors shadow-xs" title="Simpan">
+                                                <i data-lucide="check" class="w-3 h-3"></i>
+                                            </button>
+                                            <button type="button" onclick="cancelEditRegulerRow({{ $row['id'] }})" class="p-1 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded transition-colors" title="Batal">
+                                                <i data-lucide="x" class="w-3 h-3"></i>
+                                            </button>
+                                        </div>
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="5" class="px-3 py-4 text-center text-[10px] text-slate-400">Tidak ada data program mandor</td>
+                                    <td colspan="6" class="px-3 py-4 text-center text-[10px] text-slate-400">Tidak ada data program mandor</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -544,9 +605,9 @@
             <div class="bg-[#F9FAFB] border-t border-[#E5E7EB] px-3 py-1.5 flex items-center justify-between text-[10px]">
                 <span class="font-extrabold uppercase text-[#18181B] text-[10px]">TOTAL MANDOR</span>
                 <div class="flex items-center gap-2.5 font-bold">
-                    <span class="text-slate-700">PESERTA: <span class="font-extrabold text-[#18181B]">{{ $mtMandorSummary['peserta'] }} / {{ $mtMandorSummary['rencana'] }}</span></span>
-                    <span class="text-rose-600">RESIGN: {{ $mtMandorSummary['resign'] }}</span>
-                    <span class="text-emerald-600">LULUS: {{ $mtMandorSummary['lulus'] }}</span>
+                    <span class="text-slate-700">PESERTA: <span id="mandorSummaryPeserta" class="font-extrabold text-[#18181B]">{{ $mtMandorSummary['peserta'] }} / {{ $mtMandorSummary['rencana'] }}</span></span>
+                    <span class="text-rose-600">RESIGN: <span id="mandorSummaryResign">{{ $mtMandorSummary['resign'] }}</span></span>
+                    <span class="text-emerald-600">LULUS: <span id="mandorSummaryLulus">{{ $mtMandorSummary['lulus'] }}</span></span>
                 </div>
             </div>
         </div>
@@ -747,6 +808,390 @@
         const modal = document.getElementById('modalEditTalentProgress');
         if (modal) modal.classList.add('hidden');
     }
+
+    // --- Inline & Modal Editing for Program Reguler (Staf & Mandor) ---
+    function startEditRegulerRow(id) {
+        const row = document.getElementById('reguler-row-' + id);
+        if (!row) return;
+
+        row.querySelectorAll('.display-val').forEach(el => el.classList.add('hidden'));
+        row.querySelectorAll('.edit-input').forEach(el => el.classList.remove('hidden'));
+
+        const displayAct = row.querySelector('.display-actions');
+        const editAct = row.querySelector('.edit-actions');
+        if (displayAct) displayAct.classList.add('hidden');
+        if (editAct) editAct.classList.remove('hidden');
+
+        const kelasInput = row.querySelector('.cell-kelas .edit-input');
+        if (kelasInput) kelasInput.focus();
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    function cancelEditRegulerRow(id, resetValues = true) {
+        const row = document.getElementById('reguler-row-' + id);
+        if (!row) return;
+
+        if (resetValues) {
+            const kVal = row.querySelector('.cell-kelas .display-val')?.textContent.trim() || '0';
+            const rVal = row.querySelector('.cell-resign .display-val')?.textContent.trim() || '0';
+            const sVal = row.querySelector('.cell-staff .display-val')?.textContent.trim() || '0';
+
+            const kInput = row.querySelector('.cell-kelas .edit-input');
+            const rInput = row.querySelector('.cell-resign .edit-input');
+            const sInput = row.querySelector('.cell-staff .edit-input');
+
+            if (kInput) kInput.value = kVal;
+            if (rInput) rInput.value = rVal;
+            if (sInput) sInput.value = sVal;
+        }
+
+        row.querySelectorAll('.edit-input').forEach(el => el.classList.add('hidden'));
+        row.querySelectorAll('.display-val').forEach(el => el.classList.remove('hidden'));
+
+        const displayAct = row.querySelector('.display-actions');
+        const editAct = row.querySelector('.edit-actions');
+        if (displayAct) displayAct.classList.remove('hidden');
+        if (editAct) editAct.classList.add('hidden');
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    function autoCalculateRowStaff(id) {
+        const row = document.getElementById('reguler-row-' + id);
+        if (!row) return;
+
+        const kInput = row.querySelector('.cell-kelas .edit-input');
+        const rInput = row.querySelector('.cell-resign .edit-input');
+        const sInput = row.querySelector('.cell-staff .edit-input');
+
+        if (kInput && rInput && sInput) {
+            const k = parseInt(kInput.value) || 0;
+            const r = parseInt(rInput.value) || 0;
+            sInput.value = Math.max(0, k - r);
+        }
+    }
+
+    function handleRowKeydown(event, id) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            saveEditRegulerRow(id);
+        } else if (event.key === 'Escape') {
+            event.preventDefault();
+            cancelEditRegulerRow(id);
+        }
+    }
+
+    async function saveEditRegulerRow(id) {
+        const row = document.getElementById('reguler-row-' + id);
+        if (!row) return;
+
+        const kInput = row.querySelector('.cell-kelas .edit-input');
+        const rInput = row.querySelector('.cell-resign .edit-input');
+        const sInput = row.querySelector('.cell-staff .edit-input');
+
+        const kelasVal = kInput ? (parseInt(kInput.value) || 0) : 0;
+        const resignVal = rInput ? (parseInt(rInput.value) || 0) : 0;
+        const staffVal = sInput ? (parseInt(sInput.value) || 0) : 0;
+
+        const saveBtn = row.querySelector('.edit-actions button[title="Simpan"]');
+        if (saveBtn) saveBtn.disabled = true;
+
+        try {
+            const response = await fetch('{{ route('administrasi.dashboard-realisasi.update-reguler-row') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: id,
+                    kelas: kelasVal,
+                    resign: resignVal,
+                    staff: staffVal,
+                    lulus: staffVal
+                })
+            });
+
+            const res = await response.json();
+            if (res.success) {
+                const kDisp = row.querySelector('.cell-kelas .display-val');
+                const rDisp = row.querySelector('.cell-resign .display-val');
+                const sDisp = row.querySelector('.cell-staff .display-val');
+
+                if (kDisp) kDisp.textContent = res.data.kelas;
+                if (rDisp) rDisp.textContent = res.data.resign;
+                if (sDisp) sDisp.textContent = res.data.staff;
+
+                const opt = document.querySelector('#modalRegulerSelect option[value="' + id + '"]');
+                if (opt) {
+                    opt.setAttribute('data-kelas', res.data.kelas);
+                    opt.setAttribute('data-resign', res.data.resign);
+                    opt.setAttribute('data-staff', res.data.staff);
+                }
+
+                cancelEditRegulerRow(id, false);
+
+                if (row.classList.contains('reguler-staf-row')) {
+                    recalculateStafTableTotals();
+                } else {
+                    recalculateMandorTableTotals();
+                }
+
+                row.classList.add('bg-emerald-100');
+                setTimeout(() => row.classList.remove('bg-emerald-100'), 1500);
+
+                showCustomToast('success', res.message || 'Data program berhasil diperbarui');
+            } else {
+                showCustomToast('error', res.message || 'Gagal menyimpan perubahan');
+            }
+        } catch (err) {
+            console.error(err);
+            showCustomToast('error', 'Terjadi kesalahan saat menyimpan data');
+        } finally {
+            if (saveBtn) saveBtn.disabled = false;
+        }
+    }
+
+    function recalculateStafTableTotals() {
+        let sumKelas = 0;
+        let sumResign = 0;
+        let sumStaff = 0;
+        let sumRencana = 0;
+
+        document.querySelectorAll('#mtStafTableBody tr.reguler-staf-row').forEach(tr => {
+            const ren = parseInt(tr.getAttribute('data-rencana')) || 0;
+            const k = parseInt(tr.querySelector('.cell-kelas .display-val')?.textContent) || 0;
+            const r = parseInt(tr.querySelector('.cell-resign .display-val')?.textContent) || 0;
+            const s = parseInt(tr.querySelector('.cell-staff .display-val')?.textContent) || 0;
+
+            sumRencana += ren;
+            sumKelas += k;
+            sumResign += r;
+            sumStaff += s;
+        });
+
+        const elPeserta = document.getElementById('stafSummaryPeserta');
+        const elResign = document.getElementById('stafSummaryResign');
+        const elLulus = document.getElementById('stafSummaryLulus');
+
+        if (elPeserta) elPeserta.textContent = sumKelas + ' / ' + sumRencana;
+        if (elResign) elResign.textContent = sumResign;
+        if (elLulus) elLulus.textContent = sumStaff;
+
+        const kpiPesertaText = document.getElementById('kpiMtJumlahPesertaText');
+        const kpiPercentage = document.getElementById('kpiMtPercentage');
+        const kpiProgressBar = document.getElementById('kpiMtProgressBar');
+
+        if (kpiPesertaText) kpiPesertaText.textContent = sumKelas + ' / ' + sumRencana;
+        if (sumRencana > 0) {
+            const pct = Math.round((sumKelas / sumRencana) * 100);
+            if (kpiPercentage) kpiPercentage.textContent = pct + '%';
+            if (kpiProgressBar) kpiProgressBar.style.width = Math.min(100, pct) + '%';
+        }
+    }
+
+    function recalculateMandorTableTotals() {
+        let sumKelas = 0;
+        let sumResign = 0;
+        let sumStaff = 0;
+        let sumRencana = 0;
+
+        document.querySelectorAll('#mtMandorTableBody tr.reguler-mandor-row').forEach(tr => {
+            const ren = parseInt(tr.getAttribute('data-rencana')) || 0;
+            const k = parseInt(tr.querySelector('.cell-kelas .display-val')?.textContent) || 0;
+            const r = parseInt(tr.querySelector('.cell-resign .display-val')?.textContent) || 0;
+            const s = parseInt(tr.querySelector('.cell-staff .display-val')?.textContent) || 0;
+
+            sumRencana += ren;
+            sumKelas += k;
+            sumResign += r;
+            sumStaff += s;
+        });
+
+        const elPeserta = document.getElementById('mandorSummaryPeserta');
+        const elResign = document.getElementById('mandorSummaryResign');
+        const elLulus = document.getElementById('mandorSummaryLulus');
+
+        if (elPeserta) elPeserta.textContent = sumKelas + ' / ' + sumRencana;
+        if (elResign) elResign.textContent = sumResign;
+        if (elLulus) elLulus.textContent = sumStaff;
+    }
+
+    function openRegulerModal(type = 'staf', selectedId = null) {
+        const modal = document.getElementById('modalEditRegulerRow');
+        if (!modal) return;
+
+        const title = document.getElementById('modalRegulerTitle');
+        const select = document.getElementById('modalRegulerSelect');
+        const optStaf = document.getElementById('optgroupStaf');
+        const optMandor = document.getElementById('optgroupMandor');
+
+        if (type === 'staf') {
+            if (title) title.textContent = 'Edit Data Training Reguler - Staf';
+            if (optStaf) optStaf.disabled = false;
+            if (optMandor) optMandor.disabled = true;
+            if (optStaf && optStaf.children.length > 0) {
+                select.value = selectedId || optStaf.children[0].value;
+            }
+        } else {
+            if (title) title.textContent = 'Edit Data Training Reguler - Mandor';
+            if (optStaf) optStaf.disabled = true;
+            if (optMandor) optMandor.disabled = false;
+            if (optMandor && optMandor.children.length > 0) {
+                select.value = selectedId || optMandor.children[0].value;
+            }
+        }
+
+        onModalProgramChange();
+        modal.classList.remove('hidden');
+        if (window.lucide) window.lucide.createIcons();
+    }
+
+    function closeRegulerModal() {
+        const modal = document.getElementById('modalEditRegulerRow');
+        if (modal) modal.classList.add('hidden');
+    }
+
+    function onModalProgramChange() {
+        const select = document.getElementById('modalRegulerSelect');
+        if (!select) return;
+        const opt = select.options[select.selectedIndex];
+        if (!opt) return;
+
+        const rencana = opt.getAttribute('data-rencana') || '0';
+        const kelas = opt.getAttribute('data-kelas') || '0';
+        const resign = opt.getAttribute('data-resign') || '0';
+        const staff = opt.getAttribute('data-staff') || '0';
+
+        document.getElementById('modalRegulerRencana').textContent = rencana;
+        document.getElementById('modalInputKelas').value = kelas;
+        document.getElementById('modalInputResign').value = resign;
+        document.getElementById('modalInputStaff').value = staff;
+    }
+
+    function autoCalculateModalStaff(force = false) {
+        const k = parseInt(document.getElementById('modalInputKelas').value) || 0;
+        const r = parseInt(document.getElementById('modalInputResign').value) || 0;
+        const sInput = document.getElementById('modalInputStaff');
+        if (sInput) {
+            sInput.value = Math.max(0, k - r);
+        }
+    }
+
+    async function submitRegulerModal(event) {
+        event.preventDefault();
+        const select = document.getElementById('modalRegulerSelect');
+        const id = select ? select.value : null;
+        if (!id) return;
+
+        const kelasVal = parseInt(document.getElementById('modalInputKelas').value) || 0;
+        const resignVal = parseInt(document.getElementById('modalInputResign').value) || 0;
+        const staffVal = parseInt(document.getElementById('modalInputStaff').value) || 0;
+
+        const btn = document.getElementById('btnSubmitModalReguler');
+        if (btn) btn.disabled = true;
+
+        try {
+            const response = await fetch('{{ route('administrasi.dashboard-realisasi.update-reguler-row') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: id,
+                    kelas: kelasVal,
+                    resign: resignVal,
+                    staff: staffVal,
+                    lulus: staffVal
+                })
+            });
+
+            const res = await response.json();
+            if (res.success) {
+                const row = document.getElementById('reguler-row-' + id);
+                if (row) {
+                    const kDisp = row.querySelector('.cell-kelas .display-val');
+                    const rDisp = row.querySelector('.cell-resign .display-val');
+                    const sDisp = row.querySelector('.cell-staff .display-val');
+
+                    const kInput = row.querySelector('.cell-kelas .edit-input');
+                    const rInput = row.querySelector('.cell-resign .edit-input');
+                    const sInput = row.querySelector('.cell-staff .edit-input');
+
+                    if (kDisp) kDisp.textContent = res.data.kelas;
+                    if (rDisp) rDisp.textContent = res.data.resign;
+                    if (sDisp) sDisp.textContent = res.data.staff;
+
+                    if (kInput) kInput.value = res.data.kelas;
+                    if (rInput) rInput.value = res.data.resign;
+                    if (sInput) sInput.value = res.data.staff;
+
+                    if (row.classList.contains('reguler-staf-row')) {
+                        recalculateStafTableTotals();
+                    } else {
+                        recalculateMandorTableTotals();
+                    }
+
+                    row.classList.add('bg-emerald-100');
+                    setTimeout(() => row.classList.remove('bg-emerald-100'), 1500);
+                }
+
+                const opt = select.options[select.selectedIndex];
+                if (opt) {
+                    opt.setAttribute('data-kelas', res.data.kelas);
+                    opt.setAttribute('data-resign', res.data.resign);
+                    opt.setAttribute('data-staff', res.data.staff);
+                }
+
+                closeRegulerModal();
+                showCustomToast('success', res.message || 'Data program berhasil diperbarui');
+            } else {
+                showCustomToast('error', res.message || 'Gagal menyimpan perubahan');
+            }
+        } catch (err) {
+            console.error(err);
+            showCustomToast('error', 'Terjadi kesalahan saat menyimpan data');
+        } finally {
+            if (btn) btn.disabled = false;
+        }
+    }
+
+    function showCustomToast(type, message) {
+        let container = document.getElementById('toastContainer');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toastContainer';
+            container.className = 'fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none';
+            document.body.appendChild(container);
+        }
+
+        const toast = document.createElement('div');
+        const isSuccess = type === 'success';
+        toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl shadow-lg border text-xs font-bold transition-all duration-300 transform translate-y-3 opacity-0 ${
+            isSuccess
+                ? 'bg-emerald-900 text-white border-emerald-700 shadow-emerald-900/30'
+                : 'bg-rose-900 text-white border-rose-700 shadow-rose-900/30'
+        }`;
+        toast.innerHTML = `
+            <i data-lucide="${isSuccess ? 'check-circle' : 'alert-circle'}" class="w-4 h-4 shrink-0 text-${isSuccess ? 'emerald-300' : 'rose-300'}"></i>
+            <span>${message}</span>
+        `;
+        container.appendChild(toast);
+        if (window.lucide) window.lucide.createIcons();
+
+        requestAnimationFrame(() => {
+            toast.classList.remove('translate-y-3', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+        });
+
+        setTimeout(() => {
+            toast.classList.remove('translate-y-0', 'opacity-100');
+            toast.classList.add('translate-y-3', 'opacity-0');
+            setTimeout(() => toast.remove(), 300);
+        }, 3500);
+    }
 </script>
 @endpush
 
@@ -792,5 +1237,92 @@
         </form>
     </div>
 </div>
+
+{{-- Modal Edit Program Reguler (Staf & Mandor) --}}
+<div id="modalEditRegulerRow" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
+        <div class="flex items-center justify-between pb-4 border-b border-slate-100">
+            <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
+                    <i data-lucide="edit-3" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 id="modalRegulerTitle" class="font-black text-slate-900 text-base">Edit Data Program Reguler</h3>
+                    <p class="text-xs text-slate-500">Edit data kolom Kelas, Resign, dan Staff langsung</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeRegulerModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg cursor-pointer">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <form id="formEditRegulerRow" onsubmit="submitRegulerModal(event)" class="mt-4 space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Pilih Program</label>
+                <select id="modalRegulerSelect" onchange="onModalProgramChange()" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-bold text-slate-800 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                    <optgroup label="Program Staf" id="optgroupStaf">
+                        @foreach($mtStafTable as $item)
+                            <option value="{{ $item['id'] }}" data-rencana="{{ $item['rencana'] }}" data-kelas="{{ $item['kelas'] }}" data-resign="{{ $item['resign'] }}" data-staff="{{ $item['staff'] ?? $item['lulus'] }}">
+                                {{ $item['name'] }}
+                            </option>
+                        @endforeach
+                    </optgroup>
+                    <optgroup label="Program Mandor" id="optgroupMandor">
+                        @foreach($mtMandorTable as $item)
+                            <option value="{{ $item['id'] }}" data-rencana="{{ $item['rencana'] }}" data-kelas="{{ $item['kelas'] }}" data-resign="{{ $item['resign'] }}" data-staff="{{ $item['lulus'] }}">
+                                {{ $item['name'] }} ({{ $item['region'] }})
+                            </option>
+                        @endforeach
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between text-xs">
+                <span class="text-slate-500 font-medium">Target Rencana:</span>
+                <span id="modalRegulerRencana" class="font-extrabold text-slate-800 text-sm">0</span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">Kelas</label>
+                    <input type="number" min="0" id="modalInputKelas" required oninput="autoCalculateModalStaff()"
+                           class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm font-bold text-slate-900 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                    <p class="text-[9px] text-slate-400 mt-1">Peserta kelas</p>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-rose-700 uppercase tracking-wider mb-1">Resign</label>
+                    <input type="number" min="0" id="modalInputResign" required oninput="autoCalculateModalStaff()"
+                           class="w-full rounded-xl border border-rose-200 px-3 py-2 text-sm font-bold text-rose-600 outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20">
+                    <p class="text-[9px] text-slate-400 mt-1">Jumlah resign</p>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-bold text-emerald-700 uppercase tracking-wider mb-1">Staff (Lulus)</label>
+                    <input type="number" min="0" id="modalInputStaff" required
+                           class="w-full rounded-xl border border-emerald-200 px-3 py-2 text-sm font-bold text-emerald-600 outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20">
+                    <p class="text-[9px] text-slate-400 mt-1">Lulus jadi staff</p>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+                <button type="button" onclick="autoCalculateModalStaff(true)" class="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline flex items-center gap-1 cursor-pointer">
+                    <i data-lucide="calculator" class="w-3.5 h-3.5"></i> Hitung Staff = Kelas - Resign
+                </button>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
+                <button type="button" onclick="closeRegulerModal()" class="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer">
+                    Batal
+                </button>
+                <button type="submit" id="btnSubmitModalReguler" class="px-5 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-all shadow-sm flex items-center gap-1.5 cursor-pointer">
+                    <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{{-- Toast Notification Container --}}
+<div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
 </x-admin-layout>

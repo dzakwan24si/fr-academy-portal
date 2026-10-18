@@ -230,6 +230,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
 Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
     Route::get('/internal-dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/administrasi/dashboard-realisasi', [DashboardRealisasiController::class, 'index'])->name('administrasi.dashboard-realisasi.index');
+    Route::post('/administrasi/dashboard-realisasi/update-reguler-row', [DashboardRealisasiController::class, 'updateRegulerRow'])->name('administrasi.dashboard-realisasi.update-reguler-row');
     Route::get('/administrasi/dashboard-monitoring-tahunan', [DashboardMonitoringTahunanController::class, 'index'])->name('administrasi.dashboard-monitoring-tahunan.index');
 
     Route::prefix('administrasi/program-batch')->name('administrasi.program-batch.')->group(function () {

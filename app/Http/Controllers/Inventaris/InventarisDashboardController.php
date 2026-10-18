@@ -79,9 +79,9 @@ class InventarisDashboardController extends Controller
             }
         }
 
-        // Sort damaged items by jumlah_rusak DESC (Top 10)
+        // Sort damaged items by jumlah_rusak DESC (Seluruh barang yang perlu maintenance / rusak)
         usort($damagedItems, fn ($a, $b) => $b['jumlah_rusak'] <=> $a['jumlah_rusak']);
-        $topDamagedItems = array_slice($damagedItems, 0, 10);
+        $topDamagedItems = $damagedItems;
 
         $healthRatio = $totalAsetUnit > 0 ? round(($totalKondisiBaik / $totalAsetUnit) * 100, 1) : 0;
         $damageRatio = $totalAsetUnit > 0 ? round(($totalKondisiRusak / $totalAsetUnit) * 100, 1) : 0;

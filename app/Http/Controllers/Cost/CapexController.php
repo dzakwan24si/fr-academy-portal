@@ -95,10 +95,22 @@ class CapexController extends Controller
         $kreditMessTotal = (float) (clone $realMessQuery)->sum('kredit');
         $realisasiMessTotal = (float) (clone $realMessQuery)->sum('total_rp');
 
-        $totalRab = $rabKantorTotal + $rabMessTotal;
-        $totalDebit = $debitKantorTotal + $debitMessTotal;
-        $totalKredit = $kreditKantorTotal + $kreditMessTotal;
-        $totalRealisasi = $realisasiKantorTotal + $realisasiMessTotal;
+        if ($selectedLocation === 'kantor') {
+            $totalRab = $rabKantorTotal;
+            $totalDebit = $debitKantorTotal;
+            $totalKredit = $kreditKantorTotal;
+            $totalRealisasi = $realisasiKantorTotal;
+        } elseif ($selectedLocation === 'mess') {
+            $totalRab = $rabMessTotal;
+            $totalDebit = $debitMessTotal;
+            $totalKredit = $kreditMessTotal;
+            $totalRealisasi = $realisasiMessTotal;
+        } else {
+            $totalRab = $rabKantorTotal + $rabMessTotal;
+            $totalDebit = $debitKantorTotal + $debitMessTotal;
+            $totalKredit = $kreditKantorTotal + $kreditMessTotal;
+            $totalRealisasi = $realisasiKantorTotal + $realisasiMessTotal;
+        }
         $sisaRab = $totalRab - $totalRealisasi;
 
         $summary = compact(

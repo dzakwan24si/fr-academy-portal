@@ -60,9 +60,9 @@ class AsistenController extends Controller
             $query->where('asal_rekrut', $request->input('asal_rekrut'));
         }
 
-        // 2. Filter Program
+        // 2. Filter Program (Berdasarkan Nama Besar: FAT, MAT, AAT, TAT, DMT, dll)
         if ($request->filled('program') && $request->input('program') !== 'all') {
-            $query->where('program', $request->input('program'));
+            $this->applyProgramFilter($query, $request->input('program'));
         }
 
         // 3. Filter Region (Kepegawaian Saat Ini)
@@ -193,7 +193,31 @@ class AsistenController extends Controller
 
         // Distinct Filter options
         $asalRekrutList = Asisten::whereNotNull('asal_rekrut')->where('asal_rekrut', '!=', '')->distinct()->orderBy('asal_rekrut')->pluck('asal_rekrut');
-        $programList = Asisten::whereNotNull('program')->where('program', '!=', '')->distinct()->orderBy('program')->pluck('program');
+        $knownCategories = ['FAT', 'MAT', 'AAT', 'TAT', 'DMT', 'Staff Operation'];
+        $otherPrograms = Asisten::whereNotNull('program')
+            ->where('program', '!=', '')
+            ->where(function ($q) {
+                $q->where('program', 'not like', 'Field Assistant%')
+                    ->where('program', 'not like', 'FAT%')
+                    ->where('program', 'not like', 'Estate Cadet%')
+                    ->where('program', 'not like', 'ECT%')
+                    ->where('program', 'not like', 'Mill Assistant%')
+                    ->where('program', 'not like', 'MAT%')
+                    ->where('program', 'not like', 'Admin Assistant%')
+                    ->where('program', 'not like', 'AAT%')
+                    ->where('program', 'not like', '%Administrasi%')
+                    ->where('program', 'not like', 'Traction Assistant%')
+                    ->where('program', 'not like', 'TAT%')
+                    ->where('program', 'not like', '%Traksi%')
+                    ->where('program', 'not like', 'Downstream%')
+                    ->where('program', 'not like', 'DMT%')
+                    ->where('program', 'not like', 'Staff Operation%')
+                    ->where('program', 'not like', 'PMT%');
+            })
+            ->distinct()
+            ->pluck('program')
+            ->toArray();
+        $programList = array_values(array_unique(array_merge($knownCategories, $otherPrograms)));
         $rawRegions = Asisten::whereNotNull('region_saat_ini')->where('region_saat_ini', '!=', '')->distinct()->pluck('region_saat_ini');
         $regionList = RegionHelper::getCanonicalRegions($rawRegions);
         $statusList = Asisten::whereNotNull('status_karyawan')->where('status_karyawan', '!=', '')->distinct()->orderBy('status_karyawan')->pluck('status_karyawan');
@@ -617,16 +641,19 @@ class AsistenController extends Controller
                 'no_bpjs_tk' => trim($row[$columnIndices['no_bpjs_tk'] ?? -1] ?? '') ?: null,
                 'no_bpjs_kes' => trim($row[$columnIndices['no_bpjs_kes'] ?? -1] ?? '') ?: null,
                 'npwp' => trim($row[$columnIndices['npwp'] ?? -1] ?? '') ?: null,
-                'keterangan' => (function () use ($row, $columnIndices) {
+                'keterangan' => (function () use ($row, $columnIndices, $tglResign) {
                     $raw = trim($row[$columnIndices['keterangan'] ?? -1] ?? '');
-                    if (stripos($raw, 'gagal') !== false) {
+                    if (stripos($raw, 'gagal') !== false || stripos($raw, 'culled') !== false) {
                         return 'Gagal';
                     }
-                    if (stripos($raw, 'resign') !== false || stripos($raw, 'phk') !== false) {
+                    if (stripos($raw, 'resign') !== false || stripos($raw, 'phk') !== false || !empty($tglResign)) {
                         return 'Resign';
                     }
+                    if (stripos($raw, 'eksis') !== false || stripos($raw, 'aktif') !== false) {
+                        return 'Aktif';
+                    }
 
-                    return 'Aktif';
+                    return 'Resign';
                 })(),
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -771,7 +798,7 @@ class AsistenController extends Controller
             $query->where('asal_rekrut', $request->input('asal_rekrut'));
         }
         if ($request->filled('program') && $request->input('program') !== 'all') {
-            $query->where('program', $request->input('program'));
+            $this->applyProgramFilter($query, $request->input('program'));
         }
         if ($request->filled('region_saat_ini') && $request->input('region_saat_ini') !== 'all') {
             RegionHelper::applyQueryFilter($query, 'region_saat_ini', $request->input('region_saat_ini'));
@@ -907,7 +934,7 @@ class AsistenController extends Controller
         $programs = $query->orderBy('kode_kategori', 'asc')->orderBy('no', 'asc')->get();
 
         // Pre-fetch Asisten records grouped by program & status & jabatan for instant performance
-        $asistenRecords = Asisten::select(['program', 'keterangan', 'status_kelulusan', 'status_resign', 'jabatan_terakhir', 'status_karyawan'])
+        $asistenRecords = Asisten::select(['id', 'nama', 'program', 'keterangan', 'status_kelulusan', 'status_resign', 'jabatan_terakhir', 'level_jabatan', 'status_karyawan', 'tanggal_resign'])
             ->whereNotNull('program')
             ->get();
 
@@ -952,7 +979,7 @@ class AsistenController extends Controller
             // If no exact norm match, try prefix/suffix match
             if (empty($matchingAsisten)) {
                 foreach ($asistenByNormProgram as $k => $list) {
-                    if (str_contains($k, $normKey) || str_contains($normKey, $k)) {
+                    if ($k !== '' && (str_contains($k, $normKey) || str_contains($normKey, $k))) {
                         $matchingAsisten = array_merge($matchingAsisten, $list);
                     }
                 }
@@ -971,26 +998,46 @@ class AsistenController extends Controller
             foreach ($matchingAsisten as $m) {
                 $ket = strtolower(trim((string) $m->keterangan));
                 $statusKel = strtolower(trim((string) $m->status_kelulusan));
+                $statusRes = strtolower(trim((string) $m->status_resign));
+                $tglRes = trim((string) $m->tanggal_resign);
+                $lvl = strtoupper(trim((string) $m->level_jabatan));
                 $jab = strtoupper(trim((string) $m->jabatan_terakhir));
 
-                if (str_contains($ket, 'gagal') || str_contains($statusKel, 'gagal')) {
+                $isCulled = (str_contains($ket, 'gagal') || str_contains($statusKel, 'gagal') || str_contains($ket, 'culled'));
+                $isResign = (str_contains($ket, 'resign') || str_contains($ket, 'phk') || str_contains($statusRes, 'resign') || str_contains($statusRes, 'phk') || !empty($tglRes));
+                $isEksis = ($ket === 'eksis' || $ket === 'aktif' || str_contains($ket, 'eksis') || str_contains($ket, 'aktif')) && !$isCulled && !$isResign;
+
+                if ($isCulled) {
                     $culledCountFromDb++;
-                } elseif (str_contains($ket, 'resign') || str_contains($ket, 'phk') || str_contains(strtolower($m->status_resign ?? ''), 'resign')) {
+                } elseif ($isResign) {
                     $resignCount++;
-                } else {
+                } elseif ($isEksis) {
                     $eksisCount++;
 
-                    // Position breakdown among active/eksis
-                    if (str_contains($jab, 'PC') || $jab === 'PROJECT COORDINATOR') {
+                    // Position breakdown among active/eksis strictly prioritizing level_jabatan (LVL)
+                    if (in_array($lvl, ['PC', 'P', 'DIR'], true)) {
                         $posPC++;
-                    } elseif (str_contains($jab, 'GM') || str_contains($jab, 'GENERAL MANAGER')) {
+                    } elseif ($lvl === 'GM') {
                         $posGM++;
-                    } elseif (str_contains($jab, 'MGR') || str_contains($jab, 'MANAGER')) {
+                    } elseif (in_array($lvl, ['MGR', 'MK', 'MM', 'MANAGER'], true)) {
                         $posMGR++;
-                    } elseif (str_contains($jab, 'ASKEP') || str_contains($jab, 'ASSISTANT KEPALA')) {
+                    } elseif (in_array($lvl, ['ASKEP', 'KTU'], true)) {
                         $posAskep++;
-                    } else {
+                    } elseif (in_array($lvl, ['ASISTEN', 'ASST', 'STAFF'], true)) {
                         $posAsisten++;
+                    } else {
+                        // Fallback to jabatan_terakhir string if LVL is empty
+                        if (str_contains($jab, 'PC') || str_contains($jab, 'CONTROLLER') || str_contains($jab, 'DIREKTUR')) {
+                            $posPC++;
+                        } elseif (str_contains($jab, 'GENERAL MANAGER') || str_contains($jab, 'GROUP MANAGER') || str_contains($jab, 'GM')) {
+                            $posGM++;
+                        } elseif (str_contains($jab, 'MANAGER') || str_contains($jab, 'MGR')) {
+                            $posMGR++;
+                        } elseif (str_contains($jab, 'ASKEP') || str_contains($jab, 'KTU') || str_contains($jab, 'KEPALA TATA') || str_contains($jab, 'ASSISTANT KEPALA')) {
+                            $posAskep++;
+                        } else {
+                            $posAsisten++;
+                        }
                     }
                 }
             }
@@ -1229,39 +1276,119 @@ class AsistenController extends Controller
 
         if ($filterType === 'resign') {
             $query->where(function ($q) {
-                $q->where('keterangan', 'Resign')
-                    ->orWhere('status_resign', 'Resign')
-                    ->orWhere('status_resign', 'PHK');
+                $q->where('keterangan', 'like', '%Resign%')
+                    ->orWhere('status_resign', 'like', '%Resign%')
+                    ->orWhere('status_resign', 'like', '%PHK%')
+                    ->orWhere(function ($sub) {
+                        $sub->whereNotNull('tanggal_resign')->where('tanggal_resign', '!=', '');
+                    });
+            });
+        } elseif ($filterType === 'culled' || $filterType === 'gagal') {
+            $query->where(function ($q) {
+                $q->where('keterangan', 'like', '%Gagal%')
+                    ->orWhere('keterangan', 'like', '%Culled%')
+                    ->orWhere('status_kelulusan', 'like', '%Gagal%');
             });
         } elseif ($filterType === 'eksis') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'Aktif')
                     ->orWhere('keterangan', 'Eksis');
+            })->where(function ($q) {
+                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
+            })->where(function ($q) {
+                $q->where('status_resign', 'not like', '%Resign%')
+                    ->where('status_resign', 'not like', '%PHK%')
+                    ->where('keterangan', 'not like', '%Resign%')
+                    ->where('keterangan', 'not like', '%PHK%')
+                    ->where('keterangan', 'not like', '%Gagal%')
+                    ->where('keterangan', 'not like', '%Culled%');
             });
         } elseif ($filterType === 'pc') {
             $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')
-                    ->where('level_jabatan', 'like', '%PC%');
+                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
+            })->where(function ($q) {
+                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
+            })->where(function ($q) {
+                $q->where('status_resign', 'not like', '%Resign%')
+                    ->where('status_resign', 'not like', '%PHK%')
+                    ->where('keterangan', 'not like', '%Resign%')
+                    ->where('keterangan', 'not like', '%PHK%');
+            })->where(function ($q) {
+                $q->whereIn('level_jabatan', ['PC', 'P', 'DIR'])
+                    ->orWhere('level_jabatan', 'like', '%PC%')
+                    ->orWhere('jabatan_terakhir', 'like', '%Controller%')
+                    ->orWhere('jabatan_terakhir', 'like', '%Direktur%');
             });
         } elseif ($filterType === 'gm') {
             $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')
-                    ->where('level_jabatan', 'like', '%GM%');
+                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
+            })->where(function ($q) {
+                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
+            })->where(function ($q) {
+                $q->where('status_resign', 'not like', '%Resign%')
+                    ->where('status_resign', 'not like', '%PHK%')
+                    ->where('keterangan', 'not like', '%Resign%')
+                    ->where('keterangan', 'not like', '%PHK%');
+            })->where(function ($q) {
+                $q->where('level_jabatan', 'GM')
+                    ->orWhere('level_jabatan', 'like', '%GM%')
+                    ->orWhere('jabatan_terakhir', 'like', '%General Manager%')
+                    ->orWhere('jabatan_terakhir', 'like', '%Group Manager%');
             });
         } elseif ($filterType === 'mgr') {
             $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')
-                    ->where(fn ($sub) => $sub->where('level_jabatan', 'like', '%MK%')->orWhere('level_jabatan', 'like', '%MM%')->orWhere('level_jabatan', 'like', '%MGR%')->orWhere('level_jabatan', 'like', '%Manager%'));
+                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
+            })->where(function ($q) {
+                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
+            })->where(function ($q) {
+                $q->where('status_resign', 'not like', '%Resign%')
+                    ->where('status_resign', 'not like', '%PHK%')
+                    ->where('keterangan', 'not like', '%Resign%')
+                    ->where('keterangan', 'not like', '%PHK%');
+            })->where(function ($q) {
+                $q->whereIn('level_jabatan', ['MGR', 'MK', 'MM', 'MANAGER'])
+                    ->orWhere('level_jabatan', 'like', '%MGR%')
+                    ->orWhere('level_jabatan', 'like', '%Manager%')
+                    ->orWhere('jabatan_terakhir', 'like', '%Manager%');
             });
         } elseif ($filterType === 'askep') {
             $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')
-                    ->where(fn ($sub) => $sub->where('level_jabatan', 'like', '%ASKEP%')->orWhere('level_jabatan', 'like', '%KTU%'));
+                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
+            })->where(function ($q) {
+                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
+            })->where(function ($q) {
+                $q->where('status_resign', 'not like', '%Resign%')
+                    ->where('status_resign', 'not like', '%PHK%')
+                    ->where('keterangan', 'not like', '%Resign%')
+                    ->where('keterangan', 'not like', '%PHK%');
+            })->where(function ($q) {
+                $q->whereIn('level_jabatan', ['ASKEP', 'KTU'])
+                    ->orWhere('level_jabatan', 'like', '%ASKEP%')
+                    ->orWhere('level_jabatan', 'like', '%KTU%')
+                    ->orWhere('jabatan_terakhir', 'like', '%Askep%')
+                    ->orWhere('jabatan_terakhir', 'like', '%Kepala Tata Usaha%');
             });
         } elseif ($filterType === 'asisten') {
             $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')
-                    ->where(fn ($sub) => $sub->where('level_jabatan', 'like', '%ASISTEN%')->orWhere('level_jabatan', 'like', '%ASST%')->orWhere('level_jabatan', 'like', '%Staff%'));
+                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
+            })->where(function ($q) {
+                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
+            })->where(function ($q) {
+                $q->where('status_resign', 'not like', '%Resign%')
+                    ->where('status_resign', 'not like', '%PHK%')
+                    ->where('keterangan', 'not like', '%Resign%')
+                    ->where('keterangan', 'not like', '%PHK%');
+            })->where(function ($q) {
+                $q->whereIn('level_jabatan', ['ASISTEN', 'ASST', 'STAFF'])
+                    ->orWhere('level_jabatan', 'like', '%ASISTEN%')
+                    ->orWhere('level_jabatan', 'like', '%ASST%')
+                    ->orWhere('level_jabatan', 'like', '%Staff%')
+                    ->orWhere('jabatan_terakhir', 'like', '%Asisten%')
+                    ->orWhere(function ($fallback) {
+                        $fallback->whereNull('level_jabatan')
+                            ->orWhere('level_jabatan', '')
+                            ->orWhere('level_jabatan', '-');
+                    });
             });
         }
 
@@ -1550,5 +1677,51 @@ class AsistenController extends Controller
             'status' => 'success',
             'message' => 'Berhasil mengimpor '.count($rows).' data batch program!',
         ]);
+    }
+
+    /**
+     * Apply Program Category Filter (Nama Besar: FAT, MAT, AAT, TAT, DMT, Staff Operation)
+     */
+    protected function applyProgramFilter($query, string $program): void
+    {
+        $prog = strtoupper(trim($program));
+
+        if ($prog === 'FAT') {
+            $query->where(function ($q) {
+                $q->where('program', 'like', 'Field Assistant%')
+                    ->orWhere('program', 'like', 'FAT%')
+                    ->orWhere('program', 'like', 'Estate Cadet%')
+                    ->orWhere('program', 'like', 'ECT%');
+            });
+        } elseif ($prog === 'MAT') {
+            $query->where(function ($q) {
+                $q->where('program', 'like', 'Mill Assistant%')
+                    ->orWhere('program', 'like', 'MAT%');
+            });
+        } elseif ($prog === 'AAT') {
+            $query->where(function ($q) {
+                $q->where('program', 'like', 'Admin Assistant%')
+                    ->orWhere('program', 'like', 'AAT%')
+                    ->orWhere('program', 'like', '%Administrasi%');
+            });
+        } elseif ($prog === 'TAT') {
+            $query->where(function ($q) {
+                $q->where('program', 'like', 'Traction Assistant%')
+                    ->orWhere('program', 'like', 'TAT%')
+                    ->orWhere('program', 'like', '%Traksi%');
+            });
+        } elseif ($prog === 'DMT') {
+            $query->where(function ($q) {
+                $q->where('program', 'like', 'Downstream%')
+                    ->orWhere('program', 'like', 'DMT%');
+            });
+        } elseif ($prog === 'STAFF OPERATION' || $prog === 'PMT') {
+            $query->where(function ($q) {
+                $q->where('program', 'like', 'Staff Operation%')
+                    ->orWhere('program', 'like', 'PMT%');
+            });
+        } else {
+            $query->where('program', 'like', "%{$program}%");
+        }
     }
 }

@@ -113,6 +113,13 @@ class VraController extends Controller
                 ->groupBy('nomor_polisi', 'kendaraan')
                 ->get();
 
+            $allGrouped->transform(function ($item) {
+                $item->BBM_KM_liter = $item->BBM_liter > 0 ? ($item->KM / $item->BBM_liter) : 0;
+                $item->VRA = $item->KM > 0 ? ($item->total_biaya_bulan / $item->KM) : 0;
+
+                return $item;
+            });
+
             $totals = $this->calculateTotals($allGrouped);
 
         } else {
@@ -680,6 +687,28 @@ class VraController extends Controller
         $totalBiaya = $rows->sum('total_biaya_bulan');
         $totalBBM_liter = $rows->sum('BBM_liter');
 
+        $sumBbmKmLiter = $rows->sum(function ($item) {
+            $val = (float) ($item->BBM_KM_liter ?? 0);
+            if ($val > 0) {
+                return $val;
+            }
+            $liter = (float) ($item->BBM_liter ?? 0);
+            $km = (float) ($item->KM ?? 0);
+
+            return $liter > 0 ? ($km / $liter) : 0;
+        });
+
+        $sumVra = $rows->sum(function ($item) {
+            $val = (float) ($item->VRA ?? 0);
+            if ($val > 0) {
+                return $val;
+            }
+            $km = (float) ($item->KM ?? 0);
+            $biaya = (float) ($item->total_biaya_bulan ?? 0);
+
+            return $km > 0 ? ($biaya / $km) : 0;
+        });
+
         return [
             'count' => $rows->count(),
             'upah' => $rows->sum('upah'),
@@ -690,9 +719,11 @@ class VraController extends Controller
             'total_biaya' => $totalBiaya,
             'km' => $totalKM,
             'bbm_liter' => $totalBBM_liter,
-            'bbm_km_liter' => $totalBBM_liter > 0 ? ($totalKM / $totalBBM_liter) : 0,
-            'vra' => $totalKM > 0 ? ($totalBiaya / $totalKM) : 0,
+            'bbm_km_liter' => $sumBbmKmLiter,
+            'vra' => $sumVra,
             'budget_tahun' => $rows->sum('budget_tahun'),
+            'avg_bbm_km_liter' => $totalBBM_liter > 0 ? ($totalKM / $totalBBM_liter) : 0,
+            'avg_vra' => $totalKM > 0 ? ($totalBiaya / $totalKM) : 0,
         ];
     }
 }
