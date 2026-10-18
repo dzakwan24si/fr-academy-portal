@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CareerProgram;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CareerProgramController extends Controller
 {
@@ -29,9 +30,18 @@ class CareerProgramController extends Controller
             'qualifications' => 'required|string',
             'gform_url' => 'required|url|max:255',
             'is_active' => 'boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
         ]);
 
         $validated['is_active'] = $request->has('is_active');
+
+        if ($request->hasFile('image')) {
+            // Delete old custom image if exists
+            if ($career_program->image && Storage::disk('public')->exists($career_program->image)) {
+                Storage::disk('public')->delete($career_program->image);
+            }
+            $validated['image'] = $request->file('image')->store('career_programs', 'public');
+        }
 
         $career_program->update($validated);
 
@@ -46,14 +56,20 @@ class CareerProgramController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'name' => 'required|string|max:255',
             'code' => 'required|string|max:50|unique:career_programs,code',
             'description' => 'required|string',
             'qualifications' => 'required|string',
             'gform_url' => 'required|url|max:255',
             'is_active' => 'boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:3072',
         ]);
+
+        $imagePath = null;
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('career_programs', 'public');
+        }
 
         CareerProgram::create([
             'name' => $request->name,
@@ -62,6 +78,7 @@ class CareerProgramController extends Controller
             'qualifications' => $request->qualifications,
             'gform_url' => $request->gform_url,
             'is_active' => $request->has('is_active'),
+            'image' => $imagePath,
         ]);
 
         return redirect()->route('admin.career_programs.index')->with('success', 'Program karir berhasil ditambahkan.');
@@ -69,6 +86,10 @@ class CareerProgramController extends Controller
 
     public function destroy(CareerProgram $careerProgram)
     {
+        if ($careerProgram->image && Storage::disk('public')->exists($careerProgram->image)) {
+            Storage::disk('public')->delete($careerProgram->image);
+        }
+
         $careerProgram->delete();
 
         return redirect()->route('admin.career_programs.index')->with('success', 'Program karir berhasil dihapus.');

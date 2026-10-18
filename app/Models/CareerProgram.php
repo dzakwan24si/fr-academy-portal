@@ -16,5 +16,6 @@ class CareerProgram extends Model
         'qualifications',
         'is_active',
         'gform_url',
+        'image',
     ];
 }

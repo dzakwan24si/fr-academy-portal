@@ -188,15 +188,7 @@
                 <span>Sistem & Pengaturan</span>
                 <i data-lucide="chevron-down" class="h-3.5 w-3.5 transition-transform group-open:rotate-180"></i>
             </summary>
-            <div class="space-y-0.5">
-                @canany(['manage_articles', 'manage_users', 'manage_tv_display', 'manage_events'])
-                <a href="{{ route('admin.dashboard') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                          {{ request()->routeIs('admin.dashboard') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0"></i>
-                    <span>Dashboard Overview</span>
-                </a>
-                @endcanany
+
                 <a href="{{ route('administrasi.activity-logs.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.activity-logs.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">

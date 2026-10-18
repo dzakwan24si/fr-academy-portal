@@ -41,7 +41,7 @@
     </style>
 
     <div class="bg-white rounded-2xl border border-gray-200 shadow-[0_4px_20px_rgba(0,0,0,0.03)] overflow-hidden w-full">
-        <form action="{{ route('admin.career_programs.update', $career_program) }}" method="POST" class="p-8">
+        <form action="{{ route('admin.career_programs.update', $career_program) }}" method="POST" enctype="multipart/form-data" class="p-8">
             @csrf
             @method('PUT')
 
@@ -90,6 +90,35 @@
                             <span class="block text-xs text-gray-500">Jika dicentang, program ini akan muncul di halaman karir publik.</span>
                         </div>
                     </label>
+                </div>
+
+                <!-- Upload Foto Banner Card Depan -->
+                <div>
+                    <label for="image" class="block text-sm font-bold text-gray-800 mb-2">Foto / Visual Card Depan</label>
+                    <div class="flex items-start gap-6 p-4 border border-gray-200 rounded-xl bg-gray-50/50">
+                        <div class="shrink-0 w-44 h-28 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 flex items-center justify-center relative">
+                            @if($career_program->image)
+                                <img id="preview-img" src="{{ asset('storage/' . $career_program->image) }}" alt="Preview" class="w-full h-full object-cover">
+                            @else
+                                <img id="preview-img" src="{{ asset('images/bg_card_' . strtolower($career_program->code) . '.jpg') }}" 
+                                     onerror="this.src='{{ asset('images/bg_card_fat.jpg') }}'"
+                                     alt="Default Preview" class="w-full h-full object-cover">
+                            @endif
+                        </div>
+                        <div class="flex-grow space-y-2">
+                            <input type="file" name="image" id="image" accept="image/*"
+                                   onchange="if(this.files && this.files[0]) { document.getElementById('preview-img').src = URL.createObjectURL(this.files[0]); }"
+                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-[#509c38] file:text-white hover:file:bg-green-700 cursor-pointer">
+                            <p class="text-xs text-gray-500 leading-relaxed">
+                                Format: JPG, PNG, WEBP (Maksimal 3MB). Rekomendasi rasio 16:9 atau foto landscape landscape tajam.
+                                @if($career_program->image)
+                                    <span class="block text-emerald-600 font-semibold mt-1">✓ Menggunakan foto custom yang telah diupload.</span>
+                                @else
+                                    <span class="block text-gray-400 font-normal mt-1">Saat ini menggunakan foto visual bawaan sistem. Upload foto baru untuk menggantinya.</span>
+                                @endif
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Google Form URL -->
