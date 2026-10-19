@@ -400,7 +400,9 @@ class InventarisController extends Controller
         $totalJenisAset = (clone $kpiQuery)->distinct('barang_id')->count('barang_id');
         $totalBarangDibeli = (clone $kpiQuery)->sum('jumlah');
 
-        $allBarang = Barang::orderBy('nama_asset', 'asc')->get();
+        $barangQuery = Barang::orderBy('nama_asset', 'asc');
+        $this->applyJenisLokasiFilter($barangQuery, $jenisLokasiFilter);
+        $allBarang = $barangQuery->get();
 
         $availableRooms = StockOpname::whereNotNull('lokasi_spesifik')
             ->where('lokasi_spesifik', '!=', '')
@@ -427,39 +429,64 @@ class InventarisController extends Controller
 
     public function pembelianStore(Request $request)
     {
+        $barang = Barang::findOrFail($request->input('barang_id'));
+        $isKantor = in_array(strtolower($barang->jenis_lokasi ?? $barang->lokasi ?? ''), ['kantor'], true);
+
         $validated = $request->validate([
             'barang_id' => 'required|exists:barang,id',
             'tanggal_pembelian' => 'required|date',
             'jumlah' => 'required|integer|min:1',
-            'lokasi_spesifik' => 'nullable|string|max:255',
+            'lokasi_spesifik' => $isKantor ? 'required|string|max:255' : 'nullable|string|max:255',
             'keterangan' => 'nullable|string',
+        ], [
+            'lokasi_spesifik.required' => 'Lokasi spesifik / ruangan kantor wajib diisi untuk barang Kantor.',
         ]);
+
+        if (! $isKantor) {
+            $validated['lokasi_spesifik'] = null;
+        }
 
         Pembelian::create($validated);
 
         $year = Carbon::parse($validated['tanggal_pembelian'])->year;
+        $redirectParams = ['year' => $year];
+        if ($request->filled('jenis_lokasi')) {
+            $redirectParams['jenis_lokasi'] = $request->input('jenis_lokasi');
+        }
 
-        return redirect()->route('administrasi.inventaris.pembelian', ['year' => $year])
+        return redirect()->route('administrasi.inventaris.pembelian', $redirectParams)
             ->with('success', 'Data pembelian aset berhasil disimpan!');
     }
 
     public function pembelianUpdate(Request $request, $id)
     {
         $pembelian = Pembelian::findOrFail($id);
+        $barang = Barang::findOrFail($request->input('barang_id'));
+        $isKantor = in_array(strtolower($barang->jenis_lokasi ?? $barang->lokasi ?? ''), ['kantor'], true);
 
         $validated = $request->validate([
             'barang_id' => 'required|exists:barang,id',
             'tanggal_pembelian' => 'required|date',
             'jumlah' => 'required|integer|min:1',
-            'lokasi_spesifik' => 'nullable|string|max:255',
+            'lokasi_spesifik' => $isKantor ? 'required|string|max:255' : 'nullable|string|max:255',
             'keterangan' => 'nullable|string',
+        ], [
+            'lokasi_spesifik.required' => 'Lokasi spesifik / ruangan kantor wajib diisi untuk barang Kantor.',
         ]);
+
+        if (! $isKantor) {
+            $validated['lokasi_spesifik'] = null;
+        }
 
         $pembelian->update($validated);
 
         $year = Carbon::parse($validated['tanggal_pembelian'])->year;
+        $redirectParams = ['year' => $year];
+        if ($request->filled('jenis_lokasi')) {
+            $redirectParams['jenis_lokasi'] = $request->input('jenis_lokasi');
+        }
 
-        return redirect()->route('administrasi.inventaris.pembelian', ['year' => $year])
+        return redirect()->route('administrasi.inventaris.pembelian', $redirectParams)
             ->with('success', 'Data pembelian berhasil diperbarui!');
     }
 
@@ -665,12 +692,22 @@ class InventarisController extends Controller
 
         $existing = StockOpname::where('tanggal_stock_opname', $validated['tanggal_stock_opname'])->first();
 
+        $redirectParams = ['date' => $validated['tanggal_stock_opname']];
+        if ($request->filled('jenis_lokasi')) {
+            $redirectParams['jenis_lokasi'] = $request->input('jenis_lokasi');
+        }
+
         if ($existing) {
-            return redirect()->route('administrasi.inventaris.stock-opname.detail', ['date' => $validated['tanggal_stock_opname']])
+            return redirect()->route('administrasi.inventaris.stock-opname.detail', $redirectParams)
                 ->with('info', 'Sesi Stock Opname untuk tanggal tersebut sudah ada.');
         }
 
-        $firstBarang = Barang::first();
+        $barangQuery = Barang::query();
+        if ($request->filled('jenis_lokasi')) {
+            $this->applyJenisLokasiFilter($barangQuery, $request->input('jenis_lokasi'));
+        }
+        $firstBarang = $barangQuery->first() ?? Barang::first();
+
         if ($firstBarang) {
             StockOpname::create([
                 'barang_id' => $firstBarang->id,
@@ -684,7 +721,7 @@ class InventarisController extends Controller
             ]);
         }
 
-        return redirect()->route('administrasi.inventaris.stock-opname.detail', ['date' => $validated['tanggal_stock_opname']])
+        return redirect()->route('administrasi.inventaris.stock-opname.detail', $redirectParams)
             ->with('success', 'Sesi Stock Opname berhasil dibuat!');
     }
 
@@ -738,7 +775,9 @@ class InventarisController extends Controller
 
         $sessionMeta = StockOpname::where('tanggal_stock_opname', $date)->first();
 
-        $allBarang = Barang::orderBy('nama_asset', 'asc')->get();
+        $barangQuery = Barang::orderBy('nama_asset', 'asc');
+        $this->applyJenisLokasiFilter($barangQuery, $jenisLokasiFilter);
+        $allBarang = $barangQuery->get();
 
         $availableRooms = StockOpname::whereNotNull('lokasi_spesifik')
             ->where('lokasi_spesifik', '!=', '')
@@ -764,13 +803,18 @@ class InventarisController extends Controller
 
     public function stockOpnameItemStore(Request $request, $date)
     {
+        $barang = Barang::findOrFail($request->input('barang_id'));
+        $isKantor = in_array(strtolower($barang->jenis_lokasi ?? $barang->lokasi ?? ''), ['kantor'], true);
+
         $validated = $request->validate([
             'barang_id' => 'required|exists:barang,id',
-            'lokasi_spesifik' => 'nullable|string|max:255',
+            'lokasi_spesifik' => $isKantor ? 'required|string|max:255' : 'nullable|string|max:255',
             'jumlah_baik' => 'nullable|integer|min:0',
             'jumlah_rusak' => 'nullable|integer|min:0',
             'keterangan' => 'nullable|string',
             'foto_kerusakan' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ], [
+            'lokasi_spesifik.required' => 'Lokasi spesifik / ruangan kantor wajib diisi untuk barang Kantor.',
         ]);
 
         $fotoPath = null;
@@ -790,7 +834,7 @@ class InventarisController extends Controller
             'tanggal_stock_opname' => $date,
             'status' => $status,
             'catatan_sesi' => $catatan,
-            'lokasi_spesifik' => $validated['lokasi_spesifik'] ?? null,
+            'lokasi_spesifik' => $isKantor ? ($validated['lokasi_spesifik'] ?? null) : null,
             'jumlah_baik' => $baik,
             'jumlah_rusak' => $rusak,
             'grand_total' => $baik + $rusak,
@@ -798,21 +842,30 @@ class InventarisController extends Controller
             'foto_kerusakan' => $fotoPath,
         ]);
 
-        return redirect()->route('administrasi.inventaris.stock-opname.detail', ['date' => $date])
+        $redirectParams = ['date' => $date];
+        if ($request->filled('jenis_lokasi')) {
+            $redirectParams['jenis_lokasi'] = $request->input('jenis_lokasi');
+        }
+
+        return redirect()->route('administrasi.inventaris.stock-opname.detail', $redirectParams)
             ->with('success', 'Data aset berhasil ditambahkan ke Stock Opname!');
     }
 
     public function stockOpnameItemUpdate(Request $request, $id)
     {
         $item = StockOpname::findOrFail($id);
+        $barang = Barang::findOrFail($request->input('barang_id'));
+        $isKantor = in_array(strtolower($barang->jenis_lokasi ?? $barang->lokasi ?? ''), ['kantor'], true);
 
         $validated = $request->validate([
             'barang_id' => 'required|exists:barang,id',
-            'lokasi_spesifik' => 'nullable|string|max:255',
+            'lokasi_spesifik' => $isKantor ? 'required|string|max:255' : 'nullable|string|max:255',
             'jumlah_baik' => 'nullable|integer|min:0',
             'jumlah_rusak' => 'nullable|integer|min:0',
             'keterangan' => 'nullable|string',
             'foto_kerusakan' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+        ], [
+            'lokasi_spesifik.required' => 'Lokasi spesifik / ruangan kantor wajib diisi untuk barang Kantor.',
         ]);
 
         if ($request->hasFile('foto_kerusakan')) {
@@ -826,14 +879,19 @@ class InventarisController extends Controller
         $rusak = (int) ($validated['jumlah_rusak'] ?? 0);
 
         $item->barang_id = $validated['barang_id'];
-        $item->lokasi_spesifik = $validated['lokasi_spesifik'] ?? null;
+        $item->lokasi_spesifik = $isKantor ? ($validated['lokasi_spesifik'] ?? null) : null;
         $item->jumlah_baik = $baik;
         $item->jumlah_rusak = $rusak;
         $item->grand_total = $baik + $rusak;
         $item->keterangan = $validated['keterangan'] ?? null;
         $item->save();
 
-        return redirect()->route('administrasi.inventaris.stock-opname.detail', ['date' => $item->tanggal_stock_opname->format('Y-m-d')])
+        $redirectParams = ['date' => $item->tanggal_stock_opname->format('Y-m-d')];
+        if ($request->filled('jenis_lokasi')) {
+            $redirectParams['jenis_lokasi'] = $request->input('jenis_lokasi');
+        }
+
+        return redirect()->route('administrasi.inventaris.stock-opname.detail', $redirectParams)
             ->with('success', 'Data kondisi barang berhasil diperbarui!');
     }
 
@@ -848,7 +906,12 @@ class InventarisController extends Controller
 
         $item->delete();
 
-        return redirect()->route('administrasi.inventaris.stock-opname.detail', ['date' => $date])
+        $redirectParams = ['date' => $date];
+        if (request()->filled('jenis_lokasi')) {
+            $redirectParams['jenis_lokasi'] = request('jenis_lokasi');
+        }
+
+        return redirect()->route('administrasi.inventaris.stock-opname.detail', $redirectParams)
             ->with('success', 'Data barang berhasil dihapus dari Stock Opname!');
     }
 

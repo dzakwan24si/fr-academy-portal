@@ -9,7 +9,7 @@
 <nav class="flex items-center gap-2 text-xs text-[#71717A] mb-3">
     <span>Inventaris</span>
     <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-    <a href="{{ route('administrasi.inventaris.stock-opname') }}" class="hover:text-[#4B6A34] transition-colors">Stock Opname</a>
+    <a href="{{ route('administrasi.inventaris.stock-opname', !empty($jenisLokasiFilter) ? ['jenis_lokasi' => $jenisLokasiFilter] : []) }}" class="hover:text-[#4B6A34] transition-colors">Stock Opname</a>
     <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
     <span class="text-[#18181B] font-semibold">Detail</span>
 </nav>
@@ -242,10 +242,13 @@
                                      title="Edit Kondisi">
                                 <i data-lucide="pencil" class="w-4 h-4"></i>
                             </button>
-                            <form action="{{ route('administrasi.inventaris.stock-opname.item.destroy', $item->id) }}" method="POST"
+                            <form action="{{ route('administrasi.inventaris.stock-opname.item.destroy', array_merge(['id' => $item->id], !empty($jenisLokasiFilter) ? ['jenis_lokasi' => $jenisLokasiFilter] : [])) }}" method="POST"
                                   onsubmit="return confirm('Apakah Anda yakin ingin menghapus data pemeriksaan item ini?');" class="inline">
                                 @csrf
                                 @method('DELETE')
+                                @if(!empty($jenisLokasiFilter))
+                                    <input type="hidden" name="jenis_lokasi" value="{{ $jenisLokasiFilter }}">
+                                @endif
                                 <button type="submit" class="p-1.5 text-[#71717A] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                         title="Hapus Item">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -301,21 +304,37 @@
 
         <form action="{{ route('administrasi.inventaris.stock-opname.item.store', $date) }}" method="POST" enctype="multipart/form-data" class="mt-5 space-y-4">
             @csrf
+            @if(!empty($jenisLokasiFilter))
+                <input type="hidden" name="jenis_lokasi" value="{{ $jenisLokasiFilter }}">
+            @endif
+
+            @if($jenisLokasiFilter === 'Gudang')
+                <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2">
+                    <i data-lucide="info" class="w-4 h-4 shrink-0 text-emerald-600"></i>
+                    <span>Mode Filter <strong>Gudang</strong>: Menampilkan aset Gudang saja. Lokasi spesifik tidak diperlukan.</span>
+                </div>
+            @elseif($jenisLokasiFilter === 'Kantor')
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center gap-2">
+                    <i data-lucide="info" class="w-4 h-4 shrink-0 text-amber-600"></i>
+                    <span>Mode Filter <strong>Kantor</strong>: Menampilkan aset Kantor saja. Lokasi spesifik (ruangan) wajib diisi.</span>
+                </div>
+            @endif
+
             <div>
                 <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Pilih Aset Barang <span class="text-red-500">*</span></label>
-                <select name="barang_id" required class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
+                <select id="add_item_barang_id" name="barang_id" required class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
                     <option value="">-- Pilih Barang --</option>
                     @foreach($allBarang as $b)
-                        <option value="{{ $b->id }}">{{ $b->nama_asset }} ({{ $b->satuan }}) - {{ $b->jenis_lokasi }}</option>
+                        <option value="{{ $b->id }}" data-lokasi="{{ $b->jenis_lokasi ?? $b->lokasi }}">{{ $b->nama_asset }} ({{ $b->satuan }}) - {{ $b->jenis_lokasi }}</option>
                     @endforeach
                 </select>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Lokasi Spesifik / Ruangan Kantor</label>
-                <input type="text" name="lokasi_spesifik" list="roomSuggestions" placeholder="Contoh: Planter, Meeting, Administrasi..."
+            <div id="container_add_item_lokasi_spesifik" class="{{ $jenisLokasiFilter === 'Gudang' ? 'hidden' : '' }}">
+                <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Lokasi Spesifik / Ruangan Kantor <span id="add_item_lokasi_spesifik_req" class="text-red-500 {{ $jenisLokasiFilter === 'Kantor' ? '' : 'hidden' }}">*</span></label>
+                <input type="text" id="add_item_lokasi_spesifik" name="lokasi_spesifik" list="roomSuggestions" placeholder="Contoh: Planter, Meeting, Administrasi..." {{ $jenisLokasiFilter === 'Kantor' ? 'required' : '' }}
                        class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
-                <p class="text-[11px] text-[#71717A] mt-1">Kosongkan untuk barang Gudang atau jika tidak merinci ruangan.</p>
+                <p id="add_item_lokasi_spesifik_hint" class="text-[11px] text-[#71717A] mt-1">{{ $jenisLokasiFilter === 'Kantor' ? 'Wajib mengisi ruangan untuk barang Kantor.' : 'Kosongkan untuk barang Gudang atau jika tidak merinci ruangan.' }}</p>
             </div>
 
             <div class="grid grid-cols-2 gap-3 bg-[#F9FAFB] p-3.5 rounded-xl border border-[#E5E7EB]">
@@ -369,19 +388,24 @@
         <form id="formEditItem" method="POST" enctype="multipart/form-data" class="mt-5 space-y-4">
             @csrf
             @method('PUT')
+            @if(!empty($jenisLokasiFilter))
+                <input type="hidden" name="jenis_lokasi" value="{{ $jenisLokasiFilter }}">
+            @endif
+
             <div>
                 <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Aset Barang <span class="text-red-500">*</span></label>
                 <select id="edit_item_barang_id" name="barang_id" required class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
                     @foreach($allBarang as $b)
-                        <option value="{{ $b->id }}">{{ $b->nama_asset }} ({{ $b->satuan }}) - {{ $b->jenis_lokasi }}</option>
+                        <option value="{{ $b->id }}" data-lokasi="{{ $b->jenis_lokasi ?? $b->lokasi }}">{{ $b->nama_asset }} ({{ $b->satuan }}) - {{ $b->jenis_lokasi }}</option>
                     @endforeach
                 </select>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Lokasi Spesifik / Ruangan Kantor</label>
-                <input type="text" id="edit_item_lokasi_spesifik" name="lokasi_spesifik" list="roomSuggestions" placeholder="Contoh: Planter, Meeting, Administrasi..."
+            <div id="container_edit_item_lokasi_spesifik" class="{{ $jenisLokasiFilter === 'Gudang' ? 'hidden' : '' }}">
+                <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Lokasi Spesifik / Ruangan Kantor <span id="edit_item_lokasi_spesifik_req" class="text-red-500 {{ $jenisLokasiFilter === 'Kantor' ? '' : 'hidden' }}">*</span></label>
+                <input type="text" id="edit_item_lokasi_spesifik" name="lokasi_spesifik" list="roomSuggestions" placeholder="Contoh: Planter, Meeting, Administrasi..." {{ $jenisLokasiFilter === 'Kantor' ? 'required' : '' }}
                        class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
+                <p id="edit_item_lokasi_spesifik_hint" class="text-[11px] text-[#71717A] mt-1">{{ $jenisLokasiFilter === 'Kantor' ? 'Wajib mengisi ruangan untuk barang Kantor.' : 'Kosongkan untuk barang Gudang atau jika tidak merinci ruangan.' }}</p>
             </div>
 
             <div class="grid grid-cols-2 gap-3 bg-[#F9FAFB] p-3.5 rounded-xl border border-[#E5E7EB]">
@@ -487,14 +511,65 @@
 
 @push('scripts')
 <script>
+    const currentJenisLokasiFilter = @json($jenisLokasiFilter ?? '');
+
+    function updateLokasiSpesifikField(selectElem, containerId, inputId, reqId, hintId) {
+        const container = document.getElementById(containerId);
+        const input = document.getElementById(inputId);
+        const req = document.getElementById(reqId);
+        const hint = document.getElementById(hintId);
+
+        if (!container || !input) return;
+
+        let lokasi = currentJenisLokasiFilter;
+        if (!lokasi && selectElem) {
+            const opt = selectElem.options[selectElem.selectedIndex];
+            lokasi = opt ? (opt.getAttribute('data-lokasi') || '') : '';
+        }
+
+        if (lokasi.toLowerCase() === 'gudang') {
+            container.classList.add('hidden');
+            input.required = false;
+            input.value = '';
+            if (req) req.classList.add('hidden');
+        } else if (lokasi.toLowerCase() === 'kantor') {
+            container.classList.remove('hidden');
+            input.required = true;
+            if (req) req.classList.remove('hidden');
+            if (hint) hint.innerText = 'Wajib mengisi ruangan untuk barang Kantor.';
+        } else {
+            container.classList.remove('hidden');
+            input.required = false;
+            if (req) req.classList.add('hidden');
+            if (hint) hint.innerText = 'Kosongkan untuk barang Gudang atau jika tidak merinci ruangan.';
+        }
+    }
+
+    const addItemBarangSelect = document.getElementById('add_item_barang_id');
+    if (addItemBarangSelect) {
+        addItemBarangSelect.addEventListener('change', function() {
+            updateLokasiSpesifikField(this, 'container_add_item_lokasi_spesifik', 'add_item_lokasi_spesifik', 'add_item_lokasi_spesifik_req', 'add_item_lokasi_spesifik_hint');
+        });
+    }
+
+    const editItemBarangSelect = document.getElementById('edit_item_barang_id');
+    if (editItemBarangSelect) {
+        editItemBarangSelect.addEventListener('change', function() {
+            updateLokasiSpesifikField(this, 'container_edit_item_lokasi_spesifik', 'edit_item_lokasi_spesifik', 'edit_item_lokasi_spesifik_req', 'edit_item_lokasi_spesifik_hint');
+        });
+    }
+
     function openEditItemModal(item) {
         const form = document.getElementById('formEditItem');
         form.action = `/administrasi/inventaris/stock-opname/item/${item.id}`;
-        document.getElementById('edit_item_barang_id').value = item.barang_id;
+        const editSelect = document.getElementById('edit_item_barang_id');
+        editSelect.value = item.barang_id;
         document.getElementById('edit_item_lokasi_spesifik').value = item.lokasi_spesifik || '';
         document.getElementById('edit_item_baik').value = item.jumlah_baik;
         document.getElementById('edit_item_rusak').value = item.jumlah_rusak;
         document.getElementById('edit_item_keterangan').value = item.keterangan || '';
+
+        updateLokasiSpesifikField(editSelect, 'container_edit_item_lokasi_spesifik', 'edit_item_lokasi_spesifik', 'edit_item_lokasi_spesifik_req', 'edit_item_lokasi_spesifik_hint');
         document.getElementById('modalEditItem').classList.remove('hidden');
     }
 
