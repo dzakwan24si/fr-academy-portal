@@ -551,17 +551,6 @@ class DashboardRealisasiController extends Controller
             return ! $isMandor;
         });
 
-        $regulerBerjalan = $regulerStaffPrograms->filter(function ($p) use ($today) {
-            $start = $p->Mulai_program ?: (is_array($p->tanggal_pelaksanaan) && ! empty($p->tanggal_pelaksanaan) ? Carbon::parse(reset($p->tanggal_pelaksanaan)) : null);
-            $end = $p->Selesai_program ?: (is_array($p->tanggal_pelaksanaan) && ! empty($p->tanggal_pelaksanaan) ? Carbon::parse(end($p->tanggal_pelaksanaan)) : null);
-
-            if (! $start) {
-                return false;
-            }
-
-            return $start <= $today && (! $end || $end >= $today);
-        })->count();
-
         $regulerSelesai = $regulerStaffPrograms->filter(function ($p) use ($today) {
             $end = $p->Selesai_program ?: (is_array($p->tanggal_pelaksanaan) && ! empty($p->tanggal_pelaksanaan) ? Carbon::parse(end($p->tanggal_pelaksanaan)) : null);
 
@@ -570,6 +559,13 @@ class DashboardRealisasiController extends Controller
             }
 
             return $end < $today;
+        })->count();
+
+        // Program yang belum selesai (termasuk yang sedang berjalan maupun belum mulai) masuk ke Program Berjalan
+        $regulerBerjalan = $regulerStaffPrograms->filter(function ($p) use ($today) {
+            $end = $p->Selesai_program ?: (is_array($p->tanggal_pelaksanaan) && ! empty($p->tanggal_pelaksanaan) ? Carbon::parse(end($p->tanggal_pelaksanaan)) : null);
+
+            return ! ($end && $end < $today);
         })->count();
 
         $regulerPercentage = $stafRencana > 0 ? round(($stafKelas / $stafRencana) * 100) : 0;
