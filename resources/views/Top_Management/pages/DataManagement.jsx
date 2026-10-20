@@ -103,6 +103,58 @@ const groupDatesIntoRanges = (dates) => {
   return ranges;
 };
 
+const formatProgramDateRange = (item) => {
+  if (!item) return '-';
+  const orig = item.originalData || {};
+  let start = item.start && !isNaN(item.start) ? item.start : null;
+  let end = item.end && !isNaN(item.end) ? item.end : null;
+
+  if (!start) {
+    const rawStart = orig.Mulai_program || orig.start_date || orig.mulai_program;
+    if (rawStart) {
+      const d = new Date(rawStart);
+      if (!isNaN(d)) start = d;
+    }
+  }
+
+  if (!end) {
+    const rawEnd = orig.Selesai_program || orig.end_date || orig.selesai_program;
+    if (rawEnd) {
+      const d = new Date(rawEnd);
+      if (!isNaN(d)) end = d;
+    }
+  }
+
+  const extractDates = (arr) => {
+    if (!arr) return [];
+    if (typeof arr === 'string' && arr.startsWith('[')) {
+      try { arr = JSON.parse(arr); } catch (_) { return []; }
+    }
+    if (!Array.isArray(arr)) return [];
+    return arr.map(d => d instanceof Date ? d : new Date(d)).filter(d => !isNaN(d)).sort((a, b) => a - b);
+  };
+
+  const dates = extractDates(item.tanggal_pelaksanaan).concat(extractDates(orig.tanggal_pelaksanaan)).sort((a, b) => a - b);
+  if (dates.length > 0) {
+    if (!start) start = dates[0];
+    if (!end) end = dates[dates.length - 1];
+  }
+
+  if (!start && !end && !orig.start_date && !orig.mulai_program && !orig.Mulai_program && !orig.Selesai_program && !orig.end_date) {
+    return '-';
+  }
+
+  const startStr = start && !isNaN(start)
+    ? start.toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: 'numeric' })
+    : (orig.start_date || orig.Mulai_program || orig.mulai_program ? 'TBD' : '-');
+  const endStr = end && !isNaN(end)
+    ? end.toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: 'numeric' })
+    : (orig.end_date || orig.Selesai_program || orig.selesai_program || startStr !== '-' ? 'TBD' : '-');
+
+  if (startStr === '-' && endStr === '-') return '-';
+  return `${startStr} - ${endStr}`;
+};
+
 const DataManagement = () => {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -1390,9 +1442,7 @@ const DataManagement = () => {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-slate-600 whitespace-nowrap text-xs">
-                        {item.originalData?.start_date || item.originalData?.mulai_program || item.originalData?.Mulai_program
-                          ? `${item.start && !isNaN(item.start) ? item.start.toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD'} - ${item.end && !isNaN(item.end) ? item.end.toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD'}`
-                          : '-'}
+                        {formatProgramDateRange(item)}
                       </td>
                       <td className="px-4 py-4 font-medium">{item.region || '-'}</td>
                       <td className="px-4 py-4">
@@ -1489,9 +1539,7 @@ const DataManagement = () => {
                         </span>
                       </td>
                       <td className="px-4 py-4 text-slate-600 whitespace-nowrap text-xs">
-                        {item.originalData?.start_date || item.originalData?.mulai_program || item.originalData?.Mulai_program
-                          ? `${item.start && !isNaN(item.start) ? item.start.toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD'} - ${item.end && !isNaN(item.end) ? item.end.toLocaleDateString('id-ID', { month: 'short', day: 'numeric', year: 'numeric' }) : 'TBD'}`
-                          : '-'}
+                        {formatProgramDateRange(item)}
                       </td>
                       <td className="px-4 py-4 text-slate-600 font-medium">{item.region || '-'}</td>
                       <td className="px-4 py-4">

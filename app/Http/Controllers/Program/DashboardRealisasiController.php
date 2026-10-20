@@ -91,13 +91,12 @@ class DashboardRealisasiController extends Controller
 
     public function resolveProgramRegulerYear($p): int
     {
-        if ($p->Mulai_program && ($y = $this->extractYearFromField($p->Mulai_program))) {
+        // 1. Baca kolom tahun terlebih dahulu
+        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
             return $y;
         }
-        if (! empty($p->Training_Program) && preg_match('/\b(20\d{2})\b/', $p->Training_Program, $m)) {
-            return (int) $m[1];
-        }
-        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
+        // 2. Kemudian tanggal pelaksanaan
+        if ($p->Mulai_program && ($y = $this->extractYearFromField($p->Mulai_program))) {
             return $y;
         }
         if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
@@ -115,14 +114,13 @@ class DashboardRealisasiController extends Controller
 
     public function resolveProgramNonRegulerYear($p): int
     {
-        if ($p->start_date && ($y = $this->extractYearFromField($p->start_date))) {
-            return $y;
-        }
+        // 1. Baca kolom tahun terlebih dahulu
         if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
             return $y;
         }
-        if (! empty($p->jenis_pelatihan) && preg_match('/\b(20\d{2})\b/', $p->jenis_pelatihan, $m)) {
-            return (int) $m[1];
+        // 2. Kemudian tanggal pelaksanaan
+        if ($p->start_date && ($y = $this->extractYearFromField($p->start_date))) {
+            return $y;
         }
         if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
             return $y;
@@ -140,44 +138,6 @@ class DashboardRealisasiController extends Controller
     protected function filterRegulerByYear($programs, int $year)
     {
         return $programs->filter(function ($p) use ($year) {
-            $mulaiYear = $p->Mulai_program ? $this->extractYearFromField($p->Mulai_program) : null;
-            $selesaiYear = $p->Selesai_program ? $this->extractYearFromField($p->Selesai_program) : null;
-            $titleYear = (! empty($p->Training_Program) && preg_match('/\b(20\d{2})\b/', $p->Training_Program, $m)) ? (int) $m[1] : null;
-
-            if ($year === 2026) {
-                // Include programs from 2025 carry-over, 2026, and 2027 planned (like TAT I 2027, MAT I 2027)
-                if ($p->Mulai_program) {
-                    $mY = (int) date('Y', strtotime($p->Mulai_program));
-                    if ($mY === 2026 || $mY === 2025) {
-                        return true;
-                    }
-                }
-                if ($titleYear === 2026 || $titleYear === 2025) {
-                    return true;
-                }
-                if (! empty($p->Training_Program) && (str_contains($p->Training_Program, 'TAT I 2027') || str_contains($p->Training_Program, 'MAT I 2027'))) {
-                    return true;
-                }
-            }
-
-            if ($titleYear === $year) {
-                return true;
-            }
-
-            if ($mulaiYear && $selesaiYear) {
-                if ($mulaiYear <= $year && $selesaiYear >= $year) {
-                    return true;
-                }
-            } elseif ($mulaiYear) {
-                if ($mulaiYear === $year) {
-                    return true;
-                }
-            } elseif ($selesaiYear) {
-                if ($selesaiYear === $year) {
-                    return true;
-                }
-            }
-
             return $this->resolveProgramRegulerYear($p) === $year;
         });
     }
@@ -583,7 +543,7 @@ class DashboardRealisasiController extends Controller
 
         // 1. Progres Reguler Staff (Management Trainee) KPI Card - Excludes Mandor
         // Kalkulasi persentase = (jumlah peserta di kelas / target rencana) * 100
-        $now = Carbon::now();
+        $today = Carbon::today();
         $regulerStaffPrograms = $regulerPrograms->filter(function ($p) use ($cleanStr) {
             $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
             $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
@@ -591,20 +551,25 @@ class DashboardRealisasiController extends Controller
             return ! $isMandor;
         });
 
-        $regulerBerjalan = $regulerStaffPrograms->filter(function ($p) use ($now) {
-            if (! $p->Mulai_program) {
-                return true;
-            }
+        $regulerBerjalan = $regulerStaffPrograms->filter(function ($p) use ($today) {
+            $start = $p->Mulai_program ?: (is_array($p->tanggal_pelaksanaan) && ! empty($p->tanggal_pelaksanaan) ? Carbon::parse(reset($p->tanggal_pelaksanaan)) : null);
+            $end = $p->Selesai_program ?: (is_array($p->tanggal_pelaksanaan) && ! empty($p->tanggal_pelaksanaan) ? Carbon::parse(end($p->tanggal_pelaksanaan)) : null);
 
-            return $p->Mulai_program <= $now && ($p->Selesai_program >= $now || ! $p->Selesai_program);
-        })->count();
-
-        $regulerSelesai = $regulerStaffPrograms->filter(function ($p) use ($now) {
-            if (! $p->Selesai_program) {
+            if (! $start) {
                 return false;
             }
 
-            return $p->Selesai_program < $now;
+            return $start <= $today && (! $end || $end >= $today);
+        })->count();
+
+        $regulerSelesai = $regulerStaffPrograms->filter(function ($p) use ($today) {
+            $end = $p->Selesai_program ?: (is_array($p->tanggal_pelaksanaan) && ! empty($p->tanggal_pelaksanaan) ? Carbon::parse(end($p->tanggal_pelaksanaan)) : null);
+
+            if (! $end) {
+                return false;
+            }
+
+            return $end < $today;
         })->count();
 
         $regulerPercentage = $stafRencana > 0 ? round(($stafKelas / $stafRencana) * 100) : 0;

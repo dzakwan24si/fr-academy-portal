@@ -574,11 +574,25 @@ class ProgramBatchController extends Controller
                 return false;
             }
 
-            $mulai = $this->dateValue($item['tanggalmulaipelaksanaan'] ?? $item['tanggalmulai'] ?? $item['mulaiprogram'] ?? $item['startdate'] ?? $item['tglmulai'] ?? null);
-            $selesai = $this->dateValue($item['tanggalselesaipelaksanaan'] ?? $item['tanggalselesai'] ?? $item['selesaiprogram'] ?? $item['enddate'] ?? $item['tglselesai'] ?? null);
+            $mulai = $this->dateValue(
+                $item['tanggalmulaipelaksanaan'] ?? $item['tanggalmulai'] ?? $item['mulaiprogram'] ?? $item['tglmulaipelaksanaan']
+                ?? $item['mulaipelaksanaan'] ?? $item['startdate'] ?? $item['tglmulai'] ?? $item['mulai'] ?? $item['start']
+                ?? $item['tanggalawal'] ?? $item['tglawal'] ?? null
+            );
+            $selesai = $this->dateValue(
+                $item['tanggalselesaipelaksanaan'] ?? $item['tanggalselesai'] ?? $item['selesaiprogram'] ?? $item['tglselesaipelaksanaan']
+                ?? $item['selesaipelaksanaan'] ?? $item['enddate'] ?? $item['tglselesai'] ?? $item['selesai'] ?? $item['end']
+                ?? $item['tanggalberakhir'] ?? $item['tglberakhir'] ?? $item['tanggalakhir'] ?? $item['tglakhir'] ?? null
+            );
             $tglPelaksanaan = $this->jsonValue($item['tanggalpelaksanaan'] ?? null);
             if (empty($tglPelaksanaan) && $mulai && $selesai) {
                 $tglPelaksanaan = $this->generateDateRange($mulai, $selesai);
+            }
+            if (! $mulai && is_array($tglPelaksanaan) && ! empty($tglPelaksanaan)) {
+                $mulai = reset($tglPelaksanaan);
+            }
+            if (! $selesai && is_array($tglPelaksanaan) && ! empty($tglPelaksanaan)) {
+                $selesai = end($tglPelaksanaan);
             }
 
             $record = [
@@ -629,11 +643,25 @@ class ProgramBatchController extends Controller
                 return false;
             }
 
-            $start = $this->dateValue($item['tanggalmulaipelaksanaan'] ?? $item['tanggalmulai'] ?? $item['startdate'] ?? $item['mulaiprogram'] ?? $item['tglmulai'] ?? null);
-            $end = $this->dateValue($item['tanggalselesaipelaksanaan'] ?? $item['tanggalselesai'] ?? $item['enddate'] ?? $item['selesaiprogram'] ?? $item['tglselesai'] ?? null);
+            $start = $this->dateValue(
+                $item['tanggalmulaipelaksanaan'] ?? $item['tanggalmulai'] ?? $item['startdate'] ?? $item['mulaiprogram']
+                ?? $item['tglmulaipelaksanaan'] ?? $item['mulaipelaksanaan'] ?? $item['tglmulai'] ?? $item['mulai']
+                ?? $item['start'] ?? $item['tanggalawal'] ?? $item['tglawal'] ?? null
+            );
+            $end = $this->dateValue(
+                $item['tanggalselesaipelaksanaan'] ?? $item['tanggalselesai'] ?? $item['enddate'] ?? $item['selesaiprogram']
+                ?? $item['tglselesaipelaksanaan'] ?? $item['selesaipelaksanaan'] ?? $item['tglselesai'] ?? $item['selesai']
+                ?? $item['end'] ?? $item['tanggalberakhir'] ?? $item['tglberakhir'] ?? $item['tanggalakhir'] ?? $item['tglakhir'] ?? null
+            );
             $tglPelaksanaan = $this->jsonValue($item['tanggalpelaksanaan'] ?? null);
             if (empty($tglPelaksanaan) && $start && $end) {
                 $tglPelaksanaan = $this->generateDateRange($start, $end);
+            }
+            if (! $start && is_array($tglPelaksanaan) && ! empty($tglPelaksanaan)) {
+                $start = reset($tglPelaksanaan);
+            }
+            if (! $end && is_array($tglPelaksanaan) && ! empty($tglPelaksanaan)) {
+                $end = end($tglPelaksanaan);
             }
 
             $record = [
@@ -768,13 +796,23 @@ class ProgramBatchController extends Controller
         $participants = (int) ($item->TARGET_PESERTA ?? $item->target_total ?? 0);
         $year = $item->tahun ?: ($item->start_date ? (int) $item->start_date->format('Y') : ($item->end_date ? (int) $item->end_date->format('Y') : null));
 
+        $startDate = $item->start_date;
+        $endDate = $item->end_date;
+        $tglPelaksanaan = $item->tanggal_pelaksanaan;
+        if (! $startDate && is_array($tglPelaksanaan) && ! empty($tglPelaksanaan)) {
+            $startDate = reset($tglPelaksanaan);
+        }
+        if (! $endDate && is_array($tglPelaksanaan) && ! empty($tglPelaksanaan)) {
+            $endDate = end($tglPelaksanaan);
+        }
+
         return [
             'id' => 'non-reg-'.$item->id_nonreguler,
             'title' => $item->jenis_pelatihan,
-            'start' => $item->start_date,
-            'end' => $item->end_date,
+            'start' => $startDate,
+            'end' => $endDate,
             'tahun' => $year,
-            'tanggal_pelaksanaan' => $item->tanggal_pelaksanaan ?: array_values(array_filter([$item->start_date?->format('Y-m-d'), $item->end_date?->format('Y-m-d')])),
+            'tanggal_pelaksanaan' => $tglPelaksanaan ?: array_values(array_filter([$item->start_date?->format('Y-m-d'), $item->end_date?->format('Y-m-d')])),
             'type' => 'Non-Reguler',
             'location' => $item->lokasi_training,
             'region' => $item->region,
@@ -806,13 +844,23 @@ class ProgramBatchController extends Controller
         $orig['Total_orang'] = $item->target_peserta;
         $year = $item->tahun ?: ($item->Mulai_program ? (int) $item->Mulai_program->format('Y') : ($item->Selesai_program ? (int) $item->Selesai_program->format('Y') : null));
 
+        $startDate = $item->Mulai_program;
+        $endDate = $item->Selesai_program;
+        $tglPelaksanaan = $item->tanggal_pelaksanaan;
+        if (! $startDate && is_array($tglPelaksanaan) && ! empty($tglPelaksanaan)) {
+            $startDate = reset($tglPelaksanaan);
+        }
+        if (! $endDate && is_array($tglPelaksanaan) && ! empty($tglPelaksanaan)) {
+            $endDate = end($tglPelaksanaan);
+        }
+
         return [
             'id' => 'reg-'.$item->Program_reguler_id,
             'title' => $item->Training_Program,
-            'start' => $item->Mulai_program,
-            'end' => $item->Selesai_program,
+            'start' => $startDate,
+            'end' => $endDate,
             'tahun' => $year,
-            'tanggal_pelaksanaan' => $item->tanggal_pelaksanaan ?: array_values(array_filter([$item->Mulai_program?->format('Y-m-d'), $item->Selesai_program?->format('Y-m-d')])),
+            'tanggal_pelaksanaan' => $tglPelaksanaan ?: array_values(array_filter([$item->Mulai_program?->format('Y-m-d'), $item->Selesai_program?->format('Y-m-d')])),
             'type' => 'Reguler',
             'location' => $item->Lokasi_training,
             'region' => $item->Region,

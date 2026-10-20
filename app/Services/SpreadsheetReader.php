@@ -166,13 +166,110 @@ class SpreadsheetReader
         if ($value === null || trim((string) $value) === '') {
             return null;
         }
+
         $val = trim((string) $value);
+
+        // Remove invisible unicode characters
+        $val = preg_replace('/[\x{200B}-\x{200D}\x{FEFF}\x{2060}\x{00A0}]/u', '', $val);
+        $val = trim($val);
+
+        if ($val === '' || strtolower($val) === 'null' || strtolower($val) === 'tbd' || $val === '-') {
+            return null;
+        }
+
+        // Excel numeric timestamp (e.g. 45000)
         if (is_numeric($val) && (float) $val > 10000 && (float) $val < 70000) {
             return gmdate('Y-m-d', ((int) $val - 25569) * 86400);
         }
-        $time = strtotime($val);
 
-        return $time ? date('Y-m-d', $time) : null;
+        // Discard standalone 4-digit year (e.g. 2026) so strtotime doesn't treat it as 20:26 time
+        if (preg_match('/^\d{4}$/', $val)) {
+            return null;
+        }
+
+        // ISO format: YYYY-MM-DD (optionally followed by time)
+        if (preg_match('/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/', $val, $m)) {
+            $year = (int) $m[1];
+            $month = (int) $m[2];
+            $day = (int) $m[3];
+            if (checkdate($month, $day, $year)) {
+                return sprintf('%04d-%02d-%02d', $year, $month, $day);
+            }
+        }
+
+        // Indonesian / European format: DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+        if (preg_match('/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})$/', $val, $m)) {
+            $p1 = (int) $m[1];
+            $p2 = (int) $m[2];
+            $year = (int) $m[3];
+
+            // Prefer DD/MM/YYYY (standard in Indonesia)
+            if (checkdate($p2, $p1, $year)) {
+                return sprintf('%04d-%02d-%02d', $year, $p2, $p1);
+            }
+            // Fallback to MM/DD/YYYY if p2 > 12 and p1 <= 12
+            if (checkdate($p1, $p2, $year)) {
+                return sprintf('%04d-%02d-%02d', $year, $p1, $p2);
+            }
+        }
+
+        // 2-digit year format: DD/MM/YY
+        if (preg_match('/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2})$/', $val, $m)) {
+            $day = (int) $m[1];
+            $month = (int) $m[2];
+            $year = (int) $m[3] + 2000;
+            if (checkdate($month, $day, $year)) {
+                return sprintf('%04d-%02d-%02d', $year, $month, $day);
+            }
+        }
+
+        // Indonesian & English month text mapping (e.g. "27 Februari 2026", "27-Feb-2026", "1 Jan 2026")
+        $monthMap = [
+            'jan' => 1, 'januari' => 1, 'january' => 1,
+            'feb' => 2, 'februari' => 2, 'february' => 2,
+            'mar' => 3, 'maret' => 3, 'march' => 3,
+            'apr' => 4, 'april' => 4,
+            'mei' => 5, 'may' => 5,
+            'jun' => 6, 'juni' => 6, 'june' => 6,
+            'jul' => 7, 'juli' => 7, 'july' => 7,
+            'agu' => 8, 'ags' => 8, 'agst' => 8, 'agustus' => 8, 'aug' => 8, 'august' => 8,
+            'sep' => 9, 'sept' => 9, 'september' => 9,
+            'okt' => 10, 'oktober' => 10, 'oct' => 10, 'october' => 10,
+            'nov' => 11, 'nop' => 11, 'november' => 11,
+            'des' => 12, 'desember' => 12, 'dec' => 12, 'december' => 12,
+        ];
+
+        if (preg_match('/^(\d{1,2})\s*[-\/\s]\s*([a-zA-Z]+)\s*[-\/\s]\s*(\d{4})$/', $val, $m)) {
+            $day = (int) $m[1];
+            $monStr = strtolower($m[2]);
+            $year = (int) $m[3];
+            if (isset($monthMap[$monStr])) {
+                $month = $monthMap[$monStr];
+                if (checkdate($month, $day, $year)) {
+                    return sprintf('%04d-%02d-%02d', $year, $month, $day);
+                }
+            }
+        }
+
+        // Text format starting with month name: "Februari 27, 2026" or "Feb 27 2026"
+        if (preg_match('/^([a-zA-Z]+)\s*(\d{1,2}),?\s*(\d{4})$/', $val, $m)) {
+            $monStr = strtolower($m[1]);
+            $day = (int) $m[2];
+            $year = (int) $m[3];
+            if (isset($monthMap[$monStr])) {
+                $month = $monthMap[$monStr];
+                if (checkdate($month, $day, $year)) {
+                    return sprintf('%04d-%02d-%02d', $year, $month, $day);
+                }
+            }
+        }
+
+        $time = strtotime($val);
+        if ($time && date('Y', $time) > 1970 && date('Y', $time) < 2100) {
+            return date('Y-m-d', $time);
+        }
+
+        return null;
     }
 
     /**

@@ -32,12 +32,16 @@ class RealisasiVsBatchController extends Controller
         $availableYears = $this->availableYears();
         $year = (int) $request->input('year', $availableYears[0] ?? date('Y'));
         $rawMonth = $request->input('month');
-        $month = $this->monthNumber($rawMonth) ?? (int) date('n');
-        $monthCode = self::MONTH_3_LETTERS[$month];
+        $isAllMonths = ($rawMonth === 'all' || strcasecmp((string) $rawMonth, 'semua') === 0 || strcasecmp((string) $rawMonth, 'semua bulan') === 0);
+        $month = $isAllMonths ? null : ($this->monthNumber($rawMonth) ?? (int) date('n'));
+        $monthCode = $isAllMonths ? 'all' : self::MONTH_3_LETTERS[$month];
         $type = $request->input('type', 'all');
         $region = trim((string) $request->input('region', ''));
-        $rows = $this->buildRows($year, $month, $type, $region);
+        $subKategori = trim((string) $request->input('sub_kategori', ''));
+
+        $rows = $this->buildRows($year, $month, $type, $region, $subKategori);
         $regions = ProgramNonReguler::pluck('region')->merge(ProgramReguler::pluck('Region'))->filter()->map(fn ($value) => trim((string) $value))->unique()->sort()->values();
+        $subCategories = ProgramNonReguler::whereNotNull('sub_kategori')->where('sub_kategori', '!=', '')->distinct()->pluck('sub_kategori')->filter()->map(fn ($value) => trim((string) $value))->unique()->sort()->values();
         $activities = ProgramReguler::all()->map(fn ($item) => ['type' => 'reguler', 'id' => $item->getKey(), 'name' => $item->Training_Program])->concat(ProgramNonReguler::all()->map(fn ($item) => ['type' => 'non_reguler', 'id' => $item->getKey(), 'name' => $item->jenis_pelatihan.' - '.$item->region]))->values();
         $summary = [
             'planned_batch' => $rows->sum('planned_batch'),
@@ -48,7 +52,7 @@ class RealisasiVsBatchController extends Controller
         $summary['batch_percent'] = $this->percent($summary['realized_batch'], $summary['planned_batch']);
         $summary['participant_percent'] = $this->percent($summary['realized_participants'], $summary['planned_participants']);
 
-        return view('Administrasi.Pages.Program.realisasi_vs_batch', compact('rows', 'summary', 'year', 'month', 'monthCode', 'type', 'region', 'regions', 'activities', 'availableYears'));
+        return view('Administrasi.Pages.Program.realisasi_vs_batch', compact('rows', 'summary', 'year', 'month', 'monthCode', 'isAllMonths', 'type', 'region', 'regions', 'subKategori', 'subCategories', 'activities', 'availableYears'));
     }
 
     public function store(Request $request)
@@ -148,20 +152,24 @@ class RealisasiVsBatchController extends Controller
     {
         $year = (int) $request->input('year', date('Y'));
         $rawMonth = $request->input('month');
-        $month = $this->monthNumber($rawMonth) ?? (int) date('n');
+        $isAllMonths = ($rawMonth === 'all' || strcasecmp((string) $rawMonth, 'semua') === 0 || strcasecmp((string) $rawMonth, 'semua bulan') === 0);
+        $month = $isAllMonths ? null : ($this->monthNumber($rawMonth) ?? (int) date('n'));
         $type = $request->input('type', 'all');
         $region = trim((string) $request->input('region', ''));
-        $rows = $this->buildRows($year, $month, $type, $region);
+        $subKategori = trim((string) $request->input('sub_kategori', ''));
+        $rows = $this->buildRows($year, $month, $type, $region, $subKategori);
 
-        $headers = ['Realisasi ID', 'Batch ID', 'Tipe', 'Region', 'Bulan', 'Planned Batch', 'Realisasi Batch', '% Batch', 'Planned Peserta', 'Realisasi Peserta', '% Peserta'];
+        $headers = ['Realisasi ID', 'Batch ID', 'Tipe', 'Sub Kategori', 'Region', 'Bulan', 'Planned Batch', 'Realisasi Batch', '% Batch', 'Planned Peserta', 'Realisasi Peserta', '% Peserta'];
         $dataRows = [];
+        $monthLabel = $isAllMonths ? 'Jan - Des' : ($month ? self::MONTH_3_LETTERS[$month] : 'Jan - Des');
         foreach ($rows as $row) {
             $dataRows[] = [
                 $row->realisasi_id,
                 $row->batch_id,
                 $row->program_type,
+                $row->sub_kategori ?? '-',
                 $row->region,
-                self::MONTH_3_LETTERS[$month],
+                $monthLabel,
                 $row->planned_batch,
                 $row->realized_batch,
                 $row->batch_percent,
@@ -171,12 +179,12 @@ class RealisasiVsBatchController extends Controller
             ];
         }
 
-        $filename = 'realisasi_vs_batch_'.$year.'_'.self::MONTH_3_LETTERS[$month].'.xlsx';
+        $filename = 'realisasi_vs_batch_'.$year.'_'.($isAllMonths ? 'Semua_Bulan' : self::MONTH_3_LETTERS[$month]).'.xlsx';
 
         return ExcelExporter::download($filename, $headers, $dataRows, 'Realisasi Vs Batch');
     }
 
-    private function buildRows(int $year, int $month, string $type, string $region = '')
+    private function buildRows(int $year, ?int $month, string $type, string $region = '', string $subKategori = '')
     {
         $programs = collect();
         if ($type !== 'reguler') {
@@ -188,6 +196,9 @@ class RealisasiVsBatchController extends Controller
         $programs = $programs->filter(fn ($program) => $program !== null);
         if ($region !== '') {
             $programs = $programs->filter(fn ($program) => strtolower(trim((string) $program['region'])) === strtolower($region));
+        }
+        if ($type === 'non_reguler' && $subKategori !== '') {
+            $programs = $programs->filter(fn ($program) => strtolower(trim((string) ($program['sub_kategori'] ?? ''))) === strtolower($subKategori));
         }
 
         // Pre-filter TrainingRecords: fetch only records from the target window ($year-1 to $year, or null/0)
@@ -203,7 +214,7 @@ class RealisasiVsBatchController extends Controller
         $processedRecords = [];
         foreach ($rawRecords as $r) {
             $rMonth = $r->bulan ? $this->monthNumber($r->bulan) : null;
-            if ($rMonth !== null && $rMonth > $month) {
+            if ($month !== null && $rMonth !== null && $rMonth > $month) {
                 continue;
             }
 
@@ -267,14 +278,14 @@ class RealisasiVsBatchController extends Controller
                         }
                     }
                     if ($r->bulan) {
-                        if ($r->monthNum === null || $r->monthNum > $month) {
+                        if ($month !== null && ($r->monthNum === null || $r->monthNum > $month)) {
                             continue;
                         }
                     }
                 } else {
                     $hasDate = false;
                     foreach ($r->activityDates as $d) {
-                        if ($d && (int) date('Y', strtotime($d)) === $year && (int) date('n', strtotime($d)) <= $month) {
+                        if ($d && (int) date('Y', strtotime($d)) === $year && ($month === null || (int) date('n', strtotime($d)) <= $month)) {
                             $hasDate = true;
                             break;
                         }
@@ -343,7 +354,7 @@ class RealisasiVsBatchController extends Controller
         return response()->json(['message' => 'Realisasi batch berhasil diperbarui.', 'realisasi_batch' => $val]);
     }
 
-    private function programData($program, string $type, int $year, int $month): ?array
+    private function programData($program, string $type, int $year, ?int $month): ?array
     {
         $programYear = null;
         if ($type === 'reguler') {
@@ -374,7 +385,7 @@ class RealisasiVsBatchController extends Controller
         }
 
         $hasMonthDates = collect($dates)->filter()->isNotEmpty();
-        if ($hasMonthDates) {
+        if ($hasMonthDates && $month !== null) {
             $inMonth = collect($dates)->contains(fn ($date) => $date && (int) date('n', strtotime($date)) <= $month);
             if (! $inMonth && $type === 'reguler') {
                 return null;
@@ -387,6 +398,7 @@ class RealisasiVsBatchController extends Controller
             'batch_id' => $program->getKey(),
             'program_name' => $type === 'reguler' ? $program->Training_Program : $program->jenis_pelatihan,
             'region' => $type === 'reguler' ? $program->Region : $program->region,
+            'sub_kategori' => $type === 'non_reguler' ? ($program->sub_kategori ?? '') : null,
             'planned_batch' => $type === 'reguler' ? 1 : (int) ($program->TARGET_BATCH ?? $program->realisasi_batch ?? $program->total_batch ?? 0),
             'realisasi_batch' => $type === 'reguler' ? (int) ($program->Batch ?? 1) : (int) ($program->realisasi_batch ?? $program->total_batch ?? 0),
             'planned_participants' => $type === 'reguler' ? (int) $program->target_peserta : (int) ($program->TARGET_PESERTA ?? $program->target_total ?? 0),
