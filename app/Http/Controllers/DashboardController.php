@@ -101,6 +101,29 @@ class DashboardController extends Controller
         return 2026;
     }
 
+    public function getProgramRegulerStartDate($p): ?string
+    {
+        if (! empty($p->tanggal_pelaksanaan)) {
+            $dates = is_array($p->tanggal_pelaksanaan) ? $p->tanggal_pelaksanaan : json_decode($p->tanggal_pelaksanaan, true);
+            if (is_array($dates)) {
+                $validDates = array_values(array_filter($dates));
+                if (! empty($validDates)) {
+                    sort($validDates);
+
+                    return $validDates[0];
+                }
+            }
+        }
+
+        if ($p->Mulai_program) {
+            return $p->Mulai_program instanceof \DateTimeInterface
+                ? $p->Mulai_program->format('Y-m-d')
+                : date('Y-m-d', strtotime($p->Mulai_program));
+        }
+
+        return null;
+    }
+
     public function resolveProgramNonRegulerYear($p): int
     {
         if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
@@ -316,8 +339,15 @@ class DashboardController extends Controller
         $matchedUnassignedIds = [];
         $regRealBatch = 0;
         $regRealPart = 0;
+        $today = date('Y-m-d');
 
         foreach ($regulerPrograms as $p) {
+            // Pastikan tanggal_pelaksanaan awal <= dari tanggal saat ini
+            $startDate = $this->getProgramRegulerStartDate($p);
+            if (! $startDate || $startDate > $today) {
+                continue;
+            }
+
             $pId = (int) ($p->Program_reguler_id ?? $p->getKey());
             $pList = $recordsByProgId[$pId] ?? [];
 
@@ -821,6 +851,7 @@ class DashboardController extends Controller
             }
         }
 
+        $today = date('Y-m-d');
         foreach ($programs as $prog) {
             $matchingMaster = $reguler->filter(fn ($p) => str_starts_with(strtoupper($p->Training_Program), $prog));
             $planBatch = (int) $matchingMaster->count();
@@ -830,6 +861,12 @@ class DashboardController extends Controller
             $realPart = 0;
 
             foreach ($matchingMaster as $p) {
+                // Pastikan tanggal_pelaksanaan awal <= dari tanggal saat ini
+                $startDate = $this->getProgramRegulerStartDate($p);
+                if (! $startDate || $startDate > $today) {
+                    continue;
+                }
+
                 $pId = (int) ($p->Program_reguler_id ?? $p->getKey());
                 $pRecs = $recordsByProgId[$pId] ?? [];
 
