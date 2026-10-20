@@ -1,14 +1,31 @@
 <x-layout>
+    @php
+        $heroSlides = \App\Models\AppSetting::getHeroSlides();
+        $heroBadge = \App\Models\AppSetting::get('home_hero_badge', 'FIRST RESOURCES ACADEMY');
+        $heroTitle = \App\Models\AppSetting::get('home_hero_title', "Membangun Value, Menumbuhkan Karakter & <br><span class=\"text-green-accent\">Menyiapkan Masa Depan</span>");
+        $heroTagline = \App\Models\AppSetting::get('home_hero_tagline', '"Kebun Itu Sebaik Manusianya."');
+        $heroDesc = \App\Models\AppSetting::get('home_hero_desc', 'FR Academy hadir sebagai pusat pengembangan kompetensi dan pembentukan karakter kerja untuk menciptakan human capital perusahaan yang unggul, adaptif, dan siap menghadapi tantangan bisnis.');
+        $heroBtn1Text = \App\Models\AppSetting::get('home_hero_btn1_text', 'Jelajahi Program');
+        $heroBtn1Url = \App\Models\AppSetting::get('home_hero_btn1_url', '#program');
+        $heroBtn2Text = \App\Models\AppSetting::get('home_hero_btn2_text', 'Baca Artikel');
+        $heroBtn2Url = \App\Models\AppSetting::get('home_hero_btn2_url', '/artikel');
+
+        $visionBadge = \App\Models\AppSetting::get('home_vision_badge', 'TENTANG FR ACADEMY');
+        $visionTitle = \App\Models\AppSetting::get('home_vision_title', 'Visi FR Academy');
+        $visionDesc = \App\Models\AppSetting::get('home_vision_desc', 'Meningkatkan nilai perusahaan melalui pembelajaran berkelanjutan yang berkualitas dengan menjadi mitra strategis dalam pengembangan SDM. Kami merancang lingkungan belajar yang mengintegrasikan pengetahuan teknis lapangan dengan nilai-nilai kepemimpinan.');
+        $visionP1Title = \App\Models\AppSetting::get('home_vision_p1_title', 'Instruktur Internal Ahli');
+        $visionP1Desc = \App\Models\AppSetting::get('home_vision_p1_desc', 'Dibimbing langsung oleh praktisi internal kompeten mulai dari level Manager hingga Direktur, serta External Expert sesuai bidangnya.');
+        $visionP2Title = \App\Models\AppSetting::get('home_vision_p2_title', 'Fasilitas Terintegrasi');
+        $visionP2Desc = \App\Models\AppSetting::get('home_vision_p2_desc', 'Terintegrasi dengan kebun 300 Ha dan R&D, dilengkapi ruang kelas, mess 48 kamar, sarana olahraga, hingga area praktik langsung.');
+        $visionImg1 = \App\Models\AppSetting::getImageUrl('home_vision_img_1', 'https://i.ibb.co.com/hFZ1CScS/slides-6.jpg');
+        $visionImg2 = \App\Models\AppSetting::getImageUrl('home_vision_img_2', 'https://i.ibb.co.com/Rp1kWtfV/image-12.png');
+    @endphp
+
     <!-- Hero Section -->
     <section class="relative bg-teal-primary min-h-screen flex items-center pt-32 pb-16 overflow-hidden"
              x-data="{ 
                 currentSlide: 0, 
-                slides: [
-                    '{{ asset('images/welcomefr.jpg') }}',
-                    '{{ asset('images/slide2.png') }}',
-                    '{{ asset('images/slide3.png') }}',
-                    '{{ asset('images/slide4.png') }}'
-                ],
+                slides: {{ \Illuminate\Support\Js::from($heroSlides) }},
                 nextSlide() { this.currentSlide = (this.currentSlide === this.slides.length - 1) ? 0 : this.currentSlide + 1 },
                 prevSlide() { this.currentSlide = (this.currentSlide === 0) ? this.slides.length - 1 : this.currentSlide - 1 }
              }" 
@@ -56,26 +73,31 @@
         
         <div class="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full flex flex-col items-center text-center" data-aos="zoom-in" data-aos-duration="1000">
             <div class="max-w-3xl flex flex-col items-center">
-                <span class="inline-block py-1 px-3 rounded bg-white/20 text-white text-xs font-semibold tracking-wider mb-4 border border-white/30 backdrop-blur-sm">FIRST RESOURCES ACADEMY</span>
+                <span class="inline-block py-1 px-3 rounded bg-white/20 text-white text-xs font-semibold tracking-wider mb-4 border border-white/30 backdrop-blur-sm">{{ $heroBadge }}</span>
                 <h1 class="text-4xl md:text-5xl font-bold text-white leading-tight mb-4">
-                    Membangun Value, Menumbuhkan Karakter & <br>
-                    <span class="text-green-accent">Menyiapkan Masa Depan</span>
+                    {!! $heroTitle !!}
                 </h1>
-                <p class="text-xl md:text-2xl text-green-accent font-semibold mb-6">
-                    "Kebun Itu Sebaik Manusianya."
-                </p>
-                <p class="text-lg text-gray-200 mb-10 max-w-3xl mx-auto">
-                    FR Academy hadir sebagai pusat pengembangan kompetensi dan pembentukan karakter kerja untuk menciptakan human capital perusahaan yang unggul, adaptif, dan siap menghadapi tantangan bisnis.
+                @if($heroTagline)
+                    <p class="text-xl md:text-2xl text-green-accent font-semibold mb-6">
+                        {{ $heroTagline }}
+                    </p>
+                @endif
+                <p class="text-lg text-gray-200 mb-10 max-w-3xl mx-auto leading-relaxed">
+                    {{ $heroDesc }}
                 </p>
                 
                 <!-- CTA Buttons -->
                 <div class="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
-                    <a href="#program" class="w-full sm:w-auto bg-green-accent hover:bg-green-600 text-white px-8 py-4 rounded-full font-bold transition duration-300 shadow-lg text-lg">
-                        Jelajahi Program
-                    </a>
-                    <a href="/artikel" class="w-full sm:w-auto bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border border-white/30 px-8 py-4 rounded-full font-bold transition duration-300 shadow-lg text-lg">
-                        Baca Artikel
-                    </a>
+                    @if($heroBtn1Text)
+                        <a href="{{ $heroBtn1Url ?: '#program' }}" class="w-full sm:w-auto bg-green-accent hover:bg-green-600 text-white px-8 py-4 rounded-full font-bold transition duration-300 shadow-lg text-lg">
+                            {{ $heroBtn1Text }}
+                        </a>
+                    @endif
+                    @if($heroBtn2Text)
+                        <a href="{{ $heroBtn2Url ?: '/artikel' }}" class="w-full sm:w-auto bg-white/20 hover:bg-white/30 backdrop-blur-md text-white border border-white/30 px-8 py-4 rounded-full font-bold transition duration-300 shadow-lg text-lg">
+                            {{ $heroBtn2Text }}
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>
@@ -88,46 +110,50 @@
                 <!-- Image Grid -->
                 <div class="relative" data-aos="fade-right">
                     <div class="grid grid-cols-2 gap-4">
-                        <div class="h-64 bg-gray-200 rounded-2xl overflow-hidden mt-8">
-                            <img src="https://i.ibb.co.com/hFZ1CScS/slides-6.jpg" alt="Training" class="w-full h-full object-cover">
+                        <div class="h-64 bg-gray-200 rounded-2xl overflow-hidden mt-8 shadow-md">
+                            <img src="{{ $visionImg1 }}" alt="Training" class="w-full h-full object-cover">
                         </div>
-                        <div class="h-64 bg-gray-200 rounded-2xl overflow-hidden">
-                            <img src="https://i.ibb.co.com/Rp1kWtfV/image-12.png" alt="Meeting" class="w-full h-full object-cover">
+                        <div class="h-64 bg-gray-200 rounded-2xl overflow-hidden shadow-md">
+                            <img src="{{ $visionImg2 }}" alt="Meeting" class="w-full h-full object-cover">
                         </div>
                     </div>
                     <!-- Decorative element -->
-                    <div class="absolute -z-10 -bottom-6 -left-6 w-32 h-32 bg-green-50 rounded-full"></div>
+                    <div class="absolute -z-10 -bottom-6 -left-6 w-32 h-32 bg-green-50 dark:bg-green-950/20 rounded-full"></div>
                 </div>
 
                 <!-- Text Content -->
                 <div data-aos="fade-left" data-aos-delay="200">
-                    <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">TENTANG FR ACADEMY</span>
+                    <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">{{ $visionBadge }}</span>
                     <h2 class="text-4xl font-bold text-teal-primary dark:text-white mt-4 mb-6 leading-tight">
-                        Visi <span class="text-green-accent">FR Academy</span>
+                        {{ $visionTitle }}
                     </h2>
                     <p class="text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-                        Meningkatkan nilai perusahaan melalui pembelajaran berkelanjutan yang berkualitas dengan menjadi mitra strategis dalam pengembangan SDM. Kami merancang lingkungan belajar yang mengintegrasikan pengetahuan teknis lapangan dengan nilai-nilai kepemimpinan.
+                        {{ $visionDesc }}
                     </p>
                     
                     <ul class="space-y-4 mb-8">
+                        @if($visionP1Title)
                         <li class="flex items-start">
-                            <div class="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-accent mt-1">
+                            <div class="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center text-green-accent mt-1">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             </div>
                             <div class="ml-3">
-                                <h4 class="text-lg font-semibold text-teal-primary dark:text-white">Instruktur Internal Ahli</h4>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Dibimbing langsung oleh praktisi internal kompeten mulai dari level Manager hingga Direktur, serta External Expert sesuai bidangnya.</p>
+                                <h4 class="text-lg font-semibold text-teal-primary dark:text-white">{{ $visionP1Title }}</h4>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $visionP1Desc }}</p>
                             </div>
                         </li>
+                        @endif
+                        @if($visionP2Title)
                         <li class="flex items-start">
-                            <div class="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center text-green-accent mt-1">
+                            <div class="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center text-green-accent mt-1">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
                             </div>
                             <div class="ml-3">
-                                <h4 class="text-lg font-semibold text-teal-primary dark:text-white">Fasilitas Terintegrasi</h4>
-                                <p class="text-sm text-gray-500 dark:text-gray-400">Terintegrasi dengan kebun 300 Ha dan R&D, dilengkapi ruang kelas, mess 48 kamar, sarana olahraga, hingga area praktik langsung.</p>
+                                <h4 class="text-lg font-semibold text-teal-primary dark:text-white">{{ $visionP2Title }}</h4>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">{{ $visionP2Desc }}</p>
                             </div>
                         </li>
+                        @endif
                     </ul>
                     
                     <a href="/tentang-kami" class="inline-flex items-center text-teal-primary dark:text-teal-300 font-semibold hover:text-green-accent dark:hover:text-green-400 transition">

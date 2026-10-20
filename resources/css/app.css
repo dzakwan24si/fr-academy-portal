@@ -12,3 +12,13 @@
     --color-teal-primary: #114045;
     --color-green-accent: #59A338;
 }
+
+.bg-tech-grid {
+    background-image: radial-gradient(rgba(17, 64, 69, 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
+}
+
+.dark .bg-tech-grid {
+    background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+    background-size: 24px 24px;
+}

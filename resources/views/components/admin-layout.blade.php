@@ -301,12 +301,17 @@
 
                 @canany(['manage_articles', 'manage_tv_display', 'manage_events', 'manage_career'])
                 <!-- SECTION: Konten & Media -->
-                <details class="group" {{ request()->routeIs('admin.artikel.*', 'admin.tv.*', 'admin.events.*', 'admin.career_programs.*') ? 'open' : '' }}>
+                <details class="group" {{ request()->routeIs('admin.artikel.*', 'admin.tv.*', 'admin.events.*', 'admin.career_programs.*', 'admin.page_settings.*') ? 'open' : '' }}>
                     <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-wider text-gray-400 hover:bg-gray-100 [&::-webkit-details-marker]:hidden transition-colors">
                         <span>Konten & Media</span>
                         <svg class="h-4 w-4 transition-transform group-open:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </summary>
                     <div class="space-y-1 mt-1">
+                        <a href="{{ route('admin.page_settings.index') }}" class="{{ request()->routeIs('admin.page_settings.*') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">
+                            <i data-lucide="layout-template" class="w-5 h-5 mr-3 {{ request()->routeIs('admin.page_settings.*') ? 'text-white' : 'text-gray-400' }}"></i>
+                            Konten Halaman
+                        </a>
+
                         @can('manage_articles')
                         <a href="{{ route('admin.artikel.index') }}" class="{{ request()->routeIs('admin.artikel.*') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">
                             <svg class="w-5 h-5 mr-3 {{ request()->routeIs('admin.artikel.*') ? 'text-white' : 'text-gray-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"></path></svg>
