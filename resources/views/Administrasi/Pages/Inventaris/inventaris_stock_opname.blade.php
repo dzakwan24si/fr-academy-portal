@@ -137,13 +137,13 @@
         {{-- Action Button --}}
         <div>
             @if($isDraf)
-                <a href="{{ route('administrasi.inventaris.stock-opname.detail', ['date' => $rawDate]) }}"
+                <a href="{{ route('administrasi.inventaris.stock-opname.detail', array_merge(['date' => $rawDate], !empty($jenisLokasiFilter) ? ['jenis_lokasi' => $jenisLokasiFilter] : [])) }}"
                    class="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-[#E5E7EB] text-[#2563EB] hover:bg-[#EFF6FF] hover:border-[#BFDBFE] font-semibold text-xs rounded-xl transition-all">
                     <span>Lanjutkan Draf</span>
                     <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                 </a>
             @else
-                <a href="{{ route('administrasi.inventaris.stock-opname.detail', ['date' => $rawDate]) }}"
+                <a href="{{ route('administrasi.inventaris.stock-opname.detail', array_merge(['date' => $rawDate], !empty($jenisLokasiFilter) ? ['jenis_lokasi' => $jenisLokasiFilter] : [])) }}"
                    class="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 bg-white border border-[#E5E7EB] text-[#4B6A34] hover:bg-[#F0F5EB] hover:border-[#CBDDA8] font-semibold text-xs rounded-xl transition-all">
                     <span>Lihat Detail</span>
                     <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
@@ -174,6 +174,9 @@
 
         <form action="{{ route('administrasi.inventaris.stock-opname.session.store') }}" method="POST" class="mt-5 space-y-4">
             @csrf
+            @if(!empty($jenisLokasiFilter))
+                <input type="hidden" name="jenis_lokasi" value="{{ $jenisLokasiFilter }}">
+            @endif
             <div>
                 <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Tanggal Audit <span class="text-red-500">*</span></label>
                 <input type="date" name="tanggal_stock_opname" value="{{ date('Y-m-d') }}" required

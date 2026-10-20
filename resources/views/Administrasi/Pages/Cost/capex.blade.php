@@ -243,7 +243,9 @@
     {{-- Total RAB --}}
     <div class="bg-white border border-[#E5E7EB] rounded-xl p-5 relative overflow-hidden shadow-sm hover:border-blue-300 transition-all">
         <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold text-[#71717A] uppercase tracking-wider">Total RAB Anggaran</span>
+            <span class="text-xs font-semibold text-[#71717A] uppercase tracking-wider">
+                Total RAB Anggaran {{ $selectedLocation === 'kantor' ? '(Kantor)' : ($selectedLocation === 'mess' ? '(Mess)' : '') }}
+            </span>
             <div class="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center shadow-xs">
                 <i data-lucide="wallet" class="w-4 h-4 text-blue-600"></i>
             </div>
@@ -252,15 +254,25 @@
             Rp {{ number_format($summary['totalRab'], 0, ',', '.') }}
         </p>
         <div class="flex items-center justify-between text-xs text-[#71717A] mt-2 pt-2 border-t border-[#F4F4F5]">
-            <span>Kantor: Rp {{ number_format($summary['rabKantorTotal'], 0, ',', '.') }}</span>
-            <span>Mess: Rp {{ number_format($summary['rabMessTotal'], 0, ',', '.') }}</span>
+            @if($selectedLocation === 'kantor')
+                <span class="text-blue-600 font-medium">Lokasi: Kantor</span>
+                <span>{{ $rabKantor->total() }} Item RAB</span>
+            @elseif($selectedLocation === 'mess')
+                <span class="text-purple-600 font-medium">Lokasi: Mess</span>
+                <span>{{ $rabMess->total() }} Item RAB</span>
+            @else
+                <span>Kantor: Rp {{ number_format($summary['rabKantorTotal'], 0, ',', '.') }}</span>
+                <span>Mess: Rp {{ number_format($summary['rabMessTotal'], 0, ',', '.') }}</span>
+            @endif
         </div>
     </div>
 
     {{-- Total Realisasi --}}
     <div class="bg-white border border-[#E5E7EB] rounded-xl p-5 relative overflow-hidden shadow-sm hover:border-amber-300 transition-all">
         <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold text-[#71717A] uppercase tracking-wider">Total Realisasi Aktual</span>
+            <span class="text-xs font-semibold text-[#71717A] uppercase tracking-wider">
+                Total Realisasi Aktual {{ $selectedLocation === 'kantor' ? '(Kantor)' : ($selectedLocation === 'mess' ? '(Mess)' : '') }}
+            </span>
             <div class="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center shadow-xs">
                 <i data-lucide="receipt" class="w-4 h-4 text-amber-600"></i>
             </div>
@@ -281,7 +293,9 @@
     @endphp
     <div class="bg-white border border-[#E5E7EB] rounded-xl p-5 relative overflow-hidden shadow-sm {{ $isOver ? 'hover:border-red-300' : 'hover:border-green-300' }} transition-all">
         <div class="flex items-center justify-between mb-3">
-            <span class="text-xs font-semibold text-[#71717A] uppercase tracking-wider">Sisa Anggaran (Balance)</span>
+            <span class="text-xs font-semibold text-[#71717A] uppercase tracking-wider">
+                Sisa Anggaran {{ $selectedLocation === 'kantor' ? '(Kantor)' : ($selectedLocation === 'mess' ? '(Mess)' : '(Balance)') }}
+            </span>
             <div class="w-9 h-9 rounded-xl {{ $isOver ? 'bg-red-50 border border-red-100 text-red-600' : 'bg-green-50 border border-green-100 text-green-600' }} flex items-center justify-center shadow-xs">
                 <i data-lucide="{{ $isOver ? 'alert-octagon' : 'piggy-bank' }}" class="w-4 h-4"></i>
             </div>

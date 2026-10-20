@@ -210,6 +210,9 @@
         </p>
         <p class="text-xs {{ $isDeficit ? 'text-red-500 font-medium' : 'text-[#71717A]' }} mt-1">
             {{ $isDeficit ? '⚠️ Overbudget / Defisit' : '✓ Anggaran aman tersisa' }}
+            <span class="block text-[11px] text-[#71717A] mt-0.5 font-normal">
+                (Budget Thn - Realisasi {{ $selectedMonth === 'all' ? 'Tahunan' : 'Jan s/d ' . ($monthNames[$selectedMonth] ?? $selectedMonth) }})
+            </span>
         </p>
     </div>
 </div>

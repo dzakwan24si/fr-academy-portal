@@ -9,32 +9,73 @@
 <nav class="flex items-center gap-2 text-xs text-[#71717A] mb-3">
     <span>Inventaris</span>
     <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
-    <a href="{{ route('administrasi.inventaris.stock-opname') }}" class="hover:text-[#4B6A34] transition-colors">Stock Opname</a>
+    <a href="{{ route('administrasi.inventaris.stock-opname', !empty($jenisLokasiFilter) ? ['jenis_lokasi' => $jenisLokasiFilter] : []) }}" class="hover:text-[#4B6A34] transition-colors">Stock Opname</a>
     <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
     <span class="text-[#18181B] font-semibold">Detail</span>
 </nav>
 
-{{-- ============================== HEADER & ACTION BUTTONS ============================== --}}
-<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-5">
-    <div>
-        <div class="flex items-center gap-3">
-            <h1 class="text-2xl font-bold text-[#18181B] tracking-tight">Stock Opname: {{ $formattedDate }}</h1>
-            @if(strtolower($sessionMeta->status ?? 'selesai') === 'draf')
-                <span class="px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">
-                    DRAF
-                </span>
-            @else
-                <span class="px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-[#EAF5E9] text-[#2F6B27] border border-[#C6E6C1]">
-                    SELESAI
-                </span>
-            @endif
+{{-- ============================== HEADER & SUB-TABS ============================== --}}
+<div class="flex flex-col gap-4 mb-6">
+    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <h1 class="text-2xl font-bold text-[#18181B] tracking-tight">Stock Opname: {{ $formattedDate }}</h1>
+                @if(strtolower($sessionMeta->status ?? 'selesai') === 'draf')
+                    <span class="px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">
+                        DRAF
+                    </span>
+                @else
+                    <span class="px-3 py-1 rounded-full text-xs font-bold tracking-wide uppercase bg-[#EAF5E9] text-[#2F6B27] border border-[#C6E6C1]">
+                        SELESAI
+                    </span>
+                @endif
+            </div>
+            <p class="text-sm text-[#71717A] mt-1">
+                {{ ($sessionMeta->catatan_sesi ?? null) ?: 'Stock Opname rutin inventaris' }}
+            </p>
         </div>
-        <p class="text-sm text-[#71717A] mt-1">
-            {{ ($sessionMeta->catatan_sesi ?? null) ?: 'Stock Opname rutin inventaris' }}
-        </p>
+
+        <div class="flex flex-wrap items-center gap-3 shrink-0">
+            {{-- Location Switcher Pills --}}
+            <div class="inline-flex bg-[#F4F4F5] border border-[#E5E7EB] rounded-xl p-1 shadow-sm">
+                <a href="{{ route('administrasi.inventaris.stock-opname.detail', array_merge(['date' => $date], request()->query(), ['jenis_lokasi' => ''])) }}"
+                   class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ empty($jenisLokasiFilter) ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-white' }}">
+                    Semua
+                </a>
+                <a href="{{ route('administrasi.inventaris.stock-opname.detail', array_merge(['date' => $date], request()->query(), ['jenis_lokasi' => 'Gudang'])) }}"
+                   class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $jenisLokasiFilter === 'Gudang' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-white' }}">
+                    Gudang
+                </a>
+                <a href="{{ route('administrasi.inventaris.stock-opname.detail', array_merge(['date' => $date], request()->query(), ['jenis_lokasi' => 'Kantor'])) }}"
+                   class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $jenisLokasiFilter === 'Kantor' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-white' }}">
+                    Kantor
+                </a>
+            </div>
+
+            {{-- Feature Sub-tabs --}}
+            <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm overflow-x-auto max-w-full">
+                <a href="{{ route('administrasi.inventaris.summary') }}"
+                   class="px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap {{ $activeTab === 'summary' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+                    Summary
+                </a>
+                <a href="{{ route('administrasi.inventaris.barang') }}"
+                   class="px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap {{ $activeTab === 'barang' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+                    Barang
+                </a>
+                <a href="{{ route('administrasi.inventaris.pembelian') }}"
+                   class="px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap {{ $activeTab === 'pembelian' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+                    Pembelian
+                </a>
+                <a href="{{ route('administrasi.inventaris.stock-opname') }}"
+                   class="px-4 py-2 text-xs font-bold rounded-lg transition-all whitespace-nowrap {{ $activeTab === 'stock_opname' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+                    Stock Opname
+                </a>
+            </div>
+        </div>
     </div>
 
-    <div class="flex flex-wrap items-center gap-2.5">
+    {{-- Action Buttons Row --}}
+    <div class="flex flex-wrap items-center justify-start sm:justify-end gap-2.5">
         {{-- Edit Sesi & Status --}}
         <button onclick="document.getElementById('modalEditSession').classList.remove('hidden')"
                 class="inline-flex items-center gap-2 px-4 py-2 bg-white border border-[#E5E7EB] text-[#374151] text-xs font-semibold rounded-xl hover:bg-[#F9FAFB] transition-all shadow-sm">
@@ -60,39 +101,6 @@
             <i data-lucide="plus" class="w-4 h-4"></i>
             <span>Tambah Barang</span>
         </button>
-    </div>
-</div>
-
-{{-- ============================== SUB-TABS ============================== --}}
-<div class="flex items-center justify-between mb-6">
-    <div class="inline-flex bg-[#F4F4F5] border border-[#E5E7EB] rounded-xl p-1 shadow-sm">
-        <a href="{{ route('administrasi.inventaris.stock-opname.detail', array_merge(['date' => $date], request()->query(), ['jenis_lokasi' => ''])) }}"
-           class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ empty($jenisLokasiFilter) ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-white' }}">
-            Semua
-        </a>
-        <a href="{{ route('administrasi.inventaris.stock-opname.detail', array_merge(['date' => $date], request()->query(), ['jenis_lokasi' => 'Gudang'])) }}"
-           class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $jenisLokasiFilter === 'Gudang' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-white' }}">
-            Gudang
-        </a>
-        <a href="{{ route('administrasi.inventaris.stock-opname.detail', array_merge(['date' => $date], request()->query(), ['jenis_lokasi' => 'Kantor'])) }}"
-           class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $jenisLokasiFilter === 'Kantor' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-white' }}">
-            Kantor
-        </a>
-    </div>
-
-    <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm">
-        <a href="{{ route('administrasi.inventaris.barang') }}"
-           class="px-5 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'barang' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
-            Barang
-        </a>
-        <a href="{{ route('administrasi.inventaris.pembelian') }}"
-           class="px-5 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'pembelian' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
-            Pembelian
-        </a>
-        <a href="{{ route('administrasi.inventaris.stock-opname') }}"
-           class="px-5 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'stock_opname' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
-            Stock Opname
-        </a>
     </div>
 </div>
 
@@ -234,10 +242,13 @@
                                      title="Edit Kondisi">
                                 <i data-lucide="pencil" class="w-4 h-4"></i>
                             </button>
-                            <form action="{{ route('administrasi.inventaris.stock-opname.item.destroy', $item->id) }}" method="POST"
+                            <form action="{{ route('administrasi.inventaris.stock-opname.item.destroy', array_merge(['id' => $item->id], !empty($jenisLokasiFilter) ? ['jenis_lokasi' => $jenisLokasiFilter] : [])) }}" method="POST"
                                   onsubmit="return confirm('Apakah Anda yakin ingin menghapus data pemeriksaan item ini?');" class="inline">
                                 @csrf
                                 @method('DELETE')
+                                @if(!empty($jenisLokasiFilter))
+                                    <input type="hidden" name="jenis_lokasi" value="{{ $jenisLokasiFilter }}">
+                                @endif
                                 <button type="submit" class="p-1.5 text-[#71717A] hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                         title="Hapus Item">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -293,21 +304,37 @@
 
         <form action="{{ route('administrasi.inventaris.stock-opname.item.store', $date) }}" method="POST" enctype="multipart/form-data" class="mt-5 space-y-4">
             @csrf
+            @if(!empty($jenisLokasiFilter))
+                <input type="hidden" name="jenis_lokasi" value="{{ $jenisLokasiFilter }}">
+            @endif
+
+            @if($jenisLokasiFilter === 'Gudang')
+                <div class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center gap-2">
+                    <i data-lucide="info" class="w-4 h-4 shrink-0 text-emerald-600"></i>
+                    <span>Mode Filter <strong>Gudang</strong>: Menampilkan aset Gudang saja. Lokasi spesifik tidak diperlukan.</span>
+                </div>
+            @elseif($jenisLokasiFilter === 'Kantor')
+                <div class="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center gap-2">
+                    <i data-lucide="info" class="w-4 h-4 shrink-0 text-amber-600"></i>
+                    <span>Mode Filter <strong>Kantor</strong>: Menampilkan aset Kantor saja. Lokasi spesifik (ruangan) wajib diisi.</span>
+                </div>
+            @endif
+
             <div>
                 <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Pilih Aset Barang <span class="text-red-500">*</span></label>
-                <select name="barang_id" required class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
+                <select id="add_item_barang_id" name="barang_id" required class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
                     <option value="">-- Pilih Barang --</option>
                     @foreach($allBarang as $b)
-                        <option value="{{ $b->id }}">{{ $b->nama_asset }} ({{ $b->satuan }}) - {{ $b->jenis_lokasi }}</option>
+                        <option value="{{ $b->id }}" data-lokasi="{{ $b->jenis_lokasi ?? $b->lokasi }}">{{ $b->nama_asset }} ({{ $b->satuan }}) - {{ $b->jenis_lokasi }}</option>
                     @endforeach
                 </select>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Lokasi Spesifik / Ruangan Kantor</label>
-                <input type="text" name="lokasi_spesifik" list="roomSuggestions" placeholder="Contoh: Planter, Meeting, Administrasi..."
+            <div id="container_add_item_lokasi_spesifik" class="{{ $jenisLokasiFilter === 'Gudang' ? 'hidden' : '' }}">
+                <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Lokasi Spesifik / Ruangan Kantor <span id="add_item_lokasi_spesifik_req" class="text-red-500 {{ $jenisLokasiFilter === 'Kantor' ? '' : 'hidden' }}">*</span></label>
+                <input type="text" id="add_item_lokasi_spesifik" name="lokasi_spesifik" list="roomSuggestions" placeholder="Contoh: Planter, Meeting, Administrasi..." {{ $jenisLokasiFilter === 'Kantor' ? 'required' : '' }}
                        class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
-                <p class="text-[11px] text-[#71717A] mt-1">Kosongkan untuk barang Gudang atau jika tidak merinci ruangan.</p>
+                <p id="add_item_lokasi_spesifik_hint" class="text-[11px] text-[#71717A] mt-1">{{ $jenisLokasiFilter === 'Kantor' ? 'Wajib mengisi ruangan untuk barang Kantor.' : 'Kosongkan untuk barang Gudang atau jika tidak merinci ruangan.' }}</p>
             </div>
 
             <div class="grid grid-cols-2 gap-3 bg-[#F9FAFB] p-3.5 rounded-xl border border-[#E5E7EB]">
@@ -361,19 +388,24 @@
         <form id="formEditItem" method="POST" enctype="multipart/form-data" class="mt-5 space-y-4">
             @csrf
             @method('PUT')
+            @if(!empty($jenisLokasiFilter))
+                <input type="hidden" name="jenis_lokasi" value="{{ $jenisLokasiFilter }}">
+            @endif
+
             <div>
                 <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Aset Barang <span class="text-red-500">*</span></label>
                 <select id="edit_item_barang_id" name="barang_id" required class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
                     @foreach($allBarang as $b)
-                        <option value="{{ $b->id }}">{{ $b->nama_asset }} ({{ $b->satuan }}) - {{ $b->jenis_lokasi }}</option>
+                        <option value="{{ $b->id }}" data-lokasi="{{ $b->jenis_lokasi ?? $b->lokasi }}">{{ $b->nama_asset }} ({{ $b->satuan }}) - {{ $b->jenis_lokasi }}</option>
                     @endforeach
                 </select>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Lokasi Spesifik / Ruangan Kantor</label>
-                <input type="text" id="edit_item_lokasi_spesifik" name="lokasi_spesifik" list="roomSuggestions" placeholder="Contoh: Planter, Meeting, Administrasi..."
+            <div id="container_edit_item_lokasi_spesifik" class="{{ $jenisLokasiFilter === 'Gudang' ? 'hidden' : '' }}">
+                <label class="block text-xs font-bold text-[#374151] mb-1.5 uppercase tracking-wider">Lokasi Spesifik / Ruangan Kantor <span id="edit_item_lokasi_spesifik_req" class="text-red-500 {{ $jenisLokasiFilter === 'Kantor' ? '' : 'hidden' }}">*</span></label>
+                <input type="text" id="edit_item_lokasi_spesifik" name="lokasi_spesifik" list="roomSuggestions" placeholder="Contoh: Planter, Meeting, Administrasi..." {{ $jenisLokasiFilter === 'Kantor' ? 'required' : '' }}
                        class="w-full px-3.5 py-2.5 border border-[#E5E7EB] rounded-xl text-sm text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34]">
+                <p id="edit_item_lokasi_spesifik_hint" class="text-[11px] text-[#71717A] mt-1">{{ $jenisLokasiFilter === 'Kantor' ? 'Wajib mengisi ruangan untuk barang Kantor.' : 'Kosongkan untuk barang Gudang atau jika tidak merinci ruangan.' }}</p>
             </div>
 
             <div class="grid grid-cols-2 gap-3 bg-[#F9FAFB] p-3.5 rounded-xl border border-[#E5E7EB]">
@@ -479,14 +511,65 @@
 
 @push('scripts')
 <script>
+    const currentJenisLokasiFilter = @json($jenisLokasiFilter ?? '');
+
+    function updateLokasiSpesifikField(selectElem, containerId, inputId, reqId, hintId) {
+        const container = document.getElementById(containerId);
+        const input = document.getElementById(inputId);
+        const req = document.getElementById(reqId);
+        const hint = document.getElementById(hintId);
+
+        if (!container || !input) return;
+
+        let lokasi = currentJenisLokasiFilter;
+        if (!lokasi && selectElem) {
+            const opt = selectElem.options[selectElem.selectedIndex];
+            lokasi = opt ? (opt.getAttribute('data-lokasi') || '') : '';
+        }
+
+        if (lokasi.toLowerCase() === 'gudang') {
+            container.classList.add('hidden');
+            input.required = false;
+            input.value = '';
+            if (req) req.classList.add('hidden');
+        } else if (lokasi.toLowerCase() === 'kantor') {
+            container.classList.remove('hidden');
+            input.required = true;
+            if (req) req.classList.remove('hidden');
+            if (hint) hint.innerText = 'Wajib mengisi ruangan untuk barang Kantor.';
+        } else {
+            container.classList.remove('hidden');
+            input.required = false;
+            if (req) req.classList.add('hidden');
+            if (hint) hint.innerText = 'Kosongkan untuk barang Gudang atau jika tidak merinci ruangan.';
+        }
+    }
+
+    const addItemBarangSelect = document.getElementById('add_item_barang_id');
+    if (addItemBarangSelect) {
+        addItemBarangSelect.addEventListener('change', function() {
+            updateLokasiSpesifikField(this, 'container_add_item_lokasi_spesifik', 'add_item_lokasi_spesifik', 'add_item_lokasi_spesifik_req', 'add_item_lokasi_spesifik_hint');
+        });
+    }
+
+    const editItemBarangSelect = document.getElementById('edit_item_barang_id');
+    if (editItemBarangSelect) {
+        editItemBarangSelect.addEventListener('change', function() {
+            updateLokasiSpesifikField(this, 'container_edit_item_lokasi_spesifik', 'edit_item_lokasi_spesifik', 'edit_item_lokasi_spesifik_req', 'edit_item_lokasi_spesifik_hint');
+        });
+    }
+
     function openEditItemModal(item) {
         const form = document.getElementById('formEditItem');
         form.action = `/administrasi/inventaris/stock-opname/item/${item.id}`;
-        document.getElementById('edit_item_barang_id').value = item.barang_id;
+        const editSelect = document.getElementById('edit_item_barang_id');
+        editSelect.value = item.barang_id;
         document.getElementById('edit_item_lokasi_spesifik').value = item.lokasi_spesifik || '';
         document.getElementById('edit_item_baik').value = item.jumlah_baik;
         document.getElementById('edit_item_rusak').value = item.jumlah_rusak;
         document.getElementById('edit_item_keterangan').value = item.keterangan || '';
+
+        updateLokasiSpesifikField(editSelect, 'container_edit_item_lokasi_spesifik', 'edit_item_lokasi_spesifik', 'edit_item_lokasi_spesifik_req', 'edit_item_lokasi_spesifik_hint');
         document.getElementById('modalEditItem').classList.remove('hidden');
     }
 

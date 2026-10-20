@@ -211,7 +211,7 @@
             </div>
         </div>
         <p class="text-lg font-bold text-[#4B6A34] font-mono">
-            Rp {{ number_format($totals['vra'], 0, ',', '.') }} <span class="text-xs font-normal text-[#4B6A34]">/KM</span>
+            Rp {{ number_format($totals['avg_vra'] ?? $totals['vra'], 0, ',', '.') }} <span class="text-xs font-normal text-[#4B6A34]">/KM</span>
         </p>
         <p class="text-[11px] text-[#71717A] mt-0.5">Total Biaya / Total KM</p>
     </div>
@@ -225,7 +225,7 @@
             </div>
         </div>
         <p class="text-lg font-bold text-[#18181B] font-mono">
-            {{ number_format($totals['bbm_km_liter'], 2, ',', '.') }} <span class="text-xs font-normal text-[#71717A]">KM/L</span>
+            {{ number_format($totals['avg_bbm_km_liter'] ?? $totals['bbm_km_liter'], 2, ',', '.') }} <span class="text-xs font-normal text-[#71717A]">KM/L</span>
         </p>
         <p class="text-[11px] text-[#71717A] mt-0.5">{{ number_format($totals['bbm_liter'], 1, ',', '.') }} Liter terpakai</p>
     </div>

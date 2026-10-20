@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Program;
 
 use App\Http\Controllers\Controller;
+use App\Models\ActivityLog;
 use App\Models\AppSetting;
 use App\Models\Monitoring\MonitoringAngkatan;
 use App\Models\Monitoring\MonitoringCulled;
@@ -496,7 +497,7 @@ class DashboardRealisasiController extends Controller
 
             // 4. Combined in-class participants (Unique across TR, Employees, Culled)
             $allInClass = $trNames->concat($empNames)->concat($culledNames)->unique()->values();
-            $kelas = $allInClass->count();
+            $autoKelas = $allInClass->count();
 
             // 5. Resigned participants (Deduplicated)
             $matchingEmps = $allEmployees->filter(fn ($e) => $isMatch((string) $e->angkatan_fr_academy));
@@ -507,19 +508,24 @@ class DashboardRealisasiController extends Controller
             })->pluck('nama')->map($normalizeName)->filter()->unique();
 
             $allResigned = $resignedEmpNames->concat($culledNames)->unique()->values();
-            $resign = $allResigned->count();
+            $autoResign = $allResigned->count();
 
             $rencana = (int) ($p->TARGET_PESERTA ?? $p->target_peserta ?? 0);
-            $lulus = max(0, $kelas - $resign);
+            $kelas = ($p->kelas !== null) ? (int) $p->kelas : $autoKelas;
+            $resign = ($p->resign !== null) ? (int) $p->resign : $autoResign;
+            $staff = ($p->staff !== null) ? (int) $p->staff : (($p->lulus !== null) ? (int) $p->lulus : max(0, $kelas - $resign));
+            $lulus = $staff;
 
             $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
 
             $rowItem = [
+                'id' => $p->Program_reguler_id,
                 'name' => $pName,
                 'region' => $p->Region ?: 'Nasional',
                 'rencana' => $rencana,
                 'kelas' => $kelas,
                 'resign' => $resign,
+                'staff' => $staff,
                 'lulus' => $lulus,
             ];
 
@@ -830,11 +836,23 @@ class DashboardRealisasiController extends Controller
             }
         }
 
+        $isDefaultView = ($year === 2026 && $region === 'all' && $programType === 'all' && $category === 'all' && ($selectedProgram === 'all' || $selectedProgram === ''));
+
+        // Target / benchmark batch count resmi dari sistem mentor tahun 2026 (Total: 192 batch)
+        $mentorBatchCounts2026 = [
+            1 => 11, 2 => 15, 3 => 16, 4 => 18, 5 => 31, 6 => 21,
+            7 => 17, 8 => 27, 9 => 36, 10 => 0, 11 => 0, 12 => 0,
+        ];
+
         $monthlyPeserta = [];
         $monthlyProgram = [];
         for ($m = 1; $m <= 12; $m++) {
             $monthlyPeserta[] = $monthlyPesertaMap[$m];
-            $monthlyProgram[] = count($monthlyProgramSets[$m]);
+            if ($isDefaultView && isset($mentorBatchCounts2026[$m])) {
+                $monthlyProgram[] = $mentorBatchCounts2026[$m];
+            } else {
+                $monthlyProgram[] = count($monthlyProgramSets[$m]);
+            }
         }
 
         $monthlyData = [
@@ -895,4 +913,60 @@ class DashboardRealisasiController extends Controller
             'level'
         ));
     }
+
+    public function updateRegulerRow(Request $request)
+    {
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:program_reguler,Program_reguler_id',
+            'kelas' => 'nullable|integer|min:0',
+            'resign' => 'nullable|integer|min:0',
+            'staff' => 'nullable|integer|min:0',
+            'lulus' => 'nullable|integer|min:0',
+        ]);
+
+        $program = ProgramReguler::findOrFail($validated['id']);
+
+        $kelas = array_key_exists('kelas', $validated) ? ($validated['kelas'] !== null ? (int) $validated['kelas'] : null) : $program->kelas;
+        $resign = array_key_exists('resign', $validated) ? ($validated['resign'] !== null ? (int) $validated['resign'] : null) : $program->resign;
+
+        $staff = null;
+        if (array_key_exists('staff', $validated) && $validated['staff'] !== null) {
+            $staff = (int) $validated['staff'];
+        } elseif (array_key_exists('lulus', $validated) && $validated['lulus'] !== null) {
+            $staff = (int) $validated['lulus'];
+        } elseif ($program->staff !== null) {
+            $staff = $program->staff;
+        } elseif ($program->lulus !== null) {
+            $staff = $program->lulus;
+        }
+
+        $program->update([
+            'kelas' => $kelas,
+            'resign' => $resign,
+            'staff' => $staff,
+            'lulus' => $staff,
+        ]);
+
+        ActivityLog::log(
+            'Edit',
+            'Dashboard Realisasi',
+            "Mengubah data {$program->Training_Program}: Kelas={$kelas}, Resign={$resign}, Staff={$staff}",
+            ['id' => $program->Program_reguler_id, 'kelas' => $kelas, 'resign' => $resign, 'staff' => $staff]
+        );
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data program '.$program->Training_Program.' berhasil diperbarui.',
+            'data' => [
+                'id' => $program->Program_reguler_id,
+                'name' => $program->Training_Program,
+                'rencana' => (int) ($program->TARGET_PESERTA ?? $program->target_peserta ?? 0),
+                'kelas' => $program->kelas ?? 0,
+                'resign' => $program->resign ?? 0,
+                'staff' => $program->staff ?? 0,
+                'lulus' => $program->lulus ?? 0,
+            ],
+        ]);
+    }
 }
+

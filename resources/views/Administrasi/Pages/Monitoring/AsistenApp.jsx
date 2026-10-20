@@ -623,7 +623,7 @@ export default function AsistenApp() {
                 </form>
 
                 {/* Filter Dropdowns */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 pt-2 border-t border-gray-100">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 pt-2 border-t border-gray-100">
                     <div>
                         <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Asal Rekrut</label>
                         <select
@@ -662,20 +662,6 @@ export default function AsistenApp() {
                             <option value="all">Semua Region ({filterOptions.region_saat_ini?.length || 0})</option>
                             {filterOptions.region_saat_ini?.map((reg) => (
                                 <option key={reg} value={reg}>{reg}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    <div>
-                        <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Status Karyawan</label>
-                        <select
-                            value={selectedStatus}
-                            onChange={(e) => { setSelectedStatus(e.target.value); setCurrentPage(1); }}
-                            className="w-full px-3 py-1.5 bg-gray-50 border border-gray-300 rounded-lg text-xs focus:ring-1 focus:ring-[#4B6A34] focus:outline-none"
-                        >
-                            <option value="all">Semua Status ({filterOptions.status_karyawan?.length || 0})</option>
-                            {filterOptions.status_karyawan?.map((st) => (
-                                <option key={st} value={st}>{st}</option>
                             ))}
                         </select>
                     </div>

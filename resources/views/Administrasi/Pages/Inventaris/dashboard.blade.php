@@ -151,24 +151,24 @@
         </div>
     </div>
 
-    {{-- Top Damaged Items Table / Maintenance Alert --}}
+    {{-- Damaged Items Table / Maintenance Alert --}}
     <div class="bg-white border border-[#E5E7EB] rounded-2xl shadow-sm overflow-hidden flex flex-col">
         <div class="p-6 border-b border-[#E5E7EB] flex items-center justify-between bg-[#F9FAFB]">
             <div>
                 <div class="flex items-center gap-2">
                     <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-600"></i>
-                    <h2 class="text-base font-bold text-[#18181B]">Top Aset Perlu Maintenance / Replacement</h2>
+                    <h2 class="text-base font-bold text-[#18181B]">Daftar Aset Perlu Maintenance / Replacement</h2>
                 </div>
-                <p class="text-xs text-[#71717A] mt-0.5">Daftar barang dengan jumlah kerusakan tertinggi</p>
+                <p class="text-xs text-[#71717A] mt-0.5">Seluruh daftar barang yang mengalami kerusakan dan memerlukan pemeliharaan atau penggantian</p>
             </div>
             <span class="text-xs font-bold text-rose-600 bg-rose-50 px-3 py-1 border border-rose-200 rounded-full">
-                {{ count($topDamagedItems) }} Barang Alerts
+                {{ count($topDamagedItems) }} Barang Perlu Tindakan
             </span>
         </div>
 
-        <div class="overflow-x-auto flex-1">
+        <div class="overflow-x-auto flex-1 max-h-[500px]">
             <table class="w-full text-sm text-left">
-                <thead>
+                <thead class="sticky top-0 bg-[#F9FAFB] z-10 shadow-xs">
                     <tr class="border-b border-[#E5E7EB] bg-[#F9FAFB] text-[#71717A] text-[11px] font-bold uppercase tracking-wider">
                         <th class="px-5 py-3">Nama Asset</th>
                         <th class="px-3 py-3 text-center">Lokasi</th>

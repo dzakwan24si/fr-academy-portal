@@ -99,12 +99,45 @@ class CostController extends Controller
         $totalBudget = (float) $allCosts->sum('budget');
         $totalRealisasi = (float) $allCosts->sum('realisasi');
         $totalBudgetTahunan = (float) $allCosts->sum('budget_tahunan');
-        $sisaBudget = $totalBudgetTahunan > 0 ? ($totalBudgetTahunan - $totalRealisasi) : ($totalBudget - $totalRealisasi);
-        $pctRealisasi = $totalBudgetTahunan > 0 ? round(($totalRealisasi / $totalBudgetTahunan) * 100, 1) : ($totalBudget > 0 ? round(($totalRealisasi / $totalBudget) * 100, 1) : 0);
+
+        // Kalkulasi Realisasi Kumulatif (YTD) untuk Sisa Anggaran / Variance
+        if (is_numeric($selectedMonth) && (int) $selectedMonth >= 1 && (int) $selectedMonth <= 12) {
+            $monthNum = (int) $selectedMonth;
+            $ytdQuery = Cost::where('tahun', $selectedYear)
+                ->where(function ($q) use ($monthNum) {
+                    $q->where('bulan', '<=', $monthNum)
+                        ->orWhereNull('bulan');
+                });
+
+            if ($selectedJenis !== 'all') {
+                $ytdQuery->where('jenis_cost', $selectedJenis);
+            }
+
+            if (! empty($search)) {
+                $ytdQuery->where(function ($q) use ($search) {
+                    $q->where('account_name', 'like', "%{$search}%")
+                        ->orWhere('jenis_cost', 'like', "%{$search}%")
+                        ->orWhere('GL_ACCOUNT', 'like', "%{$search}%");
+                });
+            }
+
+            $totalRealisasiYtd = (float) $ytdQuery->sum('realisasi');
+        } else {
+            $totalRealisasiYtd = $totalRealisasi;
+        }
+
+        $sisaBudget = $totalBudgetTahunan > 0
+            ? ($totalBudgetTahunan - $totalRealisasiYtd)
+            : ($totalBudget - $totalRealisasi);
+
+        $pctRealisasi = $totalBudgetTahunan > 0
+            ? round(($totalRealisasiYtd / $totalBudgetTahunan) * 100, 1)
+            : ($totalBudget > 0 ? round(($totalRealisasi / $totalBudget) * 100, 1) : 0);
 
         $summary = compact(
             'totalBudget',
             'totalRealisasi',
+            'totalRealisasiYtd',
             'totalBudgetTahunan',
             'sisaBudget',
             'pctRealisasi'

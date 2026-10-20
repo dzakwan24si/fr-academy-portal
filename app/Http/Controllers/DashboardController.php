@@ -136,9 +136,9 @@ class DashboardController extends Controller
         });
     }
 
-    protected function filterRecordsByYearAndCumulativeMonth($records, int $year, ?int $selectedMonthNum)
+    protected function filterRecordsByYearAndCumulativeMonth($records, int $year, ?int $selectedMonthNum, array $validRegulerProgIds = [])
     {
-        return $records->filter(function ($r) use ($year, $selectedMonthNum) {
+        return $records->filter(function ($r) use ($year, $selectedMonthNum, $validRegulerProgIds) {
             // 1. Year filter
             $rYear = null;
             if (! empty($r->tahun)) {
@@ -160,7 +160,13 @@ class DashboardController extends Controller
             }
 
             if ($rYear !== $year) {
-                return false;
+                $isCarryOver = ($r->program_type === 'reguler' && (
+                    (! empty($validRegulerProgIds) && $r->program_id && in_array((int) $r->program_id, $validRegulerProgIds, true))
+                    || str_contains(strtoupper((string) $r->notes), (string) $year)
+                ));
+                if (! $isCarryOver) {
+                    return false;
+                }
             }
 
             // 2. Month cumulative filter
@@ -221,13 +227,23 @@ class DashboardController extends Controller
         $nonRegulerYear = $this->filterNonRegulerByYear($nonRegulerAll, $year);
 
         // Pre-fetch TrainingRecords for the year (with carry-over for reguler if applicable)
-        $yearRecords = TrainingRecord::where(function ($q) use ($year) {
+        $regulerYearIds = $regulerYear->pluck('Program_reguler_id')->map(fn ($id) => (int) $id)->all();
+        $yearRecords = TrainingRecord::where(function ($q) use ($year, $regulerYearIds) {
             $q->where('tahun', $year)
                 ->orWhereYear('training_date', $year)
-                ->orWhereYear('created_at', $year);
+                ->orWhereYear('created_at', $year)
+                ->orWhere(function ($sub) use ($year, $regulerYearIds) {
+                    $sub->where('program_type', 'reguler')
+                        ->where(function ($sub2) use ($year, $regulerYearIds) {
+                            if (! empty($regulerYearIds)) {
+                                $sub2->whereIn('program_id', $regulerYearIds);
+                            }
+                            $sub2->orWhere('notes', 'like', "%{$year}%");
+                        });
+                });
         })->get();
         // Fallback: if there are unpopulated tahun/date records, ensure all filtered properly
-        $records = $this->filterRecordsByYearAndCumulativeMonth($yearRecords, $year, $selectedMonthNum);
+        $records = $this->filterRecordsByYearAndCumulativeMonth($yearRecords, $year, $selectedMonthNum, $regulerYearIds);
 
         // 1. REKAP TRAINING REPORT (Reguler, Softskill, Technical)
         $rekapTraining = $this->computeRekapTrainingReport($year, $selectedMonthNum, $regulerYear, $nonRegulerYear, $records);
@@ -267,14 +283,87 @@ class DashboardController extends Controller
     {
         $regulerPrograms = $regulerPrograms ?? $this->filterRegulerByYear(ProgramReguler::all(), $year);
         $nonRegulerPrograms = $nonRegulerPrograms ?? $this->filterNonRegulerByYear(ProgramNonReguler::all(), $year);
-        $records = $records ?? $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::all(), $year, $selectedMonthNum);
+        $regulerYearIds = $regulerPrograms->pluck('Program_reguler_id')->map(fn ($id) => (int) $id)->all();
+        $records = $records ?? $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::all(), $year, $selectedMonthNum, $regulerYearIds);
 
         $regPlanBatch = (int) $regulerPrograms->count();
         $regPlanPart = (int) $regulerPrograms->sum('target_peserta');
         $regRecords = $records->where('program_type', 'reguler');
         $regRecordIds = array_flip($regRecords->pluck('id')->all());
-        $regRealPart = (int) $regRecords->pluck('participant_identifier')->filter()->unique()->count() ?: (int) $regRecords->count();
-        $regRealBatch = (int) $regRecords->pluck('notes')->filter()->unique()->count() ?: ($regRealPart > 0 ? $regPlanBatch : 0);
+
+        // Group reguler records by program_id to deduplicate participants per batch
+        $recordsByProgId = [];
+        $unassignedRegRecs = [];
+        foreach ($regRecords as $r) {
+            if ($r->program_id) {
+                $recordsByProgId[(int) $r->program_id][] = $r;
+            } else {
+                $unassignedRegRecs[] = $r;
+            }
+        }
+
+        $matchedUnassignedIds = [];
+        $regRealBatch = 0;
+        $regRealPart = 0;
+
+        foreach ($regulerPrograms as $p) {
+            $pId = (int) ($p->Program_reguler_id ?? $p->getKey());
+            $pList = $recordsByProgId[$pId] ?? [];
+
+            // Match unassigned records by notes or program name
+            $pNameNorm = strtolower(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->Training_Program)));
+            if (! empty($unassignedRegRecs)) {
+                foreach ($unassignedRegRecs as $r) {
+                    if (isset($matchedUnassignedIds[$r->id])) {
+                        continue;
+                    }
+                    $rNotes = strtolower(trim((string) $r->notes));
+                    $rNama = strtolower(trim((string) $r->nama_pelatihan));
+                    if ($pNameNorm !== '' && (str_contains($rNotes, $pNameNorm) || str_contains($rNama, $pNameNorm))) {
+                        $pList[] = $r;
+                        $matchedUnassignedIds[$r->id] = true;
+                    }
+                }
+            }
+
+            // Deduplicate participants per program batch
+            $seen = [];
+            $batchPartCount = 0;
+            foreach ($pList as $r) {
+                $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
+                if (! isset($seen[$ident])) {
+                    $seen[$ident] = true;
+                    $batchPartCount++;
+                }
+            }
+
+            if ($batchPartCount > 0) {
+                $regRealBatch += 1;
+                $regRealPart += $batchPartCount;
+            }
+        }
+
+        // Handle any remaining unassigned reguler records (unbudgeted)
+        $remainingUnassigned = array_filter($unassignedRegRecs, fn ($r) => ! isset($matchedUnassignedIds[$r->id]));
+        if (! empty($remainingUnassigned)) {
+            $groupedUnbudget = collect($remainingUnassigned)->groupBy(fn ($r) => trim($r->notes ?: $r->nama_pelatihan ?: 'Reguler Unbudget'));
+            foreach ($groupedUnbudget as $uRecs) {
+                $seen = [];
+                $uPartCount = 0;
+                foreach ($uRecs as $r) {
+                    $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
+                    if (! isset($seen[$ident])) {
+                        $seen[$ident] = true;
+                        $uPartCount++;
+                    }
+                }
+                if ($uPartCount > 0) {
+                    $regRealBatch += 1;
+                    $regRealPart += $uPartCount;
+                }
+            }
+        }
+
         $regPctBatch = $regPlanBatch > 0 ? round(($regRealBatch / $regPlanBatch) * 100) : 0;
         $regPctPart = $regPlanPart > 0 ? round(($regRealPart / $regPlanPart) * 100) : 0;
 
@@ -486,33 +575,8 @@ class DashboardController extends Controller
 
     protected function computeKarirLulusan(int $year): array
     {
-        $allAsisten = Asisten::whereNotNull('program')->get();
-        $minYear = $year - 2;
-        $allAsisten = $allAsisten->filter(function ($a) use ($year, $minYear) {
-            $pName = strtoupper((string) $a->program);
-            preg_match('/\b(20\d{2})\b/', $pName, $matches);
-            if (! empty($matches[1])) {
-                return (int) $matches[1] >= $minYear && (int) $matches[1] <= $year;
-            }
-            if (! empty($a->tahun_lulus) || ! empty($a->tahun_training) || ! empty($a->tahun_rekrut)) {
-                $yL = (int) $a->tahun_lulus;
-                $yT = (int) $a->tahun_training;
-                $yR = (int) $a->tahun_rekrut;
-
-                return ($yL >= $minYear && $yL <= $year) || ($yT >= $minYear && $yT <= $year) || ($yR >= $minYear && $yR <= $year);
-            }
-
-            return true;
-        });
-
-        $programKeywords = [
-            'FAT' => ['FIELD ASSISTANT', 'FAT'],
-            'MAT' => ['MILL ASSISTANT', 'MAT'],
-            'AAT' => ['ADMIN ASSISTANT', 'ADMINISTRATION ASSISTANT', 'AAT'],
-            'TAT' => ['TRACTION ASSISTANT', 'TAT'],
-            'DMT' => ['DOWNSTREAM', 'DMT'],
-        ];
-
+        $csvPath = storage_path('app/alumni_monitoring.csv');
+        $programs = ['FAT', 'MAT', 'AAT', 'TAT', 'DMT'];
         $rows = [];
         $totPc = 0;
         $totGm = 0;
@@ -521,60 +585,187 @@ class DashboardController extends Controller
         $totAsst = 0;
         $totAll = 0;
 
-        foreach ($programKeywords as $prog => $keywords) {
-            $progAsisten = $allAsisten->filter(function ($a) use ($keywords) {
-                $pName = strtoupper((string) $a->program);
-                foreach ($keywords as $kw) {
-                    if (str_contains($pName, $kw)) {
-                        return true;
+        foreach ($programs as $prog) {
+            $rows[$prog] = [
+                'program' => $prog,
+                'pc' => 0, 'gm' => 0, 'mk_mm' => 0, 'askep_ktu' => 0, 'asst' => 0,
+                'total' => 0,
+                'pct_pc' => 0, 'pct_gm' => 0, 'pct_mk_mm' => 0, 'pct_askep_ktu' => 0, 'pct_asst' => 0,
+            ];
+        }
+
+        if (file_exists($csvPath)) {
+            $f = fopen($csvPath, 'r');
+            $header = fgetcsv($f, 0, ';', '"', '\\');
+            $lvlIdx = array_search('LVL', $header);
+            $progIdx = array_search('PROG', $header);
+            $programIdx = array_search('Program', $header);
+            $ketIdx = array_search('Keterangan', $header);
+            $ketResignIdx = array_search('Keterangan Resign', $header);
+            $tglResignIdx = array_search('Tanggal Resign', $header);
+
+            while (($row = fgetcsv($f, 0, ';', '"', '\\')) !== false) {
+                if (empty(array_filter($row))) {
+                    continue;
+                }
+                $lvl = strtoupper(trim($row[$lvlIdx] ?? ''));
+                if ($lvl === '' || $lvl === '-') {
+                    continue;
+                }
+
+                $ket = trim($row[$ketIdx] ?? '');
+                $ketResign = trim($row[$ketResignIdx] ?? '');
+                $tglResign = trim($row[$tglResignIdx] ?? '');
+
+                // Trainee must be active (Keterangan: Eksis / Aktif)
+                $ketLower = strtolower($ket);
+                $isEksis = ($ketLower === 'eksis' || $ketLower === 'aktif' || str_contains($ketLower, 'eksis') || str_contains($ketLower, 'aktif'));
+                if (! $isEksis) {
+                    continue;
+                }
+                if (str_contains($ketLower, 'resign') || str_contains($ketLower, 'phk') || str_contains($ketLower, 'culled') || str_contains($ketLower, 'gagal')) {
+                    continue;
+                }
+                if (str_contains(strtolower($ketResign), 'resign') || str_contains(strtolower($ketResign), 'phk')) {
+                    continue;
+                }
+                if (! empty($tglResign)) {
+                    continue;
+                }
+
+                $prog = strtoupper(trim($row[$progIdx] ?? ''));
+                $program = trim($row[$programIdx] ?? '');
+
+                // Filter only starting from 2011 (pre-2011 like 2002-2010 are excluded)
+                $rowYear = 0;
+                if (preg_match('/\b(20\d{2})\b/', $program, $m)) {
+                    $rowYear = (int) $m[1];
+                } elseif (preg_match('/\b(20\d{2})\b/', (string) ($row[$tahunIdx] ?? ''), $m)) {
+                    $rowYear = (int) $m[1];
+                } elseif (preg_match('/\b(20\d{2})\b/', (string) ($row[15] ?? ''), $m)) {
+                    $rowYear = (int) $m[1];
+                } elseif (preg_match('/\b(20\d{2})\b/', (string) ($row[22] ?? ''), $m)) {
+                    $rowYear = (int) $m[1];
+                }
+                if ($rowYear > 0 && $rowYear < 2011) {
+                    continue;
+                }
+
+                if ($prog === 'ECT' || str_contains(strtoupper($program), 'ESTATE CADET')) {
+                    $prog = 'FAT';
+                } elseif ($prog === '') {
+                    $progUpper = strtoupper($program);
+                    if (str_contains($progUpper, 'FIELD ASSISTANT') || str_contains($progUpper, 'STAFF OPERATION') || str_contains($progUpper, 'FAT')) {
+                        $prog = 'FAT';
+                    } elseif (str_contains($progUpper, 'MILL ASSISTANT') || str_contains($progUpper, 'MAT')) {
+                        $prog = 'MAT';
+                    } elseif (str_contains($progUpper, 'ADMIN ASSISTANT') || str_contains($progUpper, 'AAT')) {
+                        $prog = 'AAT';
+                    } elseif (str_contains($progUpper, 'TRACTION ASSISTANT') || str_contains($progUpper, 'TAT')) {
+                        $prog = 'TAT';
+                    } elseif (str_contains($progUpper, 'DOWNSTREAM') || str_contains($progUpper, 'DMT')) {
+                        $prog = 'DMT';
                     }
                 }
 
-                return false;
-            });
-
-            $pc = 0;
-            $gm = 0;
-            $mk = 0;
-            $askep = 0;
-            $asst = 0;
-
-            foreach ($progAsisten as $a) {
-                $lvl = strtoupper(trim((string) ($a->level_jabatan ?: '')));
-                if ($lvl === '') {
-                    $lvl = strtoupper(trim((string) ($a->jabatan_terakhir ?: $a->jabatan_awal ?: '')));
+                if (! isset($rows[$prog])) {
+                    continue;
                 }
-                if (str_contains($lvl, 'PC') || str_contains($lvl, 'CONTROLLER')) {
-                    $pc++;
-                } elseif (str_contains($lvl, 'GM') || str_contains($lvl, 'GENERAL MANAGER')) {
-                    $gm++;
-                } elseif (str_contains($lvl, 'MK') || str_contains($lvl, 'MM') || str_contains($lvl, 'MANAGER') || str_contains($lvl, 'KASIE')) {
-                    $mk++;
-                } elseif (str_contains($lvl, 'ASKEP') || str_contains($lvl, 'KTU')) {
-                    $askep++;
-                } else {
-                    $asst++;
+
+                if (in_array($lvl, ['PC', 'P', 'DIR'], true)) {
+                    $rows[$prog]['pc']++;
+                } elseif ($lvl === 'GM') {
+                    $rows[$prog]['gm']++;
+                } elseif (in_array($lvl, ['MGR', 'MK', 'MM', 'MANAGER'], true)) {
+                    $rows[$prog]['mk_mm']++;
+                } elseif (in_array($lvl, ['ASKEP', 'KTU'], true)) {
+                    $rows[$prog]['askep_ktu']++;
+                } elseif (in_array($lvl, ['ASISTEN', 'ASST', 'STAFF'], true)) {
+                    $rows[$prog]['asst']++;
                 }
             }
+            fclose($f);
+        } else {
+            // Fallback to Asisten table in database (exclude resigned / non-active, and only starting from 2011)
+            $allAsisten = Asisten::whereNotNull('level_jabatan')
+                ->where('level_jabatan', '!=', '')
+                ->where('level_jabatan', '!=', '-')
+                ->where(function ($q) {
+                    $q->whereNull('status_resign')
+                        ->orWhere(function ($sq) {
+                            $sq->where('status_resign', 'not like', '%Resign%')
+                                ->where('status_resign', 'not like', '%PHK%');
+                        });
+                })
+                ->where(function ($q) {
+                    $q->where('keterangan', 'like', '%Eksis%')
+                        ->orWhere('keterangan', 'like', '%Aktif%');
+                })
+                ->where(function ($q) {
+                    $q->whereNull('tanggal_resign')
+                        ->orWhere('tanggal_resign', '');
+                })
+                ->where(function ($q) {
+                    $q->whereNull('tahun')
+                        ->orWhere('tahun', '>=', 2011);
+                })
+                ->get();
 
-            $total = $pc + $gm + $mk + $askep + $asst;
-
-            $rows[$prog] = [
-                'program' => $prog,
-                'pc' => $pc, 'gm' => $gm, 'mk_mm' => $mk, 'askep_ktu' => $askep, 'asst' => $asst,
-                'total' => $total,
-                'pct_pc' => $total > 0 ? round(($pc / $total) * 100, 1) : 0,
-                'pct_gm' => $total > 0 ? round(($gm / $total) * 100, 1) : 0,
-                'pct_mk_mm' => $total > 0 ? round(($mk / $total) * 100, 1) : 0,
-                'pct_askep_ktu' => $total > 0 ? round(($askep / $total) * 100, 1) : 0,
-                'pct_asst' => $total > 0 ? round(($asst / $total) * 100, 1) : 0,
+            $keywords = [
+                'FAT' => ['FIELD ASSISTANT', 'STAFF OPERATION', 'FAT'],
+                'MAT' => ['MILL ASSISTANT', 'MAT'],
+                'AAT' => ['ADMIN ASSISTANT', 'ADMINISTRATION ASSISTANT', 'AAT'],
+                'TAT' => ['TRACTION ASSISTANT'],
+                'DMT' => ['DOWNSTREAM', 'DMT'],
             ];
 
-            $totPc += $pc;
-            $totGm += $gm;
-            $totMk += $mk;
-            $totAskep += $askep;
-            $totAsst += $asst;
+            foreach ($allAsisten as $a) {
+                $lvl = strtoupper(trim((string) $a->level_jabatan));
+                $pName = strtoupper((string) $a->program);
+
+                $matchedProg = null;
+                foreach ($keywords as $p => $kws) {
+                    foreach ($kws as $kw) {
+                        if (str_contains($pName, $kw)) {
+                            $matchedProg = $p;
+                            break 2;
+                        }
+                    }
+                }
+
+                if (! $matchedProg || ! isset($rows[$matchedProg])) {
+                    continue;
+                }
+
+                if (in_array($lvl, ['PC', 'P', 'DIR'], true)) {
+                    $rows[$matchedProg]['pc']++;
+                } elseif ($lvl === 'GM') {
+                    $rows[$matchedProg]['gm']++;
+                } elseif (in_array($lvl, ['MGR', 'MK', 'MM', 'MANAGER'], true)) {
+                    $rows[$matchedProg]['mk_mm']++;
+                } elseif (in_array($lvl, ['ASKEP', 'KTU'], true)) {
+                    $rows[$matchedProg]['askep_ktu']++;
+                } elseif (in_array($lvl, ['ASISTEN', 'ASST', 'STAFF'], true)) {
+                    $rows[$matchedProg]['asst']++;
+                }
+            }
+        }
+
+        // Calculate totals and percentages
+        foreach ($rows as $prog => &$r) {
+            $total = $r['pc'] + $r['gm'] + $r['mk_mm'] + $r['askep_ktu'] + $r['asst'];
+            $r['total'] = $total;
+            $r['pct_pc'] = $total > 0 ? round(($r['pc'] / $total) * 100, 1) : 0;
+            $r['pct_gm'] = $total > 0 ? round(($r['gm'] / $total) * 100, 1) : 0;
+            $r['pct_mk_mm'] = $total > 0 ? round(($r['mk_mm'] / $total) * 100, 1) : 0;
+            $r['pct_askep_ktu'] = $total > 0 ? round(($r['askep_ktu'] / $total) * 100, 1) : 0;
+            $r['pct_asst'] = $total > 0 ? round(($r['asst'] / $total) * 100, 1) : 0;
+
+            $totPc += $r['pc'];
+            $totGm += $r['gm'];
+            $totMk += $r['mk_mm'];
+            $totAskep += $r['askep_ktu'];
+            $totAsst += $r['asst'];
             $totAll += $total;
         }
 
@@ -595,7 +786,8 @@ class DashboardController extends Controller
     protected function computeStaffFreshGraduate(int $year, ?int $selectedMonthNum = null, $reguler = null, $records = null): array
     {
         $reguler = $reguler ?? $this->filterRegulerByYear(ProgramReguler::all(), $year);
-        $records = $records ?? $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::where('program_type', 'reguler')->get(), $year, $selectedMonthNum);
+        $regulerYearIds = $reguler->pluck('Program_reguler_id')->map(fn ($id) => (int) $id)->all();
+        $records = $records ?? $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::where('program_type', 'reguler')->get(), $year, $selectedMonthNum, $regulerYearIds);
         $records = $records->where('program_type', 'reguler');
 
         $programs = ['FAT', 'MAT', 'DMT', 'TAT', 'AAT'];
@@ -605,14 +797,65 @@ class DashboardController extends Controller
         $totRealB = 0;
         $totRealP = 0;
 
+        $recordsByProgId = [];
+        $unassignedRecs = [];
+        foreach ($records as $r) {
+            if ($r->program_id) {
+                $recordsByProgId[(int) $r->program_id][] = $r;
+            } else {
+                $unassignedRecs[] = $r;
+            }
+        }
+
         foreach ($programs as $prog) {
             $matchingMaster = $reguler->filter(fn ($p) => str_starts_with(strtoupper($p->Training_Program), $prog));
             $planBatch = (int) $matchingMaster->count();
             $planPart = (int) $matchingMaster->sum('target_peserta');
 
-            $matchingRecs = $records->filter(fn ($r) => str_contains(strtoupper($r->notes), $prog));
-            $realPart = (int) $matchingRecs->pluck('participant_identifier')->filter()->unique()->count() ?: (int) $matchingRecs->count();
-            $realBatch = (int) $matchingRecs->pluck('notes')->filter()->unique()->count() ?: ($realPart > 0 ? max(1, $planBatch) : 0);
+            $realBatch = 0;
+            $realPart = 0;
+
+            foreach ($matchingMaster as $p) {
+                $pId = (int) ($p->Program_reguler_id ?? $p->getKey());
+                $pRecs = $recordsByProgId[$pId] ?? [];
+
+                // Deduplicate participants within each program batch
+                $seen = [];
+                $batchPartCount = 0;
+                foreach ($pRecs as $r) {
+                    $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
+                    if (! isset($seen[$ident])) {
+                        $seen[$ident] = true;
+                        $batchPartCount++;
+                    }
+                }
+
+                if ($batchPartCount > 0) {
+                    $realBatch += 1;
+                    $realPart += $batchPartCount;
+                }
+            }
+
+            // Also check unassigned records for this prefix if any
+            $matchingUnassigned = array_filter($unassignedRecs, function ($r) use ($prog) {
+                return str_contains(strtoupper((string) $r->notes), $prog)
+                    || str_contains(strtoupper((string) $r->nama_pelatihan), $prog);
+            });
+            if (! empty($matchingUnassigned)) {
+                $seen = [];
+                $uCount = 0;
+                foreach ($matchingUnassigned as $r) {
+                    $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
+                    if (! isset($seen[$ident])) {
+                        $seen[$ident] = true;
+                        $uCount++;
+                    }
+                }
+                if ($uCount > 0) {
+                    $realBatch += 1;
+                    $realPart += $uCount;
+                }
+            }
 
             $pctBatch = $planBatch > 0 ? round(($realBatch / $planBatch) * 100) : 0;
             $pctPart = $planPart > 0 ? round(($realPart / $planPart) * 100) : 0;
