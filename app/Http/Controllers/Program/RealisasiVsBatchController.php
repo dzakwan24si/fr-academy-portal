@@ -189,36 +189,127 @@ class RealisasiVsBatchController extends Controller
         if ($region !== '') {
             $programs = $programs->filter(fn ($program) => strtolower(trim((string) $program['region'])) === strtolower($region));
         }
-        $trainingRecords = TrainingRecord::where('status', 'valid')->get();
 
-        return $programs->map(function ($program) use ($year, $month, $trainingRecords) {
-            $matchingRecords = $trainingRecords
-                ->filter(fn (TrainingRecord $record) => $this->recordMatchesActivity($record, $program))
-                ->filter(function (TrainingRecord $record) use ($program, $year, $month) {
-                    if ($program['program_type'] === 'non_reguler' && ! $this->recordMatchesRegion($record, $program['region'])) {
-                        return false;
+        // Pre-filter TrainingRecords: fetch only records from the target window ($year-1 to $year, or null/0)
+        $rawRecords = TrainingRecord::where('status', 'valid')
+            ->where(function ($q) use ($year) {
+                $q->whereBetween('tahun', [$year - 1, $year])
+                    ->orWhereNull('tahun')
+                    ->orWhere('tahun', 0);
+            })
+            ->get();
+
+        // Pre-process relevant records: cache recordName, cleanWords, monthNum, region once
+        $processedRecords = [];
+        foreach ($rawRecords as $r) {
+            $rMonth = $r->bulan ? $this->monthNumber($r->bulan) : null;
+            if ($rMonth !== null && $rMonth > $month) {
+                continue;
+            }
+
+            $name = strtolower(trim((string) $r->activityName()));
+            $clean = preg_replace('/[^\w\s]/u', ' ', $name);
+            $words = array_values(array_filter(explode(' ', $clean)));
+
+            $processedRecords[] = (object) [
+                'id' => $r->id,
+                'program_type' => $r->program_type,
+                'program_id' => (int) $r->program_id,
+                'region' => strtolower(trim((string) ($r->region ?? ''))),
+                'tahun' => (int) $r->tahun,
+                'bulan' => $r->bulan,
+                'monthNum' => $rMonth,
+                'name' => $name,
+                'clean' => $clean,
+                'words' => $words,
+                'firstTwoWords' => count($words) >= 2 ? $words[0].' '.$words[1] : ($words[0] ?? ''),
+                'activityDates' => $r->activityDates(),
+                'activity' => $r->activity(),
+            ];
+        }
+
+        return $programs->map(function ($program) use ($year, $month, $processedRecords) {
+            $progType = $program['program_type'];
+            $progId = (int) $program['program_id'];
+            $progName = strtolower(trim((string) ($program['program_name'] ?? '')));
+            $cleanProg = preg_replace('/[^\w\s]/u', ' ', $progName);
+            $progWords = array_values(array_filter(explode(' ', $cleanProg)));
+            $firstTwoProg = implode(' ', array_slice($progWords, 0, 2));
+            $isCarryOver = str_contains($progName, 'carry over');
+            $progRegion = strtolower(trim((string) ($program['region'] ?? '')));
+            $normProgRegion = $this->normalizeRegion($progRegion);
+
+            $matchingCount = 0;
+
+            foreach ($processedRecords as $r) {
+                // 1. Check Region for non_reguler
+                if ($progType === 'non_reguler' && $progRegion !== '') {
+                    $recordRegion = $r->region;
+                    if ($recordRegion === '') {
+                        $act = $r->activity;
+                        $recordRegion = strtolower(trim((string) ($act?->Region ?? $act?->region ?? '')));
                     }
+                    if ($recordRegion !== '') {
+                        if ($recordRegion !== $progRegion
+                            && ! str_contains($recordRegion, $progRegion)
+                            && ! str_contains($progRegion, $recordRegion)
+                            && $this->normalizeRegion($recordRegion) !== $normProgRegion) {
+                            continue;
+                        }
+                    }
+                }
 
-                    // Check if TrainingRecord has explicit bulan (3 letters) or tahun
-                    if ($record->bulan || $record->tahun) {
-                        if ($record->tahun && (int) $record->tahun !== $year) {
-                            $isCarryOver = str_contains(strtolower($program['program_name'] ?? ''), 'carry over');
-                            if (! ($isCarryOver && ((int) $record->tahun === $year - 1 || (int) $record->tahun === $year))) {
-                                return false;
+                // 2. Check Year & Month
+                if ($r->tahun > 0 || $r->bulan) {
+                    if ($r->tahun > 0 && $r->tahun !== $year) {
+                        if (! ($isCarryOver && ($r->tahun === $year - 1 || $r->tahun === $year))) {
+                            continue;
+                        }
+                    }
+                    if ($r->bulan) {
+                        if ($r->monthNum === null || $r->monthNum > $month) {
+                            continue;
+                        }
+                    }
+                } else {
+                    $hasDate = false;
+                    foreach ($r->activityDates as $d) {
+                        if ($d && (int) date('Y', strtotime($d)) === $year && (int) date('n', strtotime($d)) <= $month) {
+                            $hasDate = true;
+                            break;
+                        }
+                    }
+                    if (! $hasDate) {
+                        continue;
+                    }
+                }
+
+                // 3. Match Activity
+                $isMatch = false;
+                if ($r->program_type === $progType && $r->program_id === $progId) {
+                    $isMatch = true;
+                } elseif ($r->name !== '' && $progName !== '') {
+                    if ($r->name === $progName || str_starts_with($r->name, $progName) || str_starts_with($progName, $r->name)) {
+                        $isMatch = true;
+                    } elseif (! empty($r->words) && ! empty($progWords)) {
+                        if (count($progWords) === 1) {
+                            $isMatch = in_array($progWords[0], $r->words, true) || str_contains($r->clean, $progWords[0]);
+                        } else {
+                            if (count($r->words) >= 2 && $r->firstTwoWords === $firstTwoProg) {
+                                $isMatch = true;
+                            } elseif ($firstTwoProg !== '' && str_contains($r->clean, $firstTwoProg)) {
+                                $isMatch = true;
                             }
                         }
-                        if ($record->bulan) {
-                            $recMonth = $this->monthNumber($record->bulan);
-
-                            return $recMonth !== null && $recMonth <= $month;
-                        }
                     }
+                }
 
-                    return collect($record->activityDates())->contains(fn ($date) => $date && (int) date('Y', strtotime($date)) === $year && (int) date('n', strtotime($date)) <= $month
-                    );
-                });
+                if ($isMatch) {
+                    $matchingCount++;
+                }
+            }
 
-            $realizedParticipants = $matchingRecords->count();
+            $realizedParticipants = $matchingCount;
             if ($program['program_type'] === 'reguler') {
                 $realizedBatch = $realizedParticipants > 0 ? 1 : 0;
             } else {
@@ -332,8 +423,8 @@ class RealisasiVsBatchController extends Controller
             return null;
         });
 
-        $rvbYears = RealisasiVsBatch::pluck('tahun')->map(fn ($v) => (int) $v);
-        $trYears = TrainingRecord::pluck('tahun')->filter()->map(fn ($v) => (int) $v);
+        $rvbYears = RealisasiVsBatch::whereNotNull('tahun')->where('tahun', '>', 0)->distinct()->pluck('tahun')->map(fn ($v) => (int) $v);
+        $trYears = TrainingRecord::whereNotNull('tahun')->where('tahun', '>', 0)->distinct()->pluck('tahun')->map(fn ($v) => (int) $v);
 
         return collect($regYears->all())
             ->merge($nonRegYears->all())

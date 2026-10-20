@@ -12,6 +12,7 @@ use App\Http\Controllers\Admin\NonRegulerTraineeController;
 use App\Http\Controllers\Admin\NonRegulerTrainerController;
 use App\Http\Controllers\Admin\NonRegulerTrainingProgramController;
 use App\Http\Controllers\Admin\NonRegulerWeeklyReportController;
+use App\Http\Controllers\Admin\PageSettingController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\TraineeController;
@@ -211,6 +212,15 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::resource('career-programs', CareerProgramController::class)
         ->names('admin.career_programs')
         ->middleware('can:manage_career');
+
+    // Manajemen Konten Halaman (CMS Page Settings)
+    Route::prefix('page-settings')->name('admin.page_settings.')->group(function () {
+        Route::get('/', [PageSettingController::class, 'index'])->name('index');
+        Route::post('/beranda', [PageSettingController::class, 'updateBeranda'])->name('update_beranda');
+        Route::post('/slides/delete', [PageSettingController::class, 'deleteSlide'])->name('delete_slide');
+        Route::post('/slides/reset', [PageSettingController::class, 'resetSlides'])->name('reset_slides');
+        Route::post('/tentang', [PageSettingController::class, 'updateTentang'])->name('update_tentang');
+    });
 
     // Standar Kompetensi Management
     Route::middleware('can:manage_competency')->prefix('kompetensi')->name('admin.competency.')->group(function () {
