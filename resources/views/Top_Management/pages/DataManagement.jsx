@@ -24,6 +24,95 @@ const DAY_NAMES_ID = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 
 const cleanText = (str) => (str || '').replace(/[\u200B-\u200D\uFEFF\u2060]/g, '').trim().toLowerCase();
 
+const resolveItemYear = (item) => {
+  if (!item) return 2026;
+  const orig = item.originalData || {};
+  if (item.tahun !== undefined && item.tahun !== null && item.tahun !== '') {
+    return Number(item.tahun);
+  }
+  if (orig.tahun !== undefined && orig.tahun !== null && orig.tahun !== '') {
+    return Number(orig.tahun);
+  }
+
+  // Exact parity with DashboardRealisasiController:
+  const isReguler = item.type === 'Reguler';
+  if (isReguler) {
+    const mulai = orig.Mulai_program || orig.start_date || item.start;
+    if (mulai) {
+      const d = new Date(mulai);
+      if (!isNaN(d.getTime())) return d.getFullYear();
+    }
+    const title = item.title || orig.Training_Program || orig.Nama_Program_reguler || '';
+    const match = title.match(/\b(20\d{2})\b/);
+    if (match) return parseInt(match[1], 10);
+    const selesai = orig.Selesai_program || orig.end_date || item.end;
+    if (selesai) {
+      const d = new Date(selesai);
+      if (!isNaN(d.getTime())) return d.getFullYear();
+    }
+  } else {
+    const start = orig.start_date || orig.Mulai_program || item.start;
+    if (start) {
+      const d = new Date(start);
+      if (!isNaN(d.getTime())) return d.getFullYear();
+    }
+    const title = item.title || orig.jenis_pelatihan || '';
+    const match = title.match(/\b(20\d{2})\b/);
+    if (match) return parseInt(match[1], 10);
+    const end = orig.end_date || orig.Selesai_program || item.end;
+    if (end) {
+      const d = new Date(end);
+      if (!isNaN(d.getTime())) return d.getFullYear();
+    }
+  }
+
+  return 2026;
+};
+
+const checkItemMatchesYear = (item, targetYear) => {
+  if (!targetYear || targetYear === 'Semua Tahun') return true;
+  const yr = Number(targetYear);
+  const orig = item.originalData || {};
+  const isReguler = item.type === 'Reguler';
+
+  const startVal = isReguler
+    ? (orig.Mulai_program || orig.start_date || item.start)
+    : (orig.start_date || orig.Mulai_program || item.start);
+  const endVal = isReguler
+    ? (orig.Selesai_program || orig.end_date || item.end)
+    : (orig.end_date || orig.Selesai_program || item.end);
+
+  const startYear = startVal ? new Date(startVal).getFullYear() : null;
+  const endYear = endVal ? new Date(endVal).getFullYear() : null;
+
+  const title = item.title || orig.Training_Program || orig.Nama_Program_reguler || orig.jenis_pelatihan || '';
+  const match = title.match(/\b(20\d{2})\b/);
+  const titleYear = match ? parseInt(match[1], 10) : null;
+
+  if (isReguler) {
+    if (yr === 2026) {
+      if (startYear === 2026 || startYear === 2025) return true;
+      if (titleYear === 2026 || titleYear === 2025) return true;
+      if (title.includes('TAT I 2027') || title.includes('MAT I 2027')) return true;
+    }
+
+    if (titleYear === yr) return true;
+
+    if (startYear && endYear) {
+      if (startYear <= yr && endYear >= yr) return true;
+    } else if (startYear) {
+      if (startYear === yr) return true;
+    } else if (endYear) {
+      if (endYear === yr) return true;
+    }
+
+    return resolveItemYear(item) === yr;
+  } else {
+    // Non-reguler: exact parity with DashboardRealisasiController::filterNonRegulerByYear
+    return resolveItemYear(item) === yr;
+  }
+};
+
 const groupDatesIntoRanges = (dates) => {
   if (!dates || dates.length === 0) return [];
   const sortedDates = dates.map(d => new Date(d)).sort((a, b) => a - b);
@@ -275,6 +364,7 @@ const DataManagement = () => {
 
     const orig = item.originalData || {};
     const editData = { ...orig };
+    editData.tahun = editData.tahun || resolveItemYear(item);
     if (!isReguler) {
       if (editData.start_date) editData.start_date = editData.start_date.split('T')[0];
       if (editData.end_date) editData.end_date = editData.end_date.split('T')[0];
@@ -448,21 +538,9 @@ const DataManagement = () => {
       return false;
     }
 
-    // 6. Filter by Tahun
+    // 6. Filter by Tahun (Selaras dengan Dashboard Utama: mencakup tanggal pelaksanaan & carry-over)
     if (filterTahun !== 'Semua Tahun') {
-      let itemYear = item.tahun || item.originalData?.tahun;
-      if (!itemYear) {
-        if (isRegulerTab) {
-          const mulai = item.originalData?.Mulai_program || item.start;
-          if (mulai) itemYear = new Date(mulai).getFullYear();
-        } else {
-          const start = item.originalData?.start_date || item.start;
-          if (start) itemYear = new Date(start).getFullYear();
-          const end = item.originalData?.end_date || item.end;
-          if (!itemYear && end) itemYear = new Date(end).getFullYear();
-        }
-      }
-      if (Number(itemYear) !== Number(filterTahun)) return false;
+      if (!checkItemMatchesYear(item, filterTahun)) return false;
     }
 
     return true;
@@ -506,25 +584,10 @@ const DataManagement = () => {
       .filter(sub => sub && sub !== '-')
   )];
 
-  const uniqueYears = [...new Set(
-    data
-      .map(item => {
-        let yr = item.tahun || item.originalData?.tahun;
-        if (!yr) {
-          if (item.type === 'Reguler') {
-            const mulai = item.originalData?.Mulai_program || item.start;
-            if (mulai) yr = new Date(mulai).getFullYear();
-          } else {
-            const start = item.originalData?.start_date || item.start;
-            if (start) yr = new Date(start).getFullYear();
-            const end = item.originalData?.end_date || item.end;
-            if (!yr && end) yr = new Date(end).getFullYear();
-          }
-        }
-        return yr ? Number(yr) : null;
-      })
-      .filter(Boolean)
-  )].sort((a, b) => b - a);
+  const uniqueYears = [...new Set([
+    ...data.map(item => resolveItemYear(item)),
+    2024, 2025, 2026, 2027
+  ].filter(y => y && y >= 2000 && y <= 2100))].sort((a, b) => b - a);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -865,7 +928,7 @@ const DataManagement = () => {
       rows = filteredData.map(item => {
         const orig = item.originalData || {};
         const { startDate, endDate } = getDates(item, true);
-        const year = item.tahun || orig.tahun || (startDate ? new Date(startDate).getFullYear() : '');
+        const year = resolveItemYear(item);
         return {
           'Training Program': orig.Training_Program || item.title || '',
           'Batch': orig.Batch || '',
@@ -890,7 +953,7 @@ const DataManagement = () => {
       rows = filteredData.map(item => {
         const orig = item.originalData || {};
         const { startDate, endDate } = getDates(item, false);
-        const year = item.tahun || orig.tahun || (startDate ? new Date(startDate).getFullYear() : '');
+        const year = resolveItemYear(item);
         return {
           'Jenis Pelatihan': orig.jenis_pelatihan || item.title || '',
           'Kategori Pelatihan': orig.kategori_pelatihan || '',
@@ -1209,7 +1272,7 @@ const DataManagement = () => {
             <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-1">Total Program</p>
             <p className="text-2xl font-extrabold text-slate-800 leading-none">{totalProgram}</p>
             <p className="text-xs text-emerald-600 mt-1.5 font-medium flex items-center gap-1">
-              <span className="w-3 h-3 flex items-center justify-center bg-emerald-100 rounded-full"><span className="text-[8px]">✓</span></span> {activeMainTab === 'reguler' ? 'Program Reguler' : 'Program Non-Reguler'} ({new Date().getFullYear()})
+              <span className="w-3 h-3 flex items-center justify-center bg-emerald-100 rounded-full"><span className="text-[8px]">✓</span></span> {activeMainTab === 'reguler' ? 'Program Reguler' : 'Program Non-Reguler'} {filterTahun !== 'Semua Tahun' ? `(${filterTahun})` : '(Semua Tahun)'}
             </p>
           </div>
         </div>
@@ -1219,10 +1282,10 @@ const DataManagement = () => {
             <Layers size={24} />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-1">Target Batch / Tahun</p>
+            <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-1">Target Batch {filterTahun !== 'Semua Tahun' ? `/ ${filterTahun}` : ''}</p>
             <p className="text-2xl font-extrabold text-slate-800 leading-none">{totalBatch}</p>
             <p className="text-xs text-blue-600 mt-1.5 font-medium flex items-center gap-1">
-              <span>↻</span> Total rencana realisasi batch
+              <span>↻</span> Total rencana batch
             </p>
           </div>
         </div>
@@ -1232,10 +1295,10 @@ const DataManagement = () => {
             <Users size={24} />
           </div>
           <div>
-            <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-1">Target Peserta / Tahun</p>
+            <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase mb-1">Target Peserta {filterTahun !== 'Semua Tahun' ? `/ ${filterTahun}` : ''}</p>
             <p className="text-2xl font-extrabold text-slate-800 leading-none">{totalPeserta} <span className="text-sm font-semibold text-slate-400">org</span></p>
             <p className="text-xs text-purple-600 mt-1.5 font-medium flex items-center gap-1">
-              <span>↗</span> Jumlah kuota peserta
+              <span>↗</span> Jumlah kuota target peserta
             </p>
           </div>
         </div>
@@ -1313,6 +1376,7 @@ const DataManagement = () => {
               <thead>
                 <tr className="bg-slate-50/70 text-slate-600 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
                   <th className="px-4 py-3.5">Program Pelatihan</th>
+                  <th className="px-4 py-3.5 text-center">Tahun</th>
                   <th className="px-4 py-3.5">Batch</th>
                   <th className="px-4 py-3.5">Kategori Reguler</th>
                   <th className="px-4 py-3.5">Tanggal</th>
@@ -1328,18 +1392,27 @@ const DataManagement = () => {
               <tbody className="text-sm divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan="11" className="px-4 py-12 text-center">
+                    <td colSpan="12" className="px-4 py-12 text-center">
                       <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
                     </td>
                   </tr>
                 ) : paginatedData.length === 0 ? (
                   <tr>
-                    <td colSpan="11" className="px-4 py-10 text-center text-slate-500">Tidak ada data program reguler ditemukan.</td>
+                    <td colSpan="12" className="px-4 py-10 text-center text-slate-500">Tidak ada data program reguler ditemukan.</td>
                   </tr>
                 ) : (
                   paginatedData.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/70 transition-colors group">
                       <td className="px-4 py-4 font-semibold text-slate-800">{item.title}</td>
+                      <td className="px-4 py-4 text-center">
+                        {resolveItemYear(item) ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-semibold">
+                            {resolveItemYear(item)}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-xs">-</span>
+                        )}
+                      </td>
                       <td className="px-4 py-4 text-slate-600 font-medium">
                         <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-semibold">
                           {item.originalData?.Batch || '-'}
@@ -1395,6 +1468,7 @@ const DataManagement = () => {
               <thead>
                 <tr className="bg-slate-50/70 text-slate-600 text-xs font-semibold uppercase tracking-wider border-b border-slate-200">
                   <th className="px-4 py-3.5">Program Pelatihan</th>
+                  <th className="px-4 py-3.5 text-center">Tahun</th>
                   <th className="px-4 py-3.5">Kategori Pelatihan</th>
                   <th className="px-4 py-3.5">Sub Kategori</th>
                   <th className="px-4 py-3.5 text-center">Target Batch</th>
@@ -1410,18 +1484,27 @@ const DataManagement = () => {
               <tbody className="text-sm divide-y divide-slate-100">
                 {loading ? (
                   <tr>
-                    <td colSpan="11" className="px-4 py-12 text-center">
+                    <td colSpan="12" className="px-4 py-12 text-center">
                       <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-green-600"></div>
                     </td>
                   </tr>
                 ) : paginatedData.length === 0 ? (
                   <tr>
-                    <td colSpan="11" className="px-4 py-10 text-center text-slate-500">Tidak ada data program non reguler ditemukan.</td>
+                    <td colSpan="12" className="px-4 py-10 text-center text-slate-500">Tidak ada data program non reguler ditemukan.</td>
                   </tr>
                 ) : (
                   paginatedData.map((item) => (
                     <tr key={item.id} className="hover:bg-slate-50/70 transition-colors group">
                       <td className="px-4 py-4 font-semibold text-slate-800">{item.title}</td>
+                      <td className="px-4 py-4 text-center">
+                        {resolveItemYear(item) ? (
+                          <span className="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-xs font-semibold">
+                            {resolveItemYear(item)}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-xs">-</span>
+                        )}
+                      </td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
                           cleanText(item.originalData?.kategori_pelatihan).includes('managerial')

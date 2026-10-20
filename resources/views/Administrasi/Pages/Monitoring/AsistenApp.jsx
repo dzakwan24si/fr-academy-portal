@@ -199,6 +199,7 @@ export default function AsistenApp() {
     const [importing, setImporting] = useState(false);
     const [importResult, setImportResult] = useState(null);
     const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
+    const [templateDropdownOpen, setTemplateDropdownOpen] = useState(false);
 
     // Delete Confirmation
     const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
@@ -455,6 +456,12 @@ export default function AsistenApp() {
         window.location.href = `/administrasi/asisten/api/export?${params.toString()}`;
     };
 
+    // Download Template Excel Trigger
+    const handleDownloadTemplate = (type = 'lengkap') => {
+        setTemplateDropdownOpen(false);
+        window.location.href = `/administrasi/asisten/template?type=${type}`;
+    };
+
     return (
         <div className="space-y-6">
             {/* Header Banner */}
@@ -472,6 +479,50 @@ export default function AsistenApp() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2.5">
+                    {/* Template Excel Dropdown */}
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setTemplateDropdownOpen(!templateDropdownOpen);
+                                setExportDropdownOpen(false);
+                            }}
+                            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-300 text-sm font-semibold text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition shadow-xs"
+                            title="Unduh format template Excel untuk Database Asisten"
+                        >
+                            <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                            <span>Template Excel</span>
+                            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+                        </button>
+
+                        {templateDropdownOpen && (
+                            <div className="absolute right-0 mt-1.5 w-64 bg-white border border-gray-200 rounded-xl shadow-lg z-30 py-1 text-sm animate-in fade-in">
+                                <button
+                                    type="button"
+                                    onClick={() => handleDownloadTemplate('lengkap')}
+                                    className="w-full text-left px-4 py-2.5 text-gray-700 hover:bg-emerald-50 hover:text-[#4B6A34] flex items-center gap-2.5 font-medium transition"
+                                >
+                                    <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
+                                    <div>
+                                        <p className="font-semibold text-xs">Template Lengkap (56 Kolom)</p>
+                                        <p className="text-[11px] text-gray-400">Seluruh atribut master data & contoh</p>
+                                    </div>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleDownloadTemplate('ringkas')}
+                                    className="w-full text-left px-4 py-2.5 text-gray-700 hover:bg-emerald-50 hover:text-[#4B6A34] flex items-center gap-2.5 font-medium transition border-t border-gray-100"
+                                >
+                                    <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                                    <div>
+                                        <p className="font-semibold text-xs">Template Ringkas (12 Kolom)</p>
+                                        <p className="text-[11px] text-gray-400">Format data pokok & penempatan</p>
+                                    </div>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
                     {/* Export Dropdown */}
                     <div className="relative">
                         <button
@@ -1283,8 +1334,8 @@ export default function AsistenApp() {
                                     <Upload className="w-5 h-5" />
                                 </div>
                                 <div>
-                                    <h3 className="font-bold text-gray-900 text-sm">Import Data dari CSV</h3>
-                                    <p className="text-[11px] text-gray-500">Mendukung file Database_Asisten_Bersih.csv (56 kolom)</p>
+                                    <h3 className="font-bold text-gray-900 text-sm">Import Data dari Excel / CSV</h3>
+                                    <p className="text-[11px] text-gray-500">Mendukung file .xlsx, .xls, atau .csv (56 kolom master)</p>
                                 </div>
                             </div>
                             <button
@@ -1297,12 +1348,34 @@ export default function AsistenApp() {
                         </div>
 
                         <form onSubmit={handleImportSubmit} className="p-6 space-y-4">
+                            {/* Download Template Banner */}
+                            <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3.5 flex items-center justify-between">
+                                <div className="flex items-center gap-2.5">
+                                    <FileSpreadsheet className="w-5 h-5 text-emerald-600 shrink-0" />
+                                    <div>
+                                        <p className="text-xs font-bold text-gray-900">Belum punya format file?</p>
+                                        <p className="text-[11px] text-gray-500">Unduh template Excel siap isi dengan contoh data.</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                    <button
+                                        type="button"
+                                        onClick={() => handleDownloadTemplate('lengkap')}
+                                        className="px-2.5 py-1.5 bg-[#4B6A34] hover:bg-[#3d562a] text-white text-xs font-semibold rounded-lg shadow-2xs transition flex items-center gap-1"
+                                        title="Unduh Template Lengkap (56 Kolom)"
+                                    >
+                                        <Download className="w-3.5 h-3.5" />
+                                        <span>Template Excel</span>
+                                    </button>
+                                </div>
+                            </div>
+
                             {/* File Drag/Drop Input */}
                             <div>
-                                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Pilih File CSV</label>
+                                <label className="block text-xs font-semibold text-gray-700 mb-1.5">Pilih File Excel / CSV</label>
                                 <input
                                     type="file"
-                                    accept=".csv,.txt"
+                                    accept=".csv,.txt,.xlsx,.xls"
                                     onChange={(e) => {
                                         setImportFile(e.target.files[0] || null);
                                         setImportResult(null);

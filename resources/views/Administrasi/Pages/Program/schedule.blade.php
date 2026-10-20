@@ -1,7 +1,7 @@
 <x-admin-layout>
 
-<x-slot name="title">Schedule Bulanan | FR Academy</x-slot>
-    <x-slot name="header">Schedule Bulanan | FR Academy</x-slot>
+<x-slot name="title">Kalender | FR Academy</x-slot>
+    <x-slot name="header">Kalender | FR Academy</x-slot>
 
 
     <meta name="csrf-token" content="{{ csrf_token() }}">

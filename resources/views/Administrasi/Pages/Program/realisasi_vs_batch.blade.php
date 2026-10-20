@@ -1,13 +1,13 @@
 <x-admin-layout>
 
-<x-slot name="title">Realisasi Vs Batch | FR Academy</x-slot>
-    <x-slot name="header">Realisasi Vs Batch | FR Academy</x-slot>
+<x-slot name="title">Realisasi Batch | FR Academy</x-slot>
+    <x-slot name="header">Realisasi Batch | FR Academy</x-slot>
 
 
 <div class="space-y-5">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-[#18181B]">Realisasi Vs Batch</h1>
+            <h1 class="text-2xl font-bold text-[#18181B]">Realisasi Batch</h1>
             <p class="mt-1 text-sm text-[#71717A]">Monitor realisasi batch dan peserta secara otomatis berdasarkan data program & training record.</p>
         </div>
     </div>

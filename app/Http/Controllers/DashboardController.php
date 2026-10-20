@@ -223,7 +223,7 @@ class DashboardController extends Controller
         // Pre-fetch programs and records for this year to avoid repeated full table scans
         $regulerAll = ProgramReguler::all();
         $nonRegulerAll = ProgramNonReguler::all();
-        $regulerYear = $this->filterRegulerByYear($regulerAll, $year);
+        $regulerYear = $this->filterRegulerByYear($regulerAll, $year)->filter(fn ($p) => ! $p->isMandor());
         $nonRegulerYear = $this->filterNonRegulerByYear($nonRegulerAll, $year);
 
         // Pre-fetch TrainingRecords for the year (with carry-over for reguler if applicable)
@@ -282,13 +282,24 @@ class DashboardController extends Controller
     protected function computeRekapTrainingReport(int $year, ?int $selectedMonthNum = null, $regulerPrograms = null, $nonRegulerPrograms = null, $records = null): array
     {
         $regulerPrograms = $regulerPrograms ?? $this->filterRegulerByYear(ProgramReguler::all(), $year);
+        // Exclude Mandor programs from Dashboard MR (only count Staf)
+        $regulerPrograms = $regulerPrograms->filter(fn ($p) => ! $p->isMandor());
         $nonRegulerPrograms = $nonRegulerPrograms ?? $this->filterNonRegulerByYear(ProgramNonReguler::all(), $year);
         $regulerYearIds = $regulerPrograms->pluck('Program_reguler_id')->map(fn ($id) => (int) $id)->all();
         $records = $records ?? $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::all(), $year, $selectedMonthNum, $regulerYearIds);
 
+        $isRecordMandor = function ($r) {
+            $notes = strtoupper(trim((string) $r->notes));
+            $nama = strtoupper(trim((string) $r->nama_pelatihan));
+
+            return str_starts_with($notes, 'PMT') || str_starts_with($notes, 'PKT')
+                || str_starts_with($nama, 'PMT') || str_starts_with($nama, 'PKT')
+                || str_contains($notes, 'MANDOR') || str_contains($nama, 'MANDOR');
+        };
+
         $regPlanBatch = (int) $regulerPrograms->count();
         $regPlanPart = (int) $regulerPrograms->sum('target_peserta');
-        $regRecords = $records->where('program_type', 'reguler');
+        $regRecords = $records->where('program_type', 'reguler')->reject($isRecordMandor);
         $regRecordIds = array_flip($regRecords->pluck('id')->all());
 
         // Group reguler records by program_id to deduplicate participants per batch
@@ -373,7 +384,10 @@ class DashboardController extends Controller
         $softProgramIds = $softPrograms->pluck('id_nonreguler')->all();
         $regulerPrefixes = ['FAT', 'MAT', 'TAT', 'AAT', 'DMT', 'ECT', 'PMT', 'PKT'];
         $technicalNotes = ['ESTATE', 'MILL', 'TRACTION', 'TRAKSI', 'DOWNSTREAM', 'ADMINISTRASI', 'ADMIN'];
-        $softRecords = $records->filter(function ($r) use ($softPrograms, $softProgramIds, $regulerPrefixes, $regRecordIds, $technicalNotes) {
+        $softRecords = $records->filter(function ($r) use ($softPrograms, $softProgramIds, $regulerPrefixes, $regRecordIds, $technicalNotes, $isRecordMandor) {
+            if ($isRecordMandor($r)) {
+                return false;
+            }
             if (isset($regRecordIds[$r->id])) {
                 return false;
             }
@@ -412,7 +426,7 @@ class DashboardController extends Controller
         $tekPlanBatch = (int) $tekPrograms->sum(fn ($p) => (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0));
         $tekPlanPart = (int) $tekPrograms->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0));
         $softRecordIds = array_flip($softRecords->pluck('id')->all());
-        $tekRecords = $records->filter(fn ($r) => ! isset($regRecordIds[$r->id]) && ! isset($softRecordIds[$r->id]));
+        $tekRecords = $records->filter(fn ($r) => $r->program_type !== 'reguler' && ! isset($regRecordIds[$r->id]) && ! isset($softRecordIds[$r->id]))->reject($isRecordMandor);
         $tekRealPart = (int) $tekRecords->count();
         $tekRealBatch = (int) $tekPrograms->sum(fn ($p) => (int) ($p->realisasi_batch ?? 0)) ?: (int) $tekRecords->pluck('nama_pelatihan')->filter()->unique()->count();
         $tekPctBatch = $tekPlanBatch > 0 ? round(($tekRealBatch / $tekPlanBatch) * 100) : 0;

@@ -283,6 +283,8 @@ class CapexController extends Controller
 
         $debit = (float) ($validated['debit'] ?? 0);
         $kredit = (float) ($validated['kredit'] ?? 0);
+        $validated['debit'] = $debit;
+        $validated['kredit'] = $kredit;
         $validated['total_rp'] = $debit - $kredit;
 
         CapexRealisasi::create($validated);
@@ -335,6 +337,8 @@ class CapexController extends Controller
 
         $debit = (float) ($validated['debit'] ?? 0);
         $kredit = (float) ($validated['kredit'] ?? 0);
+        $validated['debit'] = $debit;
+        $validated['kredit'] = $kredit;
         $validated['total_rp'] = $debit - $kredit;
 
         $item->update($validated);

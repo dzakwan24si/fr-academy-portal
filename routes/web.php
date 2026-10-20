@@ -255,10 +255,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
         Route::delete('/{type}/{id}', [ProgramBatchController::class, 'destroy'])->whereIn('type', ['reguler', 'non_reguler'])->name('destroy');
     });
 
-    Route::prefix('administrasi/program')->name('administrasi.program.')->group(function () {
-        Route::get('/', [ProgramBatchController::class, 'programIndex'])->name('index');
-        Route::get('/{type}/{name}', [ProgramBatchController::class, 'programShow'])->whereIn('type', ['reguler', 'non_reguler'])->name('show');
-    });
+    Route::redirect('administrasi/program', '/administrasi/program-batch')->name('administrasi.program.index');
 
     Route::prefix('administrasi/realisasi-vs-batch')->name('administrasi.realisasi-vs-batch.')->group(function () {
         Route::get('/', [RealisasiVsBatchController::class, 'index'])->name('index');
@@ -341,6 +338,8 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
     // Administrasi - Database Asisten Routes
     Route::prefix('administrasi/asisten')->name('administrasi.asisten.')->group(function () {
         Route::get('/', [AsistenController::class, 'index'])->name('index');
+        Route::get('/template', [AsistenController::class, 'downloadTemplate'])->name('template');
+        Route::get('/api/template', [AsistenController::class, 'downloadTemplate'])->name('api.template');
         Route::get('/api/data', [AsistenController::class, 'getData'])->name('api.data');
         Route::get('/api/{id}', [AsistenController::class, 'show'])->name('api.show');
         Route::post('/api/store', [AsistenController::class, 'store'])->name('api.store');

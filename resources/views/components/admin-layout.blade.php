@@ -112,32 +112,28 @@
 
 <!-- SECTION: Program -->
         <details class="group"
-            {{ request()->routeIs('administrasi.program.*', 'administrasi.program-batch.*', 'administrasi.schedule.*', 'administrasi.realisasi-vs-batch.*', 'administrasi.training-record.*') ? 'open' : '' }}>
+            {{ request()->routeIs('administrasi.program-batch.*', 'administrasi.schedule.*', 'administrasi.realisasi-vs-batch.*', 'administrasi.training-record.*') ? 'open' : '' }}>
             <summary
                 class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-widest text-[#A1A1AA] hover:bg-[#F9FAFB] [&::-webkit-details-marker]:hidden">
                 <span>Program</span>
                 <svg class="h-3.5 w-3.5 transition-transform group-open:rotate-180 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </summary>
             <div class="space-y-0.5">
-                <a href="{{ route('administrasi.program.index') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors {{ request()->routeIs('administrasi.program.index', 'administrasi.program.show') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                <a href="{{ route('administrasi.program-batch.index') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors {{ request()->routeIs('administrasi.program-batch.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
                     <i data-lucide="layers-3" class="w-4 h-4 shrink-0"></i><span>Program</span>
-                </a>
-                <a href="{{ route('administrasi.realisasi-vs-batch.index') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors {{ request()->routeIs('administrasi.realisasi-vs-batch.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="chart-no-axes-combined" class="w-4 h-4 shrink-0"></i><span>Realisasi Program Vs Target</span>
                 </a>
                 <a href="{{ route('administrasi.schedule.index') }}"
                     class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors {{ request()->routeIs('administrasi.schedule.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="calendar" class="w-4 h-4 shrink-0"></i><span>Schedule</span>
-                </a>
-                <a href="{{ route('administrasi.program-batch.index') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors {{ request()->routeIs('administrasi.program-batch.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="graduation-cap" class="w-4 h-4 shrink-0"></i><span>Program / Batch</span>
+                    <i data-lucide="calendar" class="w-4 h-4 shrink-0"></i><span>Kalender</span>
                 </a>
                 <a href="{{ route('administrasi.training-record.index') }}"
                     class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors {{ request()->routeIs('administrasi.training-record.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="users-round" class="w-4 h-4 shrink-0"></i><span>Training Record</span>
+                    <i data-lucide="award" class="w-4 h-4 shrink-0"></i><span>Training Record</span>
+                </a>
+                <a href="{{ route('administrasi.realisasi-vs-batch.index') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors {{ request()->routeIs('administrasi.realisasi-vs-batch.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                    <i data-lucide="chart-no-axes-combined" class="w-4 h-4 shrink-0"></i><span>Realisasi Batch</span>
                 </a>
             </div>
         </details>

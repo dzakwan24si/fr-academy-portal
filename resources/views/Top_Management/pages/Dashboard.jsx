@@ -24,7 +24,24 @@ const Dashboard = () => {
       setLoading(true);
       const result = await getAllPelatihan();
       if (result.data) {
-        const enhancedData = result.data.map(item => {
+        // Dashboard MR tidak perlu menghitung bagian mandor
+        const nonMandorData = result.data.filter(item => {
+          const cat = (item.category || '').toLowerCase();
+          const subCat = (item.subCategory || '').toLowerCase();
+          const title = (item.title || '').toLowerCase();
+          const origProg = (item.originalData?.jenis_program_reguler || item.originalData?.Training_Program || item.originalData?.Nama_Program_reguler || '').toLowerCase();
+
+          const isMandor = cat.includes('mandor') 
+            || subCat.includes('mandor') 
+            || title.includes('mandor') 
+            || origProg.includes('mandor')
+            || title.startsWith('pmt')
+            || title.startsWith('pkt');
+
+          return !isMandor;
+        });
+
+        const enhancedData = nonMandorData.map(item => {
           let subSektor = 'SOFT SKILLS';
           // Gunakan subCategory (sudah dinormalisasi dari sub_kategori di client.js)
           // sebagai sumber utama, lalu fallback ke kategori_pelatihan / jenis_pelatihan / title
@@ -61,7 +78,7 @@ const Dashboard = () => {
   const totalPeserta = filteredData.reduce((sum, item) => sum + (item.participants || item.originalData?.target_total || 0), 0);
 
   // Chart Data: Distribusi & Batch per Kategori
-  const kategoriList = ['Reguler - Staf', 'Reguler - Mandor', 'Riau', 'Kalbar', 'Kaltim', 'Corporate'];
+  const kategoriList = ['Reguler - Staf', 'Riau', 'Kalbar', 'Kaltim', 'Corporate'];
   const chartSourceData = data;
 
   const kategoriData = kategoriList.map(kat => {
@@ -240,7 +257,7 @@ const Dashboard = () => {
         </div>
 
         {/* Chart 4: Horizontal Bar - hanya tampil untuk Non-Reguler atau Semua */}
-        {filterKategori !== 'Reguler - Staf' && filterKategori !== 'Reguler - Mandor' && (
+        {filterKategori !== 'Reguler - Staf' && (
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6">
           <h3 className="font-extrabold text-slate-800 flex items-center gap-2 mb-6 border-b border-slate-100 pb-3 text-sm">
             <LayoutIcon size={18} className="text-green-600" /> Distribusi Program (Sub-Sektor)

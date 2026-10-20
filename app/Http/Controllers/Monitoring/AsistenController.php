@@ -386,45 +386,45 @@ class AsistenController extends Controller
     }
 
     /**
-     * Import assistant data from CSV.
+     * Import assistant data from CSV / Excel.
      */
     public function importCsv(Request $request)
     {
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:30720',
+            'file' => 'required|file|mimes:csv,txt,xlsx,xls|max:30720',
             'mode' => 'nullable|in:append,replace',
         ]);
 
         $file = $request->file('file');
         $mode = $request->input('mode', 'append');
 
-        // Auto-detect delimiter (semicolon vs comma)
-        $sampleHandle = fopen($file->getRealPath(), 'r');
-        $firstLine = fgets($sampleHandle);
-        fclose($sampleHandle);
-        $delimiter = (str_contains($firstLine, ';')) ? ';' : ',';
-
-        $handle = fopen($file->getRealPath(), 'r');
-        if (! $handle) {
+        try {
+            $allRows = SpreadsheetReader::read($file->getRealPath(), $file->getClientOriginalExtension());
+        } catch (\Exception $e) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Gagal membuka file CSV.',
+                'message' => 'Gagal membaca file: '.$e->getMessage(),
             ], 400);
         }
 
-        $header = fgetcsv($handle, 10000, $delimiter);
-        if (! $header) {
-            fclose($handle);
-
+        if (empty($allRows)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'File CSV kosong atau tidak valid.',
+                'message' => 'File kosong atau tidak valid.',
+            ], 400);
+        }
+
+        $header = array_shift($allRows);
+        if (! $header || empty(array_filter($header, fn ($v) => trim((string) $v) !== ''))) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Header file kosong atau tidak valid.',
             ], 400);
         }
 
         // Clean & normalize headers
         $cleanHeaders = array_map(function ($h) {
-            $str = trim($h);
+            $str = trim((string) $h);
             $str = preg_replace('/[\x00-\x1F\x80-\xFF]/', '', $str);
             $str = strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $str));
 
@@ -530,9 +530,9 @@ class AsistenController extends Controller
         $errors = [];
         $rowNumber = 1;
 
-        while (($row = fgetcsv($handle, 10000, $delimiter)) !== false) {
+        foreach ($allRows as $row) {
             $rowNumber++;
-            if (empty(array_filter($row, fn ($v) => trim($v) !== ''))) {
+            if (empty(array_filter($row, fn ($v) => trim((string) $v) !== ''))) {
                 continue;
             }
 
@@ -661,8 +661,6 @@ class AsistenController extends Controller
 
             $rowsToInsert[] = $rowObj;
         }
-
-        fclose($handle);
 
         if (empty($rowsToInsert) && ! empty($errors)) {
             return response()->json([
@@ -886,6 +884,71 @@ class AsistenController extends Controller
 
             return ExcelExporter::download($filename, $headers, $dataRows, 'Asisten Lengkap');
         }
+    }
+
+    /**
+     * Download Excel template for Database Asisten import.
+     */
+    public function downloadTemplate(Request $request): StreamedResponse
+    {
+        $type = $request->query('type', 'lengkap'); // 'lengkap' | 'ringkas'
+
+        if ($type === 'ringkas') {
+            $headers = [
+                'NO', 'NIK', 'NAMA', 'ASAL REKRUT', 'PROGRAM', 'BATCH', 'JABATAN (AWAL)', 'PENEMPATAN (PT)', 'REGION (SAAT INI)', 'UNIT KERJA', 'STATUS KARYAWAN', 'KETERANGAN',
+            ];
+
+            $sampleRows = [
+                [
+                    1, '1234567890123456', 'Ahmad Fauzi', 'Medan', 'FAT', 'Batch 1', 'Asisten Agronomi', 'PT FR Agro', 'Sumatera', 'Kebun Sei Rampah', 'Aktif', 'Contoh data template',
+                ],
+                [
+                    2, '9876543210987654', 'Siti Rahmawati', 'Pekanbaru', 'MAT', 'Batch 2', 'Asisten Mill', 'PT FR Sawit', 'Riau', 'PKS Tapung', 'Aktif', 'Contoh data template',
+                ],
+            ];
+
+            return ExcelExporter::download('Template_Database_Asisten_Ringkas.xlsx', $headers, $sampleRows, 'Template Asisten Ringkas');
+        }
+
+        // Default: Lengkap (56 Kolom)
+        $headers = [
+            'NO', 'NIK', 'NAMA', 'JENIS KELAMIN', 'TEMPAT LAHIR', 'TANGGAL LAHIR', 'USIA', 'AGAMA', 'STATUS PERNIKAHAN', 'NO HP', 'EMAIL', 'ALAMAT DOMISILI', 'NO KTP',
+            'JENJANG PENDIDIKAN', 'UNIVERSITAS', 'FAKULTAS', 'JURUSAN', 'IPK', 'TAHUN LULUS',
+            'ASAL REKRUT', 'JALUR REKRUTMEN', 'PROGRAM', 'BATCH', 'TANGGAL MULAI TRAINING', 'TANGGAL SELESAI TRAINING', 'TAHUN ANGKATAN',
+            'NILAI PSIKOTEST', 'NILAI INTERVIEW HR', 'NILAI INTERVIEW USER', 'STATUS MCU', 'RANKING SELEKSI',
+            'NILAI AKADEMIK', 'NILAI PRAKTEK', 'NILAI SIKAP', 'NILAI AKHIR TRAINING', 'STATUS KELULUSAN', 'TANGGAL KELULUSAN',
+            'JABATAN (AWAL)', 'PENEMPATAN (PT)', 'REGIONAL (PENEMPATAN TRAINING)', 'UNIT KERJA (PENEMPATAN TRAINING)', 'TANGGAL SK AWAL',
+            'STATUS KARYAWAN', 'JABATAN TERAKHIR', 'LEVEL JABATAN', 'REGION (KEPEGAWAIAN SAAT INI)', 'UNIT KERJA (KEPEGAWAIAN SAAT INI)', 'ATASAN LANGSUNG', 'TANGGAL PENGANGKATAN',
+            'STATUS RESIGN', 'TANGGAL RESIGN', 'ALASAN RESIGN', 'STATUS IJAZAH', 'TANGGAL PENGAMBILAN IJAZAH', 'NO TANDA TERIMA IJAZAH',
+            'NO BPJS TK', 'NO BPJS KES', 'NPWP', 'KETERANGAN',
+        ];
+
+        $sampleRows = [
+            [
+                1, '1234567890123456', 'Ahmad Fauzi', 'L', 'Medan', '1998-05-12', 26, 'Islam', 'Belum Menikah', '081234567890', 'ahmad.fauzi@example.com', 'Jl. Sudirman No. 12', '1234567890123456',
+                'S1', 'Universitas Sumatera Utara', 'Pertanian', 'Agroteknologi', 3.45, 2021,
+                'Medan', 'Kampus', 'FAT', 'Batch 1', '2022-01-10', '2022-07-10', 2022,
+                80, 85, 82, 'Fit', 1,
+                84, 86, 88, 86, 'Lulus', '2022-07-15',
+                'Asisten Agronomi', 'PT FR Agro', 'Sumatera', 'Kebun Sei Rampah', '2022-08-01',
+                'Aktif', 'Asisten Agronomi', 'Asisten', 'Sumatera', 'Kebun Sei Rampah', 'Budi Santoso', '2023-08-01',
+                '-', '', '', 'Disimpan Perusahaan', '', '',
+                'BPJS-12345', 'BPJS-67890', '12.345.678.9-123.000', 'Contoh data template',
+            ],
+            [
+                2, '9876543210987654', 'Siti Rahmawati', 'P', 'Pekanbaru', '1999-08-20', 25, 'Islam', 'Belum Menikah', '081298765432', 'siti.rahma@example.com', 'Jl. Diponegoro No. 45', '9876543210987654',
+                'S1', 'Universitas Riau', 'Teknik', 'Teknik Mesin', 3.60, 2022,
+                'Pekanbaru', 'Umum', 'MAT', 'Batch 2', '2023-02-01', '2023-08-01', 2023,
+                82, 88, 85, 'Fit', 2,
+                88, 90, 89, 89, 'Lulus', '2023-08-05',
+                'Asisten Mill', 'PT FR Sawit', 'Riau', 'PKS Tapung', '2023-08-15',
+                'Aktif', 'Asisten Mill', 'Asisten', 'Riau', 'PKS Tapung', 'Agus Wibowo', '2024-08-15',
+                '-', '', '', 'Disimpan Perusahaan', '', '',
+                'BPJS-54321', 'BPJS-09876', '98.765.432.1-987.000', 'Contoh data template',
+            ],
+        ];
+
+        return ExcelExporter::download('Template_Database_Asisten_Lengkap.xlsx', $headers, $sampleRows, 'Template Asisten Lengkap');
     }
 
     /**

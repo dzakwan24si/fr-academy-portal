@@ -21,6 +21,41 @@ class TrainingRecordController extends Controller
 
     private const MONTHS = [1 => 'Jan', 2 => 'Feb', 3 => 'Mar', 4 => 'Apr', 5 => 'Mei', 6 => 'Jun', 7 => 'Jul', 8 => 'Agu', 9 => 'Sep', 10 => 'Okt', 11 => 'Nov', 12 => 'Des'];
 
+    /**
+     * Parse any month string / abbreviation (e.g. AGU, AGS, AGST, AGUSTUS, 8) to its 1-12 integer.
+     */
+    public static function parseMonthNumber(?string $monthStr): ?int
+    {
+        if ($monthStr === null || $monthStr === '') {
+            return null;
+        }
+
+        $clean = strtoupper(trim((string) $monthStr));
+
+        if (is_numeric($clean)) {
+            $num = (int) $clean;
+
+            return ($num >= 1 && $num <= 12) ? $num : null;
+        }
+
+        $map = [
+            'JAN' => 1, 'JANUARI' => 1, 'JANUARY' => 1,
+            'FEB' => 2, 'FEBRUARI' => 2, 'FEBRUARY' => 2,
+            'MAR' => 3, 'MARET' => 3, 'MARCH' => 3,
+            'APR' => 4, 'APRIL' => 4,
+            'MEI' => 5, 'MAY' => 5,
+            'JUN' => 6, 'JUNI' => 6, 'JUNE' => 6,
+            'JUL' => 7, 'JULI' => 7, 'JULY' => 7,
+            'AGU' => 8, 'AGS' => 8, 'AGST' => 8, 'AGUSTUS' => 8, 'AUG' => 8, 'AUGUST' => 8,
+            'SEP' => 9, 'SEPT' => 9, 'SEPTEMBER' => 9,
+            'OKT' => 10, 'OKTOBER' => 10, 'OCT' => 10, 'OCTOBER' => 10,
+            'NOV' => 11, 'NOP' => 11, 'NOVEMBER' => 11,
+            'DES' => 12, 'DESEMBER' => 12, 'DEC' => 12, 'DECEMBER' => 12,
+        ];
+
+        return $map[$clean] ?? null;
+    }
+
     public function index(Request $request)
     {
         $rawYear = $request->input('year', 'all');
@@ -60,7 +95,7 @@ class TrainingRecordController extends Controller
         $perPage = 15;
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
         $records = new LengthAwarePaginator(
-            $filteredRecords->values()->forPage($currentPage, $perPage),
+            $filteredRecords->forPage($currentPage, $perPage)->values(),
             $filteredRecords->count(),
             $perPage,
             $currentPage,
@@ -120,11 +155,19 @@ class TrainingRecordController extends Controller
 
     public function import(Request $request)
     {
-        $request->validate(['file' => 'required|file|mimes:csv,txt,xlsx|max:20480']);
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt,xlsx|max:20480',
+            'import_mode' => 'nullable|string|in:append,replace',
+        ]);
+        $importMode = $request->input('import_mode', 'append');
         $file = $request->file('file');
         $rows = SpreadsheetReader::read($file->getRealPath(), $file->getClientOriginalExtension());
         if (count($rows) < 2) {
             return back()->withErrors(['file' => 'File tidak memiliki data.']);
+        }
+
+        if ($importMode === 'replace') {
+            TrainingRecord::truncate();
         }
 
         $rawHeaders = array_shift($rows);
@@ -480,8 +523,8 @@ class TrainingRecordController extends Controller
             // 4. Filter Month
             if ($month > 0) {
                 if ($record->bulan) {
-                    $monthShort = strtoupper(self::MONTHS[$month] ?? '');
-                    if ($record->bulan !== $monthShort) {
+                    $recordMonth = self::parseMonthNumber($record->bulan);
+                    if ($recordMonth !== $month) {
                         return false;
                     }
                 } else {
@@ -822,7 +865,7 @@ class TrainingRecordController extends Controller
             'internal_external' => $item['internal/eksternal'] ?? null,
             'level' => $item['level'] ?? null,
             'periode' => $item['periode'] ?? null,
-            'bulan' => $bulan !== '' ? strtoupper(substr($bulan, 0, 3)) : null,
+            'bulan' => ($monthNum = self::parseMonthNumber($bulan)) ? strtoupper(self::MONTHS[$monthNum]) : ($bulan !== '' ? strtoupper(substr($bulan, 0, 3)) : null),
             'tahun' => $tahunVal,
             'jml_hari' => $item['jml hari'] ?? null,
             'total_jam' => $item['jam pelatihan'] ?? null,
