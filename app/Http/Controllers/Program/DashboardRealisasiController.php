@@ -12,6 +12,7 @@ use App\Models\Monitoring\MonitoringTalent;
 use App\Models\Program\ProgramNonReguler;
 use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
+use App\Services\ProgramFilterHelper;
 use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
@@ -412,31 +413,44 @@ class DashboardRealisasiController extends Controller
         $regulerPrograms = $regulerProgramsQuery->get();
         $regulerPrograms = $this->filterRegulerByYear($regulerPrograms, $year);
 
+        // Khusus kedua tabel ini (TRAINING REGULER - STAF & TRAINING REGULER - MANDOR):
+        // Menampilkan data program berdasarkan kolom "tahun", tidak berdasarkan tanggal pelaksanaan
+        $tableRegulerPrograms = $regulerProgramsQuery->get()->filter(function ($p) use ($year) {
+            return (int) $p->tahun === (int) $year;
+        });
+
         if ($programType === 'non_reguler') {
             $regulerPrograms = collect();
+            $tableRegulerPrograms = collect();
         } else {
             if ($category === 'staf') {
-                $regulerPrograms = $regulerPrograms->filter(function ($p) use ($cleanStr) {
+                $stafFilter = function ($p) use ($cleanStr) {
                     $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
                     $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
 
                     return ! $isMandor;
-                });
+                };
+                $regulerPrograms = $regulerPrograms->filter($stafFilter);
+                $tableRegulerPrograms = $tableRegulerPrograms->filter($stafFilter);
             } elseif ($category === 'mandor') {
-                $regulerPrograms = $regulerPrograms->filter(function ($p) use ($cleanStr) {
+                $mandorFilter = function ($p) use ($cleanStr) {
                     $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
                     $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
 
                     return $isMandor;
-                });
+                };
+                $regulerPrograms = $regulerPrograms->filter($mandorFilter);
+                $tableRegulerPrograms = $tableRegulerPrograms->filter($mandorFilter);
             }
 
             if ($selectedProgram !== 'all' && $selectedProgram !== '') {
-                $regulerPrograms = $regulerPrograms->filter(function ($p) use ($selectedProgram, $cleanStr) {
+                $progFilter = function ($p) use ($selectedProgram, $cleanStr) {
                     $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
 
                     return strcasecmp($pName, $selectedProgram) === 0 || str_contains($cleanStr($pName), $cleanStr($selectedProgram));
-                });
+                };
+                $regulerPrograms = $regulerPrograms->filter($progFilter);
+                $tableRegulerPrograms = $tableRegulerPrograms->filter($progFilter);
             }
         }
 
@@ -452,7 +466,7 @@ class DashboardRealisasiController extends Controller
         $mandorResign = 0;
         $mandorLulus = 0;
 
-        foreach ($regulerPrograms as $p) {
+        foreach ($tableRegulerPrograms as $p) {
             $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
             $normPName = $normalizeAngkatan($pName);
 
@@ -815,15 +829,61 @@ class DashboardRealisasiController extends Controller
         $teknikal = $calcMetrics($tekPrograms, 'teknikal');
 
         // 6. Monthly Chart Data (Jan - Des) - Real-time Per Bulan from TrainingRecord
+        // Khusus grafik ini: hanya menampilkan data yang kolom "tahun" di tabel programnya sesuai ($year)
+        // Tidak melihat tanggal_pelaksanaan
         $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         $monthMap = ['JAN' => 1, 'FEB' => 2, 'MAR' => 3, 'APR' => 4, 'MEI' => 5, 'MAY' => 5, 'JUN' => 6, 'JUL' => 7, 'AGU' => 8, 'AGS' => 8, 'AUG' => 8, 'SEP' => 9, 'OKT' => 10, 'OCT' => 10, 'NOV' => 11, 'DES' => 12, 'DEC' => 12];
 
-        $allYearRecords = $this->filterRecordsByYearAndCumulativeMonth((clone $trainingRecordQuery)->get(), $year, null);
+        $chartRegulerMap = ProgramReguler::all()->keyBy('Program_reguler_id');
+        $chartNonRegulerMap = ProgramNonReguler::all()->keyBy('id_nonreguler');
+
+        $chartRawRecords = (clone $trainingRecordQuery)->get();
+        $chartYearRecords = $chartRawRecords->filter(function ($r) use ($year, $chartRegulerMap, $chartNonRegulerMap) {
+            $pTahun = null;
+            if ($r->program_type === 'reguler') {
+                if ($r->program_id && isset($chartRegulerMap[$r->program_id])) {
+                    $pTahun = $chartRegulerMap[$r->program_id]->tahun;
+                } else {
+                    $note = strtoupper(trim((string) ($r->notes ?: $r->nama_pelatihan)));
+                    foreach ($chartRegulerMap as $p) {
+                        $pName = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->Training_Program)));
+                        if ($pName !== '' && (str_contains($note, $pName) || str_contains($pName, $note))) {
+                            $pTahun = $p->tahun;
+                            break;
+                        }
+                    }
+                }
+            } elseif ($r->program_type === 'non_reguler') {
+                if ($r->program_id && isset($chartNonRegulerMap[$r->program_id])) {
+                    $pTahun = $chartNonRegulerMap[$r->program_id]->tahun;
+                } else {
+                    $note = strtoupper(trim((string) ($r->notes ?: $r->nama_pelatihan)));
+                    foreach ($chartNonRegulerMap as $p) {
+                        $pName = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->jenis_pelatihan)));
+                        if ($pName !== '' && (str_contains($note, $pName) || str_contains($pName, $note))) {
+                            $pTahun = $p->tahun;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if ($pTahun !== null) {
+                return (int) $pTahun === (int) $year;
+            }
+
+            // Fallback: kolom tahun pada training_record itu sendiri (tanpa melihat tanggal pelaksanaan)
+            if (! empty($r->tahun)) {
+                return (int) $r->tahun === (int) $year;
+            }
+
+            return false;
+        });
 
         $monthlyPesertaMap = array_fill(1, 12, 0);
         $monthlyProgramSets = array_fill(1, 12, []);
 
-        foreach ($allYearRecords as $r) {
+        foreach ($chartYearRecords as $r) {
             $mCode = strtoupper(substr(trim((string) $r->bulan), 0, 3));
             $mNum = $monthMap[$mCode] ?? null;
             if (! $mNum && $r->training_date) {

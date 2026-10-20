@@ -799,18 +799,34 @@ document.addEventListener('DOMContentLoaded', function () {
                     {
                         label: 'Culled (%)',
                         data: traineeChartData.culled,
-                        backgroundColor: '#f59e0b', // Amber
+                        backgroundColor: '#e11d48', // Red / Crimson
                         borderRadius: 4,
-                        barPercentage: 0.6,
-                        categoryPercentage: 0.6,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.8,
+                    },
+                    {
+                        label: 'Passed (%)',
+                        data: traineeChartData.passed,
+                        backgroundColor: '#2563eb', // Royal Blue
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.8,
                     },
                     {
                         label: 'Resign (%)',
                         data: traineeChartData.resign,
-                        backgroundColor: '#ef4444', // Merah
+                        backgroundColor: '#f59e0b', // Amber
                         borderRadius: 4,
-                        barPercentage: 0.6,
-                        categoryPercentage: 0.6,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.8,
+                    },
+                    {
+                        label: 'Exist (%)',
+                        data: traineeChartData.existing,
+                        backgroundColor: '#10b981', // Emerald
+                        borderRadius: 4,
+                        barPercentage: 0.8,
+                        categoryPercentage: 0.8,
                     }
                 ]
             },

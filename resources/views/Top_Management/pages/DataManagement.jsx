@@ -72,45 +72,7 @@ const resolveItemYear = (item) => {
 const checkItemMatchesYear = (item, targetYear) => {
   if (!targetYear || targetYear === 'Semua Tahun') return true;
   const yr = Number(targetYear);
-  const orig = item.originalData || {};
-  const isReguler = item.type === 'Reguler';
-
-  const startVal = isReguler
-    ? (orig.Mulai_program || orig.start_date || item.start)
-    : (orig.start_date || orig.Mulai_program || item.start);
-  const endVal = isReguler
-    ? (orig.Selesai_program || orig.end_date || item.end)
-    : (orig.end_date || orig.Selesai_program || item.end);
-
-  const startYear = startVal ? new Date(startVal).getFullYear() : null;
-  const endYear = endVal ? new Date(endVal).getFullYear() : null;
-
-  const title = item.title || orig.Training_Program || orig.Nama_Program_reguler || orig.jenis_pelatihan || '';
-  const match = title.match(/\b(20\d{2})\b/);
-  const titleYear = match ? parseInt(match[1], 10) : null;
-
-  if (isReguler) {
-    if (yr === 2026) {
-      if (startYear === 2026 || startYear === 2025) return true;
-      if (titleYear === 2026 || titleYear === 2025) return true;
-      if (title.includes('TAT I 2027') || title.includes('MAT I 2027')) return true;
-    }
-
-    if (titleYear === yr) return true;
-
-    if (startYear && endYear) {
-      if (startYear <= yr && endYear >= yr) return true;
-    } else if (startYear) {
-      if (startYear === yr) return true;
-    } else if (endYear) {
-      if (endYear === yr) return true;
-    }
-
-    return resolveItemYear(item) === yr;
-  } else {
-    // Non-reguler: exact parity with DashboardRealisasiController::filterNonRegulerByYear
-    return resolveItemYear(item) === yr;
-  }
+  return resolveItemYear(item) === yr;
 };
 
 const groupDatesIntoRanges = (dates) => {
@@ -538,7 +500,7 @@ const DataManagement = () => {
       return false;
     }
 
-    // 6. Filter by Tahun (Selaras dengan Dashboard Utama: mencakup tanggal pelaksanaan & carry-over)
+    // 6. Filter by Tahun (Berdasarkan kolom tahunnya saja)
     if (filterTahun !== 'Semua Tahun') {
       if (!checkItemMatchesYear(item, filterTahun)) return false;
     }

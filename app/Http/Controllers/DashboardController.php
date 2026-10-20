@@ -82,11 +82,15 @@ class DashboardController extends Controller
 
     public function resolveProgramRegulerYear($p): int
     {
+        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
+            return $y;
+        }
         if ($p->Mulai_program && ($y = $this->extractYearFromField($p->Mulai_program))) {
             return $y;
         }
-        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
-            return $y;
+        $title = $p->Training_Program ?? $p->Nama_Program_reguler ?? '';
+        if (preg_match('/\b(20\d{2})\b/', $title, $m)) {
+            return (int) $m[1];
         }
         if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
             return $y;
@@ -131,6 +135,10 @@ class DashboardController extends Controller
         }
         if ($p->start_date && ($y = $this->extractYearFromField($p->start_date))) {
             return $y;
+        }
+        $title = $p->jenis_pelatihan ?? '';
+        if (preg_match('/\b(20\d{2})\b/', $title, $m)) {
+            return (int) $m[1];
         }
         if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
             return $y;

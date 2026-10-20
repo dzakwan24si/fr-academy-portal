@@ -804,7 +804,7 @@ class ProgramBatchController extends Controller
 
         $orig['Nama_Program_reguler'] = $item->Training_Program;
         $orig['Total_orang'] = $item->target_peserta;
-        $year = $item->Mulai_program ? (int) $item->Mulai_program->format('Y') : ($item->tahun ?: ($item->Selesai_program ? (int) $item->Selesai_program->format('Y') : null));
+        $year = $item->tahun ?: ($item->Mulai_program ? (int) $item->Mulai_program->format('Y') : ($item->Selesai_program ? (int) $item->Selesai_program->format('Y') : null));
 
         return [
             'id' => 'reg-'.$item->Program_reguler_id,
