@@ -10,6 +10,7 @@ use App\Models\Program\RealisasiVsBatch;
 use App\Models\Program\TrainingRecord;
 use App\Services\ExcelExporter;
 use App\Services\SpreadsheetReader;
+use App\Services\TrainingMetricService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -546,34 +547,6 @@ class RealisasiVsBatchController extends Controller
 
     public function monthNumber($value): ?int
     {
-        if ($value === null || $value === '') {
-            return null;
-        }
-        if (is_numeric($value)) {
-            return max(1, min(12, (int) $value));
-        }
-
-        $upper = strtoupper(substr(trim((string) $value), 0, 3));
-        $aliasMap = [
-            'JAN' => 1, 'FEB' => 2, 'MAR' => 3, 'APR' => 4,
-            'MEI' => 5, 'MAY' => 5,
-            'JUN' => 6, 'JUL' => 7,
-            'AGU' => 8, 'AGS' => 8, 'AUG' => 8,
-            'SEP' => 9,
-            'OKT' => 10, 'OCT' => 10,
-            'NOV' => 11, 'DES' => 12, 'DEC' => 12,
-        ];
-        if (isset($aliasMap[$upper])) {
-            return $aliasMap[$upper];
-        }
-
-        $lower = strtolower(trim((string) $value));
-        foreach (self::MONTHS as $number => $name) {
-            if ($lower === strtolower($name) || $lower === strtolower(substr($name, 0, 3))) {
-                return $number;
-            }
-        }
-
-        return null;
+        return TrainingMetricService::parseMonthNumber($value);
     }
 }

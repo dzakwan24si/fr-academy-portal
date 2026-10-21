@@ -14,6 +14,7 @@ use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
 use App\Services\ProgramFilterHelper;
 use App\Services\SpreadsheetReader;
+use App\Services\TrainingMetricService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -29,210 +30,100 @@ class DashboardRealisasiController extends Controller
 
     public function parseMonthNumber($value): ?int
     {
-        if ($value === null || $value === '' || $value === 'all') {
-            return null;
-        }
-        if (is_numeric($value)) {
-            $num = (int) $value;
-
-            return ($num >= 1 && $num <= 12) ? $num : null;
-        }
-
-        $upper = strtoupper(substr(trim((string) $value), 0, 3));
-        $map = [
-            'JAN' => 1, 'FEB' => 2, 'MAR' => 3, 'APR' => 4,
-            'MEI' => 5, 'MAY' => 5, 'JUN' => 6, 'JUL' => 7,
-            'AGU' => 8, 'AGS' => 8, 'AUG' => 8, 'SEP' => 9,
-            'OKT' => 10, 'OCT' => 10, 'NOV' => 11, 'DES' => 12, 'DEC' => 12,
-        ];
-
-        return $map[$upper] ?? null;
+        return TrainingMetricService::parseMonthNumber($value);
     }
 
     public function extractYearFromField($val): ?int
     {
-        if (empty($val)) {
-            return null;
-        }
-        if ($val instanceof \DateTimeInterface) {
-            return (int) $val->format('Y');
-        }
-        if (is_numeric($val) && (int) $val >= 2000 && (int) $val <= 2100) {
-            return (int) $val;
-        }
-        if (is_array($val)) {
-            foreach ($val as $item) {
-                $y = $this->extractYearFromField($item);
-                if ($y) {
-                    return $y;
-                }
-            }
-
-            return null;
-        }
-        if (is_string($val)) {
-            $trimmed = trim($val);
-            if (str_starts_with($trimmed, '[') && str_ends_with($trimmed, ']')) {
-                $decoded = json_decode($trimmed, true);
-                if (is_array($decoded)) {
-                    return $this->extractYearFromField($decoded);
-                }
-            }
-            if (preg_match('/\b(20\d{2})\b/', $trimmed, $m)) {
-                return (int) $m[1];
-            }
-            $time = strtotime($trimmed);
-            if ($time !== false && $time > 0) {
-                return (int) date('Y', $time);
-            }
-        }
-
-        return null;
+        return TrainingMetricService::extractYearFromField($val);
     }
 
     public function resolveProgramRegulerYear($p): int
     {
-        // 1. Baca kolom tahun terlebih dahulu
-        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
-            return $y;
-        }
-        // 2. Kemudian tanggal pelaksanaan
-        if ($p->Mulai_program && ($y = $this->extractYearFromField($p->Mulai_program))) {
-            return $y;
-        }
-        if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
-            return $y;
-        }
-        if ($p->Selesai_program && ($y = $this->extractYearFromField($p->Selesai_program))) {
-            return $y;
-        }
-        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) {
-            return $y;
-        }
-
-        return 2026;
+        return TrainingMetricService::resolveProgramRegulerYear($p);
     }
 
     public function resolveProgramNonRegulerYear($p): int
     {
-        // 1. Baca kolom tahun terlebih dahulu
-        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
-            return $y;
-        }
-        // 2. Kemudian tanggal pelaksanaan
-        if ($p->start_date && ($y = $this->extractYearFromField($p->start_date))) {
-            return $y;
-        }
-        if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
-            return $y;
-        }
-        if ($p->end_date && ($y = $this->extractYearFromField($p->end_date))) {
-            return $y;
-        }
-        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) {
-            return $y;
-        }
-
-        return 2026;
+        return TrainingMetricService::resolveProgramNonRegulerYear($p);
     }
 
     protected function filterRegulerByYear($programs, int $year)
     {
-        return $programs->filter(function ($p) use ($year) {
-            $pYear = (! empty($p->tahun) && is_numeric($p->tahun)) ? (int) $p->tahun : $this->resolveProgramRegulerYear($p);
-
-            return $pYear === $year;
-        });
+        return TrainingMetricService::filterRegulerByYear($programs, $year);
     }
 
     protected function filterNonRegulerByYear($programs, int $year)
     {
-        return $programs->filter(function ($p) use ($year) {
-            return $this->resolveProgramNonRegulerYear($p) === $year;
-        });
+        return TrainingMetricService::filterNonRegulerByYear($programs, $year);
     }
 
     protected function filterRecordsByYearAndCumulativeMonth($records, int $year, ?int $selectedMonthNum, array $regulerYearById = [], array $regulerYearByAng = [])
     {
-        return $records->filter(function ($r) use ($year, $selectedMonthNum, $regulerYearById, $regulerYearByAng) {
-            // 1. Year filter
-            $rYear = null;
-            if ($r->program_type === 'reguler') {
-                if ($r->program_id && isset($regulerYearById[(int) $r->program_id])) {
-                    $rYear = $regulerYearById[(int) $r->program_id];
-                } elseif (! empty($r->notes)) {
-                    $norm = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $r->notes)));
-                    $norm = str_replace(
-                        ['FIELD ASSISTANT', 'ESTATE CADET TRAINEE', 'ESTATE CADET', 'MILL ASSISTANT', 'ADMIN ASSISTANT', 'PROCESSING', 'PABRIK'],
-                        ['FAT', 'ECT', 'ECT', 'MAT', 'AAT', 'PMT', 'PMT'],
-                        $norm
-                    );
-                    $norm = preg_replace('/[^A-Z0-9]/', ' ', $norm);
-                    $norm = implode('-', array_values(array_filter(explode(' ', $norm))));
-                    if (isset($regulerYearByAng[$norm])) {
-                        $rYear = $regulerYearByAng[$norm];
-                    }
-                }
-            }
-
-            if ($rYear === null) {
-                if (! empty($r->tahun)) {
-                    $rYear = (int) $r->tahun;
-                } elseif (! empty($r->training_date)) {
-                    $rYear = (int) date('Y', strtotime($r->training_date));
-                } elseif (method_exists($r, 'activityDates')) {
-                    $dates = $r->activityDates();
-                    foreach ($dates as $d) {
-                        if ($d) {
-                            $rYear = (int) date('Y', strtotime($d));
-                            break;
-                        }
-                    }
-                } elseif (! empty($r->created_at)) {
-                    $rYear = (int) date('Y', strtotime($r->created_at));
-                } else {
-                    $rYear = 2026;
-                }
-            }
-
-            if ($rYear !== $year) {
-                // Allow carry-over training records (from previous year) for reguler programs
-                if (! ($r->program_type === 'reguler' && $rYear === $year - 1)) {
-                    return false;
-                }
-            }
-
-            // 2. Month cumulative filter
-            if ($selectedMonthNum !== null) {
-                $mNum = null;
-                if ($r->bulan) {
-                    $mNum = $this->parseMonthNumber($r->bulan);
-                }
-                if (! $mNum && $r->training_date) {
-                    $mNum = (int) date('n', strtotime($r->training_date));
-                }
-                if (! $mNum && method_exists($r, 'activityDates')) {
-                    $dates = $r->activityDates();
-                    foreach ($dates as $d) {
-                        if ($d) {
-                            $mNum = (int) date('n', strtotime($d));
-                            break;
-                        }
-                    }
-                }
-
-                if ($mNum !== null && $mNum > $selectedMonthNum) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
+        return TrainingMetricService::filterRecordsByYearAndCumulativeMonth($records, $year, $selectedMonthNum, [], $regulerYearById, $regulerYearByAng);
     }
 
     public function index(Request $request)
     {
-        $filterOptions = Cache::remember('dreal_filter_options', 300, function () {
+        $filterOptions = $this->getFilterOptions();
+        $years = $filterOptions['years'];
+        $allRegions = $filterOptions['allRegions'];
+        $regulerProgramOptions = collect($filterOptions['regulerProgramOptions']);
+        $nonRegulerProgramOptions = collect($filterOptions['nonRegulerProgramOptions']);
+        $nonRegulerCategoryOptions = $filterOptions['nonRegulerCategoryOptions'];
+
+        $yearDefault = in_array(2026, $years, true) ? 2026 : ($years[count($years) - 1] ?? (int) date('Y'));
+        $year = (int) $request->input('year', $yearDefault);
+
+        $rawMonth = $request->input('month', 'all');
+        $selectedMonthNum = $this->parseMonthNumber($rawMonth);
+        $selectedMonthCode = ($selectedMonthNum && isset(self::MONTH_3_LETTERS[$selectedMonthNum]))
+            ? self::MONTH_3_LETTERS[$selectedMonthNum]
+            : 'all';
+        $monthList = self::MONTH_3_LETTERS;
+
+        $rawRegion = trim((string) $request->input('region', 'all'));
+        $region = ($rawRegion === '' || $rawRegion === 'Semua Region') ? 'all' : $rawRegion;
+        $programType = trim((string) $request->input('program_type', 'all'));
+        $selectedProgram = trim((string) $request->input('program', 'all'));
+        $category = trim((string) $request->input('category', 'all'));
+        $unit = trim((string) $request->input('unit', 'all'));
+        $level = trim((string) $request->input('level', 'all'));
+
+        $availablePrograms = $programType === 'reguler' ? $regulerProgramOptions
+            : ($programType === 'non_reguler' ? $nonRegulerProgramOptions
+            : $regulerProgramOptions->concat($nonRegulerProgramOptions)->unique()->values());
+
+        $v = (int) Cache::get('dreal_cache_version', 1);
+        $cacheKey = "dreal_metrics_v{$v}_".md5(json_encode([$year, $selectedMonthCode, $region, $programType, $selectedProgram, $category, $unit, $level]));
+
+        $metrics = Cache::remember($cacheKey, 300, function () use ($year, $selectedMonthNum, $region, $programType, $selectedProgram, $category, $unit, $level) {
+            return $this->computeMetrics($year, $selectedMonthNum, $region, $programType, $selectedProgram, $category, $unit, $level);
+        });
+
+        return view('Administrasi.Pages.Dashboard.dashboard_realisasi', array_merge($metrics, compact(
+            'years',
+            'year',
+            'monthList',
+            'selectedMonthCode',
+            'selectedMonthNum',
+            'region',
+            'allRegions',
+            'programType',
+            'selectedProgram',
+            'category',
+            'availablePrograms',
+            'regulerProgramOptions',
+            'nonRegulerProgramOptions',
+            'nonRegulerCategoryOptions',
+            'unit',
+            'level'
+        )));
+    }
+
+    protected function getFilterOptions(): array
+    {
+        return Cache::remember('dreal_filter_options', 300, function () {
             $trYears = TrainingRecord::whereNotNull('tahun')->distinct()->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
             $trDateYears = TrainingRecord::whereNotNull('training_date')->distinct()->pluck('training_date')->map(fn ($d) => (int) date('Y', strtotime($d)))->filter()->all();
             $regYears = ProgramReguler::whereNotNull('tahun')->pluck('tahun')
@@ -259,19 +150,10 @@ class DashboardRealisasiController extends Controller
 
             $allRegions = $regulerRegions->merge($nonRegulerRegions)->merge($recordRegions)
                 ->map(function ($r) {
-                    if (strcasecmp($r, 'riau') === 0) {
-                        return 'Riau';
-                    }
-                    if (strcasecmp($r, 'kalbar') === 0) {
-                        return 'Kalbar';
-                    }
-                    if (strcasecmp($r, 'kaltim') === 0 || strcasecmp($r, 'kaltim fr') === 0) {
-                        return 'Kaltim FR';
-                    }
-                    if (strcasecmp($r, 'corporate') === 0) {
-                        return 'Corporate';
-                    }
-
+                    if (strcasecmp($r, 'riau') === 0) return 'Riau';
+                    if (strcasecmp($r, 'kalbar') === 0) return 'Kalbar';
+                    if (strcasecmp($r, 'kaltim') === 0 || strcasecmp($r, 'kaltim fr') === 0) return 'Kaltim FR';
+                    if (strcasecmp($r, 'corporate') === 0) return 'Corporate';
                     return $r;
                 })
                 ->unique()
@@ -280,15 +162,13 @@ class DashboardRealisasiController extends Controller
 
             $regulerProgramOptions = ProgramReguler::pluck('Training_Program')
                 ->toBase()
-                ->map(function ($p) {
-                    return trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p));
-                })->filter()->unique()->values()->all();
+                ->map(fn ($p) => trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p)))
+                ->filter()->unique()->values()->all();
 
             $nonRegulerProgramOptions = ProgramNonReguler::pluck('jenis_pelatihan')
                 ->toBase()
-                ->map(function ($p) {
-                    return trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p));
-                })->filter()->unique()->values()->all();
+                ->map(fn ($p) => trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p)))
+                ->filter()->unique()->values()->all();
 
             $nonRegulerCategoryOptions = ProgramNonReguler::pluck('kategori_pelatihan')
                 ->concat(ProgramNonReguler::pluck('sub_kategori'))
@@ -300,86 +180,27 @@ class DashboardRealisasiController extends Controller
 
             return compact('years', 'allRegions', 'regulerProgramOptions', 'nonRegulerProgramOptions', 'nonRegulerCategoryOptions');
         });
+    }
 
-        $years = $filterOptions['years'];
-        $allRegions = $filterOptions['allRegions'];
-        $regulerProgramOptions = collect($filterOptions['regulerProgramOptions']);
-        $nonRegulerProgramOptions = collect($filterOptions['nonRegulerProgramOptions']);
-        $nonRegulerCategoryOptions = $filterOptions['nonRegulerCategoryOptions'];
+    protected function computeMetrics(int $year, ?int $selectedMonthNum, string $region, string $programType, string $selectedProgram, string $category, string $unit, string $level): array
+    {
+        $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
+        $normalizeName = fn (?string $name) => TrainingMetricService::normalizeName($name);
+        $normalizeAngkatan = fn (string $name) => TrainingMetricService::normalizeAngkatan($name);
 
-        $yearDefault = in_array(2026, $years, true) ? 2026 : ($years[count($years) - 1] ?? (int) date('Y'));
-        $year = (int) $request->input('year', $yearDefault);
-
-        $rawMonth = $request->input('month', 'all');
-        $selectedMonthNum = $this->parseMonthNumber($rawMonth);
-        $selectedMonthCode = ($selectedMonthNum && isset(self::MONTH_3_LETTERS[$selectedMonthNum]))
-            ? self::MONTH_3_LETTERS[$selectedMonthNum]
-            : 'all';
-        $monthList = self::MONTH_3_LETTERS;
-
-        $rawRegion = trim((string) $request->input('region', 'all'));
-        $region = ($rawRegion === '' || $rawRegion === 'Semua Region') ? 'all' : $rawRegion;
-        $programType = trim((string) $request->input('program_type', 'all'));
-        $selectedProgram = trim((string) $request->input('program', 'all'));
-        $category = trim((string) $request->input('category', 'all'));
-        $unit = trim((string) $request->input('unit', 'all'));
-        $level = trim((string) $request->input('level', 'all'));
-
-        if ($programType === 'reguler') {
-            $availablePrograms = $regulerProgramOptions;
-        } elseif ($programType === 'non_reguler') {
-            $availablePrograms = $nonRegulerProgramOptions;
-        } else {
-            $availablePrograms = $regulerProgramOptions->concat($nonRegulerProgramOptions)->unique()->values();
-        }
-
-        // Base Queries with Filters
         $trainingRecordQuery = TrainingRecord::query();
         if ($region !== 'all') {
-            $searchRegion = $region;
             if (strcasecmp($region, 'Kaltim FR') === 0) {
                 $trainingRecordQuery->where(function ($q) {
-                    $q->where('region', 'LIKE', '%kaltim%')
-                        ->orWhere('region', 'LIKE', '%Kaltim FR%');
+                    $q->where('region', 'LIKE', '%kaltim%')->orWhere('region', 'LIKE', '%Kaltim FR%');
                 });
             } else {
-                $trainingRecordQuery->where('region', 'LIKE', '%'.$searchRegion.'%');
+                $trainingRecordQuery->where('region', 'LIKE', '%'.$region.'%');
             }
         }
         if ($level !== 'all' && $level !== '') {
             $trainingRecordQuery->where('level', 'LIKE', '%'.$level.'%');
         }
-
-        $v = (int) Cache::get('dreal_cache_version', 1);
-        $cacheKey = "dreal_metrics_v{$v}_".md5(json_encode([$year, $selectedMonthCode, $region, $programType, $selectedProgram, $category, $unit, $level]));
-        $metrics = Cache::remember($cacheKey, 300, function () use ($year, $selectedMonthNum, $region, $programType, $selectedProgram, $category, $unit, $level, $trainingRecordQuery) {
-            // 1. Progress MT Per Program Tables (Separated into Staf & Mandor)
-            $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
-
-            $normalizeName = function (?string $name): string {
-            if (! $name) {
-                return '';
-            }
-            $clean = strtolower(trim($name));
-            $clean = preg_replace('/[.\-_,]/', ' ', $clean);
-            $clean = preg_replace('/\s+/', ' ', $clean);
-            $clean = str_replace('deofinka', 'df', $clean);
-
-            return trim($clean);
-        };
-
-        $normalizeAngkatan = function (string $name): string {
-            $str = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', $name)));
-            $str = str_replace(
-                ['FIELD ASSISTANT', 'ESTATE CADET TRAINEE', 'ESTATE CADET', 'MILL ASSISTANT', 'ADMIN ASSISTANT', 'PROCESSING', 'PABRIK'],
-                ['FAT', 'ECT', 'ECT', 'MAT', 'AAT', 'PMT', 'PMT'],
-                $str
-            );
-            $str = preg_replace('/[^A-Z0-9]/', ' ', $str);
-            $parts = array_values(array_filter(explode(' ', $str)));
-
-            return implode('-', $parts);
-        };
 
         $allEmployees = MonitoringEmployee::all();
         $empByAngkatan = [];
@@ -453,8 +274,7 @@ class DashboardRealisasiController extends Controller
         if ($region !== 'all') {
             if (strcasecmp($region, 'Kaltim FR') === 0) {
                 $regulerProgramsQuery->where(function ($q) {
-                    $q->where('Region', 'LIKE', '%kaltim%')
-                        ->orWhere('Region', 'LIKE', '%Kaltim FR%');
+                    $q->where('Region', 'LIKE', '%kaltim%')->orWhere('Region', 'LIKE', '%Kaltim FR%');
                 });
             } else {
                 $regulerProgramsQuery->where('Region', 'LIKE', '%'.$region.'%');
@@ -462,11 +282,9 @@ class DashboardRealisasiController extends Controller
         }
         $regulerPrograms = $regulerProgramsQuery->get()->filter(function ($p) use ($year) {
             $pYear = (! empty($p->tahun) && is_numeric($p->tahun)) ? (int) $p->tahun : $this->resolveProgramRegulerYear($p);
-
             return $pYear === (int) $year;
         });
 
-        // Tabel dan KPI Card membaca program reguler berdasarkan kolom tahun
         $tableRegulerPrograms = $regulerPrograms;
 
         if ($programType === 'non_reguler') {
@@ -474,21 +292,11 @@ class DashboardRealisasiController extends Controller
             $tableRegulerPrograms = collect();
         } else {
             if ($category === 'staf') {
-                $stafFilter = function ($p) use ($cleanStr) {
-                    $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
-                    $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
-
-                    return ! $isMandor;
-                };
+                $stafFilter = fn ($p) => ! str_contains($cleanStr($p->jenis_program_reguler), 'mandor');
                 $regulerPrograms = $regulerPrograms->filter($stafFilter);
                 $tableRegulerPrograms = $tableRegulerPrograms->filter($stafFilter);
             } elseif ($category === 'mandor') {
-                $mandorFilter = function ($p) use ($cleanStr) {
-                    $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
-                    $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
-
-                    return $isMandor;
-                };
+                $mandorFilter = fn ($p) => str_contains($cleanStr($p->jenis_program_reguler), 'mandor');
                 $regulerPrograms = $regulerPrograms->filter($mandorFilter);
                 $tableRegulerPrograms = $tableRegulerPrograms->filter($mandorFilter);
             }
@@ -496,13 +304,80 @@ class DashboardRealisasiController extends Controller
             if ($selectedProgram !== 'all' && $selectedProgram !== '') {
                 $progFilter = function ($p) use ($selectedProgram, $cleanStr) {
                     $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
-
                     return strcasecmp($pName, $selectedProgram) === 0 || str_contains($cleanStr($pName), $cleanStr($selectedProgram));
                 };
                 $regulerPrograms = $regulerPrograms->filter($progFilter);
                 $tableRegulerPrograms = $tableRegulerPrograms->filter($progFilter);
             }
         }
+
+        // 1. Compute MT Program Tables
+        $mtData = $this->computeMtTables(
+            $tableRegulerPrograms, $trByAngkatan, $empByAngkatan, $culledByAngkatan, $empResignByAngkatan,
+            $year, $selectedMonthNum, $allTrainingRecords
+        );
+
+        // 2. Compute KPI Cards
+        $kpiCards = $this->computeKpiCards(
+            $year, $selectedMonthNum, $region, $programType, $category, $selectedProgram,
+            $regulerPrograms, $allTrainingRecords, $mtData['stafRencana'], $trainingRecordQuery
+        );
+
+        // 3. Compute Monthly Chart Data
+        $monthlyData = $this->computeMonthlyChartData($year, $region, $programType, $category, $selectedProgram, $trainingRecordQuery);
+
+        // 4. Compute Evaluasi
+        $evaluasi = $this->computeEvaluasi();
+
+        return array_merge($mtData, $kpiCards, compact('monthlyData', 'evaluasi'));
+    }
+
+    protected function computeMtTables(
+        $tableRegulerPrograms,
+        array $trByAngkatan,
+        array $empByAngkatan,
+        array $culledByAngkatan,
+        array $empResignByAngkatan,
+        int $year,
+        ?int $selectedMonthNum,
+        $allTrainingRecords
+    ): array {
+        $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
+        $normalizeAngkatan = fn (string $name) => TrainingMetricService::normalizeAngkatan($name);
+
+        $todayStr = date('Y-m-d');
+        if ($selectedMonthNum !== null) {
+            $periodEnd = Carbon::create($year, $selectedMonthNum)->endOfMonth()->format('Y-m-d');
+            $cutoffDate = ($year === (int) date('Y') && $periodEnd > $todayStr) ? $todayStr : $periodEnd;
+        } else {
+            $cutoffDate = ($year === (int) date('Y')) ? $todayStr : Carbon::create($year, 12, 31)->format('Y-m-d');
+        }
+
+        $isRecordMandor = fn ($r) => str_contains(strtoupper((string) $r->notes), 'MANDOR') || str_contains(strtoupper((string) $r->nama_pelatihan), 'MANDOR');
+        $regStaffRecords = $allTrainingRecords->where('program_type', 'reguler')->reject($isRecordMandor);
+        $regMandorRecords = $allTrainingRecords->where('program_type', 'reguler')->filter($isRecordMandor);
+
+        $staffRecordsByProgId = [];
+        $unassignedStaffRecs = [];
+        foreach ($regStaffRecords as $r) {
+            if ($r->program_id) {
+                $staffRecordsByProgId[(int) $r->program_id][] = $r;
+            } else {
+                $unassignedStaffRecs[] = $r;
+            }
+        }
+
+        $mandorRecordsByProgId = [];
+        $unassignedMandorRecs = [];
+        foreach ($regMandorRecords as $r) {
+            if ($r->program_id) {
+                $mandorRecordsByProgId[(int) $r->program_id][] = $r;
+            } else {
+                $unassignedMandorRecs[] = $r;
+            }
+        }
+
+        $matchedUnassignedIds = [];
 
         $mtStafTable = [];
         $stafRencana = 0;
@@ -520,32 +395,7 @@ class DashboardRealisasiController extends Controller
             $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
             $normPName = $normalizeAngkatan($pName);
 
-            $trNames = [];
-            $empNames = [];
-            $culledNames = [];
             $resignedEmpNames = [];
-
-            foreach ($trByAngkatan as $ang => $nList) {
-                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
-                    foreach ($nList as $n) {
-                        $trNames[$n] = true;
-                    }
-                }
-            }
-            foreach ($empByAngkatan as $ang => $nList) {
-                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
-                    foreach ($nList as $n) {
-                        $empNames[$n] = true;
-                    }
-                }
-            }
-            foreach ($culledByAngkatan as $ang => $nList) {
-                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
-                    foreach ($nList as $n) {
-                        $culledNames[$n] = true;
-                    }
-                }
-            }
             foreach ($empResignByAngkatan as $ang => $nList) {
                 if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
                     foreach ($nList as $n) {
@@ -553,20 +403,69 @@ class DashboardRealisasiController extends Controller
                     }
                 }
             }
-
-            $allInClass = array_unique(array_merge(array_keys($trNames), array_keys($empNames), array_keys($culledNames)));
-            $autoKelas = count($allInClass);
+            $culledNames = [];
+            foreach ($culledByAngkatan as $ang => $nList) {
+                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
+                    foreach ($nList as $n) {
+                        $culledNames[$n] = true;
+                    }
+                }
+            }
 
             $allResigned = array_unique(array_merge(array_keys($resignedEmpNames), array_keys($culledNames)));
             $autoResign = count($allResigned);
 
-            $rencana = (int) ($p->TARGET_PESERTA ?? $p->target_peserta ?? 0);
-            $kelas = ($p->kelas !== null) ? (int) $p->kelas : $autoKelas;
-            $resign = ($p->resign !== null) ? (int) $p->resign : $autoResign;
-            $staff = ($p->staff !== null) ? (int) $p->staff : (($p->lulus !== null) ? (int) $p->lulus : max(0, $kelas - $resign));
-            $lulus = $staff;
+            $startDate = $p->Mulai_program?->format('Y-m-d') ?: TrainingMetricService::getProgramRegulerStartDate($p);
+            $endDate = $p->Selesai_program?->format('Y-m-d') ?: TrainingMetricService::getProgramRegulerEndDate($p);
+            $hasStarted = ($startDate && $startDate <= $cutoffDate);
 
-            $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
+            $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor');
+            $rencana = (int) ($p->TARGET_PESERTA ?? $p->target_peserta ?? 0);
+
+            if (! $hasStarted) {
+                $kelas = 0;
+            } else {
+                $pId = (int) ($p->Program_reguler_id ?? $p->getKey());
+                $pList = $isMandor ? ($mandorRecordsByProgId[$pId] ?? []) : ($staffRecordsByProgId[$pId] ?? []);
+                $unassignedRecs = $isMandor ? $unassignedMandorRecs : $unassignedStaffRecs;
+
+                $pNameNorm = strtolower(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->Training_Program)));
+                if (! empty($unassignedRecs)) {
+                    foreach ($unassignedRecs as $r) {
+                        if (isset($matchedUnassignedIds[$r->id])) {
+                            continue;
+                        }
+                        $rNotes = strtolower(trim((string) $r->notes));
+                        $rNama = strtolower(trim((string) $r->nama_pelatihan));
+                        if ($pNameNorm !== '' && (str_contains($rNotes, $pNameNorm) || str_contains($rNama, $pNameNorm))) {
+                            $pList[] = $r;
+                            $matchedUnassignedIds[$r->id] = true;
+                        }
+                    }
+                }
+
+                $seen = [];
+                $batchPartCount = 0;
+                foreach ($pList as $r) {
+                    $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
+                    if (! isset($seen[$ident])) {
+                        $seen[$ident] = true;
+                        $batchPartCount++;
+                    }
+                }
+
+                if ($batchPartCount > 0) {
+                    $kelas = $batchPartCount;
+                } elseif ($p->kelas !== null) {
+                    $kelas = (int) $p->kelas;
+                } else {
+                    $kelas = TrainingMetricService::resolveRegulerKelasCount($p, $trByAngkatan, $empByAngkatan, $culledByAngkatan);
+                }
+            }
+
+            $resign = ($p->resign !== null && $hasStarted) ? (int) $p->resign : ($hasStarted ? $autoResign : 0);
+            $staff = ($p->staff !== null && $hasStarted) ? (int) $p->staff : (($p->lulus !== null && $hasStarted) ? (int) $p->lulus : max(0, $kelas - $resign));
+            $lulus = $staff;
 
             $rowItem = [
                 'id' => $p->Program_reguler_id,
@@ -608,7 +507,6 @@ class DashboardRealisasiController extends Controller
             'lulus' => $mandorLulus,
         ];
 
-        // Combined MT summary for backwards compatibility
         $mtProgramTable = array_merge($mtStafTable, $mtMandorTable);
         $mtSummary = [
             'peserta' => $stafKelas + $mandorKelas,
@@ -617,76 +515,143 @@ class DashboardRealisasiController extends Controller
             'lulus' => $stafLulus + $mandorLulus,
         ];
 
-        // 1. Progres Reguler Staff (Management Trainee) KPI Card - Excludes Mandor
-        // Kalkulasi persentase = (jumlah peserta di kelas / target rencana) * 100
-        $today = Carbon::today();
-        $regulerStaffPrograms = $regulerPrograms->filter(function ($p) use ($cleanStr) {
-            $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
-            $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
+        return compact(
+            'mtStafTable', 'mtStafSummary', 'mtMandorTable', 'mtMandorSummary',
+            'mtProgramTable', 'mtSummary', 'stafRencana', 'stafKelas'
+        );
+    }
 
-            return ! $isMandor;
-        });
+    protected function computeKpiCards(int $year, ?int $selectedMonthNum, string $region, string $programType, string $category, string $selectedProgram, $regulerPrograms, $allTrainingRecords, int $stafRencana, $trainingRecordQuery): array
+    {
+        $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
 
-        $regulerSelesai = $regulerStaffPrograms->filter(function ($p) use ($today) {
-            $tgl = is_array($p->tanggal_pelaksanaan) ? $p->tanggal_pelaksanaan : [];
-            $lastTgl = ! empty($tgl) ? $tgl[array_key_last($tgl)] : null;
+        $todayStr = date('Y-m-d');
+        if ($selectedMonthNum !== null) {
+            $periodEnd = Carbon::create($year, $selectedMonthNum)->endOfMonth()->format('Y-m-d');
+            $cutoffDate = ($year === (int) date('Y') && $periodEnd > $todayStr) ? $todayStr : $periodEnd;
+        } else {
+            $cutoffDate = ($year === (int) date('Y')) ? $todayStr : Carbon::create($year, 12, 31)->format('Y-m-d');
+        }
 
-            $end = $p->Selesai_program ?: ($lastTgl ? Carbon::parse($lastTgl) : null);
+        // 1. Reguler MT Staff Card
+        $regulerStaffPrograms = $regulerPrograms->filter(fn ($p) => ! str_contains($cleanStr($p->jenis_program_reguler), 'mandor'));
+        $isRecordMandor = fn ($r) => str_contains(strtoupper((string) $r->notes), 'MANDOR') || str_contains(strtoupper((string) $r->nama_pelatihan), 'MANDOR');
+        $regStaffRecords = $allTrainingRecords->where('program_type', 'reguler')->reject($isRecordMandor);
 
-            if (! $end) {
-                return false;
+        $recordsByProgId = [];
+        $unassignedRegRecs = [];
+        foreach ($regStaffRecords as $r) {
+            if ($r->program_id) {
+                $recordsByProgId[(int) $r->program_id][] = $r;
+            } else {
+                $unassignedRegRecs[] = $r;
+            }
+        }
+
+        $matchedUnassignedIds = [];
+        $regRealPart = 0;
+        $regulerBerjalan = 0;
+        $regulerSelesai = 0;
+
+        foreach ($regulerStaffPrograms as $p) {
+            $startDate = $p->Mulai_program?->format('Y-m-d') ?: TrainingMetricService::getProgramRegulerStartDate($p);
+            $endDate = $p->Selesai_program?->format('Y-m-d') ?: TrainingMetricService::getProgramRegulerEndDate($p);
+
+            if (! $startDate || $startDate > $cutoffDate) {
+                if ($selectedMonthNum === null) {
+                    $regulerBerjalan++;
+                }
+                continue;
             }
 
-            return $end < $today;
-        })->count();
+            $pId = (int) ($p->Program_reguler_id ?? $p->getKey());
+            $pList = $recordsByProgId[$pId] ?? [];
 
-        // Program yang belum selesai (termasuk yang sedang berjalan maupun belum mulai) masuk ke Program Berjalan
-        $regulerBerjalan = $regulerStaffPrograms->filter(function ($p) use ($today) {
-            $tgl = is_array($p->tanggal_pelaksanaan) ? $p->tanggal_pelaksanaan : [];
-            $lastTgl = ! empty($tgl) ? $tgl[array_key_last($tgl)] : null;
-            $end = $p->Selesai_program ?: ($lastTgl ? Carbon::parse($lastTgl) : null);
+            $pNameNorm = strtolower(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->Training_Program)));
+            if (! empty($unassignedRegRecs)) {
+                foreach ($unassignedRegRecs as $r) {
+                    if (isset($matchedUnassignedIds[$r->id])) continue;
+                    $rNotes = strtolower(trim((string) $r->notes));
+                    $rNama = strtolower(trim((string) $r->nama_pelatihan));
+                    if ($pNameNorm !== '' && (str_contains($rNotes, $pNameNorm) || str_contains($rNama, $pNameNorm))) {
+                        $pList[] = $r;
+                        $matchedUnassignedIds[$r->id] = true;
+                    }
+                }
+            }
 
-            return ! ($end && $end < $today);
-        })->count();
+            $seen = [];
+            $batchPartCount = 0;
+            foreach ($pList as $r) {
+                $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
+                if (! isset($seen[$ident])) {
+                    $seen[$ident] = true;
+                    $batchPartCount++;
+                }
+            }
 
-        $regulerPercentage = $stafRencana > 0 ? round(($stafKelas / $stafRencana) * 100) : 0;
+            if ($batchPartCount > 0) {
+                $regRealPart += $batchPartCount;
+            }
+
+            if ($endDate && $endDate <= $cutoffDate) {
+                $regulerSelesai++;
+            } else {
+                $regulerBerjalan++;
+            }
+        }
+
+        $remainingUnassigned = array_filter($unassignedRegRecs, fn ($r) => ! isset($matchedUnassignedIds[$r->id]));
+        if (! empty($remainingUnassigned)) {
+            $groupedUnbudget = collect($remainingUnassigned)->groupBy(fn ($r) => trim($r->notes ?: $r->nama_pelatihan ?: 'Reguler Unbudget'));
+            foreach ($groupedUnbudget as $uRecs) {
+                $seen = [];
+                $uPartCount = 0;
+                foreach ($uRecs as $r) {
+                    $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
+                    if (! isset($seen[$ident])) {
+                        $seen[$ident] = true;
+                        $uPartCount++;
+                    }
+                }
+                if ($uPartCount > 0) {
+                    $regRealPart += $uPartCount;
+                }
+            }
+        }
+
+        $regTargetPeserta = $stafRencana > 0 ? $stafRencana : (int) $regulerStaffPrograms->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_peserta ?? 0));
+        $regulerPercentage = $regTargetPeserta > 0 ? round(($regRealPart / $regTargetPeserta) * 100) : 0;
 
         $regulerMt = [
             'percentage' => $regulerPercentage,
             'target' => 100,
-            'jumlah_peserta' => $stafKelas,
-            'target_peserta' => $stafRencana,
+            'jumlah_peserta' => $regRealPart,
+            'target_peserta' => $regTargetPeserta,
             'program_berjalan' => $regulerBerjalan,
             'program_selesai' => $regulerSelesai,
         ];
 
-        // 2. Progres Talent Program (Dari Database Monitoring Talent)
+        // 2. Talent Program Card
         $talentQuery = MonitoringTalent::query();
         if ($region !== 'all') {
             $searchReg = str_replace([' FR', ' fr'], '', $region);
             $talentQuery->where('region', 'LIKE', "%{$searchReg}%");
         }
-
         $totalTalent = $talentQuery->count();
         $sudahPenugasan = (clone $talentQuery)->where(function ($sub) {
-            $sub->where('status', 'LIKE', '%sudah penugasan%')
-                ->orWhere('status', 'LIKE', '%confirm%');
+            $sub->where('status', 'LIKE', '%sudah penugasan%')->orWhere('status', 'LIKE', '%confirm%');
         })->count();
         $akanPenugasan = (clone $talentQuery)->where('status', 'LIKE', '%akan penugasan%')->count();
         $belumPenugasan = (clone $talentQuery)->where('status', 'LIKE', '%belum penugasan%')->count();
-
         $talentPercentage = (float) AppSetting::get('talent_program_progress_materi', 83);
-
         $talentToBreakdown = (clone $talentQuery)->select('talent_to', DB::raw('count(*) as total'))
             ->whereNotNull('talent_to')
             ->where('talent_to', '!=', '')
             ->groupBy('talent_to')
             ->orderByDesc('total')
             ->get()
-            ->map(fn ($item) => [
-                'role' => $item->talent_to,
-                'count' => (int) $item->total,
-            ])
+            ->map(fn ($item) => ['role' => $item->talent_to, 'count' => (int) $item->total])
             ->all();
 
         $talentProgram = [
@@ -704,8 +669,7 @@ class DashboardRealisasiController extends Controller
         if ($region !== 'all') {
             if (strcasecmp($region, 'Kaltim FR') === 0) {
                 $nonRegulerProgramsQuery->where(function ($q) {
-                    $q->where('region', 'LIKE', '%kaltim%')
-                        ->orWhere('region', 'LIKE', '%Kaltim FR%');
+                    $q->where('region', 'LIKE', '%kaltim%')->orWhere('region', 'LIKE', '%Kaltim FR%');
                 });
             } else {
                 $nonRegulerProgramsQuery->where('region', 'LIKE', '%'.$region.'%');
@@ -716,11 +680,8 @@ class DashboardRealisasiController extends Controller
         $nonRegulerPrograms = $this->filterNonRegulerByYear($nonRegulerPrograms, $year)->filter(function ($p) use ($regulerPrefixes) {
             $name = strtoupper(trim($p->jenis_pelatihan));
             foreach ($regulerPrefixes as $prefix) {
-                if (str_starts_with($name, $prefix)) {
-                    return false;
-                }
+                if (str_starts_with($name, $prefix)) return false;
             }
-
             return true;
         });
 
@@ -732,11 +693,8 @@ class DashboardRealisasiController extends Controller
         $trNonReg = $this->filterRecordsByYearAndCumulativeMonth($trNonReg, $year, $selectedMonthNum)->filter(function ($r) use ($regulerPrefixes) {
             $notes = strtoupper(trim((string) $r->notes));
             foreach ($regulerPrefixes as $prefix) {
-                if (str_starts_with($notes, $prefix)) {
-                    return false;
-                }
+                if (str_starts_with($notes, $prefix)) return false;
             }
-
             return true;
         });
 
@@ -749,17 +707,12 @@ class DashboardRealisasiController extends Controller
                 $nonRegulerPrograms = $nonRegulerPrograms->filter(fn ($p) => ! $p->isSoftSkill() || str_contains($cleanStr($p->kategori_pelatihan), 'technical'));
             } elseif ($category !== 'all' && $category !== '') {
                 $searchCat = $cleanStr($category);
-                $nonRegulerPrograms = $nonRegulerPrograms->filter(function ($p) use ($searchCat, $cleanStr) {
-                    return str_contains($cleanStr($p->sub_kategori), $searchCat)
-                        || str_contains($cleanStr($p->kategori_pelatihan), $searchCat)
-                        || str_contains($cleanStr($p->jenis_pelatihan), $searchCat);
-                });
+                $nonRegulerPrograms = $nonRegulerPrograms->filter(fn ($p) => str_contains($cleanStr($p->sub_kategori), $searchCat) || str_contains($cleanStr($p->kategori_pelatihan), $searchCat) || str_contains($cleanStr($p->jenis_pelatihan), $searchCat));
             }
 
             if ($selectedProgram !== 'all' && $selectedProgram !== '') {
                 $nonRegulerPrograms = $nonRegulerPrograms->filter(function ($p) use ($selectedProgram, $cleanStr) {
                     $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->jenis_pelatihan));
-
                     return strcasecmp($pName, $selectedProgram) === 0 || str_contains($cleanStr($pName), $cleanStr($selectedProgram));
                 });
             }
@@ -767,7 +720,6 @@ class DashboardRealisasiController extends Controller
 
         $softPrograms = [];
         $tekPrograms = [];
-
         foreach ($nonRegulerPrograms as $p) {
             if ($p->isSoftSkill()) {
                 $softPrograms[] = $p;
@@ -806,11 +758,8 @@ class DashboardRealisasiController extends Controller
 
             if ($selectedProgram !== 'all' && $selectedProgram !== '') {
                 $cleanFilter = $cleanStr($selectedProgram);
-                $matchesSelected = str_contains($cleanStr($r->nama_pelatihan), $cleanFilter)
-                    || str_contains($cleanStr($r->notes), $cleanFilter);
-                if (! $matchesSelected) {
-                    continue;
-                }
+                $matchesSelected = str_contains($cleanStr($r->nama_pelatihan), $cleanFilter) || str_contains($cleanStr($r->notes), $cleanFilter);
+                if (! $matchesSelected) continue;
             }
 
             if ($isSoft) {
@@ -829,19 +778,14 @@ class DashboardRealisasiController extends Controller
                 $targPeserta += (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0);
                 $targBatch += (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0);
                 $explicitBatch = (int) ($p->realisasi_batch ?? $p->total_batch ?? 0);
-                if ($explicitBatch > 0) {
-                    $realBatch += $explicitBatch;
-                }
+                if ($explicitBatch > 0) $realBatch += $explicitBatch;
             }
 
             if (empty($progList)) {
                 return [
-                    'percentage' => 0,
-                    'target' => 100,
-                    'peserta_realisasi' => 0,
-                    'peserta_target' => 0,
-                    'batch_realisasi' => 0,
-                    'batch_target' => 0,
+                    'percentage' => 0, 'target' => 100,
+                    'peserta_realisasi' => 0, 'peserta_target' => 0,
+                    'batch_realisasi' => 0, 'batch_target' => 0,
                     'total_program' => 0,
                 ];
             }
@@ -859,12 +803,9 @@ class DashboardRealisasiController extends Controller
             $pct = $targPeserta > 0 ? round(($realPeserta / $targPeserta) * 100) : 0;
 
             return [
-                'percentage' => $pct,
-                'target' => 100,
-                'peserta_realisasi' => $realPeserta,
-                'peserta_target' => $targPeserta,
-                'batch_realisasi' => $realBatch,
-                'batch_target' => $targBatch,
+                'percentage' => $pct, 'target' => 100,
+                'peserta_realisasi' => $realPeserta, 'peserta_target' => $targPeserta,
+                'batch_realisasi' => $realBatch, 'batch_target' => $targBatch,
                 'total_program' => count($progList),
             ];
         };
@@ -872,9 +813,11 @@ class DashboardRealisasiController extends Controller
         $softSkill = $calcMetrics($softPrograms, $softNonRegRecords);
         $teknikal = $calcMetrics($tekPrograms, $tekNonRegRecords);
 
-        // 6. Monthly Chart Data (Jan - Des) - Real-time Per Bulan from TrainingRecord
-        // Khusus grafik ini: hanya menampilkan data yang kolom "tahun" di tabel programnya sesuai ($year)
-        // Tidak melihat tanggal_pelaksanaan
+        return compact('regulerMt', 'talentProgram', 'softSkill', 'teknikal');
+    }
+
+    protected function computeMonthlyChartData(int $year, string $region, string $programType, string $category, string $selectedProgram, $trainingRecordQuery): array
+    {
         $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         $monthMap = ['JAN' => 1, 'FEB' => 2, 'MAR' => 3, 'APR' => 4, 'MEI' => 5, 'MAY' => 5, 'JUN' => 6, 'JUL' => 7, 'AGU' => 8, 'AGS' => 8, 'AUG' => 8, 'SEP' => 9, 'OKT' => 10, 'OCT' => 10, 'NOV' => 11, 'DES' => 12, 'DEC' => 12];
 
@@ -884,16 +827,12 @@ class DashboardRealisasiController extends Controller
         $cleanedRegulerList = [];
         foreach ($chartRegulerMap as $p) {
             $pName = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->Training_Program)));
-            if ($pName !== '') {
-                $cleanedRegulerList[] = ['name' => $pName, 'tahun' => $p->tahun];
-            }
+            if ($pName !== '') $cleanedRegulerList[] = ['name' => $pName, 'tahun' => $p->tahun];
         }
         $cleanedNonRegulerList = [];
         foreach ($chartNonRegulerMap as $p) {
             $pName = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->jenis_pelatihan)));
-            if ($pName !== '') {
-                $cleanedNonRegulerList[] = ['name' => $pName, 'tahun' => $p->tahun];
-            }
+            if ($pName !== '') $cleanedNonRegulerList[] = ['name' => $pName, 'tahun' => $p->tahun];
         }
 
         $chartRawRecords = (clone $trainingRecordQuery)->get();
@@ -925,16 +864,8 @@ class DashboardRealisasiController extends Controller
                 }
             }
 
-            if ($pTahun !== null) {
-                return (int) $pTahun === (int) $year;
-            }
-
-            // Fallback: kolom tahun pada training_record itu sendiri (tanpa melihat tanggal pelaksanaan)
-            if (! empty($r->tahun)) {
-                return (int) $r->tahun === (int) $year;
-            }
-
-            return false;
+            if ($pTahun !== null) return (int) $pTahun === (int) $year;
+            return ! empty($r->tahun) && (int) $r->tahun === (int) $year;
         });
 
         $monthlyPesertaMap = array_fill(1, 12, 0);
@@ -948,45 +879,33 @@ class DashboardRealisasiController extends Controller
                 $mNum = (int) date('n', strtotime($r->training_date));
             }
 
-            // Sync month with parent program schedule if program schedule exists
             $parentMonths = [];
             if ($r->program_type === 'reguler' && $r->program_id && isset($chartRegulerMap[$r->program_id])) {
                 $p = $chartRegulerMap[$r->program_id];
                 $dates = is_array($p->tanggal_pelaksanaan) ? $p->tanggal_pelaksanaan : json_decode($p->tanggal_pelaksanaan ?? '[]', true);
                 if (is_array($dates)) {
                     foreach ($dates as $d) {
-                        if ($d && (int) date('Y', strtotime($d)) === (int) $year) {
-                            $parentMonths[] = (int) date('n', strtotime($d));
-                        }
+                        if ($d && (int) date('Y', strtotime($d)) === (int) $year) $parentMonths[] = (int) date('n', strtotime($d));
                     }
                 }
-                if (empty($parentMonths) && $p->Mulai_program) {
-                    if ((int) date('Y', strtotime($p->Mulai_program)) === (int) $year) {
-                        $parentMonths[] = (int) date('n', strtotime($p->Mulai_program));
-                    }
+                if (empty($parentMonths) && $p->Mulai_program && (int) date('Y', strtotime($p->Mulai_program)) === (int) $year) {
+                    $parentMonths[] = (int) date('n', strtotime($p->Mulai_program));
                 }
             } elseif ($r->program_type === 'non_reguler' && $r->program_id && isset($chartNonRegulerMap[$r->program_id])) {
                 $p = $chartNonRegulerMap[$r->program_id];
                 $dates = is_array($p->tanggal_pelaksanaan) ? $p->tanggal_pelaksanaan : json_decode($p->tanggal_pelaksanaan ?? '[]', true);
                 if (is_array($dates)) {
                     foreach ($dates as $d) {
-                        if ($d && (int) date('Y', strtotime($d)) === (int) $year) {
-                            $parentMonths[] = (int) date('n', strtotime($d));
-                        }
+                        if ($d && (int) date('Y', strtotime($d)) === (int) $year) $parentMonths[] = (int) date('n', strtotime($d));
                     }
                 }
-                if (empty($parentMonths) && $p->start_date) {
-                    if ((int) date('Y', strtotime($p->start_date)) === (int) $year) {
-                        $parentMonths[] = (int) date('n', strtotime($p->start_date));
-                    }
+                if (empty($parentMonths) && $p->start_date && (int) date('Y', strtotime($p->start_date)) === (int) $year) {
+                    $parentMonths[] = (int) date('n', strtotime($p->start_date));
                 }
             }
             $parentMonths = array_values(array_unique(array_filter($parentMonths)));
-
-            if (! empty($parentMonths)) {
-                if (! $mNum || ! in_array($mNum, $parentMonths, true)) {
-                    $mNum = $parentMonths[0];
-                }
+            if (! empty($parentMonths) && (! $mNum || ! in_array($mNum, $parentMonths, true))) {
+                $mNum = $parentMonths[0];
             }
 
             if ($mNum && isset($monthlyPesertaMap[$mNum])) {
@@ -1005,8 +924,6 @@ class DashboardRealisasiController extends Controller
         }
 
         $isDefaultView = ($year === 2026 && $region === 'all' && $programType === 'all' && $category === 'all' && ($selectedProgram === 'all' || $selectedProgram === ''));
-
-        // Target / benchmark batch count resmi dari sistem mentor tahun 2026 (Total: 192 batch)
         $mentorBatchCounts2026 = [
             1 => 11, 2 => 15, 3 => 16, 4 => 18, 5 => 31, 6 => 21,
             7 => 17, 8 => 27, 9 => 36, 10 => 0, 11 => 0, 12 => 0,
@@ -1016,23 +933,21 @@ class DashboardRealisasiController extends Controller
         $monthlyProgram = [];
         for ($m = 1; $m <= 12; $m++) {
             $monthlyPeserta[] = $monthlyPesertaMap[$m];
-            if ($isDefaultView && isset($mentorBatchCounts2026[$m])) {
-                $monthlyProgram[] = $mentorBatchCounts2026[$m];
-            } else {
-                $monthlyProgram[] = count($monthlyProgramSets[$m]);
-            }
+            $monthlyProgram[] = ($isDefaultView && isset($mentorBatchCounts2026[$m])) ? $mentorBatchCounts2026[$m] : count($monthlyProgramSets[$m]);
         }
 
-        $monthlyData = [
+        return [
             'labels' => $months,
             'peserta' => $monthlyPeserta,
             'program' => $monthlyProgram,
             'total_peserta_ytd' => array_sum($monthlyPeserta),
             'total_program_ytd' => array_sum($monthlyProgram),
         ];
+    }
 
-        // 7. Evaluasi Pelatihan
-        $evaluasi = [
+    protected function computeEvaluasi(): array
+    {
+        return [
             'average_score' => 4.43,
             'max_score' => 5.00,
             'ratings' => [
@@ -1049,55 +964,6 @@ class DashboardRealisasiController extends Controller
                 'respon_rate' => '92%',
             ],
         ];
-
-        return compact(
-            'regulerMt',
-            'talentProgram',
-            'softSkill',
-            'teknikal',
-            'mtProgramTable',
-            'mtSummary',
-            'mtStafTable',
-            'mtStafSummary',
-            'mtMandorTable',
-            'mtMandorSummary',
-            'monthlyData',
-            'evaluasi'
-        );
-    });
-
-    extract($metrics);
-
-    return view('Administrasi.Pages.Dashboard.dashboard_realisasi', compact(
-            'regulerMt',
-            'talentProgram',
-            'softSkill',
-            'teknikal',
-            'mtProgramTable',
-            'mtSummary',
-            'mtStafTable',
-            'mtStafSummary',
-            'mtMandorTable',
-            'mtMandorSummary',
-            'monthlyData',
-            'evaluasi',
-            'years',
-            'year',
-            'monthList',
-            'selectedMonthCode',
-            'selectedMonthNum',
-            'region',
-            'allRegions',
-            'programType',
-            'selectedProgram',
-            'category',
-            'availablePrograms',
-            'regulerProgramOptions',
-            'nonRegulerProgramOptions',
-            'nonRegulerCategoryOptions',
-            'unit',
-            'level'
-        ));
     }
 
     public function updateRegulerRow(Request $request)

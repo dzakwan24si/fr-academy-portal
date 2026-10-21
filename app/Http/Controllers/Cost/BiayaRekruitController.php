@@ -232,20 +232,17 @@ class BiayaRekruitController extends Controller
             BiayaRekruit::truncate();
         }
 
-        $handle = fopen($filePath, 'r');
-        if (! $handle) {
+        try {
+            $dataset = $this->parseCsvDataset($filePath);
+        } catch (\Throwable $e) {
             return back()->with('error', 'Gagal membuka file CSV yang diunggah.');
         }
 
-        $delimiter = $this->detectCsvDelimiter($filePath);
-        $rawHeaders = fgetcsv($handle, 0, $delimiter);
-        if (! $rawHeaders) {
-            fclose($handle);
-
+        if (empty($dataset['headers'])) {
             return back()->with('error', 'Format file CSV tidak valid atau file kosong.');
         }
 
-        $cleanHeaders = $this->cleanCsvHeaders($rawHeaders);
+        $cleanHeaders = $dataset['cleanHeaders'];
 
         // Normalize header mapping
         $headerMap = [];
@@ -270,7 +267,7 @@ class BiayaRekruitController extends Controller
         $insertedCount = 0;
         $updatedCount = 0;
 
-        while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+        foreach ($dataset['rows'] as $row) {
             if (empty(array_filter($row))) {
                 continue;
             }
@@ -343,8 +340,6 @@ class BiayaRekruitController extends Controller
                 $insertedCount++;
             }
         }
-
-        fclose($handle);
 
         (new CostController)->syncAggregatedCosts((int) date('Y'));
 

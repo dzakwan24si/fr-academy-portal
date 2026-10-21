@@ -8,6 +8,7 @@ use App\Models\Inventaris\Barang;
 use App\Models\Inventaris\Pembelian;
 use App\Models\Inventaris\StockOpname;
 use App\Services\ExcelExporter;
+use App\Services\SpreadsheetReader;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -42,18 +43,17 @@ class InventarisController extends Controller
         ]);
 
         $file = $request->file('file');
-        $handle = fopen($file->getRealPath(), 'r');
-        if (! $handle) {
+        try {
+            $rawRows = SpreadsheetReader::readCsv($file->getRealPath());
+        } catch (\Throwable $e) {
             return [];
         }
 
-        $rawHeaderLine = fgets($handle);
-        $rawHeaderLine = str_replace("\xEF\xBB\xBF", '', $rawHeaderLine);
-        rewind($handle);
+        if (empty($rawRows)) {
+            return [];
+        }
 
-        $delimiter = (strpos($rawHeaderLine, ';') !== false) ? ';' : ',';
-
-        $rawHeader = fgetcsv($handle, 1000, $delimiter);
+        $rawHeader = array_shift($rawRows);
         $headerMap = [];
         if ($rawHeader) {
             foreach ($rawHeader as $idx => $colName) {
@@ -62,17 +62,9 @@ class InventarisController extends Controller
             }
         }
 
-        $rows = [];
-        while (($data = fgetcsv($handle, 1000, $delimiter)) !== false) {
-            if (! empty($data) && count($data) >= 1) {
-                $rows[] = $data;
-            }
-        }
-        fclose($handle);
-
         return [
             'headerMap' => $headerMap,
-            'rows' => $rows,
+            'rows' => $rawRows,
         ];
     }
 

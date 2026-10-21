@@ -483,23 +483,17 @@ class CostController extends Controller
         $rawTargetMonth = $request->get('bulan');
         $targetMonth = (is_numeric($rawTargetMonth) && (int) $rawTargetMonth >= 1 && (int) $rawTargetMonth <= 12) ? (int) $rawTargetMonth : null;
 
-        $handle = fopen($filePath, 'r');
-        if (! $handle) {
+        try {
+            $dataset = $this->parseCsvDataset($filePath);
+        } catch (\Throwable $e) {
             return back()->with('error', 'Gagal membuka file CSV yang diunggah.');
         }
 
-        $delimiter = $this->detectCsvDelimiter($filePath);
-
-        // Read header
-        $rawHeaders = fgetcsv($handle, 0, $delimiter);
-        if (! $rawHeaders) {
-            fclose($handle);
-
+        if (empty($dataset['headers'])) {
             return back()->with('error', 'Format file CSV tidak valid atau kosong.');
         }
 
-        // Clean & normalize headers
-        $cleanHeaders = $this->cleanCsvHeaders($rawHeaders);
+        $cleanHeaders = $dataset['cleanHeaders'];
 
         // Map column indices
         $headerMap = [];
@@ -547,7 +541,7 @@ class CostController extends Controller
 
         DB::beginTransaction();
         try {
-            while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+            foreach ($dataset['rows'] as $row) {
                 // Skip empty rows
                 if (empty(array_filter($row, fn ($v) => trim($v) !== ''))) {
                     continue;
@@ -644,15 +638,11 @@ class CostController extends Controller
             }
 
             DB::commit();
-            fclose($handle);
 
             // Re-sync automatic aggregation from source tables
             $this->syncAggregatedCosts($defaultYear, $targetMonth);
         } catch (\Exception $e) {
             DB::rollBack();
-            if (is_resource($handle)) {
-                fclose($handle);
-            }
 
             return back()->with('error', 'Terjadi kesalahan saat import data: '.$e->getMessage());
         }

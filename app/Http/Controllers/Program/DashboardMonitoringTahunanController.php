@@ -8,6 +8,7 @@ use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
 use App\Services\RegionHelper;
 use App\Services\SpreadsheetReader;
+use App\Services\TrainingMetricService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 
@@ -27,85 +28,17 @@ class DashboardMonitoringTahunanController extends Controller
 
     public function extractYearFromField($val): ?int
     {
-        if (empty($val)) {
-            return null;
-        }
-        if ($val instanceof \DateTimeInterface) {
-            return (int) $val->format('Y');
-        }
-        if (is_numeric($val) && (int) $val >= 2000 && (int) $val <= 2100) {
-            return (int) $val;
-        }
-        if (is_array($val)) {
-            foreach ($val as $item) {
-                $y = $this->extractYearFromField($item);
-                if ($y) {
-                    return $y;
-                }
-            }
-
-            return null;
-        }
-        if (is_string($val)) {
-            $trimmed = trim($val);
-            if (str_starts_with($trimmed, '[') && str_ends_with($trimmed, ']')) {
-                $decoded = json_decode($trimmed, true);
-                if (is_array($decoded)) {
-                    return $this->extractYearFromField($decoded);
-                }
-            }
-            if (preg_match('/\b(20\d{2})\b/', $trimmed, $m)) {
-                return (int) $m[1];
-            }
-            $time = strtotime($trimmed);
-            if ($time !== false && $time > 0) {
-                return (int) date('Y', $time);
-            }
-        }
-
-        return null;
+        return TrainingMetricService::extractYearFromField($val);
     }
 
     public function resolveProgramRegulerYear($p): int
     {
-        if ($p->Mulai_program && ($y = $this->extractYearFromField($p->Mulai_program))) {
-            return $y;
-        }
-        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
-            return $y;
-        }
-        if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
-            return $y;
-        }
-        if ($p->Selesai_program && ($y = $this->extractYearFromField($p->Selesai_program))) {
-            return $y;
-        }
-        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) {
-            return $y;
-        }
-
-        return 2026;
+        return TrainingMetricService::resolveProgramRegulerYear($p);
     }
 
     public function resolveProgramNonRegulerYear($p): int
     {
-        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
-            return $y;
-        }
-        if ($p->start_date && ($y = $this->extractYearFromField($p->start_date))) {
-            return $y;
-        }
-        if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
-            return $y;
-        }
-        if ($p->end_date && ($y = $this->extractYearFromField($p->end_date))) {
-            return $y;
-        }
-        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) {
-            return $y;
-        }
-
-        return 2026;
+        return TrainingMetricService::resolveProgramNonRegulerYear($p);
     }
 
     public function index(Request $request)
@@ -673,23 +606,6 @@ class DashboardMonitoringTahunanController extends Controller
 
     public function parseMonthNumber($value): ?int
     {
-        if ($value === null || $value === '' || $value === 'all') {
-            return null;
-        }
-        if (is_numeric($value)) {
-            $num = (int) $value;
-
-            return ($num >= 1 && $num <= 12) ? $num : null;
-        }
-
-        $upper = strtoupper(substr(trim((string) $value), 0, 3));
-        $map = [
-            'JAN' => 1, 'FEB' => 2, 'MAR' => 3, 'APR' => 4,
-            'MEI' => 5, 'MAY' => 5, 'JUN' => 6, 'JUL' => 7,
-            'AGU' => 8, 'AGS' => 8, 'AUG' => 8, 'SEP' => 9,
-            'OKT' => 10, 'OCT' => 10, 'NOV' => 11, 'DES' => 12, 'DEC' => 12,
-        ];
-
-        return $map[$upper] ?? null;
+        return TrainingMetricService::parseMonthNumber($value);
     }
 }

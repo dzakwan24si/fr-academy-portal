@@ -1337,6 +1337,19 @@ class AsistenController extends Controller
             }
         });
 
+        $applyActiveFilter = function ($q) {
+            $q->where(function ($sub) {
+                $sub->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
+            })->where(function ($sub) {
+                $sub->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
+            })->where(function ($sub) {
+                $sub->where('status_resign', 'not like', '%Resign%')
+                    ->where('status_resign', 'not like', '%PHK%')
+                    ->where('keterangan', 'not like', '%Resign%')
+                    ->where('keterangan', 'not like', '%PHK%');
+            });
+        };
+
         if ($filterType === 'resign') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'like', '%Resign%')
@@ -1353,105 +1366,57 @@ class AsistenController extends Controller
                     ->orWhere('status_kelulusan', 'like', '%Gagal%');
             });
         } elseif ($filterType === 'eksis') {
-            $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')
-                    ->orWhere('keterangan', 'Eksis');
-            })->where(function ($q) {
-                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
-            })->where(function ($q) {
-                $q->where('status_resign', 'not like', '%Resign%')
-                    ->where('status_resign', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Resign%')
-                    ->where('keterangan', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Gagal%')
-                    ->where('keterangan', 'not like', '%Culled%');
-            });
-        } elseif ($filterType === 'pc') {
-            $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
-            })->where(function ($q) {
-                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
-            })->where(function ($q) {
-                $q->where('status_resign', 'not like', '%Resign%')
-                    ->where('status_resign', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Resign%')
-                    ->where('keterangan', 'not like', '%PHK%');
-            })->where(function ($q) {
-                $q->whereIn('level_jabatan', ['PC', 'P', 'DIR'])
-                    ->orWhere('level_jabatan', 'like', '%PC%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Controller%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Direktur%');
-            });
-        } elseif ($filterType === 'gm') {
-            $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
-            })->where(function ($q) {
-                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
-            })->where(function ($q) {
-                $q->where('status_resign', 'not like', '%Resign%')
-                    ->where('status_resign', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Resign%')
-                    ->where('keterangan', 'not like', '%PHK%');
-            })->where(function ($q) {
-                $q->where('level_jabatan', 'GM')
-                    ->orWhere('level_jabatan', 'like', '%GM%')
-                    ->orWhere('jabatan_terakhir', 'like', '%General Manager%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Group Manager%');
-            });
-        } elseif ($filterType === 'mgr') {
-            $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
-            })->where(function ($q) {
-                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
-            })->where(function ($q) {
-                $q->where('status_resign', 'not like', '%Resign%')
-                    ->where('status_resign', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Resign%')
-                    ->where('keterangan', 'not like', '%PHK%');
-            })->where(function ($q) {
-                $q->whereIn('level_jabatan', ['MGR', 'MK', 'MM', 'MANAGER'])
-                    ->orWhere('level_jabatan', 'like', '%MGR%')
-                    ->orWhere('level_jabatan', 'like', '%Manager%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Manager%');
-            });
-        } elseif ($filterType === 'askep') {
-            $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
-            })->where(function ($q) {
-                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
-            })->where(function ($q) {
-                $q->where('status_resign', 'not like', '%Resign%')
-                    ->where('status_resign', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Resign%')
-                    ->where('keterangan', 'not like', '%PHK%');
-            })->where(function ($q) {
-                $q->whereIn('level_jabatan', ['ASKEP', 'KTU'])
-                    ->orWhere('level_jabatan', 'like', '%ASKEP%')
-                    ->orWhere('level_jabatan', 'like', '%KTU%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Askep%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Kepala Tata Usaha%');
-            });
-        } elseif ($filterType === 'asisten') {
-            $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
-            })->where(function ($q) {
-                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
-            })->where(function ($q) {
-                $q->where('status_resign', 'not like', '%Resign%')
-                    ->where('status_resign', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Resign%')
-                    ->where('keterangan', 'not like', '%PHK%');
-            })->where(function ($q) {
-                $q->whereIn('level_jabatan', ['ASISTEN', 'ASST', 'STAFF'])
-                    ->orWhere('level_jabatan', 'like', '%ASISTEN%')
-                    ->orWhere('level_jabatan', 'like', '%ASST%')
-                    ->orWhere('level_jabatan', 'like', '%Staff%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Asisten%')
-                    ->orWhere(function ($fallback) {
+            $applyActiveFilter($query);
+            $query->where('keterangan', 'not like', '%Gagal%')
+                ->where('keterangan', 'not like', '%Culled%');
+        } elseif (in_array($filterType, ['pc', 'gm', 'mgr', 'askep', 'asisten'], true)) {
+            $applyActiveFilter($query);
+
+            $levelMappings = [
+                'pc' => [
+                    'levels' => ['PC', 'P', 'DIR'],
+                    'level_likes' => ['%PC%'],
+                    'titles' => ['%Controller%', '%Direktur%'],
+                ],
+                'gm' => [
+                    'levels' => ['GM'],
+                    'level_likes' => ['%GM%'],
+                    'titles' => ['%General Manager%', '%Group Manager%'],
+                ],
+                'mgr' => [
+                    'levels' => ['MGR', 'MK', 'MM', 'MANAGER'],
+                    'level_likes' => ['%MGR%', '%Manager%'],
+                    'titles' => ['%Manager%'],
+                ],
+                'askep' => [
+                    'levels' => ['ASKEP', 'KTU'],
+                    'level_likes' => ['%ASKEP%', '%KTU%'],
+                    'titles' => ['%Askep%', '%Kepala Tata Usaha%'],
+                ],
+                'asisten' => [
+                    'levels' => ['ASISTEN', 'ASST', 'STAFF'],
+                    'level_likes' => ['%ASISTEN%', '%ASST%', '%Staff%'],
+                    'titles' => ['%Asisten%'],
+                    'allow_null' => true,
+                ],
+            ];
+
+            $cfg = $levelMappings[$filterType];
+            $query->where(function ($q) use ($cfg) {
+                $q->whereIn('level_jabatan', $cfg['levels']);
+                foreach ($cfg['level_likes'] as $like) {
+                    $q->orWhere('level_jabatan', 'like', $like);
+                }
+                foreach ($cfg['titles'] as $title) {
+                    $q->orWhere('jabatan_terakhir', 'like', $title);
+                }
+                if (! empty($cfg['allow_null'])) {
+                    $q->orWhere(function ($fallback) {
                         $fallback->whereNull('level_jabatan')
                             ->orWhere('level_jabatan', '')
                             ->orWhere('level_jabatan', '-');
                     });
+                }
             });
         }
 
@@ -1597,7 +1562,7 @@ class AsistenController extends Controller
     }
 
     /**
-     * Export 21 columns Monitoring Program & Angkatan to CSV.
+     * Export 21 columns Monitoring Program & Angkatan / Summarized / Alumni to Excel.
      */
     public function exportMonitoringSummarized(Request $request): StreamedResponse
     {
@@ -1605,15 +1570,20 @@ class AsistenController extends Controller
         $json = $res->getData(true);
         $records = $json['data'] ?? [];
         $summary = $json['summary'] ?? [];
+        $viewMode = $request->input('view_mode', $json['view_mode'] ?? 'batch');
 
-        $filename = 'Monitoring_Program_Angkatan_'.date('Ymd_His').'.xlsx';
+        $isSummarized = ($viewMode === 'aggregated');
+        $filename = ($isSummarized ? 'Monitoring_Summarized_' : 'Monitoring_Alumni_Batch_').date('Ymd_His').'.xlsx';
+        $sheetTitle = $isSummarized ? 'Monitoring Summarized' : 'Monitoring Alumni';
+        $programHeader = $isSummarized ? 'Program & Tahun Kelulusan' : 'Nama Program';
+
         $headers = [
-            'No', 'Kode_Kategori', 'Kategori_Program', 'Nama_Program',
-            'Tahun_Rekrut', 'Tahun_Training', 'Tahun_Lulus',
-            'Jumlah_Trainee', 'Jumlah_Culled', 'Jumlah_Passed',
-            'Jumlah_Resign', 'Jumlah_Eksis',
-            'Pct_Culled', 'Pct_Passed', 'Pct_Resign', 'Pct_Existing',
-            'Posisi_PC', 'Posisi_GM', 'Posisi_MGR', 'Posisi_Askep', 'Posisi_Asisten',
+            'No', 'Kode Kategori', 'Kategori Program', $programHeader,
+            'Tahun Rekrut', 'Tahun Training', 'Tahun Lulus',
+            'Jumlah Trainee', 'Jumlah Culled', 'Jumlah Passed',
+            'Jumlah Resign', 'Jumlah Eksis',
+            '% Culled', '% Passed', '% Resign', '% Eksis',
+            'Posisi PC', 'Posisi GM', 'Posisi MGR', 'Posisi Askep', 'Posisi Asisten',
         ];
 
         $dataRows = [];
@@ -1631,10 +1601,10 @@ class AsistenController extends Controller
                 $r['jumlah_passed'],
                 $r['jumlah_resign'],
                 $r['jumlah_eksis'],
-                number_format($r['pct_culled'] / 100, 4),
-                number_format($r['pct_passed'] / 100, 4),
-                number_format($r['pct_resign'] / 100, 4),
-                number_format($r['pct_existing'] / 100, 4),
+                ($r['pct_culled'] ?? 0).'%',
+                ($r['pct_passed'] ?? 0).'%',
+                ($r['pct_resign'] ?? 0).'%',
+                ($r['pct_existing'] ?? 0).'%',
                 $r['posisi_pc'],
                 $r['posisi_gm'],
                 $r['posisi_mgr'],
@@ -1644,18 +1614,19 @@ class AsistenController extends Controller
         }
 
         // Summary row
+        $totalLabel = $isSummarized ? (count($records).' Program Groups') : (count($records).' Batch Programs');
         $dataRows[] = [
-            'TOTAL', '', '', count($records).' Batch Programs',
+            'TOTAL', '', '', $totalLabel,
             '', '', '',
             $summary['total_trainee'] ?? 0,
             $summary['total_culled'] ?? 0,
             $summary['total_passed'] ?? 0,
             $summary['total_resign'] ?? 0,
             $summary['total_eksis'] ?? 0,
-            number_format(($summary['pct_culled_weighted'] ?? 0) / 100, 4),
-            number_format(($summary['pct_passed_weighted'] ?? 0) / 100, 4),
-            number_format(($summary['pct_resign_weighted'] ?? 0) / 100, 4),
-            number_format(($summary['pct_existing_weighted'] ?? 0) / 100, 4),
+            ($summary['pct_culled_weighted'] ?? 0).'%',
+            ($summary['pct_passed_weighted'] ?? 0).'%',
+            ($summary['pct_resign_weighted'] ?? 0).'%',
+            ($summary['pct_existing_weighted'] ?? 0).'%',
             $summary['posisi_pc_total'] ?? 0,
             $summary['posisi_gm_total'] ?? 0,
             $summary['posisi_mgr_total'] ?? 0,
@@ -1663,7 +1634,15 @@ class AsistenController extends Controller
             $summary['posisi_asisten_total'] ?? 0,
         ];
 
-        return ExcelExporter::download($filename, $headers, $dataRows, 'Monitoring Summarized');
+        return ExcelExporter::download($filename, $headers, $dataRows, $sheetTitle);
+    }
+
+    /**
+     * Alias endpoint for exporting Monitoring Program / Alumni CSV/Excel.
+     */
+    public function exportMonitoringProgramCsv(Request $request): StreamedResponse
+    {
+        return $this->exportMonitoringSummarized($request);
     }
 
     /**

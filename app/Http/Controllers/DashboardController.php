@@ -11,6 +11,7 @@ use App\Models\Program\ProgramNonReguler;
 use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
 use App\Services\SpreadsheetReader;
+use App\Services\TrainingMetricService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 
@@ -24,213 +25,42 @@ class DashboardController extends Controller
 
     public function parseMonthNumber($value): ?int
     {
-        if ($value === null || $value === '' || $value === 'all') {
-            return null;
-        }
-        if (is_numeric($value)) {
-            $num = (int) $value;
-
-            return ($num >= 1 && $num <= 12) ? $num : null;
-        }
-
-        $upper = strtoupper(substr(trim((string) $value), 0, 3));
-        $map = [
-            'JAN' => 1, 'FEB' => 2, 'MAR' => 3, 'APR' => 4,
-            'MEI' => 5, 'MAY' => 5, 'JUN' => 6, 'JUL' => 7,
-            'AGU' => 8, 'AGS' => 8, 'AUG' => 8, 'SEP' => 9,
-            'OKT' => 10, 'OCT' => 10, 'NOV' => 11, 'DES' => 12, 'DEC' => 12,
-        ];
-
-        return $map[$upper] ?? null;
+        return TrainingMetricService::parseMonthNumber($value);
     }
 
     public function extractYearFromField($val): ?int
     {
-        if (empty($val)) {
-            return null;
-        }
-        if ($val instanceof \DateTimeInterface) {
-            return (int) $val->format('Y');
-        }
-        if (is_numeric($val) && (int) $val >= 2000 && (int) $val <= 2100) {
-            return (int) $val;
-        }
-        if (is_array($val)) {
-            foreach ($val as $item) {
-                $y = $this->extractYearFromField($item);
-                if ($y) {
-                    return $y;
-                }
-            }
-
-            return null;
-        }
-        if (is_string($val)) {
-            $trimmed = trim($val);
-            if (str_starts_with($trimmed, '[') && str_ends_with($trimmed, ']')) {
-                $decoded = json_decode($trimmed, true);
-                if (is_array($decoded)) {
-                    return $this->extractYearFromField($decoded);
-                }
-            }
-            if (preg_match('/\b(20\d{2})\b/', $trimmed, $m)) {
-                return (int) $m[1];
-            }
-            $time = strtotime($trimmed);
-            if ($time !== false && $time > 0) {
-                return (int) date('Y', $time);
-            }
-        }
-
-        return null;
+        return TrainingMetricService::extractYearFromField($val);
     }
 
     public function resolveProgramRegulerYear($p): int
     {
-        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
-            return $y;
-        }
-        if ($p->Mulai_program && ($y = $this->extractYearFromField($p->Mulai_program))) {
-            return $y;
-        }
-        $title = $p->Training_Program ?? $p->Nama_Program_reguler ?? '';
-        if (preg_match('/\b(20\d{2})\b/', $title, $m)) {
-            return (int) $m[1];
-        }
-        if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
-            return $y;
-        }
-        if ($p->Selesai_program && ($y = $this->extractYearFromField($p->Selesai_program))) {
-            return $y;
-        }
-        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) {
-            return $y;
-        }
-
-        return 2026;
+        return TrainingMetricService::resolveProgramRegulerYear($p);
     }
 
     public function getProgramRegulerStartDate($p): ?string
     {
-        if (! empty($p->tanggal_pelaksanaan)) {
-            $dates = is_array($p->tanggal_pelaksanaan) ? $p->tanggal_pelaksanaan : json_decode($p->tanggal_pelaksanaan, true);
-            if (is_array($dates)) {
-                $validDates = array_values(array_filter($dates));
-                if (! empty($validDates)) {
-                    sort($validDates);
-
-                    return $validDates[0];
-                }
-            }
-        }
-
-        if ($p->Mulai_program) {
-            return $p->Mulai_program instanceof \DateTimeInterface
-                ? $p->Mulai_program->format('Y-m-d')
-                : date('Y-m-d', strtotime($p->Mulai_program));
-        }
-
-        return null;
+        return TrainingMetricService::getProgramRegulerStartDate($p);
     }
 
     public function resolveProgramNonRegulerYear($p): int
     {
-        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
-            return $y;
-        }
-        if ($p->start_date && ($y = $this->extractYearFromField($p->start_date))) {
-            return $y;
-        }
-        $title = $p->jenis_pelatihan ?? '';
-        if (preg_match('/\b(20\d{2})\b/', $title, $m)) {
-            return (int) $m[1];
-        }
-        if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
-            return $y;
-        }
-        if ($p->end_date && ($y = $this->extractYearFromField($p->end_date))) {
-            return $y;
-        }
-        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) {
-            return $y;
-        }
-
-        return 2026;
+        return TrainingMetricService::resolveProgramNonRegulerYear($p);
     }
 
     protected function filterRegulerByYear($programs, int $year)
     {
-        return $programs->filter(function ($p) use ($year) {
-            return $this->resolveProgramRegulerYear($p) === $year;
-        });
+        return TrainingMetricService::filterRegulerByYear($programs, $year);
     }
 
     protected function filterNonRegulerByYear($programs, int $year)
     {
-        return $programs->filter(function ($p) use ($year) {
-            return $this->resolveProgramNonRegulerYear($p) === $year;
-        });
+        return TrainingMetricService::filterNonRegulerByYear($programs, $year);
     }
 
     protected function filterRecordsByYearAndCumulativeMonth($records, int $year, ?int $selectedMonthNum, array $validRegulerProgIds = [])
     {
-        return $records->filter(function ($r) use ($year, $selectedMonthNum, $validRegulerProgIds) {
-            // 1. Year filter
-            $rYear = null;
-            if (! empty($r->tahun)) {
-                $rYear = (int) $r->tahun;
-            } elseif (! empty($r->training_date)) {
-                $rYear = (int) date('Y', strtotime($r->training_date));
-            } elseif (method_exists($r, 'activityDates')) {
-                $dates = $r->activityDates();
-                foreach ($dates as $d) {
-                    if ($d) {
-                        $rYear = (int) date('Y', strtotime($d));
-                        break;
-                    }
-                }
-            } elseif (! empty($r->created_at)) {
-                $rYear = (int) date('Y', strtotime($r->created_at));
-            } else {
-                $rYear = 2026;
-            }
-
-            if ($rYear !== $year) {
-                $isCarryOver = ($r->program_type === 'reguler' && (
-                    (! empty($validRegulerProgIds) && $r->program_id && in_array((int) $r->program_id, $validRegulerProgIds, true))
-                    || str_contains(strtoupper((string) $r->notes), (string) $year)
-                ));
-                if (! $isCarryOver) {
-                    return false;
-                }
-            }
-
-            // 2. Month cumulative filter
-            if ($selectedMonthNum !== null) {
-                $mNum = null;
-                if ($r->bulan) {
-                    $mNum = $this->parseMonthNumber($r->bulan);
-                }
-                if (! $mNum && $r->training_date) {
-                    $mNum = (int) date('n', strtotime($r->training_date));
-                }
-                if (! $mNum && method_exists($r, 'activityDates')) {
-                    $dates = $r->activityDates();
-                    foreach ($dates as $d) {
-                        if ($d) {
-                            $mNum = (int) date('n', strtotime($d));
-                            break;
-                        }
-                    }
-                }
-
-                if ($mNum !== null && $mNum > $selectedMonthNum) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
+        return TrainingMetricService::filterRecordsByYearAndCumulativeMonth($records, $year, $selectedMonthNum, $validRegulerProgIds);
     }
 
     public function index(Request $request)
@@ -327,29 +157,8 @@ class DashboardController extends Controller
 
         // 1. REGULER (Management Trainee Staff)
         $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
-        $normalizeName = function (?string $name): string {
-            if (! $name) {
-                return '';
-            }
-            $clean = strtolower(trim($name));
-            $clean = preg_replace('/[.\-_,]/', ' ', $clean);
-            $clean = preg_replace('/\s+/', ' ', $clean);
-            $clean = str_replace('deofinka', 'df', $clean);
-
-            return trim($clean);
-        };
-        $normalizeAngkatan = function (string $name): string {
-            $str = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', $name)));
-            $str = str_replace(
-                ['FIELD ASSISTANT', 'ESTATE CADET TRAINEE', 'ESTATE CADET', 'MILL ASSISTANT', 'ADMIN ASSISTANT', 'PROCESSING', 'PABRIK'],
-                ['FAT', 'ECT', 'ECT', 'MAT', 'AAT', 'PMT', 'PMT'],
-                $str
-            );
-            $str = preg_replace('/[^A-Z0-9]/', ' ', $str);
-            $parts = array_values(array_filter(explode(' ', $str)));
-
-            return implode('-', $parts);
-        };
+        $normalizeName = fn (?string $name) => TrainingMetricService::normalizeName($name);
+        $normalizeAngkatan = fn (string $name) => TrainingMetricService::normalizeAngkatan($name);
 
         $allEmployees = MonitoringEmployee::all();
         $empByAngkatan = [];
@@ -371,18 +180,35 @@ class DashboardController extends Controller
             }
         }
 
-        $allTrainingRecords = TrainingRecord::where(function ($q) {
-            $q->where('program_type', 'reguler')
-                ->orWhere('notes', 'LIKE', 'FAT%')
-                ->orWhere('notes', 'LIKE', 'MAT%')
-                ->orWhere('notes', 'LIKE', 'TAT%')
-                ->orWhere('notes', 'LIKE', 'AAT%')
-                ->orWhere('notes', 'LIKE', 'DMT%')
-                ->orWhere('notes', 'LIKE', 'ECT%')
-                ->orWhere('notes', 'LIKE', 'PMT%')
-                ->orWhere('notes', 'LIKE', 'PKT%');
-        })->get();
-        $allTrainingRecords = $this->filterRecordsByYearAndCumulativeMonth($allTrainingRecords, $year, $selectedMonthNum, $regulerYearIds);
+        $regulerPrefixes = ['FAT', 'MAT', 'TAT', 'AAT', 'DMT', 'ECT', 'PMT', 'PKT'];
+        if ($records !== null) {
+            $allTrainingRecords = $records->filter(function ($r) use ($regulerPrefixes) {
+                if ($r->program_type === 'reguler') {
+                    return true;
+                }
+                $notes = strtoupper(trim((string) $r->notes));
+                foreach ($regulerPrefixes as $prefix) {
+                    if (str_starts_with($notes, $prefix)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            });
+        } else {
+            $allTrainingRecords = TrainingRecord::where(function ($q) {
+                $q->where('program_type', 'reguler')
+                    ->orWhere('notes', 'LIKE', 'FAT%')
+                    ->orWhere('notes', 'LIKE', 'MAT%')
+                    ->orWhere('notes', 'LIKE', 'TAT%')
+                    ->orWhere('notes', 'LIKE', 'AAT%')
+                    ->orWhere('notes', 'LIKE', 'DMT%')
+                    ->orWhere('notes', 'LIKE', 'ECT%')
+                    ->orWhere('notes', 'LIKE', 'PMT%')
+                    ->orWhere('notes', 'LIKE', 'PKT%');
+            })->get();
+            $allTrainingRecords = $this->filterRecordsByYearAndCumulativeMonth($allTrainingRecords, $year, $selectedMonthNum, $regulerYearIds);
+        }
 
         $trByAngkatan = [];
         foreach ($allTrainingRecords as $r) {
@@ -401,34 +227,7 @@ class DashboardController extends Controller
         $targetDate = $selectedMonthNum ? date('Y-m-t', strtotime("{$year}-{$selectedMonthNum}-01")) : $today;
 
         foreach ($regulerPrograms as $p) {
-            $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
-            $normPName = $normalizeAngkatan($pName);
-
-            $names = [];
-            foreach ($trByAngkatan as $ang => $nList) {
-                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
-                    foreach ($nList as $n) {
-                        if ($n) $names[$n] = true;
-                    }
-                }
-            }
-            foreach ($empByAngkatan as $ang => $nList) {
-                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
-                    foreach ($nList as $n) {
-                        if ($n) $names[$n] = true;
-                    }
-                }
-            }
-            foreach ($culledByAngkatan as $ang => $nList) {
-                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
-                    foreach ($nList as $n) {
-                        if ($n) $names[$n] = true;
-                    }
-                }
-            }
-
-            $autoKelas = count($names);
-            $kelas = ($p->kelas !== null) ? (int) $p->kelas : $autoKelas;
+            $kelas = TrainingMetricService::resolveRegulerKelasCount($p, $trByAngkatan, $empByAngkatan, $culledByAngkatan);
 
             // Logika terpisah untuk Realisasi Batch dan Realisasi Peserta:
             // 1. Batch: Hanya dihitung jika tanggal mulai pelaksanaan <= target tanggal (sudah mulai)
@@ -448,23 +247,48 @@ class DashboardController extends Controller
         $regPctPart = $regPlanPart > 0 ? round(($regRealPart / $regPlanPart) * 100) : 0;
 
         // 2 & 3. NON REGULER (SOFTSKILL & TEKNIKAL)
-        $regulerPrefixes = ['FAT', 'MAT', 'TAT', 'AAT', 'DMT', 'ECT', 'PMT', 'PKT'];
-        $trNonReg = TrainingRecord::where(function ($q) {
-            $q->where('program_type', 'non_reguler')
-                ->orWhere('reg_non_reg', 'LIKE', '%non%')
-                ->orWhereIn('notes', ['Softskill', 'Traksi', 'Administrasi', 'Mill', 'Estate', 'Downstream']);
-        })->get();
+        if ($records !== null) {
+            $trNonReg = $records->filter(function ($r) use ($regulerPrefixes) {
+                if ($r->program_type === 'non_reguler') {
+                    $notes = strtoupper(trim((string) $r->notes));
+                    foreach ($regulerPrefixes as $prefix) {
+                        if (str_starts_with($notes, $prefix)) {
+                            return false;
+                        }
+                    }
 
-        $trNonReg = $this->filterRecordsByYearAndCumulativeMonth($trNonReg, $year, $selectedMonthNum)->filter(function ($r) use ($regulerPrefixes) {
-            $notes = strtoupper(trim((string) $r->notes));
-            foreach ($regulerPrefixes as $prefix) {
-                if (str_starts_with($notes, $prefix)) {
-                    return false;
+                    return true;
                 }
-            }
+                if (str_contains(strtolower((string) $r->reg_non_reg), 'non')) {
+                    return true;
+                }
+                $notes = strtoupper(trim((string) $r->notes));
+                foreach ($regulerPrefixes as $prefix) {
+                    if (str_starts_with($notes, $prefix)) {
+                        return false;
+                    }
+                }
 
-            return true;
-        });
+                return in_array($r->notes, ['Softskill', 'Traksi', 'Administrasi', 'Mill', 'Estate', 'Downstream']);
+            });
+        } else {
+            $trNonReg = TrainingRecord::where(function ($q) {
+                $q->where('program_type', 'non_reguler')
+                    ->orWhere('reg_non_reg', 'LIKE', '%non%')
+                    ->orWhereIn('notes', ['Softskill', 'Traksi', 'Administrasi', 'Mill', 'Estate', 'Downstream']);
+            })->get();
+
+            $trNonReg = $this->filterRecordsByYearAndCumulativeMonth($trNonReg, $year, $selectedMonthNum)->filter(function ($r) use ($regulerPrefixes) {
+                $notes = strtoupper(trim((string) $r->notes));
+                foreach ($regulerPrefixes as $prefix) {
+                    if (str_starts_with($notes, $prefix)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+        }
 
         $softPrograms = $nonRegulerPrograms->filter(fn ($p) => $p->isSoftSkill());
         $softPlanBatch = (int) $softPrograms->sum(fn ($p) => (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0));
@@ -476,7 +300,7 @@ class DashboardController extends Controller
         $tekPlanPart = (int) $tekPrograms->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0));
 
         $technicalNotes = ['ESTATE' => true, 'MILL' => true, 'TRACTION' => true, 'TRAKSI' => true, 'DOWNSTREAM' => true, 'ADMINISTRASI' => true, 'ADMIN' => true];
-        $allSoftProgramIds = array_flip(ProgramNonReguler::all()->filter(fn ($p) => $p->isSoftSkill())->pluck('id_nonreguler')->all());
+        $allSoftProgramIds = array_flip($softProgramIds);
 
         $softRecords = [];
         $tekRecords = [];
@@ -578,7 +402,13 @@ class DashboardController extends Controller
             'TAT' => ['TRACTION ASSISTANT', 'TAT'],
         ];
 
-        $allAsisten = Asisten::select(['id', 'program', 'status_karyawan', 'keterangan'])->get();
+        $allAsisten = Asisten::select(['id', 'program', 'tahun_angkatan', 'status_karyawan', 'keterangan'])
+            ->where(function ($q) use ($minYear) {
+                $q->where('tahun_angkatan', '>=', $minYear)
+                    ->orWhereNull('tahun_angkatan')
+                    ->orWhere('tahun_angkatan', 0);
+            })
+            ->get();
         $rows = [];
         $totTrainee = 0;
         $totCulled = 0;
@@ -614,6 +444,10 @@ class DashboardController extends Controller
                 }
                 if (! $matchesProg) {
                     return false;
+                }
+
+                if ($a->tahun_angkatan && (int) $a->tahun_angkatan > 0) {
+                    return (int) $a->tahun_angkatan >= $minYear;
                 }
 
                 preg_match('/\b(20\d{2})\b/', $pName, $matches);
@@ -702,12 +536,90 @@ class DashboardController extends Controller
             ];
         }
 
-        if (file_exists($csvPath)) {
+        $allAsisten = Asisten::whereNotNull('level_jabatan')
+            ->where('level_jabatan', '!=', '')
+            ->where('level_jabatan', '!=', '-')
+            ->where(function ($q) {
+                $q->whereNull('status_resign')
+                    ->orWhere(function ($sq) {
+                        $sq->where('status_resign', 'not like', '%Resign%')
+                            ->where('status_resign', 'not like', '%PHK%');
+                    });
+            })
+            ->where(function ($q) {
+                $q->where('keterangan', 'like', '%Eksis%')
+                    ->orWhere('keterangan', 'like', '%Aktif%');
+            })
+            ->where(function ($q) {
+                $q->whereNull('tanggal_resign')
+                    ->orWhere('tanggal_resign', '');
+            })
+            ->where(function ($q) {
+                $q->whereNull('tahun_angkatan')
+                    ->orWhere('tahun_angkatan', '>=', 2011);
+            })
+            ->get();
+
+        if ($allAsisten->isNotEmpty()) {
+            $keywords = [
+                'FAT' => ['FIELD ASSISTANT', 'STAFF OPERATION', 'FAT', 'ESTATE CADET', 'ECT'],
+                'MAT' => ['MILL ASSISTANT', 'MAT'],
+                'AAT' => ['ADMIN ASSISTANT', 'ADMINISTRATION ASSISTANT', 'AAT'],
+                'TAT' => ['TRACTION ASSISTANT', 'TAT'],
+                'DMT' => ['DOWNSTREAM', 'DMT'],
+            ];
+
+            foreach ($allAsisten as $a) {
+                $lvl = strtoupper(trim((string) $a->level_jabatan));
+                $pName = strtoupper((string) $a->program);
+                $batchName = strtoupper((string) $a->batch);
+
+                // Filter only starting from 2011 (pre-2011 are excluded)
+                $rowYear = 0;
+                if (preg_match('/\b(20\d{2})\b/', $pName, $m)) {
+                    $rowYear = (int) $m[1];
+                } elseif (preg_match('/\b(20\d{2})\b/', $batchName, $m)) {
+                    $rowYear = (int) $m[1];
+                } elseif ($a->tahun_angkatan && preg_match('/\b(20\d{2})\b/', (string) $a->tahun_angkatan, $m)) {
+                    $rowYear = (int) $m[1];
+                }
+                if ($rowYear > 0 && $rowYear < 2011) {
+                    continue;
+                }
+
+                $matchedProg = null;
+                foreach ($keywords as $p => $kws) {
+                    foreach ($kws as $kw) {
+                        if (str_contains($pName, $kw) || str_contains($batchName, $kw)) {
+                            $matchedProg = $p;
+                            break 2;
+                        }
+                    }
+                }
+
+                if (! $matchedProg || ! isset($rows[$matchedProg])) {
+                    continue;
+                }
+
+                if (in_array($lvl, ['PC', 'P', 'DIR'], true)) {
+                    $rows[$matchedProg]['pc']++;
+                } elseif ($lvl === 'GM') {
+                    $rows[$matchedProg]['gm']++;
+                } elseif (in_array($lvl, ['MGR', 'MK', 'MM', 'MANAGER'], true)) {
+                    $rows[$matchedProg]['mk_mm']++;
+                } elseif (in_array($lvl, ['ASKEP', 'KTU'], true)) {
+                    $rows[$matchedProg]['askep_ktu']++;
+                } elseif (in_array($lvl, ['ASISTEN', 'ASST', 'STAFF'], true)) {
+                    $rows[$matchedProg]['asst']++;
+                }
+            }
+        } elseif (file_exists($csvPath)) {
             $f = fopen($csvPath, 'r');
             $header = fgetcsv($f, 0, ';', '"', '\\');
             $lvlIdx = array_search('LVL', $header);
             $progIdx = array_search('PROG', $header);
             $programIdx = array_search('Program', $header);
+            $tahunIdx = array_search('Tahun', $header);
             $ketIdx = array_search('Keterangan', $header);
             $ketResignIdx = array_search('Keterangan Resign', $header);
             $tglResignIdx = array_search('Tanggal Resign', $header);
@@ -793,84 +705,6 @@ class DashboardController extends Controller
                 }
             }
             fclose($f);
-        } else {
-            // Fallback to Asisten table in database (exclude resigned / non-active, and only starting from 2011)
-            $allAsisten = Asisten::whereNotNull('level_jabatan')
-                ->where('level_jabatan', '!=', '')
-                ->where('level_jabatan', '!=', '-')
-                ->where(function ($q) {
-                    $q->whereNull('status_resign')
-                        ->orWhere(function ($sq) {
-                            $sq->where('status_resign', 'not like', '%Resign%')
-                                ->where('status_resign', 'not like', '%PHK%');
-                        });
-                })
-                ->where(function ($q) {
-                    $q->where('keterangan', 'like', '%Eksis%')
-                        ->orWhere('keterangan', 'like', '%Aktif%');
-                })
-                ->where(function ($q) {
-                    $q->whereNull('tanggal_resign')
-                        ->orWhere('tanggal_resign', '');
-                })
-                ->where(function ($q) {
-                    $q->whereNull('tahun_angkatan')
-                        ->orWhere('tahun_angkatan', '>=', 2011);
-                })
-                ->get();
-
-            $keywords = [
-                'FAT' => ['FIELD ASSISTANT', 'STAFF OPERATION', 'FAT', 'ESTATE CADET', 'ECT'],
-                'MAT' => ['MILL ASSISTANT', 'MAT'],
-                'AAT' => ['ADMIN ASSISTANT', 'ADMINISTRATION ASSISTANT', 'AAT'],
-                'TAT' => ['TRACTION ASSISTANT', 'TAT'],
-                'DMT' => ['DOWNSTREAM', 'DMT'],
-            ];
-
-            foreach ($allAsisten as $a) {
-                $lvl = strtoupper(trim((string) $a->level_jabatan));
-                $pName = strtoupper((string) $a->program);
-                $batchName = strtoupper((string) $a->batch);
-
-                // Filter only starting from 2011 (pre-2011 are excluded)
-                $rowYear = 0;
-                if (preg_match('/\b(20\d{2})\b/', $pName, $m)) {
-                    $rowYear = (int) $m[1];
-                } elseif (preg_match('/\b(20\d{2})\b/', $batchName, $m)) {
-                    $rowYear = (int) $m[1];
-                } elseif ($a->tahun_angkatan && preg_match('/\b(20\d{2})\b/', (string) $a->tahun_angkatan, $m)) {
-                    $rowYear = (int) $m[1];
-                }
-                if ($rowYear > 0 && $rowYear < 2011) {
-                    continue;
-                }
-
-                $matchedProg = null;
-                foreach ($keywords as $p => $kws) {
-                    foreach ($kws as $kw) {
-                        if (str_contains($pName, $kw) || str_contains($batchName, $kw)) {
-                            $matchedProg = $p;
-                            break 2;
-                        }
-                    }
-                }
-
-                if (! $matchedProg || ! isset($rows[$matchedProg])) {
-                    continue;
-                }
-
-                if (in_array($lvl, ['PC', 'P', 'DIR'], true)) {
-                    $rows[$matchedProg]['pc']++;
-                } elseif ($lvl === 'GM') {
-                    $rows[$matchedProg]['gm']++;
-                } elseif (in_array($lvl, ['MGR', 'MK', 'MM', 'MANAGER'], true)) {
-                    $rows[$matchedProg]['mk_mm']++;
-                } elseif (in_array($lvl, ['ASKEP', 'KTU'], true)) {
-                    $rows[$matchedProg]['askep_ktu']++;
-                } elseif (in_array($lvl, ['ASISTEN', 'ASST', 'STAFF'], true)) {
-                    $rows[$matchedProg]['asst']++;
-                }
-            }
         }
 
         // Calculate totals and percentages
@@ -1144,12 +978,15 @@ class DashboardController extends Controller
     {
         $nonRegAll = $nonRegPrograms ?? $this->filterNonRegulerByYear(ProgramNonReguler::all(), $year);
         $nonReg = $nonRegAll->filter(fn ($p) => ! $p->isSoftSkill());
+        $allNonRegProgIds = array_flip($nonRegAll->pluck('id_nonreguler')->map(fn ($id) => (int) $id)->all());
+
         $records = $records ?? $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::where('program_type', 'non_reguler')->get(), $year, $selectedMonthNum);
         $records = $records->where('program_type', 'non_reguler');
 
-        // Pre-group records by program_id for instant O(1) matching
-        $recordsByProgramId = $records->whereNotNull('program_id')->groupBy('program_id');
-        $recordsWithoutProgId = $records->whereNull('program_id');
+        // Pre-group records by valid program_id for instant O(1) matching.
+        // Records without program_id OR with an unknown program_id are treated as unlinked records.
+        $recordsByProgramId = $records->filter(fn ($r) => $r->program_id && isset($allNonRegProgIds[(int) $r->program_id]))->groupBy('program_id');
+        $recordsWithoutProgId = $records->filter(fn ($r) => empty($r->program_id) || ! isset($allNonRegProgIds[(int) $r->program_id]));
 
         $categories = ['ESTATE', 'MILL', 'TRACTION', 'DOWNSTREAM', 'ADMINISTRASI'];
         $groups = [];
@@ -1193,9 +1030,10 @@ class DashboardController extends Controller
             }
 
             $unlinkedRecs = $recordsWithoutProgId->filter(function ($r) use ($catKey) {
-                $notes = strtolower((string) $r->notes);
+                $notes = strtolower((string) ($r->notes ?: $r->nama_pelatihan));
                 if ($catKey === 'estate') {
-                    return str_contains($notes, 'estate') || str_contains($notes, 'tanaman') || str_contains($notes, 'agronomi');
+                    return str_contains($notes, 'estate') || str_contains($notes, 'tanaman') || str_contains($notes, 'agronomi')
+                        || (! str_contains($notes, 'mill') && ! str_contains($notes, 'pabrik') && ! str_contains($notes, 'traction') && ! str_contains($notes, 'traksi') && ! str_contains($notes, 'downstream') && ! str_contains($notes, 'administrasi') && ! str_contains($notes, 'admin'));
                 }
                 if ($catKey === 'mill') {
                     return str_contains($notes, 'mill') || str_contains($notes, 'pabrik');

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ChevronDown, Clock, MapPin, Menu } from "lucide-react";
+import { ChevronDown, Clock, MapPin, Menu, ArrowLeft } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
 export function Topbar({ onOpenSidebar }) {
@@ -64,6 +64,16 @@ export function Topbar({ onOpenSidebar }) {
             {getBreadcrumb(location.pathname)}
           </span>
         </div>
+
+        <a
+          href="/administrasi/dashboard-realisasi"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 bg-gray-50 hover:bg-[#eaf4ec] text-gray-700 hover:text-[#2c8f42] text-xs font-semibold transition-all shadow-2xs hover:border-[#cbe5d2] group"
+          title="Kembali ke Dashboard Utama FR Academy"
+        >
+          <ArrowLeft size={13} className="transition-transform group-hover:-translate-x-0.5 text-gray-400 group-hover:text-[#2c8f42]" />
+          <span className="hidden sm:inline">Dashboard Utama</span>
+          <span className="sm:hidden">Kembali</span>
+        </a>
       </div>
 
       {/* Right Side: Clock & Profile */}

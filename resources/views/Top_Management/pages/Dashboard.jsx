@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BookOpen, Layers, Users, Filter, PieChart as PieChartIcon, BarChart2, LayoutDashboard as LayoutIcon } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
-import { getAllPelatihan } from '@services/supabase/client';
+import { getAllPelatihan } from '@services/trainingApi';
 
 const COLORS = ['#3b82f6', '#a855f7', '#4d7c38', '#84cc46', '#eab308', '#f97316'];
 
