@@ -380,9 +380,7 @@ class ProgramBatchController extends Controller
         }
 
         $updateData = [];
-        if ($year) {
-            $updateData['tahun'] = (int) $year;
-        }
+        // Preserve individual training records' tahun so historical records aren't overwritten when a program year changes
         if ($title) {
             $updateData['notes'] = $title;
             $updateData['nama_pelatihan'] = $title;

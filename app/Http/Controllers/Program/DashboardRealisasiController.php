@@ -357,6 +357,14 @@ class DashboardRealisasiController extends Controller
         $regStaffRecords = $allTrainingRecords->where('program_type', 'reguler')->reject($isRecordMandor);
         $regMandorRecords = $allTrainingRecords->where('program_type', 'reguler')->filter($isRecordMandor);
 
+        $progIdsWithTrainingRecords = TrainingRecord::where('program_type', 'reguler')
+            ->whereNotNull('program_id')
+            ->distinct()
+            ->pluck('program_id')
+            ->map(fn ($id) => (int) $id)
+            ->flip()
+            ->all();
+
         $staffRecordsByProgId = [];
         $unassignedStaffRecs = [];
         foreach ($regStaffRecords as $r) {
@@ -454,8 +462,12 @@ class DashboardRealisasiController extends Controller
                     }
                 }
 
+                $hasRecordsInDb = isset($progIdsWithTrainingRecords[$pId]);
+
                 if ($batchPartCount > 0) {
                     $kelas = $batchPartCount;
+                } elseif ($hasRecordsInDb) {
+                    $kelas = 0;
                 } elseif ($p->kelas !== null) {
                     $kelas = (int) $p->kelas;
                 } else {
@@ -538,6 +550,14 @@ class DashboardRealisasiController extends Controller
         $isRecordMandor = fn ($r) => str_contains(strtoupper((string) $r->notes), 'MANDOR') || str_contains(strtoupper((string) $r->nama_pelatihan), 'MANDOR');
         $regStaffRecords = $allTrainingRecords->where('program_type', 'reguler')->reject($isRecordMandor);
 
+        $progIdsWithTrainingRecords = TrainingRecord::where('program_type', 'reguler')
+            ->whereNotNull('program_id')
+            ->distinct()
+            ->pluck('program_id')
+            ->map(fn ($id) => (int) $id)
+            ->flip()
+            ->all();
+
         $recordsByProgId = [];
         $unassignedRegRecs = [];
         foreach ($regStaffRecords as $r) {
@@ -591,9 +611,10 @@ class DashboardRealisasiController extends Controller
                 }
             }
 
+            $hasRecordsInDb = isset($progIdsWithTrainingRecords[$pId]);
             if ($batchPartCount > 0) {
                 $regRealPart += $batchPartCount;
-            } elseif ($p->kelas !== null) {
+            } elseif (! $hasRecordsInDb && $p->kelas !== null) {
                 $regRealPart += (int) $p->kelas;
             }
 
@@ -840,6 +861,10 @@ class DashboardRealisasiController extends Controller
 
         $chartRawRecords = (clone $trainingRecordQuery)->get();
         $chartYearRecords = $chartRawRecords->filter(function ($r) use ($year, $chartRegulerMap, $chartNonRegulerMap, $cleanedRegulerList, $cleanedNonRegulerList) {
+            if (! empty($r->tahun) && is_numeric($r->tahun)) {
+                return (int) $r->tahun === (int) $year;
+            }
+
             $pTahun = null;
             if ($r->program_type === 'reguler') {
                 if ($r->program_id && isset($chartRegulerMap[$r->program_id])) {
@@ -868,7 +893,8 @@ class DashboardRealisasiController extends Controller
             }
 
             if ($pTahun !== null) return (int) $pTahun === (int) $year;
-            return ! empty($r->tahun) && (int) $r->tahun === (int) $year;
+            if (! empty($r->training_date)) return (int) date('Y', strtotime($r->training_date)) === (int) $year;
+            return false;
         });
 
         $monthlyPesertaMap = array_fill(1, 12, 0);
