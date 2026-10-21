@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Users, UserX, UserMinus, GraduationCap, Database, X } from "lucide-react";
+import { LayoutDashboard, Users, UserX, UserMinus, GraduationCap, Database, X, ArrowLeft } from "lucide-react";
 
 export function Sidebar({ onClose }) {
   const mainNavItems = [
@@ -21,7 +21,24 @@ export function Sidebar({ onClose }) {
         </button>
       )}
 
-      <nav className="flex-1 px-4 py-8 md:py-6 overflow-y-auto">
+      {/* Tombol Kembali ke Dashboard Utama / Sidebar Utama Portal */}
+      <div className="px-4 pt-5 pb-1">
+        <a
+          href="/administrasi/dashboard-realisasi"
+          className="flex items-center justify-between w-full px-3.5 py-2.5 rounded-2xl bg-gray-50 hover:bg-[#eaf4ec] text-gray-700 hover:text-[#2c8f42] border border-gray-200 hover:border-[#cbe5d2] transition-all font-semibold text-xs shadow-2xs group"
+          title="Kembali ke Dashboard Utama & Sidebar Utama FR Academy"
+        >
+          <div className="flex items-center gap-2.5">
+            <div className="w-6 h-6 rounded-lg bg-white group-hover:bg-[#2c8f42] group-hover:text-white text-gray-500 flex items-center justify-center transition-all border border-gray-200 group-hover:border-[#2c8f42] shadow-2xs">
+              <ArrowLeft size={13} className="transition-transform group-hover:-translate-x-0.5" />
+            </div>
+            <span>Dashboard Utama</span>
+          </div>
+          <span className="text-[10px] text-gray-400 group-hover:text-[#2c8f42] font-medium transition-colors">Kembali</span>
+        </a>
+      </div>
+
+      <nav className="flex-1 px-4 py-4 md:py-4 overflow-y-auto">
         <div className="mb-8">
           <p className="px-4 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">
             Menu Utama

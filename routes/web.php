@@ -351,19 +351,19 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
         Route::get('/template', [AsistenController::class, 'downloadTemplate'])->name('template');
         Route::get('/api/template', [AsistenController::class, 'downloadTemplate'])->name('api.template');
         Route::get('/api/data', [AsistenController::class, 'getData'])->name('api.data');
-        Route::get('/api/{id}', [AsistenController::class, 'show'])->name('api.show');
-        Route::post('/api/store', [AsistenController::class, 'store'])->name('api.store');
-        Route::put('/api/{id}', [AsistenController::class, 'update'])->name('api.update');
-        Route::delete('/api/destroy-all', [AsistenController::class, 'destroyAll'])->name('api.destroyAll');
-        Route::delete('/api/{id}', [AsistenController::class, 'destroy'])->name('api.destroy');
-        Route::post('/api/import', [AsistenController::class, 'importCsv'])->name('api.import');
         Route::get('/api/export', [AsistenController::class, 'exportCsv'])->name('api.export');
+        Route::post('/api/import', [AsistenController::class, 'importCsv'])->name('api.import');
+        Route::delete('/api/destroy-all', [AsistenController::class, 'destroyAll'])->name('api.destroyAll');
+        Route::post('/api/store', [AsistenController::class, 'store'])->name('api.store');
+        Route::get('/api/{id}', [AsistenController::class, 'show'])->name('api.show')->whereNumber('id');
+        Route::put('/api/{id}', [AsistenController::class, 'update'])->name('api.update')->whereNumber('id');
+        Route::delete('/api/{id}', [AsistenController::class, 'destroy'])->name('api.destroy')->whereNumber('id');
 
         // Monitoring Program & Angkatan endpoints (backward compatibility)
         Route::get('/api/monitoring-program/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.monitoring-program.data');
         Route::post('/api/monitoring-program/store', [AsistenController::class, 'storeMonitoringProgram'])->name('api.monitoring-program.store');
-        Route::put('/api/monitoring-program/{id}', [AsistenController::class, 'updateMonitoringProgram'])->name('api.monitoring-program.update');
-        Route::delete('/api/monitoring-program/{id}', [AsistenController::class, 'destroyMonitoringProgram'])->name('api.monitoring-program.destroy');
+        Route::put('/api/monitoring-program/{id}', [AsistenController::class, 'updateMonitoringProgram'])->name('api.monitoring-program.update')->whereNumber('id');
+        Route::delete('/api/monitoring-program/{id}', [AsistenController::class, 'destroyMonitoringProgram'])->name('api.monitoring-program.destroy')->whereNumber('id');
         Route::get('/api/monitoring-program/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.monitoring-program.drilldown');
         Route::post('/api/monitoring-program/import', [AsistenController::class, 'importMonitoringProgramCsv'])->name('api.monitoring-program.import');
         Route::get('/api/monitoring-program/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.monitoring-program.export');
@@ -382,10 +382,10 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
         Route::get('/', [AsistenController::class, 'indexMonitoringAlumni'])->name('index');
         Route::get('/api/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.data');
         Route::post('/api/store', [AsistenController::class, 'storeMonitoringProgram'])->name('api.store');
-        Route::put('/api/{id}', [AsistenController::class, 'updateMonitoringProgram'])->name('api.update');
-        Route::delete('/api/{id}', [AsistenController::class, 'destroyMonitoringProgram'])->name('api.destroy');
         Route::get('/api/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.drilldown');
         Route::get('/api/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.export');
+        Route::put('/api/{id}', [AsistenController::class, 'updateMonitoringProgram'])->name('api.update')->whereNumber('id');
+        Route::delete('/api/{id}', [AsistenController::class, 'destroyMonitoringProgram'])->name('api.destroy')->whereNumber('id');
     });
 
     // Administrasi - Monitoring Lulusan Alumni Routes (backward compatible)
@@ -393,11 +393,11 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
         Route::get('/', [AsistenController::class, 'indexMonitoringAlumni'])->name('index');
         Route::get('/api/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.data');
         Route::post('/api/store', [AsistenController::class, 'storeMonitoringProgram'])->name('api.store');
-        Route::put('/api/{id}', [AsistenController::class, 'updateMonitoringProgram'])->name('api.update');
-        Route::delete('/api/{id}', [AsistenController::class, 'destroyMonitoringProgram'])->name('api.destroy');
         Route::get('/api/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.drilldown');
         Route::post('/api/import', [AsistenController::class, 'importMonitoringProgramCsv'])->name('api.import');
         Route::get('/api/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.export');
+        Route::put('/api/{id}', [AsistenController::class, 'updateMonitoringProgram'])->name('api.update')->whereNumber('id');
+        Route::delete('/api/{id}', [AsistenController::class, 'destroyMonitoringProgram'])->name('api.destroy')->whereNumber('id');
     });
 
     // Administrasi - Monitoring Talent Routes

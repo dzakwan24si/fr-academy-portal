@@ -542,8 +542,15 @@ class DashboardRealisasiController extends Controller
         ];
 
         // 1. Progres Reguler Staff (Management Trainee) KPI Card - Excludes Mandor
-        // Kalkulasi persentase = (jumlah peserta di kelas / target rencana) * 100
-        $today = Carbon::today();
+        // Dihitung berdasarkan realisasi akumulasi bulan & cutoff tanggal pelaksanaan (identik dengan Dashboard MR)
+        $todayStr = date('Y-m-d');
+        if ($selectedMonthNum !== null) {
+            $periodEnd = Carbon::create($year, $selectedMonthNum)->endOfMonth()->format('Y-m-d');
+            $cutoffDate = ($year === (int) date('Y') && $periodEnd > $todayStr) ? $todayStr : $periodEnd;
+        } else {
+            $cutoffDate = ($year === (int) date('Y')) ? $todayStr : Carbon::create($year, 12, 31)->format('Y-m-d');
+        }
+
         $regulerStaffPrograms = $regulerPrograms->filter(function ($p) use ($cleanStr) {
             $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
             $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor') || str_starts_with(strtoupper($pName), 'PMT') || str_starts_with(strtoupper($pName), 'PKT');
@@ -551,30 +558,125 @@ class DashboardRealisasiController extends Controller
             return ! $isMandor;
         });
 
-        $regulerSelesai = $regulerStaffPrograms->filter(function ($p) use ($today) {
-            $end = $p->Selesai_program ?: (is_array($p->tanggal_pelaksanaan) && ! empty($p->tanggal_pelaksanaan) ? Carbon::parse(end($p->tanggal_pelaksanaan)) : null);
+        $isRecordMandor = function ($r) {
+            $notes = strtoupper(trim((string) $r->notes));
+            $nama = strtoupper(trim((string) $r->nama_pelatihan));
 
-            if (! $end) {
-                return false;
+            return str_starts_with($notes, 'PMT') || str_starts_with($notes, 'PKT')
+                || str_starts_with($nama, 'PMT') || str_starts_with($nama, 'PKT')
+                || str_contains($notes, 'MANDOR') || str_contains($nama, 'MANDOR');
+        };
+
+        $regStaffRecords = $allTrainingRecords->where('program_type', 'reguler')->reject($isRecordMandor);
+
+        $recordsByProgId = [];
+        $unassignedRegRecs = [];
+        foreach ($regStaffRecords as $r) {
+            if ($r->program_id) {
+                $recordsByProgId[(int) $r->program_id][] = $r;
+            } else {
+                $unassignedRegRecs[] = $r;
+            }
+        }
+
+        $matchedUnassignedIds = [];
+        $regRealPart = 0;
+        $regulerBerjalan = 0;
+        $regulerSelesai = 0;
+
+        foreach ($regulerStaffPrograms as $p) {
+            $startDate = $p->Mulai_program?->format('Y-m-d');
+            if (! $startDate && is_array($p->tanggal_pelaksanaan) && ! empty($p->tanggal_pelaksanaan)) {
+                $sortedDates = array_values(array_filter($p->tanggal_pelaksanaan));
+                sort($sortedDates);
+                $startDate = $sortedDates[0] ?? null;
             }
 
-            return $end < $today;
-        })->count();
+            $endDate = $p->Selesai_program?->format('Y-m-d');
+            if (! $endDate && is_array($p->tanggal_pelaksanaan) && ! empty($p->tanggal_pelaksanaan)) {
+                $sortedDates = array_values(array_filter($p->tanggal_pelaksanaan));
+                sort($sortedDates);
+                $endDate = end($sortedDates) ?: null;
+            }
 
-        // Program yang belum selesai (termasuk yang sedang berjalan maupun belum mulai) masuk ke Program Berjalan
-        $regulerBerjalan = $regulerStaffPrograms->filter(function ($p) use ($today) {
-            $end = $p->Selesai_program ?: (is_array($p->tanggal_pelaksanaan) && ! empty($p->tanggal_pelaksanaan) ? Carbon::parse(end($p->tanggal_pelaksanaan)) : null);
+            // Jika program belum mulai sebelum/pada tanggal cutoff
+            if (! $startDate || $startDate > $cutoffDate) {
+                if ($selectedMonthNum === null) {
+                    // Ketika tidak memfilter bulan (melihat setahun penuh), program yang belum mulai dihitung dalam program berjalan
+                    $regulerBerjalan++;
+                }
+                continue;
+            }
 
-            return ! ($end && $end < $today);
-        })->count();
+            $pId = (int) ($p->Program_reguler_id ?? $p->getKey());
+            $pList = $recordsByProgId[$pId] ?? [];
 
-        $regulerPercentage = $stafRencana > 0 ? round(($stafKelas / $stafRencana) * 100) : 0;
+            // Match unassigned records by notes or program name
+            $pNameNorm = strtolower(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->Training_Program)));
+            if (! empty($unassignedRegRecs)) {
+                foreach ($unassignedRegRecs as $r) {
+                    if (isset($matchedUnassignedIds[$r->id])) {
+                        continue;
+                    }
+                    $rNotes = strtolower(trim((string) $r->notes));
+                    $rNama = strtolower(trim((string) $r->nama_pelatihan));
+                    if ($pNameNorm !== '' && (str_contains($rNotes, $pNameNorm) || str_contains($rNama, $pNameNorm))) {
+                        $pList[] = $r;
+                        $matchedUnassignedIds[$r->id] = true;
+                    }
+                }
+            }
+
+            // Deduplicate participants per program batch
+            $seen = [];
+            $batchPartCount = 0;
+            foreach ($pList as $r) {
+                $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
+                if (! isset($seen[$ident])) {
+                    $seen[$ident] = true;
+                    $batchPartCount++;
+                }
+            }
+
+            if ($batchPartCount > 0) {
+                $regRealPart += $batchPartCount;
+            }
+
+            if ($endDate && $endDate <= $cutoffDate) {
+                $regulerSelesai++;
+            } else {
+                $regulerBerjalan++;
+            }
+        }
+
+        // Handle any remaining unassigned reguler records (unbudgeted) seperti di Dashboard MR
+        $remainingUnassigned = array_filter($unassignedRegRecs, fn ($r) => ! isset($matchedUnassignedIds[$r->id]));
+        if (! empty($remainingUnassigned)) {
+            $groupedUnbudget = collect($remainingUnassigned)->groupBy(fn ($r) => trim($r->notes ?: $r->nama_pelatihan ?: 'Reguler Unbudget'));
+            foreach ($groupedUnbudget as $uRecs) {
+                $seen = [];
+                $uPartCount = 0;
+                foreach ($uRecs as $r) {
+                    $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
+                    if (! isset($seen[$ident])) {
+                        $seen[$ident] = true;
+                        $uPartCount++;
+                    }
+                }
+                if ($uPartCount > 0) {
+                    $regRealPart += $uPartCount;
+                }
+            }
+        }
+
+        $regTargetPeserta = $stafRencana > 0 ? $stafRencana : (int) $regulerStaffPrograms->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_peserta ?? 0));
+        $regulerPercentage = $regTargetPeserta > 0 ? round(($regRealPart / $regTargetPeserta) * 100) : 0;
 
         $regulerMt = [
             'percentage' => $regulerPercentage,
             'target' => 100,
-            'jumlah_peserta' => $stafKelas,
-            'target_peserta' => $stafRencana,
+            'jumlah_peserta' => $regRealPart,
+            'target_peserta' => $regTargetPeserta,
             'program_berjalan' => $regulerBerjalan,
             'program_selesai' => $regulerSelesai,
         ];

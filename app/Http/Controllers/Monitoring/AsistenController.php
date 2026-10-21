@@ -1597,7 +1597,7 @@ class AsistenController extends Controller
     }
 
     /**
-     * Export 21 columns Monitoring Program & Angkatan to CSV.
+     * Export 21 columns Monitoring Program & Angkatan / Summarized / Alumni to Excel.
      */
     public function exportMonitoringSummarized(Request $request): StreamedResponse
     {
@@ -1605,15 +1605,20 @@ class AsistenController extends Controller
         $json = $res->getData(true);
         $records = $json['data'] ?? [];
         $summary = $json['summary'] ?? [];
+        $viewMode = $request->input('view_mode', $json['view_mode'] ?? 'batch');
 
-        $filename = 'Monitoring_Program_Angkatan_'.date('Ymd_His').'.xlsx';
+        $isSummarized = ($viewMode === 'aggregated');
+        $filename = ($isSummarized ? 'Monitoring_Summarized_' : 'Monitoring_Alumni_Batch_').date('Ymd_His').'.xlsx';
+        $sheetTitle = $isSummarized ? 'Monitoring Summarized' : 'Monitoring Alumni';
+        $programHeader = $isSummarized ? 'Program & Tahun Kelulusan' : 'Nama Program';
+
         $headers = [
-            'No', 'Kode_Kategori', 'Kategori_Program', 'Nama_Program',
-            'Tahun_Rekrut', 'Tahun_Training', 'Tahun_Lulus',
-            'Jumlah_Trainee', 'Jumlah_Culled', 'Jumlah_Passed',
-            'Jumlah_Resign', 'Jumlah_Eksis',
-            'Pct_Culled', 'Pct_Passed', 'Pct_Resign', 'Pct_Existing',
-            'Posisi_PC', 'Posisi_GM', 'Posisi_MGR', 'Posisi_Askep', 'Posisi_Asisten',
+            'No', 'Kode Kategori', 'Kategori Program', $programHeader,
+            'Tahun Rekrut', 'Tahun Training', 'Tahun Lulus',
+            'Jumlah Trainee', 'Jumlah Culled', 'Jumlah Passed',
+            'Jumlah Resign', 'Jumlah Eksis',
+            '% Culled', '% Passed', '% Resign', '% Eksis',
+            'Posisi PC', 'Posisi GM', 'Posisi MGR', 'Posisi Askep', 'Posisi Asisten',
         ];
 
         $dataRows = [];
@@ -1631,10 +1636,10 @@ class AsistenController extends Controller
                 $r['jumlah_passed'],
                 $r['jumlah_resign'],
                 $r['jumlah_eksis'],
-                number_format($r['pct_culled'] / 100, 4),
-                number_format($r['pct_passed'] / 100, 4),
-                number_format($r['pct_resign'] / 100, 4),
-                number_format($r['pct_existing'] / 100, 4),
+                ($r['pct_culled'] ?? 0).'%',
+                ($r['pct_passed'] ?? 0).'%',
+                ($r['pct_resign'] ?? 0).'%',
+                ($r['pct_existing'] ?? 0).'%',
                 $r['posisi_pc'],
                 $r['posisi_gm'],
                 $r['posisi_mgr'],
@@ -1644,18 +1649,19 @@ class AsistenController extends Controller
         }
 
         // Summary row
+        $totalLabel = $isSummarized ? (count($records).' Program Groups') : (count($records).' Batch Programs');
         $dataRows[] = [
-            'TOTAL', '', '', count($records).' Batch Programs',
+            'TOTAL', '', '', $totalLabel,
             '', '', '',
             $summary['total_trainee'] ?? 0,
             $summary['total_culled'] ?? 0,
             $summary['total_passed'] ?? 0,
             $summary['total_resign'] ?? 0,
             $summary['total_eksis'] ?? 0,
-            number_format(($summary['pct_culled_weighted'] ?? 0) / 100, 4),
-            number_format(($summary['pct_passed_weighted'] ?? 0) / 100, 4),
-            number_format(($summary['pct_resign_weighted'] ?? 0) / 100, 4),
-            number_format(($summary['pct_existing_weighted'] ?? 0) / 100, 4),
+            ($summary['pct_culled_weighted'] ?? 0).'%',
+            ($summary['pct_passed_weighted'] ?? 0).'%',
+            ($summary['pct_resign_weighted'] ?? 0).'%',
+            ($summary['pct_existing_weighted'] ?? 0).'%',
             $summary['posisi_pc_total'] ?? 0,
             $summary['posisi_gm_total'] ?? 0,
             $summary['posisi_mgr_total'] ?? 0,
@@ -1663,7 +1669,15 @@ class AsistenController extends Controller
             $summary['posisi_asisten_total'] ?? 0,
         ];
 
-        return ExcelExporter::download($filename, $headers, $dataRows, 'Monitoring Summarized');
+        return ExcelExporter::download($filename, $headers, $dataRows, $sheetTitle);
+    }
+
+    /**
+     * Alias endpoint for exporting Monitoring Program / Alumni CSV/Excel.
+     */
+    public function exportMonitoringProgramCsv(Request $request): StreamedResponse
+    {
+        return $this->exportMonitoringSummarized($request);
     }
 
     /**

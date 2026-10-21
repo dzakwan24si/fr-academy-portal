@@ -422,10 +422,7 @@ class DashboardController extends Controller
         $softProgramIds = $softPrograms->pluck('id_nonreguler')->all();
         $regulerPrefixes = ['FAT', 'MAT', 'TAT', 'AAT', 'DMT', 'ECT', 'PMT', 'PKT'];
         $technicalNotes = ['ESTATE', 'MILL', 'TRACTION', 'TRAKSI', 'DOWNSTREAM', 'ADMINISTRASI', 'ADMIN'];
-        $softRecords = $records->filter(function ($r) use ($softPrograms, $softProgramIds, $regulerPrefixes, $regRecordIds, $technicalNotes, $isRecordMandor) {
-            if ($isRecordMandor($r)) {
-                return false;
-            }
+        $softRecords = $records->filter(function ($r) use ($softPrograms, $softProgramIds, $regulerPrefixes, $regRecordIds, $technicalNotes) {
             if (isset($regRecordIds[$r->id])) {
                 return false;
             }
@@ -464,7 +461,19 @@ class DashboardController extends Controller
         $tekPlanBatch = (int) $tekPrograms->sum(fn ($p) => (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0));
         $tekPlanPart = (int) $tekPrograms->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0));
         $softRecordIds = array_flip($softRecords->pluck('id')->all());
-        $tekRecords = $records->filter(fn ($r) => $r->program_type !== 'reguler' && ! isset($regRecordIds[$r->id]) && ! isset($softRecordIds[$r->id]))->reject($isRecordMandor);
+        $tekRecords = $records->filter(function ($r) use ($regRecordIds, $softRecordIds, $regulerPrefixes) {
+            if ($r->program_type === 'reguler' || isset($regRecordIds[$r->id]) || isset($softRecordIds[$r->id])) {
+                return false;
+            }
+            $notes = strtoupper(trim((string) $r->notes));
+            foreach ($regulerPrefixes as $prefix) {
+                if (str_starts_with($notes, $prefix)) {
+                    return false;
+                }
+            }
+
+            return true;
+        });
         $tekRealPart = (int) $tekRecords->count();
         $tekRealBatch = (int) $tekPrograms->sum(fn ($p) => (int) ($p->realisasi_batch ?? 0)) ?: (int) $tekRecords->pluck('nama_pelatihan')->filter()->unique()->count();
         $tekPctBatch = $tekPlanBatch > 0 ? round(($tekRealBatch / $tekPlanBatch) * 100) : 0;
@@ -1071,12 +1080,15 @@ class DashboardController extends Controller
     {
         $nonRegAll = $nonRegPrograms ?? $this->filterNonRegulerByYear(ProgramNonReguler::all(), $year);
         $nonReg = $nonRegAll->filter(fn ($p) => ! $p->isSoftSkill());
+        $allNonRegProgIds = array_flip($nonRegAll->pluck('id_nonreguler')->map(fn ($id) => (int) $id)->all());
+
         $records = $records ?? $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::where('program_type', 'non_reguler')->get(), $year, $selectedMonthNum);
         $records = $records->where('program_type', 'non_reguler');
 
-        // Pre-group records by program_id for instant O(1) matching
-        $recordsByProgramId = $records->whereNotNull('program_id')->groupBy('program_id');
-        $recordsWithoutProgId = $records->whereNull('program_id');
+        // Pre-group records by valid program_id for instant O(1) matching.
+        // Records without program_id OR with an unknown program_id are treated as unlinked records.
+        $recordsByProgramId = $records->filter(fn ($r) => $r->program_id && isset($allNonRegProgIds[(int) $r->program_id]))->groupBy('program_id');
+        $recordsWithoutProgId = $records->filter(fn ($r) => empty($r->program_id) || ! isset($allNonRegProgIds[(int) $r->program_id]));
 
         $categories = ['ESTATE', 'MILL', 'TRACTION', 'DOWNSTREAM', 'ADMINISTRASI'];
         $groups = [];
@@ -1120,9 +1132,10 @@ class DashboardController extends Controller
             }
 
             $unlinkedRecs = $recordsWithoutProgId->filter(function ($r) use ($catKey) {
-                $notes = strtolower((string) $r->notes);
+                $notes = strtolower((string) ($r->notes ?: $r->nama_pelatihan));
                 if ($catKey === 'estate') {
-                    return str_contains($notes, 'estate') || str_contains($notes, 'tanaman') || str_contains($notes, 'agronomi');
+                    return str_contains($notes, 'estate') || str_contains($notes, 'tanaman') || str_contains($notes, 'agronomi')
+                        || (! str_contains($notes, 'mill') && ! str_contains($notes, 'pabrik') && ! str_contains($notes, 'traction') && ! str_contains($notes, 'traksi') && ! str_contains($notes, 'downstream') && ! str_contains($notes, 'administrasi') && ! str_contains($notes, 'admin'));
                 }
                 if ($catKey === 'mill') {
                     return str_contains($notes, 'mill') || str_contains($notes, 'pabrik');
