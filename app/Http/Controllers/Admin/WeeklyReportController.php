@@ -26,6 +26,9 @@ use Illuminate\Support\Facades\Storage;
 
 class WeeklyReportController extends Controller
 {
+    protected string $viewPrefix = 'admin.weekly_reports.';
+    protected string $routeIndex = 'training-reguler.weekly-reports.index';
+
     public function index(Request $request)
     {
         $query = WeeklyReport::with(['trainer', 'trainingProgram'])->latest();
@@ -67,12 +70,12 @@ class WeeklyReportController extends Controller
         $programs = TrainingProgram::with('trainees')->get();
         $trainers = Trainer::all();
 
-        return view('admin.weekly_reports.index', compact('reports', 'programs', 'trainers', 'total', 'draft', 'submitted', 'months'));
+        return view($this->viewPrefix.'index', compact('reports', 'programs', 'trainers', 'total', 'draft', 'submitted', 'months'));
     }
 
     public function create()
     {
-        return redirect()->route('training-reguler.weekly-reports.index');
+        return redirect()->route($this->routeIndex);
     }
 
     public function getTrainees(Request $request)
@@ -103,14 +106,14 @@ class WeeklyReportController extends Controller
             ->whereBetween('date', [$weeklyReport->week_start_date, $weeklyReport->week_end_date])
             ->get();
 
-        return view('admin.weekly_reports.show', compact('weeklyReport', 'dailyClasses'));
+        return view($this->viewPrefix.'show', compact('weeklyReport', 'dailyClasses'));
     }
 
     public function destroy(WeeklyReport $weeklyReport)
     {
         $weeklyReport->delete();
 
-        return redirect()->route('training-reguler.weekly-reports.index')
+        return redirect()->route($this->routeIndex)
             ->with('success', 'Laporan berhasil dihapus.');
     }
 
@@ -132,7 +135,7 @@ class WeeklyReportController extends Controller
             ->whereBetween('date', [$weeklyReport->week_start_date, $weeklyReport->week_end_date])
             ->get();
 
-        $pdf = Pdf::loadView('admin.weekly_reports.pdf', [
+        $pdf = Pdf::loadView($this->viewPrefix.'pdf', [
             'weeklyReport' => $weeklyReport,
             'dailyClasses' => $dailyClasses,
         ])->setPaper('a4', 'portrait');
@@ -165,7 +168,7 @@ class WeeklyReportController extends Controller
                 ->get();
         }
 
-        $pdf = Pdf::loadView('admin.weekly_reports.export_multiple', ['reports' => $reports])
+        $pdf = Pdf::loadView($this->viewPrefix.'export_multiple', ['reports' => $reports])
             ->setPaper('a4', 'portrait');
 
         return $pdf->stream('Laporan_Mingguan_Multiple.pdf');
@@ -276,7 +279,7 @@ class WeeklyReportController extends Controller
 
         $allTrainees = Trainee::where('training_program_id', $weeklyReport->training_program_id)->get();
 
-        return view('admin.weekly_reports.edit', compact(
+        return view($this->viewPrefix.'edit', compact(
             'weeklyReport', 'programs', 'trainers', 'resigneesData', 'uniqueSubjects',
             'initialQuizScores', 'initialRankings', 'initialRemedialNotes',
             'existingPhotos', 'stripPreviews', 'allTrainees'
@@ -599,7 +602,7 @@ class WeeklyReportController extends Controller
 
             DB::commit();
 
-            return redirect()->route('training-reguler.weekly-reports.index')->with('success', 'Laporan Mingguan berhasil diperbarui!');
+            return redirect()->route($this->routeIndex)->with('success', 'Laporan Mingguan berhasil diperbarui!');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -656,7 +659,7 @@ class WeeklyReportController extends Controller
 
             DB::commit();
 
-            return redirect()->route('training-reguler.weekly-reports.index')->with('success', 'Laporan berhasil digabungkan.');
+            return redirect()->route($this->routeIndex)->with('success', 'Laporan berhasil digabungkan.');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -725,7 +728,7 @@ class WeeklyReportController extends Controller
 
             DB::commit();
 
-            return redirect()->route('training-reguler.weekly-reports.index')->with('success', 'Berhasil membatalkan penggabungan laporan.');
+            return redirect()->route($this->routeIndex)->with('success', 'Berhasil membatalkan penggabungan laporan.');
         } catch (\Exception $e) {
             DB::rollBack();
 
