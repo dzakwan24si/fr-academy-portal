@@ -312,7 +312,10 @@ class DashboardRealisasiController extends Controller
         }
 
         // 1. Compute MT Program Tables
-        $mtData = $this->computeMtTables($tableRegulerPrograms, $trByAngkatan, $empByAngkatan, $culledByAngkatan, $empResignByAngkatan);
+        $mtData = $this->computeMtTables(
+            $tableRegulerPrograms, $trByAngkatan, $empByAngkatan, $culledByAngkatan, $empResignByAngkatan,
+            $year, $selectedMonthNum, $allTrainingRecords
+        );
 
         // 2. Compute KPI Cards
         $kpiCards = $this->computeKpiCards(
@@ -329,10 +332,52 @@ class DashboardRealisasiController extends Controller
         return array_merge($mtData, $kpiCards, compact('monthlyData', 'evaluasi'));
     }
 
-    protected function computeMtTables($tableRegulerPrograms, array $trByAngkatan, array $empByAngkatan, array $culledByAngkatan, array $empResignByAngkatan): array
-    {
+    protected function computeMtTables(
+        $tableRegulerPrograms,
+        array $trByAngkatan,
+        array $empByAngkatan,
+        array $culledByAngkatan,
+        array $empResignByAngkatan,
+        int $year,
+        ?int $selectedMonthNum,
+        $allTrainingRecords
+    ): array {
         $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
         $normalizeAngkatan = fn (string $name) => TrainingMetricService::normalizeAngkatan($name);
+
+        $todayStr = date('Y-m-d');
+        if ($selectedMonthNum !== null) {
+            $periodEnd = Carbon::create($year, $selectedMonthNum)->endOfMonth()->format('Y-m-d');
+            $cutoffDate = ($year === (int) date('Y') && $periodEnd > $todayStr) ? $todayStr : $periodEnd;
+        } else {
+            $cutoffDate = ($year === (int) date('Y')) ? $todayStr : Carbon::create($year, 12, 31)->format('Y-m-d');
+        }
+
+        $isRecordMandor = fn ($r) => str_contains(strtoupper((string) $r->notes), 'MANDOR') || str_contains(strtoupper((string) $r->nama_pelatihan), 'MANDOR');
+        $regStaffRecords = $allTrainingRecords->where('program_type', 'reguler')->reject($isRecordMandor);
+        $regMandorRecords = $allTrainingRecords->where('program_type', 'reguler')->filter($isRecordMandor);
+
+        $staffRecordsByProgId = [];
+        $unassignedStaffRecs = [];
+        foreach ($regStaffRecords as $r) {
+            if ($r->program_id) {
+                $staffRecordsByProgId[(int) $r->program_id][] = $r;
+            } else {
+                $unassignedStaffRecs[] = $r;
+            }
+        }
+
+        $mandorRecordsByProgId = [];
+        $unassignedMandorRecs = [];
+        foreach ($regMandorRecords as $r) {
+            if ($r->program_id) {
+                $mandorRecordsByProgId[(int) $r->program_id][] = $r;
+            } else {
+                $unassignedMandorRecs[] = $r;
+            }
+        }
+
+        $matchedUnassignedIds = [];
 
         $mtStafTable = [];
         $stafRencana = 0;
@@ -370,13 +415,57 @@ class DashboardRealisasiController extends Controller
             $allResigned = array_unique(array_merge(array_keys($resignedEmpNames), array_keys($culledNames)));
             $autoResign = count($allResigned);
 
-            $rencana = (int) ($p->TARGET_PESERTA ?? $p->target_peserta ?? 0);
-            $kelas = TrainingMetricService::resolveRegulerKelasCount($p, $trByAngkatan, $empByAngkatan, $culledByAngkatan);
-            $resign = ($p->resign !== null) ? (int) $p->resign : $autoResign;
-            $staff = ($p->staff !== null) ? (int) $p->staff : (($p->lulus !== null) ? (int) $p->lulus : max(0, $kelas - $resign));
-            $lulus = $staff;
+            $startDate = $p->Mulai_program?->format('Y-m-d') ?: TrainingMetricService::getProgramRegulerStartDate($p);
+            $endDate = $p->Selesai_program?->format('Y-m-d') ?: TrainingMetricService::getProgramRegulerEndDate($p);
+            $hasStarted = ($startDate && $startDate <= $cutoffDate);
 
             $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor');
+            $rencana = (int) ($p->TARGET_PESERTA ?? $p->target_peserta ?? 0);
+
+            if (! $hasStarted) {
+                $kelas = 0;
+            } else {
+                $pId = (int) ($p->Program_reguler_id ?? $p->getKey());
+                $pList = $isMandor ? ($mandorRecordsByProgId[$pId] ?? []) : ($staffRecordsByProgId[$pId] ?? []);
+                $unassignedRecs = $isMandor ? $unassignedMandorRecs : $unassignedStaffRecs;
+
+                $pNameNorm = strtolower(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->Training_Program)));
+                if (! empty($unassignedRecs)) {
+                    foreach ($unassignedRecs as $r) {
+                        if (isset($matchedUnassignedIds[$r->id])) {
+                            continue;
+                        }
+                        $rNotes = strtolower(trim((string) $r->notes));
+                        $rNama = strtolower(trim((string) $r->nama_pelatihan));
+                        if ($pNameNorm !== '' && (str_contains($rNotes, $pNameNorm) || str_contains($rNama, $pNameNorm))) {
+                            $pList[] = $r;
+                            $matchedUnassignedIds[$r->id] = true;
+                        }
+                    }
+                }
+
+                $seen = [];
+                $batchPartCount = 0;
+                foreach ($pList as $r) {
+                    $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
+                    if (! isset($seen[$ident])) {
+                        $seen[$ident] = true;
+                        $batchPartCount++;
+                    }
+                }
+
+                if ($batchPartCount > 0) {
+                    $kelas = $batchPartCount;
+                } elseif ($p->kelas !== null) {
+                    $kelas = (int) $p->kelas;
+                } else {
+                    $kelas = TrainingMetricService::resolveRegulerKelasCount($p, $trByAngkatan, $empByAngkatan, $culledByAngkatan);
+                }
+            }
+
+            $resign = ($p->resign !== null && $hasStarted) ? (int) $p->resign : ($hasStarted ? $autoResign : 0);
+            $staff = ($p->staff !== null && $hasStarted) ? (int) $p->staff : (($p->lulus !== null && $hasStarted) ? (int) $p->lulus : max(0, $kelas - $resign));
+            $lulus = $staff;
 
             $rowItem = [
                 'id' => $p->Program_reguler_id,
