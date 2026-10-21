@@ -120,7 +120,6 @@ body { font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 11px; color: #1
     <div class="laporan-wrapper theme-{{ $weeklyReport->theme ?? 'reguler' }}">
 
 @php
-    use Illuminate\Support\Facades\Storage;
     $allPhotos = $weeklyReport->trainingSessions->flatMap(fn($s) => $s->photos);
     
     $parseListLines = function ($text) {

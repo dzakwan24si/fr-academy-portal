@@ -23,7 +23,7 @@
 
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden" 
          x-data="weeklyReportForm({{ $programs->toJson() }})">
-        <form action="{{ route('admin.non-reguler.weekly-reports.store') }}" method="POST" enctype="multipart/form-data" class="p-8">
+        <form action="{{ route('training-non-reguler.weekly-reports.store') }}" method="POST" enctype="multipart/form-data" class="p-8">
             @csrf
 
             <!-- Jika tidak ada trainer yang terdeteksi, kita butuh trainer fallback (sudah diatasi di controller) -->
@@ -135,7 +135,7 @@
             </div>
 
             <div class="mt-8 flex justify-end gap-3">
-                <a href="{{ route('admin.non-reguler.weekly-reports.index') }}" class="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition shadow-sm">
+                <a href="{{ route('training-non-reguler.weekly-reports.index') }}" class="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition shadow-sm">
                     Batal
                 </a>
                 <button type="submit" class="px-6 py-2.5 bg-[#509c38] text-white font-bold rounded-xl hover:bg-green-700 transition shadow-sm">

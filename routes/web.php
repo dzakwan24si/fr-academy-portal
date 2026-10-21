@@ -191,14 +191,14 @@ Route::middleware('auth')->prefix('admin')->group(function () {
         return redirect()->route('administrasi.dashboard-realisasi.index');
     })->name('admin.dashboard');
 
-    Route::resource('artikel', AdminArticleController::class)->names('admin.artikel')->middleware('can:manage_articles');
+    Route::resource('artikel', AdminArticleController::class)->except(['show'])->names('admin.artikel')->middleware('can:manage_articles');
 
     // User Management Routes
-    Route::resource('users', UserController::class)->names('admin.users')->middleware('can:manage_users');
-    Route::resource('roles', RoleController::class)->names('admin.roles')->middleware('can:manage_roles');
+    Route::resource('users', UserController::class)->except(['show'])->names('admin.users')->middleware('can:manage_users');
+    Route::resource('roles', RoleController::class)->except(['show'])->names('admin.roles')->middleware('can:manage_roles');
 
     // Event Themes Management
-    Route::resource('events', HomepageEventController::class)->names('admin.events')->middleware('can:manage_events');
+    Route::resource('events', HomepageEventController::class)->except(['show'])->names('admin.events')->middleware('can:manage_events');
 
     // Profile Management Routes
     Route::get('profile', [ProfileController::class, 'edit'])->name('admin.profile.edit');
@@ -210,6 +210,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
 
     // Career Programs Management
     Route::resource('career-programs', CareerProgramController::class)
+        ->except(['show'])
         ->names('admin.career_programs')
         ->middleware('can:manage_career');
 
@@ -266,6 +267,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
     });
 
     Route::redirect('administrasi/program', '/administrasi/program-batch')->name('administrasi.program.index');
+    Route::get('administrasi/program/{type}/{name}', [ProgramBatchController::class, 'programShow'])->name('administrasi.program.show');
 
     Route::prefix('administrasi/realisasi-vs-batch')->name('administrasi.realisasi-vs-batch.')->group(function () {
         Route::get('/', [RealisasiVsBatchController::class, 'index'])->name('index');
@@ -680,16 +682,16 @@ Route::middleware('auth')->prefix('training-reguler')->group(function () {
         return view('admin.training-dashboard', compact('totalTrainees', 'totalPrograms', 'draftReports', 'recentReports'));
     })->name('training-reguler.dashboard');
 
-    Route::resource('training-programs', TrainingProgramController::class)->names('training-reguler.training-programs');
-    Route::resource('trainees', TraineeController::class)->names('training-reguler.trainees');
+    Route::resource('training-programs', TrainingProgramController::class)->except(['show'])->names('training-reguler.training-programs');
+    Route::resource('trainees', TraineeController::class)->except(['show'])->names('training-reguler.trainees');
     Route::post('trainees/import', [TraineeController::class, 'import'])->name('training-reguler.trainees.import');
     Route::get('trainees/template', [TraineeController::class, 'downloadTemplate'])->name('training-reguler.trainees.template');
-    Route::resource('trainers', TrainerController::class)->names('training-reguler.trainers');
+    Route::resource('trainers', TrainerController::class)->except(['show'])->names('training-reguler.trainers');
     Route::post('weekly-reports/merge', [WeeklyReportController::class, 'merge'])->name('training-reguler.weekly-reports.merge');
     Route::post('weekly-reports/{weekly_report}/unmerge', [WeeklyReportController::class, 'unmerge'])->name('training-reguler.weekly-reports.unmerge');
     Route::resource('weekly-reports', WeeklyReportController::class)->names('training-reguler.weekly-reports');
     Route::get('weekly-reports/{weekly_report}/export-pdf', [WeeklyReportController::class, 'exportPdf'])->name('training-reguler.weekly-reports.export-pdf');
-    Route::resource('moas', MoaController::class)->names('training-reguler.moas');
+    Route::resource('moas', MoaController::class)->except(['show'])->names('training-reguler.moas');
 
     // Dummy Print Routes
     Route::get('print/attendance', function () {
@@ -708,7 +710,7 @@ Route::middleware('auth')->prefix('training-reguler')->group(function () {
     Route::post('daily-classes/{daily_class}/tasks', [DailyClassController::class, 'storeTask'])->name('training-reguler.daily-classes.tasks.store');
     Route::get('tasks/{task}', [DailyClassController::class, 'showTask'])->name('training-reguler.tasks.show');
     Route::delete('tasks/{task}', [DailyClassController::class, 'destroyTask'])->name('training-reguler.daily-classes.tasks.destroy');
-    Route::resource('daily-classes', DailyClassController::class)->names('training-reguler.daily-classes');
+    Route::resource('daily-classes', DailyClassController::class)->except(['create', 'edit', 'destroy'])->names('training-reguler.daily-classes');
 });
 
 Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
@@ -744,16 +746,16 @@ Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
         return view('admin.non-reguler.training-dashboard', compact('totalTrainees', 'totalSesi', 'totalPrograms', 'recentSesi'));
     })->name('training-non-reguler.dashboard');
 
-    Route::resource('training-programs', NonRegulerTrainingProgramController::class)->names('training-non-reguler.training-programs');
-    Route::resource('trainees', NonRegulerTraineeController::class)->names('training-non-reguler.trainees');
+    Route::resource('training-programs', NonRegulerTrainingProgramController::class)->except(['show'])->names('training-non-reguler.training-programs');
+    Route::resource('trainees', NonRegulerTraineeController::class)->except(['show'])->names('training-non-reguler.trainees');
     Route::post('trainees/import', [NonRegulerTraineeController::class, 'import'])->name('training-non-reguler.trainees.import');
     Route::get('trainees/template', [NonRegulerTraineeController::class, 'downloadTemplate'])->name('training-non-reguler.trainees.template');
-    Route::resource('trainers', NonRegulerTrainerController::class)->names('training-non-reguler.trainers');
+    Route::resource('trainers', NonRegulerTrainerController::class)->except(['show'])->names('training-non-reguler.trainers');
     Route::post('weekly-reports/merge', [NonRegulerWeeklyReportController::class, 'merge'])->name('training-non-reguler.weekly-reports.merge');
     Route::post('weekly-reports/{weekly_report}/unmerge', [NonRegulerWeeklyReportController::class, 'unmerge'])->name('training-non-reguler.weekly-reports.unmerge');
     Route::resource('weekly-reports', NonRegulerWeeklyReportController::class)->names('training-non-reguler.weekly-reports');
     Route::get('weekly-reports/{weekly_report}/export-pdf', [NonRegulerWeeklyReportController::class, 'exportPdf'])->name('training-non-reguler.weekly-reports.export-pdf');
-    Route::resource('moas', NonRegulerMoaController::class)->names('training-non-reguler.moas');
+    Route::resource('moas', NonRegulerMoaController::class)->except(['show'])->names('training-non-reguler.moas');
 
     // Dummy Print Routes
     Route::get('print/attendance', function () {
@@ -785,7 +787,7 @@ Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
     Route::post('daily-classes/{daily_class}/notify', [NonRegulerDailyClassController::class, 'notifyTrainees'])->name('training-non-reguler.daily-classes.notify');
 
     Route::get('history', [NonRegulerDailyClassController::class, 'history'])->name('training-non-reguler.history.index');
-    Route::resource('daily-classes', NonRegulerDailyClassController::class)->names('training-non-reguler.daily-classes');
+    Route::resource('daily-classes', NonRegulerDailyClassController::class)->except(['create', 'edit'])->names('training-non-reguler.daily-classes');
 });
 
 Route::middleware(['auth', 'verified'])->post('/admin/notifications/blast', function (Request $request) {
