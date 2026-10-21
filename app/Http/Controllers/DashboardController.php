@@ -402,7 +402,13 @@ class DashboardController extends Controller
             'TAT' => ['TRACTION ASSISTANT', 'TAT'],
         ];
 
-        $allAsisten = Asisten::select(['id', 'program', 'status_karyawan', 'keterangan'])->get();
+        $allAsisten = Asisten::select(['id', 'program', 'tahun_angkatan', 'status_karyawan', 'keterangan'])
+            ->where(function ($q) use ($minYear) {
+                $q->where('tahun_angkatan', '>=', $minYear)
+                    ->orWhereNull('tahun_angkatan')
+                    ->orWhere('tahun_angkatan', 0);
+            })
+            ->get();
         $rows = [];
         $totTrainee = 0;
         $totCulled = 0;
@@ -438,6 +444,10 @@ class DashboardController extends Controller
                 }
                 if (! $matchesProg) {
                     return false;
+                }
+
+                if ($a->tahun_angkatan && (int) $a->tahun_angkatan > 0) {
+                    return (int) $a->tahun_angkatan >= $minYear;
                 }
 
                 preg_match('/\b(20\d{2})\b/', $pName, $matches);
