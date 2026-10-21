@@ -715,21 +715,16 @@ Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
     Route::get('/', function () {
         $today = now()->format('Y-m-d');
 
-        // Menghitung total peserta yang materi/kelasnya berjalan hari ini
-        $totalTrainees = Attendance::whereHas('dailyClass', function ($query) use ($today) {
-            $query->where(function ($q) use ($today) {
-                $q->whereNotNull('end_date')
-                    ->whereDate('date', '<=', $today)
-                    ->whereDate('end_date', '>=', $today);
-            })->orWhere(function ($q) use ($today) {
-                $q->whereNull('end_date')
-                    ->whereDate('date', '=', $today);
-            });
-        })->distinct('trainee_id')->count('trainee_id');
         $totalSesi = DailyClass::count();
-        $totalPrograms = TrainingProgram::count();
 
-        $recentSesi = DailyClass::with('trainingProgram')
+        // 1. Distribusi Materi per Sub Kategori (untuk Donut Chart)
+        $programStats = TrainingProgram::withCount('dailyClasses')->get()->map(fn ($p) => [
+            'name' => $p->name,
+            'count' => (int) $p->daily_classes_count,
+        ])->filter(fn ($p) => $p['count'] > 0)->values();
+
+        // 2. Hitung Sesi Berjalan Hari Ini (Cepat & Ringan)
+        $todaySesiCount = DailyClass::whereNotNull('date')
             ->whereDate('date', '<=', $today)
             ->where(function ($q) use ($today) {
                 $q->whereDate('end_date', '>=', $today)
@@ -737,11 +732,13 @@ Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
                         $sq->whereNull('end_date')->whereDate('date', '>=', $today);
                     });
             })
-            ->orderBy('date', 'desc')
-            ->take(5)
-            ->get();
+            ->count();
 
-        return view('admin.non-reguler.training-dashboard', compact('totalTrainees', 'totalSesi', 'totalPrograms', 'recentSesi'));
+        return view('admin.non-reguler.training-dashboard', compact(
+            'totalSesi',
+            'todaySesiCount',
+            'programStats'
+        ));
     })->name('training-non-reguler.dashboard');
 
     Route::resource('training-programs', NonRegulerTrainingProgramController::class)->names('training-non-reguler.training-programs');
