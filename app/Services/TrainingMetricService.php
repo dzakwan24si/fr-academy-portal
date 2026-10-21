@@ -220,7 +220,9 @@ class TrainingMetricService
         return $records->filter(function ($r) use ($year, $selectedMonthNum, $validRegulerProgIds, $regulerYearById, $regulerYearByAng) {
             // 1. Year filter
             $rYear = null;
-            if ($r->program_type === 'reguler') {
+            if (! empty($r->tahun) && is_numeric($r->tahun)) {
+                $rYear = (int) $r->tahun;
+            } elseif ($r->program_type === 'reguler') {
                 if ($r->program_id && isset($regulerYearById[(int) $r->program_id])) {
                     $rYear = $regulerYearById[(int) $r->program_id];
                 } elseif (! empty($r->notes)) {
@@ -232,9 +234,7 @@ class TrainingMetricService
             }
 
             if ($rYear === null) {
-                if (! empty($r->tahun)) {
-                    $rYear = (int) $r->tahun;
-                } elseif (! empty($r->training_date)) {
+                if (! empty($r->training_date)) {
                     $rYear = (int) date('Y', strtotime($r->training_date));
                 } elseif (method_exists($r, 'activityDates')) {
                     $dates = $r->activityDates();
@@ -252,8 +252,8 @@ class TrainingMetricService
             }
 
             if ($rYear !== $year) {
-                // Support carry-over training records for reguler programs
-                $isCarryOver = ($r->program_type === 'reguler' && (
+                // Support carry-over training records for reguler programs only if no explicit record tahun
+                $isCarryOver = ($r->program_type === 'reguler' && empty($r->tahun) && (
                     (! empty($validRegulerProgIds) && $r->program_id && in_array((int) $r->program_id, $validRegulerProgIds, true))
                     || str_contains(strtoupper((string) $r->notes), (string) $year)
                 ));
