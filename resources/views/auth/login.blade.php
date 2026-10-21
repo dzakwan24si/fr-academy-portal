@@ -6,8 +6,8 @@
     <title>Login - Admin FR Academy</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
-    <!-- Script Cloudflare Turnstile -->
-    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <!-- Script Cloudflare Turnstile (hidden) -->
+    {{-- <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script> --}}
 </head>
 <body class="bg-white min-h-screen font-sans text-gray-900">
     <div class="flex min-h-screen">
@@ -85,13 +85,13 @@
                         </div>
                     </div>
 
-                    <!-- Widget Cloudflare Turnstile -->
-                    <div class="cf-turnstile" data-sitekey="0x4AAAAAAEzPGJLBNyo86KAl" data-theme="light"></div>
+                    <!-- Widget Cloudflare Turnstile (hidden) -->
+                    {{-- <div class="cf-turnstile" data-sitekey="0x4AAAAAAEzPGJLBNyo86KAl" data-theme="light"></div> --}}
 
                     <!-- Options -->
                     <div class="flex items-center justify-between pt-2">
                         <div class="flex items-center">
-                            <input type="checkbox" name="remember" id="remember" class="h-4 w-4 text-green-accent focus:ring-green-accent border-gray-300 rounded">
+                            <input type="checkbox" name="remember" id="remember" class="h-4 w-4 text-green-accent focus:ring-green-accent border-gray-300 rounded" checked>
                             <label for="remember" class="ml-2 block text-sm text-gray-600">Ingat Saya</label>
                         </div>
                         <a href="#" class="text-sm font-bold text-green-800 hover:text-green-600 transition">Lupa Kata Sandi?</a>

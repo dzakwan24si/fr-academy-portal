@@ -236,10 +236,10 @@
                         <li><a href="/tentang-kami" class="hover:text-white hover:text-green-accent transition-colors">Tentang Kami</a></li>
                         <li><a href="{{ route('competency.public') }}" class="hover:text-white hover:text-green-accent transition-colors">Standar Kompetensi</a></li>
                         <li><a href="https://peta-sdm.fr-academy.my.id/" target="_blank" class="hover:text-white hover:text-green-accent transition-colors">Peta SDM Operasional</a></li>
-                        <li><a href="{{ route('download.app') }}" class="hover:text-white hover:text-green-accent transition-colors">Aplikasi Learning Activity</a></li>
                         <li><a href="/artikel" class="hover:text-white hover:text-green-accent transition-colors">Artikel & Berita</a></li>
                         <li><a href="/tv-display" class="hover:text-white hover:text-green-accent transition-colors">TV Display Mode</a></li>
                         <li><a href="/login" class="hover:text-white hover:text-green-accent transition-colors">Login Admin / Staf</a></li>
+                        <li><a href="{{ route('download.app') }}" class="inline-flex items-center gap-1.5 text-green-accent hover:text-white transition-colors font-medium"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg> Aplikasi Learning Activity</a></li>
                     </ul>
                 </div>
 

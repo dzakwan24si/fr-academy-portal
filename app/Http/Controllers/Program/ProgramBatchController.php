@@ -10,6 +10,7 @@ use App\Models\Program\TrainingRecord;
 use App\Services\ExcelExporter;
 use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -330,11 +331,21 @@ class ProgramBatchController extends Controller
         return strtolower(trim(str_replace(' fr', '', (string) $value)));
     }
 
+    private function clearDashboardCache(): void
+    {
+        Cache::put('dreal_cache_version', time());
+        Cache::put('dashboard_cache_version', time());
+        Cache::put('rvb_cache_version', time());
+        Cache::forget('dreal_filter_options');
+        Cache::forget('portal_dashboard_years');
+    }
+
     public function store(Request $request, string $type)
     {
         abort_unless(in_array($type, ['reguler', 'non_reguler'], true), 404);
         $model = $type === 'reguler' ? new ProgramReguler : new ProgramNonReguler;
         $model->newQuery()->create($this->preparePayload($request->all(), $type));
+        $this->clearDashboardCache();
 
         return response()->json(['message' => 'Data berhasil disimpan.'], 201);
     }
@@ -343,9 +354,57 @@ class ProgramBatchController extends Controller
     {
         abort_unless(in_array($type, ['reguler', 'non_reguler'], true), 404);
         $model = $type === 'reguler' ? new ProgramReguler : new ProgramNonReguler;
-        $model->newQuery()->findOrFail($id)->update($this->preparePayload($request->all(), $type));
+        $instance = $model->newQuery()->findOrFail($id);
+        $instance->update($this->preparePayload($request->all(), $type));
+
+        $this->syncTrainingRecordsForProgram($type, $instance);
+        $this->clearDashboardCache();
 
         return response()->json(['message' => 'Data berhasil diperbarui.']);
+    }
+
+    private function syncTrainingRecordsForProgram(string $type, $program): void
+    {
+        $id = $type === 'reguler' ? $program->Program_reguler_id : $program->id_nonreguler;
+        $title = $type === 'reguler' ? $program->Training_Program : $program->jenis_pelatihan;
+        $year = $program->tahun;
+        $startDate = $type === 'reguler' ? $program->Mulai_program : $program->start_date;
+        $dates = is_array($program->tanggal_pelaksanaan) ? $program->tanggal_pelaksanaan : json_decode($program->tanggal_pelaksanaan ?? '[]', true);
+        if (empty($startDate) && ! empty($dates) && is_array($dates)) {
+            $startDate = $dates[0] ?? null;
+        }
+
+        $records = TrainingRecord::where('program_type', $type)->where('program_id', $id)->get();
+        if ($records->isEmpty()) {
+            return;
+        }
+
+        $updateData = [];
+        if ($year) {
+            $updateData['tahun'] = (int) $year;
+        }
+        if ($title) {
+            $updateData['notes'] = $title;
+            $updateData['nama_pelatihan'] = $title;
+        }
+
+        if ($startDate) {
+            $monthNum = (int) date('n', strtotime($startDate));
+            $monthNames = [
+                1 => 'JAN', 2 => 'FEB', 3 => 'MAR', 4 => 'APR',
+                5 => 'MEI', 6 => 'JUN', 7 => 'JUL', 8 => 'AGU',
+                9 => 'SEP', 10 => 'OKT', 11 => 'NOV', 12 => 'DES',
+            ];
+            if (isset($monthNames[$monthNum])) {
+                $updateData['bulan'] = $monthNames[$monthNum];
+            }
+        }
+
+        if (! empty($updateData)) {
+            TrainingRecord::where('program_type', $type)
+                ->where('program_id', $id)
+                ->update($updateData);
+        }
     }
 
     public function destroy(string $type, int $id)
@@ -353,6 +412,7 @@ class ProgramBatchController extends Controller
         abort_unless(in_array($type, ['reguler', 'non_reguler'], true), 404);
         $model = $type === 'reguler' ? new ProgramReguler : new ProgramNonReguler;
         $model->newQuery()->findOrFail($id)->delete();
+        $this->clearDashboardCache();
 
         return response()->json(['message' => 'Data berhasil dihapus.']);
     }
@@ -363,17 +423,20 @@ class ProgramBatchController extends Controller
         if ($type === 'reguler') {
             ProgramReguler::truncate();
             ActivityLog::log('Hapus', 'Program Batch', 'Menghapus seluruh data Program Reguler');
+            $this->clearDashboardCache();
 
             return response()->json(['message' => 'Seluruh data Program Reguler berhasil dihapus.']);
         } elseif ($type === 'non_reguler') {
             ProgramNonReguler::truncate();
             ActivityLog::log('Hapus', 'Program Batch', 'Menghapus seluruh data Program Non Reguler');
+            $this->clearDashboardCache();
 
             return response()->json(['message' => 'Seluruh data Program Non Reguler berhasil dihapus.']);
         } else {
             ProgramReguler::truncate();
             ProgramNonReguler::truncate();
             ActivityLog::log('Hapus', 'Program Batch', 'Menghapus seluruh data Program Batch (Reguler & Non Reguler)');
+            $this->clearDashboardCache();
 
             return response()->json(['message' => 'Seluruh data Program Batch (Reguler & Non Reguler) berhasil dihapus.']);
         }
@@ -557,6 +620,8 @@ class ProgramBatchController extends Controller
             "Mengimport {$imported} data program batch dari file ".$file->getClientOriginalName(),
             ['filename' => $file->getClientOriginalName(), 'count' => $imported]
         );
+
+        $this->clearDashboardCache();
 
         $message = "{$imported} data program batch berhasil diimpor.";
         if ($request->wantsJson() || $request->ajax() || $request->isJson()) {

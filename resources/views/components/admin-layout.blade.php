@@ -121,7 +121,7 @@
             <div class="space-y-0.5">
                 <a href="{{ route('administrasi.program-batch.index') }}"
                     class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors {{ request()->routeIs('administrasi.program-batch.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="layers-3" class="w-4 h-4 shrink-0"></i><span>Program</span>
+                    <i data-lucide="layers-3" class="w-4 h-4 shrink-0"></i><span>Program Training</span>
                 </a>
                 <a href="{{ route('administrasi.schedule.index') }}"
                     class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors {{ request()->routeIs('administrasi.schedule.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
@@ -340,7 +340,7 @@
                 @endcanany
                 
                 <!-- SECTION: Learning Activity (Non Reguler) -->
-                @if(auth()->user()->can('access_learning_activity') || auth()->user()->hasRole(['Superadmin', 'Trainer']))
+                @if(auth()->user()?->can('access_learning_activity') || auth()->user()?->hasRole(['Superadmin', 'Trainer']))
                 <details class="group" {{ request()->routeIs('training-non-reguler.*') ? 'open' : '' }}>
                     <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-wider text-gray-400 hover:bg-gray-100 [&::-webkit-details-marker]:hidden transition-colors">
                         <span>Learning Activity</span>
@@ -583,9 +583,9 @@
                     <!-- User Menu -->
                     <div x-data="{ dropdownOpen: false }" class="relative">
                         <button @click="dropdownOpen = !dropdownOpen" class="flex items-center space-x-3 focus:outline-none rounded-full py-1 pl-1 pr-3 hover:bg-gray-50 transition border border-transparent hover:border-gray-200">
-                            <img class="w-9 h-9 rounded-full object-cover border border-gray-200" src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()->name ?? 'Admin') }}&background=f3f4f6&color=374151" alt="Avatar">
+                            <img class="w-9 h-9 rounded-full object-cover border border-gray-200" src="https://ui-avatars.com/api/?name={{ urlencode(auth()->user()?->name ?? 'Admin') }}&background=f3f4f6&color=374151" alt="Avatar">
                             <div class="text-left hidden md:block">
-                                <p class="text-sm font-bold text-gray-800 leading-tight">{{ auth()->user()->name ?? 'Admin User' }}</p>
+                                <p class="text-sm font-bold text-gray-800 leading-tight">{{ auth()->user()?->name ?? 'Admin User' }}</p>
                                 <p class="text-xs text-gray-500 leading-tight">{{ auth()->check() && auth()->user()->roles->count() > 0 ? auth()->user()->roles->pluck('name')->join(', ') : 'User Biasa' }}</p>
                             </div>
                             <svg class="w-4 h-4 text-gray-400 hidden md:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -624,6 +624,44 @@
             </main>
         </div>
     </div>
+    
+    <!-- Global Flash Notification Toast Popup -->
+    @if(session('success') || session('error') || session('status'))
+    <div x-data="{ show: true }" 
+         x-show="show" 
+         x-init="setTimeout(() => show = false, 6000)"
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:translate-x-6"
+         x-transition:enter-end="opacity-100 translate-y-0 sm:translate-x-0"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100 scale-100"
+         x-transition:leave-end="opacity-0 scale-95"
+         class="fixed top-8 right-8 z-[9999] max-w-sm sm:max-w-md w-full bg-white rounded-2xl shadow-2xl border @if(session('error')) border-red-200 shadow-red-500/10 @else border-emerald-200 shadow-emerald-500/10 @endif p-4.5 flex items-start gap-4"
+         style="display: none;">
+         
+        @if(session('error'))
+            <div class="w-11 h-11 rounded-xl bg-red-50 border border-red-100 text-red-600 flex items-center justify-center shrink-0 shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <div class="flex-1 min-w-0 pt-0.5">
+                <h4 class="text-sm font-bold text-gray-900 leading-tight">Terjadi Kesalahan</h4>
+                <p class="text-xs text-gray-600 mt-1 leading-relaxed">{{ session('error') }}</p>
+            </div>
+        @else
+            <div class="w-11 h-11 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-600 flex items-center justify-center shrink-0 shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+            </div>
+            <div class="flex-1 min-w-0 pt-0.5">
+                <h4 class="text-sm font-bold text-gray-900 leading-tight">Berhasil!</h4>
+                <p class="text-xs text-gray-600 mt-1 leading-relaxed">{{ session('success') ?? session('status') }}</p>
+            </div>
+        @endif
+
+        <button @click="show = false" type="button" class="text-gray-400 hover:text-gray-600 transition p-1.5 rounded-lg hover:bg-gray-100 shrink-0">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
+    </div>
+    @endif
     
     <!-- Floating Exit Fullscreen Button -->
     <button type="button" onclick="toggleDashboardFullscreen()" class="floating-exit-fullscreen-btn items-center gap-2 px-4 py-2.5 bg-gray-900/90 hover:bg-gray-900 text-white rounded-full shadow-2xl text-xs font-bold transition-all border border-gray-700 backdrop-blur-md cursor-pointer">

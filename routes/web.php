@@ -670,7 +670,7 @@ Route::get('/clear-opcache', function () {
     return 'Cache server berhasil dibersihkan! Silakan kembali ke halaman Edit dan Refresh (F5).';
 });
 
-Route::prefix('training-reguler')->group(function () {
+Route::middleware('auth')->prefix('training-reguler')->group(function () {
     Route::get('/', function () {
         $totalTrainees = Trainee::where('status', 'aktif')->count();
         $totalPrograms = TrainingProgram::count();
@@ -711,7 +711,7 @@ Route::prefix('training-reguler')->group(function () {
     Route::resource('daily-classes', DailyClassController::class)->names('training-reguler.daily-classes');
 });
 
-Route::prefix('training-non-reguler')->group(function () {
+Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
     Route::get('/', function () {
         $today = now()->format('Y-m-d');
 

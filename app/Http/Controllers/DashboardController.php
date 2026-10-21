@@ -4,10 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Monitoring\Asisten;
 use App\Models\Monitoring\AsistenProgramMonitoring;
+use App\Models\Monitoring\MonitoringAngkatan;
+use App\Models\Monitoring\MonitoringCulled;
+use App\Models\Monitoring\MonitoringEmployee;
 use App\Models\Program\ProgramNonReguler;
 use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
+use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
@@ -230,19 +235,21 @@ class DashboardController extends Controller
 
     public function index(Request $request)
     {
-        $trYears = TrainingRecord::whereNotNull('tahun')->distinct()->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
-        $regYears = ProgramReguler::all()->map(fn ($p) => $this->resolveProgramRegulerYear($p))->filter()->all();
-        $nonRegYears = ProgramNonReguler::all()->map(fn ($p) => $this->resolveProgramNonRegulerYear($p))->filter()->all();
+        $years = Cache::remember('portal_dashboard_years', 300, function () {
+            $trYears = TrainingRecord::whereNotNull('tahun')->distinct()->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
+            $regYears = ProgramReguler::whereNotNull('Mulai_program')->pluck('Mulai_program')->map(fn ($d) => (int) date('Y', strtotime($d)))->filter()->all();
+            $nonRegYears = ProgramNonReguler::whereNotNull('start_date')->pluck('start_date')->map(fn ($d) => (int) date('Y', strtotime($d)))->filter()->all();
 
-        $years = collect([2024, 2025, 2026, 2027])
-            ->merge($trYears)
-            ->merge($regYears)
-            ->merge($nonRegYears)
-            ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
-            ->unique()
-            ->sort()
-            ->values()
-            ->all();
+            return collect([2024, 2025, 2026, 2027])
+                ->merge($trYears)
+                ->merge($regYears)
+                ->merge($nonRegYears)
+                ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
+        });
 
         $yearDefault = in_array(2026, $years, true) ? 2026 : ($years[count($years) - 1] ?? (int) date('Y'));
         $year = (int) $request->input('year', $yearDefault);
@@ -251,48 +258,48 @@ class DashboardController extends Controller
         $selectedMonthCode = $selectedMonthNum ? self::MONTH_3_LETTERS[$selectedMonthNum] : 'all';
         $monthList = self::MONTH_3_LETTERS;
 
-        // Pre-fetch programs and records for this year to avoid repeated full table scans
-        $regulerAll = ProgramReguler::all();
-        $nonRegulerAll = ProgramNonReguler::all();
-        $regulerYear = $this->filterRegulerByYear($regulerAll, $year)->filter(fn ($p) => ! $p->isMandor());
-        $nonRegulerYear = $this->filterNonRegulerByYear($nonRegulerAll, $year);
+        $v = (int) Cache::get('dashboard_cache_version', 1);
+        $cacheKey = "dashboard_metrics_v{$v}_{$year}_{$selectedMonthCode}";
+        $metrics = Cache::remember($cacheKey, 300, function () use ($year, $selectedMonthNum) {
+            $regulerAll = ProgramReguler::all();
+            $nonRegulerAll = ProgramNonReguler::all();
+            $regulerYear = $this->filterRegulerByYear($regulerAll, $year)->filter(fn ($p) => ! $p->isMandor());
+            $nonRegulerYear = $this->filterNonRegulerByYear($nonRegulerAll, $year);
 
-        // Pre-fetch TrainingRecords for the year (with carry-over for reguler if applicable)
-        $regulerYearIds = $regulerYear->pluck('Program_reguler_id')->map(fn ($id) => (int) $id)->all();
-        $yearRecords = TrainingRecord::where(function ($q) use ($year, $regulerYearIds) {
-            $q->where('tahun', $year)
-                ->orWhereYear('training_date', $year)
-                ->orWhereYear('created_at', $year)
-                ->orWhere(function ($sub) use ($year, $regulerYearIds) {
-                    $sub->where('program_type', 'reguler')
-                        ->where(function ($sub2) use ($year, $regulerYearIds) {
-                            if (! empty($regulerYearIds)) {
-                                $sub2->whereIn('program_id', $regulerYearIds);
-                            }
-                            $sub2->orWhere('notes', 'like', "%{$year}%");
-                        });
-                });
-        })->get();
-        // Fallback: if there are unpopulated tahun/date records, ensure all filtered properly
-        $records = $this->filterRecordsByYearAndCumulativeMonth($yearRecords, $year, $selectedMonthNum, $regulerYearIds);
+            $regulerYearIds = $regulerYear->pluck('Program_reguler_id')->map(fn ($id) => (int) $id)->all();
+            $yearRecords = TrainingRecord::where(function ($q) use ($year, $regulerYearIds) {
+                $q->where('tahun', $year)
+                    ->orWhereYear('training_date', $year)
+                    ->orWhereYear('created_at', $year)
+                    ->orWhere(function ($sub) use ($year, $regulerYearIds) {
+                        $sub->where('program_type', 'reguler')
+                            ->where(function ($sub2) use ($year, $regulerYearIds) {
+                                if (! empty($regulerYearIds)) {
+                                    $sub2->whereIn('program_id', $regulerYearIds);
+                                }
+                                $sub2->orWhere('notes', 'like', "%{$year}%");
+                            });
+                    });
+            })->get();
 
-        // 1. REKAP TRAINING REPORT (Reguler, Softskill, Technical)
-        $rekapTraining = $this->computeRekapTrainingReport($year, $selectedMonthNum, $regulerYear, $nonRegulerYear, $records);
+            $records = $this->filterRecordsByYearAndCumulativeMonth($yearRecords, $year, $selectedMonthNum, $regulerYearIds);
 
-        // 2. MONITORING TRAINEE UNDER 2 YEARS
-        $traineeUnder2Years = $this->computeTraineeUnder2Years($year);
+            return [
+                'rekapTraining' => $this->computeRekapTrainingReport($year, $selectedMonthNum, $regulerYear, $nonRegulerYear, $records),
+                'traineeUnder2Years' => $this->computeTraineeUnder2Years($year),
+                'karirLulusan' => $this->computeKarirLulusan($year),
+                'staffFreshGraduate' => $this->computeStaffFreshGraduate($year, $selectedMonthNum, $regulerYear, $records),
+                'softskillRegional' => $this->computeSoftskillRegional($year, $selectedMonthNum, $nonRegulerYear, $records),
+                'teknikalBreakdown' => $this->computeTeknikalBreakdown($year, $selectedMonthNum, $nonRegulerYear, $records),
+            ];
+        });
 
-        // 3. MONITORING KARIR LULUSAN FRLC
-        $karirLulusan = $this->computeKarirLulusan($year);
-
-        // 4. STAFF FRESH GRADUATE (Asisten Trainee)
-        $staffFreshGraduate = $this->computeStaffFreshGraduate($year, $selectedMonthNum, $regulerYear, $records);
-
-        // 5. PROGRAM SOFTSKILL BY REGION
-        $softskillRegional = $this->computeSoftskillRegional($year, $selectedMonthNum, $nonRegulerYear, $records);
-
-        // 6. PROGRAM NON-REGULER TEKNIKAL BY CATEGORY & REGION
-        $teknikalBreakdown = $this->computeTeknikalBreakdown($year, $selectedMonthNum, $nonRegulerYear, $records);
+        $rekapTraining = $metrics['rekapTraining'];
+        $traineeUnder2Years = $metrics['traineeUnder2Years'];
+        $karirLulusan = $metrics['karirLulusan'];
+        $staffFreshGraduate = $metrics['staffFreshGraduate'];
+        $softskillRegional = $metrics['softskillRegional'];
+        $teknikalBreakdown = $metrics['teknikalBreakdown'];
 
         return view('Administrasi.Pages.Dashboard.dashboard', compact(
             'year',
@@ -317,125 +324,175 @@ class DashboardController extends Controller
         $regulerPrograms = $regulerPrograms->filter(fn ($p) => ! $p->isMandor());
         $nonRegulerPrograms = $nonRegulerPrograms ?? $this->filterNonRegulerByYear(ProgramNonReguler::all(), $year);
         $regulerYearIds = $regulerPrograms->pluck('Program_reguler_id')->map(fn ($id) => (int) $id)->all();
-        $records = $records ?? $this->filterRecordsByYearAndCumulativeMonth(TrainingRecord::all(), $year, $selectedMonthNum, $regulerYearIds);
 
-        $isRecordMandor = function ($r) {
-            $notes = strtoupper(trim((string) $r->notes));
-            $nama = strtoupper(trim((string) $r->nama_pelatihan));
+        // 1. REGULER (Management Trainee Staff)
+        $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
+        $normalizeName = function (?string $name): string {
+            if (! $name) {
+                return '';
+            }
+            $clean = strtolower(trim($name));
+            $clean = preg_replace('/[.\-_,]/', ' ', $clean);
+            $clean = preg_replace('/\s+/', ' ', $clean);
+            $clean = str_replace('deofinka', 'df', $clean);
 
-            return str_starts_with($notes, 'PMT') || str_starts_with($notes, 'PKT')
-                || str_starts_with($nama, 'PMT') || str_starts_with($nama, 'PKT')
-                || str_contains($notes, 'MANDOR') || str_contains($nama, 'MANDOR');
+            return trim($clean);
         };
+        $normalizeAngkatan = function (string $name): string {
+            $str = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', $name)));
+            $str = str_replace(
+                ['FIELD ASSISTANT', 'ESTATE CADET TRAINEE', 'ESTATE CADET', 'MILL ASSISTANT', 'ADMIN ASSISTANT', 'PROCESSING', 'PABRIK'],
+                ['FAT', 'ECT', 'ECT', 'MAT', 'AAT', 'PMT', 'PMT'],
+                $str
+            );
+            $str = preg_replace('/[^A-Z0-9]/', ' ', $str);
+            $parts = array_values(array_filter(explode(' ', $str)));
+
+            return implode('-', $parts);
+        };
+
+        $allEmployees = MonitoringEmployee::all();
+        $empByAngkatan = [];
+        foreach ($allEmployees as $e) {
+            if ($e->angkatan_fr_academy) {
+                $norm = $normalizeAngkatan($e->angkatan_fr_academy);
+                $empByAngkatan[$norm][] = $normalizeName($e->nama);
+            }
+        }
+
+        $allAngkatans = MonitoringAngkatan::pluck('angkatan', 'id_angkatan')->all();
+        $allCulled = MonitoringCulled::all();
+        $culledByAngkatan = [];
+        foreach ($allCulled as $c) {
+            $rawAng = $allAngkatans[$c->id_angkatan] ?? null;
+            if ($rawAng) {
+                $norm = $normalizeAngkatan($rawAng);
+                $culledByAngkatan[$norm][] = $normalizeName($c->nama);
+            }
+        }
+
+        $allTrainingRecords = TrainingRecord::where(function ($q) {
+            $q->where('program_type', 'reguler')
+                ->orWhere('notes', 'LIKE', 'FAT%')
+                ->orWhere('notes', 'LIKE', 'MAT%')
+                ->orWhere('notes', 'LIKE', 'TAT%')
+                ->orWhere('notes', 'LIKE', 'AAT%')
+                ->orWhere('notes', 'LIKE', 'DMT%')
+                ->orWhere('notes', 'LIKE', 'ECT%')
+                ->orWhere('notes', 'LIKE', 'PMT%')
+                ->orWhere('notes', 'LIKE', 'PKT%');
+        })->get();
+        $allTrainingRecords = $this->filterRecordsByYearAndCumulativeMonth($allTrainingRecords, $year, $selectedMonthNum, $regulerYearIds);
+
+        $trByAngkatan = [];
+        foreach ($allTrainingRecords as $r) {
+            if ($r->notes) {
+                $norm = $normalizeAngkatan($r->notes);
+                $trByAngkatan[$norm][] = $normalizeName($r->participant_name);
+            }
+        }
 
         $regPlanBatch = (int) $regulerPrograms->count();
         $regPlanPart = (int) $regulerPrograms->sum('target_peserta');
-        $regRecords = $records->where('program_type', 'reguler')->reject($isRecordMandor);
-        $regRecordIds = array_flip($regRecords->pluck('id')->all());
-
-        // Group reguler records by program_id to deduplicate participants per batch
-        $recordsByProgId = [];
-        $unassignedRegRecs = [];
-        foreach ($regRecords as $r) {
-            if ($r->program_id) {
-                $recordsByProgId[(int) $r->program_id][] = $r;
-            } else {
-                $unassignedRegRecs[] = $r;
-            }
-        }
-
-        $matchedUnassignedIds = [];
         $regRealBatch = 0;
         $regRealPart = 0;
+
         $today = date('Y-m-d');
+        $targetDate = $selectedMonthNum ? date('Y-m-t', strtotime("{$year}-{$selectedMonthNum}-01")) : $today;
 
         foreach ($regulerPrograms as $p) {
-            // Pastikan tanggal_pelaksanaan awal <= dari tanggal saat ini
+            $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
+            $normPName = $normalizeAngkatan($pName);
+
+            $names = [];
+            foreach ($trByAngkatan as $ang => $nList) {
+                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
+                    foreach ($nList as $n) {
+                        if ($n) $names[$n] = true;
+                    }
+                }
+            }
+            foreach ($empByAngkatan as $ang => $nList) {
+                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
+                    foreach ($nList as $n) {
+                        if ($n) $names[$n] = true;
+                    }
+                }
+            }
+            foreach ($culledByAngkatan as $ang => $nList) {
+                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
+                    foreach ($nList as $n) {
+                        if ($n) $names[$n] = true;
+                    }
+                }
+            }
+
+            $autoKelas = count($names);
+            $kelas = ($p->kelas !== null) ? (int) $p->kelas : $autoKelas;
+
+            // Logika terpisah untuk Realisasi Batch dan Realisasi Peserta:
+            // 1. Batch: Hanya dihitung jika tanggal mulai pelaksanaan <= target tanggal (sudah mulai)
             $startDate = $this->getProgramRegulerStartDate($p);
-            if (! $startDate || $startDate > $today) {
-                continue;
+            $isStarted = ($startDate && $startDate <= $targetDate);
+            if ($isStarted && $kelas > 0) {
+                $regRealBatch++;
             }
 
-            $pId = (int) ($p->Program_reguler_id ?? $p->getKey());
-            $pList = $recordsByProgId[$pId] ?? [];
-
-            // Match unassigned records by notes or program name
-            $pNameNorm = strtolower(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->Training_Program)));
-            if (! empty($unassignedRegRecs)) {
-                foreach ($unassignedRegRecs as $r) {
-                    if (isset($matchedUnassignedIds[$r->id])) {
-                        continue;
-                    }
-                    $rNotes = strtolower(trim((string) $r->notes));
-                    $rNama = strtolower(trim((string) $r->nama_pelatihan));
-                    if ($pNameNorm !== '' && (str_contains($rNotes, $pNameNorm) || str_contains($rNama, $pNameNorm))) {
-                        $pList[] = $r;
-                        $matchedUnassignedIds[$r->id] = true;
-                    }
-                }
-            }
-
-            // Deduplicate participants per program batch
-            $seen = [];
-            $batchPartCount = 0;
-            foreach ($pList as $r) {
-                $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
-                if (! isset($seen[$ident])) {
-                    $seen[$ident] = true;
-                    $batchPartCount++;
-                }
-            }
-
-            if ($batchPartCount > 0) {
-                $regRealBatch += 1;
-                $regRealPart += $batchPartCount;
-            }
-        }
-
-        // Handle any remaining unassigned reguler records (unbudgeted)
-        $remainingUnassigned = array_filter($unassignedRegRecs, fn ($r) => ! isset($matchedUnassignedIds[$r->id]));
-        if (! empty($remainingUnassigned)) {
-            $groupedUnbudget = collect($remainingUnassigned)->groupBy(fn ($r) => trim($r->notes ?: $r->nama_pelatihan ?: 'Reguler Unbudget'));
-            foreach ($groupedUnbudget as $uRecs) {
-                $seen = [];
-                $uPartCount = 0;
-                foreach ($uRecs as $r) {
-                    $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
-                    if (! isset($seen[$ident])) {
-                        $seen[$ident] = true;
-                        $uPartCount++;
-                    }
-                }
-                if ($uPartCount > 0) {
-                    $regRealBatch += 1;
-                    $regRealPart += $uPartCount;
-                }
+            // 2. Peserta: Dihitung dari jumlah peserta kelas yang ada
+            if ($kelas > 0) {
+                $regRealPart += $kelas;
             }
         }
 
         $regPctBatch = $regPlanBatch > 0 ? round(($regRealBatch / $regPlanBatch) * 100) : 0;
         $regPctPart = $regPlanPart > 0 ? round(($regRealPart / $regPlanPart) * 100) : 0;
 
-        $softPrograms = $nonRegulerPrograms->filter(fn ($p) => $p->isSoftSkill());
-        $softPlanBatch = (int) $softPrograms->sum(fn ($p) => (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0));
-        $softPlanPart = (int) $softPrograms->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0));
-        $softProgramIds = $softPrograms->pluck('id_nonreguler')->all();
+        // 2 & 3. NON REGULER (SOFTSKILL & TEKNIKAL)
         $regulerPrefixes = ['FAT', 'MAT', 'TAT', 'AAT', 'DMT', 'ECT', 'PMT', 'PKT'];
-        $technicalNotes = ['ESTATE', 'MILL', 'TRACTION', 'TRAKSI', 'DOWNSTREAM', 'ADMINISTRASI', 'ADMIN'];
-        $softRecords = $records->filter(function ($r) use ($softPrograms, $softProgramIds, $regulerPrefixes, $regRecordIds, $technicalNotes) {
-            if (isset($regRecordIds[$r->id])) {
-                return false;
-            }
+        $trNonReg = TrainingRecord::where(function ($q) {
+            $q->where('program_type', 'non_reguler')
+                ->orWhere('reg_non_reg', 'LIKE', '%non%')
+                ->orWhereIn('notes', ['Softskill', 'Traksi', 'Administrasi', 'Mill', 'Estate', 'Downstream']);
+        })->get();
+
+        $trNonReg = $this->filterRecordsByYearAndCumulativeMonth($trNonReg, $year, $selectedMonthNum)->filter(function ($r) use ($regulerPrefixes) {
             $notes = strtoupper(trim((string) $r->notes));
             foreach ($regulerPrefixes as $prefix) {
                 if (str_starts_with($notes, $prefix)) {
                     return false;
                 }
             }
-            if (in_array($notes, $technicalNotes, true)) {
-                return false;
-            }
+
+            return true;
+        });
+
+        $softPrograms = $nonRegulerPrograms->filter(fn ($p) => $p->isSoftSkill());
+        $softPlanBatch = (int) $softPrograms->sum(fn ($p) => (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0));
+        $softPlanPart = (int) $softPrograms->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0));
+        $softProgramIds = $softPrograms->pluck('id_nonreguler')->all();
+
+        $tekPrograms = $nonRegulerPrograms->filter(fn ($p) => ! $p->isSoftSkill());
+        $tekPlanBatch = (int) $tekPrograms->sum(fn ($p) => (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0));
+        $tekPlanPart = (int) $tekPrograms->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0));
+
+        $technicalNotes = ['ESTATE' => true, 'MILL' => true, 'TRACTION' => true, 'TRAKSI' => true, 'DOWNSTREAM' => true, 'ADMINISTRASI' => true, 'ADMIN' => true];
+        $allSoftProgramIds = array_flip(ProgramNonReguler::all()->filter(fn ($p) => $p->isSoftSkill())->pluck('id_nonreguler')->all());
+
+        $softRecords = [];
+        $tekRecords = [];
+        $softPelatihanNames = [];
+        $tekPelatihanNames = [];
+
+        foreach ($trNonReg as $r) {
+            $notes = strtoupper(trim((string) $r->notes));
             $nama = strtolower(trim((string) $r->nama_pelatihan));
+
+            if (isset($technicalNotes[$notes])) {
+                $tekRecords[] = $r;
+                if ($r->nama_pelatihan) $tekPelatihanNames[$r->nama_pelatihan] = true;
+                continue;
+            }
+
             $isSoft = ($notes === 'SOFTSKILL')
                 || str_contains($notes, 'SOFT')
                 || str_contains($nama, 'soft')
@@ -448,34 +505,24 @@ class DashboardController extends Controller
                 || str_contains($nama, 'training of trainers')
                 || (bool) preg_match('/\b(tot)\b/i', $nama)
                 || str_contains($nama, 'fr mengajar')
-                || ($r->program_id && in_array((int) $r->program_id, $softProgramIds, true));
+                || ($r->program_id && isset($allSoftProgramIds[(int) $r->program_id]));
 
-            return $isSoft;
-        });
-        $softRealPart = (int) $softRecords->count();
-        $softRealBatch = (int) $softPrograms->sum(fn ($p) => (int) ($p->realisasi_batch ?? 0)) ?: (int) $softRecords->pluck('nama_pelatihan')->filter()->unique()->count();
+            if ($isSoft) {
+                $softRecords[] = $r;
+                if ($r->nama_pelatihan) $softPelatihanNames[$r->nama_pelatihan] = true;
+            } else {
+                $tekRecords[] = $r;
+                if ($r->nama_pelatihan) $tekPelatihanNames[$r->nama_pelatihan] = true;
+            }
+        }
+
+        $softRealPart = count($softRecords);
+        $softRealBatch = (int) $softPrograms->sum(fn ($p) => (int) ($p->realisasi_batch ?? 0)) ?: count($softPelatihanNames);
         $softPctBatch = $softPlanBatch > 0 ? round(($softRealBatch / $softPlanBatch) * 100) : 0;
         $softPctPart = $softPlanPart > 0 ? round(($softRealPart / $softPlanPart) * 100) : 0;
 
-        $tekPrograms = $nonRegulerPrograms->filter(fn ($p) => ! $p->isSoftSkill());
-        $tekPlanBatch = (int) $tekPrograms->sum(fn ($p) => (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0));
-        $tekPlanPart = (int) $tekPrograms->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0));
-        $softRecordIds = array_flip($softRecords->pluck('id')->all());
-        $tekRecords = $records->filter(function ($r) use ($regRecordIds, $softRecordIds, $regulerPrefixes) {
-            if ($r->program_type === 'reguler' || isset($regRecordIds[$r->id]) || isset($softRecordIds[$r->id])) {
-                return false;
-            }
-            $notes = strtoupper(trim((string) $r->notes));
-            foreach ($regulerPrefixes as $prefix) {
-                if (str_starts_with($notes, $prefix)) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
-        $tekRealPart = (int) $tekRecords->count();
-        $tekRealBatch = (int) $tekPrograms->sum(fn ($p) => (int) ($p->realisasi_batch ?? 0)) ?: (int) $tekRecords->pluck('nama_pelatihan')->filter()->unique()->count();
+        $tekRealPart = count($tekRecords);
+        $tekRealBatch = (int) $tekPrograms->sum(fn ($p) => (int) ($p->realisasi_batch ?? 0)) ?: count($tekPelatihanNames);
         $tekPctBatch = $tekPlanBatch > 0 ? round(($tekRealBatch / $tekPlanBatch) * 100) : 0;
         $tekPctPart = $tekPlanPart > 0 ? round(($tekRealPart / $tekPlanPart) * 100) : 0;
 
@@ -531,7 +578,7 @@ class DashboardController extends Controller
             'TAT' => ['TRACTION ASSISTANT', 'TAT'],
         ];
 
-        $allAsisten = Asisten::all();
+        $allAsisten = Asisten::select(['id', 'program', 'status_karyawan', 'keterangan'])->get();
         $rows = [];
         $totTrainee = 0;
         $totCulled = 0;
@@ -767,27 +814,41 @@ class DashboardController extends Controller
                         ->orWhere('tanggal_resign', '');
                 })
                 ->where(function ($q) {
-                    $q->whereNull('tahun')
-                        ->orWhere('tahun', '>=', 2011);
+                    $q->whereNull('tahun_angkatan')
+                        ->orWhere('tahun_angkatan', '>=', 2011);
                 })
                 ->get();
 
             $keywords = [
-                'FAT' => ['FIELD ASSISTANT', 'STAFF OPERATION', 'FAT'],
+                'FAT' => ['FIELD ASSISTANT', 'STAFF OPERATION', 'FAT', 'ESTATE CADET', 'ECT'],
                 'MAT' => ['MILL ASSISTANT', 'MAT'],
                 'AAT' => ['ADMIN ASSISTANT', 'ADMINISTRATION ASSISTANT', 'AAT'],
-                'TAT' => ['TRACTION ASSISTANT'],
+                'TAT' => ['TRACTION ASSISTANT', 'TAT'],
                 'DMT' => ['DOWNSTREAM', 'DMT'],
             ];
 
             foreach ($allAsisten as $a) {
                 $lvl = strtoupper(trim((string) $a->level_jabatan));
                 $pName = strtoupper((string) $a->program);
+                $batchName = strtoupper((string) $a->batch);
+
+                // Filter only starting from 2011 (pre-2011 are excluded)
+                $rowYear = 0;
+                if (preg_match('/\b(20\d{2})\b/', $pName, $m)) {
+                    $rowYear = (int) $m[1];
+                } elseif (preg_match('/\b(20\d{2})\b/', $batchName, $m)) {
+                    $rowYear = (int) $m[1];
+                } elseif ($a->tahun_angkatan && preg_match('/\b(20\d{2})\b/', (string) $a->tahun_angkatan, $m)) {
+                    $rowYear = (int) $m[1];
+                }
+                if ($rowYear > 0 && $rowYear < 2011) {
+                    continue;
+                }
 
                 $matchedProg = null;
                 foreach ($keywords as $p => $kws) {
                     foreach ($kws as $kw) {
-                        if (str_contains($pName, $kw)) {
+                        if (str_contains($pName, $kw) || str_contains($batchName, $kw)) {
                             $matchedProg = $p;
                             break 2;
                         }
@@ -869,6 +930,7 @@ class DashboardController extends Controller
         }
 
         $today = date('Y-m-d');
+        $targetDate = $selectedMonthNum ? date('Y-m-t', strtotime("{$year}-{$selectedMonthNum}-01")) : $today;
         foreach ($programs as $prog) {
             $matchingMaster = $reguler->filter(fn ($p) => str_starts_with(strtoupper($p->Training_Program), $prog));
             $planBatch = (int) $matchingMaster->count();
@@ -878,11 +940,10 @@ class DashboardController extends Controller
             $realPart = 0;
 
             foreach ($matchingMaster as $p) {
-                // Pastikan tanggal_pelaksanaan awal <= dari tanggal saat ini
+                // Logika terpisah untuk Realisasi Batch dan Realisasi Peserta:
+                // 1. Batch: Hanya dihitung jika tanggal mulai pelaksanaan <= target tanggal (sudah mulai)
                 $startDate = $this->getProgramRegulerStartDate($p);
-                if (! $startDate || $startDate > $today) {
-                    continue;
-                }
+                $isStarted = ($startDate && $startDate <= $targetDate);
 
                 $pId = (int) ($p->Program_reguler_id ?? $p->getKey());
                 $pRecs = $recordsByProgId[$pId] ?? [];
@@ -898,8 +959,11 @@ class DashboardController extends Controller
                     }
                 }
 
-                if ($batchPartCount > 0) {
+                if ($isStarted && $batchPartCount > 0) {
                     $realBatch += 1;
+                }
+
+                if ($batchPartCount > 0) {
                     $realPart += $batchPartCount;
                 }
             }

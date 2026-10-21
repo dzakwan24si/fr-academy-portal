@@ -12,6 +12,7 @@ use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -69,34 +70,44 @@ class TrainingRecordController extends Controller
         }
 
         $activities = $this->activities();
-        $filteredRecords = $this->filteredRecords($request);
 
-        $trYears = TrainingRecord::whereNotNull('tahun')->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
-        $regYears = ProgramReguler::whereNotNull('Mulai_program')->get()->map(fn ($p) => (int) optional($p->Mulai_program)->year)->filter()->all();
-        $nonRegYears = ProgramNonReguler::whereNotNull('start_date')->get()->map(fn ($p) => (int) optional($p->start_date)->year)->filter()->all();
+        $years = Cache::remember('tr_years', 300, function () {
+            $trYears = TrainingRecord::whereNotNull('tahun')->distinct()->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
+            $regYears = ProgramReguler::whereNotNull('Mulai_program')->pluck('Mulai_program')->map(fn ($d) => (int) date('Y', strtotime($d)))->filter()->all();
+            $nonRegYears = ProgramNonReguler::whereNotNull('start_date')->pluck('start_date')->map(fn ($d) => (int) date('Y', strtotime($d)))->filter()->all();
 
-        $years = collect([2024, 2025, 2026, 2027])
-            ->merge($trYears)
-            ->merge($regYears)
-            ->merge($nonRegYears)
-            ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
-            ->unique()
-            ->sort()
-            ->values()
-            ->all();
+            return collect([2024, 2025, 2026, 2027])
+                ->merge($trYears)
+                ->merge($regYears)
+                ->merge($nonRegYears)
+                ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
+        });
 
-        $nonRegulerSubCategories = ProgramNonReguler::distinct()->pluck('sub_kategori')
-            ->filter()
-            ->map(fn ($c) => trim((string) $c))
-            ->unique()
-            ->values()
-            ->all();
+        $nonRegulerSubCategories = Cache::remember('tr_non_reg_subcats', 300, function () {
+            return ProgramNonReguler::distinct()->pluck('sub_kategori')
+                ->filter()
+                ->map(fn ($c) => trim((string) $c))
+                ->unique()
+                ->values()
+                ->all();
+        });
 
+        $matchingIds = $this->filteredRecordIds($request);
+        $total = count($matchingIds);
         $perPage = 15;
         $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $pageIds = array_slice($matchingIds, ($currentPage - 1) * $perPage, $perPage);
+        $pageRecords = ! empty($pageIds)
+            ? TrainingRecord::whereIn('id', $pageIds)->orderBy('id', 'desc')->get()
+            : collect();
+
         $records = new LengthAwarePaginator(
-            $filteredRecords->forPage($currentPage, $perPage)->values(),
-            $filteredRecords->count(),
+            $pageRecords,
+            $total,
             $perPage,
             $currentPage,
             ['path' => $request->url(), 'query' => $request->query()]
@@ -106,12 +117,22 @@ class TrainingRecordController extends Controller
         return view('Administrasi.Pages.Program.training_record', compact('records', 'activities', 'year', 'rawYear', 'month', 'type', 'category', 'years', 'months', 'nonRegulerSubCategories'));
     }
 
+    private function clearTrCache(): void
+    {
+        Cache::increment('tr_cache_version');
+        Cache::forget('tr_years');
+        Cache::forget('tr_non_reg_subcats');
+        Cache::increment('dashboard_cache_version');
+        Cache::increment('rvb_cache_version');
+    }
+
     public function store(Request $request)
     {
         $data = $this->validated($request);
         $this->ensureActivity($data['program_type'], $data['program_id']);
         $this->ensureUnique($data['program_type'], $data['program_id'], $data['participant_identifier']);
         TrainingRecord::create($data + ['status' => 'valid']);
+        $this->clearTrCache();
 
         return back()->with('success', 'Training Record berhasil ditambahkan.');
     }
@@ -127,6 +148,7 @@ class TrainingRecordController extends Controller
         $this->ensureActivity($data['program_type'], $data['program_id']);
         $this->ensureUnique($data['program_type'], $data['program_id'], $data['participant_identifier'], null, null, null, $trainingRecord->id);
         $trainingRecord->update($data);
+        $this->clearTrCache();
 
         return back()->with('success', 'Training Record berhasil diperbarui.');
     }
@@ -134,6 +156,7 @@ class TrainingRecordController extends Controller
     public function destroy(TrainingRecord $trainingRecord)
     {
         $trainingRecord->delete();
+        $this->clearTrCache();
 
         return back()->with('success', 'Training Record berhasil dihapus.');
     }
@@ -142,6 +165,7 @@ class TrainingRecordController extends Controller
     {
         $count = TrainingRecord::count();
         TrainingRecord::truncate();
+        $this->clearTrCache();
 
         ActivityLog::log(
             'Hapus',
@@ -293,6 +317,7 @@ class TrainingRecordController extends Controller
         if ($skipped > 0) {
             $message .= " ({$skipped} data dilewati karena aktivitas program tidak ditemukan).";
         }
+        $this->clearTrCache();
 
         return back()->with('success', $message);
     }
@@ -406,7 +431,7 @@ class TrainingRecordController extends Controller
 
         $cleanStr = fn ($str) => strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', '', (string) $str)));
 
-        $reguler = ProgramReguler::all()->mapWithKeys(fn ($item) => [
+        $reguler = ProgramReguler::select(['Program_reguler_id', 'Training_Program', 'jenis_program_reguler', 'Mulai_program', 'Selesai_program'])->get()->mapWithKeys(fn ($item) => [
             'reguler:'.$item->getKey() => [
                 'type' => 'reguler',
                 'sub_type' => 'reguler',
@@ -417,7 +442,7 @@ class TrainingRecordController extends Controller
             ],
         ]);
 
-        $nonReguler = ProgramNonReguler::all()->mapWithKeys(function ($item) use ($cleanStr) {
+        $nonReguler = ProgramNonReguler::select(['id_nonreguler', 'jenis_pelatihan', 'kategori_pelatihan', 'sub_kategori', 'region', 'start_date', 'end_date'])->get()->mapWithKeys(function ($item) use ($cleanStr) {
             $kat = $cleanStr(($item->kategori_pelatihan ?? '').' '.($item->sub_kategori ?? '').' '.($item->jenis_pelatihan ?? ''));
             $isSoft = str_contains($kat, 'managerial') || str_contains($kat, 'leadership') || str_contains($kat, 'soft');
 
@@ -436,13 +461,42 @@ class TrainingRecordController extends Controller
         return self::$cachedActivities = $reguler->union($nonReguler);
     }
 
-    private function filteredRecords(Request $request)
+    private function filteredRecordIds(Request $request): array
     {
         $clone = $request->duplicate();
         $activities = $this->activities();
         $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
 
-        return TrainingRecord::latest()->get()->filter(function ($record) use ($clone, $activities, $cleanStr) {
+        $v = (int) Cache::get('tr_cache_version', 1);
+        $cacheKey = "tr_filtered_ids_v{$v}_".md5(json_encode($clone->all()));
+
+        return Cache::remember($cacheKey, 180, function () use ($clone, $activities, $cleanStr) {
+            $query = TrainingRecord::latest();
+            $rawYear = $clone->input('year', 'all');
+            $year = ($rawYear === 'all' || $rawYear === '' || $rawYear === '0') ? null : (int) $rawYear;
+            $type = $clone->input('type', 'all');
+
+            if ($type === 'reguler') {
+                $query->where('program_type', 'reguler');
+            } elseif ($type === 'non_reguler') {
+                $query->where('program_type', 'non_reguler');
+            }
+
+            if ($year !== null) {
+                $query->where(function ($q) use ($year) {
+                    $q->where('tahun', $year)
+                        ->orWhereNull('tahun')
+                        ->orWhere('tahun', 0);
+                });
+            }
+
+            foreach (['company', 'work_location', 'group_name', 'region', 'position', 'internal_external', 'level'] as $field) {
+                if ($clone->filled($field)) {
+                    $query->where($field, $clone->input($field));
+                }
+            }
+
+            return $query->get()->filter(function ($record) use ($clone, $activities, $cleanStr) {
             $type = $clone->input('type', 'all');
             $category = trim((string) $clone->input('category', 'all'));
             $rawYear = $clone->input('year', 'all');
@@ -546,7 +600,17 @@ class TrainingRecordController extends Controller
             }
 
             return true;
+        })->pluck('id')->all();
         });
+    }
+
+    private function filteredRecords(Request $request)
+    {
+        $ids = $this->filteredRecordIds($request);
+
+        return ! empty($ids)
+            ? TrainingRecord::whereIn('id', $ids)->orderBy('id', 'desc')->get()
+            : collect();
     }
 
     private function activityDates($activity, string $type): array
@@ -682,6 +746,7 @@ class TrainingRecordController extends Controller
                 'region' => $formattedRegion,
                 'trainer' => $item['instruktur'] ?? 'Internal',
                 'lokasi_training' => $item['lokasi kerja'] ?? 'FR Academy',
+                'tahun' => ! empty($item['tahun']) ? (int) $item['tahun'] : (! empty($item['thn']) ? (int) $item['thn'] : (int) date('Y')),
                 'TARGET_BATCH' => 0,
                 'TARGET_PESERTA' => 0,
                 'target_total' => 0,

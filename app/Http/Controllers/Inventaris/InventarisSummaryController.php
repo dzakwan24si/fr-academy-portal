@@ -7,6 +7,7 @@ use App\Models\Inventaris\Barang;
 use App\Models\Inventaris\Pembelian;
 use App\Models\Inventaris\StockOpname;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class InventarisSummaryController extends Controller
 {
@@ -26,6 +27,18 @@ class InventarisSummaryController extends Controller
 
         $summaryData = [];
 
+        // Pre-fetch all Pembelian sums and StockOpname records up to selected year in 2 fast queries
+        $pembelianSums = Pembelian::whereYear('tanggal_pembelian', '<=', $selectedYear)
+            ->select('barang_id', DB::raw('SUM(jumlah) as total'))
+            ->groupBy('barang_id')
+            ->pluck('total', 'barang_id')
+            ->all();
+
+        $allStockOpnames = StockOpname::whereYear('tanggal_stock_opname', '<=', $selectedYear)
+            ->orderByDesc('tanggal_stock_opname')
+            ->get()
+            ->groupBy('barang_id');
+
         foreach ($locations as $lokasi) {
             $barangList = Barang::where('jenis_lokasi', $lokasi)
                 ->orWhere('lokasi', $lokasi)
@@ -34,16 +47,9 @@ class InventarisSummaryController extends Controller
 
             $items = [];
             foreach ($barangList as $barang) {
-                // Get latest Stock Opname up to or within selected year
-                $latestSO = StockOpname::where('barang_id', $barang->id)
-                    ->whereYear('tanggal_stock_opname', '<=', $selectedYear)
-                    ->orderByDesc('tanggal_stock_opname')
-                    ->first();
-
-                // Total purchased up to this year
-                $totalPembelian = Pembelian::where('barang_id', $barang->id)
-                    ->whereYear('tanggal_pembelian', '<=', $selectedYear)
-                    ->sum('jumlah');
+                $soList = $allStockOpnames->get($barang->id);
+                $latestSO = $soList ? $soList->first() : null;
+                $totalPembelian = (int) ($pembelianSums[$barang->id] ?? 0);
 
                 $stok = $latestSO ? $latestSO->grand_total : $totalPembelian;
                 $baik = $latestSO ? $latestSO->jumlah_baik : $stok;
@@ -52,16 +58,12 @@ class InventarisSummaryController extends Controller
 
                 // Room breakdown for Kantor items
                 $roomBreakdown = [];
-                if ($lokasi === 'Kantor') {
-                    $latestDate = StockOpname::where('barang_id', $barang->id)
-                        ->whereYear('tanggal_stock_opname', '<=', $selectedYear)
-                        ->max('tanggal_stock_opname');
-
+                if ($lokasi === 'Kantor' && $soList) {
+                    $latestDate = $latestSO->tanggal_stock_opname;
                     if ($latestDate) {
-                        $roomRecords = StockOpname::where('barang_id', $barang->id)
-                            ->where('tanggal_stock_opname', $latestDate)
-                            ->whereNotNull('lokasi_spesifik')
-                            ->get();
+                        $roomRecords = $soList->filter(function ($rec) use ($latestDate) {
+                            return $rec->tanggal_stock_opname === $latestDate && ! empty($rec->lokasi_spesifik);
+                        });
 
                         foreach ($roomRecords as $rec) {
                             $roomBreakdown[] = [
@@ -99,20 +101,15 @@ class InventarisSummaryController extends Controller
 
             $summaryRoomMap = [];
             foreach ($kantorBarangSummary as $b) {
-                $latestSO = StockOpname::where('barang_id', $b->id)
-                    ->whereYear('tanggal_stock_opname', '<=', $selectedYear)
-                    ->orderByDesc('tanggal_stock_opname')
-                    ->first();
-
-                $totalPembelian = Pembelian::where('barang_id', $b->id)
-                    ->whereYear('tanggal_pembelian', '<=', $selectedYear)
-                    ->sum('jumlah');
+                $soList = $allStockOpnames->get($b->id);
+                $latestSO = $soList ? $soList->first() : null;
+                $totalPembelian = (int) ($pembelianSums[$b->id] ?? 0);
 
                 $stok = $latestSO ? $latestSO->grand_total : $totalPembelian;
                 $baik = $latestSO ? $latestSO->jumlah_baik : $stok;
                 $rusak = $latestSO ? $latestSO->jumlah_rusak : 0;
 
-                $roomName = ($latestSO && ! empty(trim($latestSO->lokasi_spesifik)))
+                $roomName = ($latestSO && ! empty(trim((string) $latestSO->lokasi_spesifik)))
                     ? trim($latestSO->lokasi_spesifik)
                     : (($b->lokasi && ! in_array($b->lokasi, ['Kantor', 'Gudang'])) ? $b->lokasi : 'Kantor (Umum)');
 

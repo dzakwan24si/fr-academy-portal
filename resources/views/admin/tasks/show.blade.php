@@ -31,14 +31,14 @@
         <div class="p-6 border-b border-slate-100 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-slate-50/50">
             <div>
                 <h3 class="text-lg font-bold text-slate-800">Daftar Pengumpulan</h3>
-                <p class="text-sm text-slate-500 mt-0.5">Lihat dan unduh file tugas yang dikumpulkan oleh trainee.</p>
+                <p class="text-sm text-slate-500 mt-0.5">Lihat dan unduh file tugas yang dikumpulkan oleh peserta.</p>
             </div>
             @php
                 $submissionsCount = $task->submissions->where('status', 'sudah')->count();
             @endphp
             <div class="px-3 py-1.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-lg text-sm font-medium flex items-center gap-1.5">
                 <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                {{ $submissionsCount }} Trainee Telah Mengumpulkan
+                {{ $submissionsCount }} Peserta Telah Mengumpulkan
             </div>
         </div>
         
@@ -54,28 +54,42 @@
                     @foreach($submissions as $sub)
                         <div class="bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col h-full overflow-hidden">
                             
+                            @php
+                                $files = is_array($sub->file_path) ? $sub->file_path : [$sub->file_path];
+                                $firstFile = $files[0] ?? null;
+                            @endphp
                             <!-- Card Header -->
-                            <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-full bg-[#064e3b]/10 text-[#064e3b] font-bold flex items-center justify-center shrink-0">
-                                    {{ substr($sub->trainee->name, 0, 1) }}
+                            <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-3 min-w-0">
+                                    <div class="w-10 h-10 rounded-full bg-[#064e3b]/10 text-[#064e3b] font-bold flex items-center justify-center shrink-0">
+                                        {{ substr($sub->trainee->name, 0, 1) }}
+                                    </div>
+                                    <div class="min-w-0">
+                                        <h4 class="font-bold text-slate-800 text-sm truncate">{{ $sub->trainee->name }}</h4>
+                                        <p class="text-xs text-slate-500 font-mono mt-0.5">{{ $sub->trainee->nik }}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <h4 class="font-bold text-slate-800 text-sm">{{ $sub->trainee->name }}</h4>
-                                    <p class="text-xs text-slate-500 font-mono mt-0.5">{{ $sub->trainee->nik }}</p>
-                                </div>
+                                @if($firstFile)
+                                    <a href="{{ Storage::url($firstFile) }}" download="{{ basename($firstFile) }}" class="inline-flex items-center gap-1 px-2.5 py-1.5 bg-white border border-slate-200 hover:border-[#064e3b] hover:bg-emerald-50 text-slate-600 hover:text-[#064e3b] rounded-lg text-xs font-semibold shadow-sm transition-all shrink-0" title="Unduh File">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                        <span>Unduh</span>
+                                    </a>
+                                @endif
                             </div>
                             
                             <!-- Card Body (Files) -->
                             <div class="p-4 flex flex-col gap-2 flex-1">
                                 <p class="text-xs font-semibold text-slate-400 mb-1">FILE TERLAMPIR</p>
-                                @php
-                                    $files = is_array($sub->file_path) ? $sub->file_path : [$sub->file_path];
-                                @endphp
                                 @foreach($files as $file)
-                                    <a href="{{ Storage::url($file) }}" target="_blank" class="flex items-center gap-3 p-2.5 bg-white border border-slate-200 hover:border-[#064e3b] hover:bg-emerald-50 rounded-lg text-sm text-slate-600 hover:text-[#064e3b] transition-colors group/file">
-                                        <svg class="w-5 h-5 text-slate-400 group-hover/file:text-[#064e3b] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
-                                        <span class="truncate flex-1" title="{{ basename($file) }}">{{ basename($file) }}</span>
-                                    </a>
+                                    <div class="flex items-center gap-2">
+                                        <a href="{{ Storage::url($file) }}" target="_blank" class="flex-1 min-w-0 flex items-center gap-3 p-2.5 bg-white border border-slate-200 hover:border-[#064e3b] hover:bg-emerald-50 rounded-lg text-sm text-slate-600 hover:text-[#064e3b] transition-colors group/file">
+                                            <svg class="w-5 h-5 text-slate-400 group-hover/file:text-[#064e3b] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path></svg>
+                                            <span class="truncate" title="{{ basename($file) }}">{{ basename($file) }}</span>
+                                        </a>
+                                        <a href="{{ Storage::url($file) }}" download="{{ basename($file) }}" title="Unduh File" class="p-2.5 bg-white border border-slate-200 hover:border-[#064e3b] hover:bg-emerald-50 text-slate-500 hover:text-[#064e3b] rounded-lg transition-colors flex items-center justify-center shrink-0 shadow-sm">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                        </a>
+                                    </div>
                                 @endforeach
                             </div>
                             
@@ -91,7 +105,7 @@
                 <div class="text-center py-12 px-4 border border-dashed border-slate-300 rounded-xl bg-slate-50">
                     <svg class="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
                     <h3 class="text-base font-semibold text-slate-700 mb-1">Belum Ada Pengumpulan</h3>
-                    <p class="text-sm text-slate-500">Trainee belum mengirimkan file tugas mereka.</p>
+                    <p class="text-sm text-slate-500">Peserta belum mengirimkan file tugas mereka.</p>
                 </div>
             @endif
         </div>
