@@ -9,6 +9,7 @@ use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
 use App\Services\ExcelExporter;
 use App\Services\SpreadsheetReader;
+use App\Services\TrainingMetricService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
@@ -27,34 +28,7 @@ class TrainingRecordController extends Controller
      */
     public static function parseMonthNumber(?string $monthStr): ?int
     {
-        if ($monthStr === null || $monthStr === '') {
-            return null;
-        }
-
-        $clean = strtoupper(trim((string) $monthStr));
-
-        if (is_numeric($clean)) {
-            $num = (int) $clean;
-
-            return ($num >= 1 && $num <= 12) ? $num : null;
-        }
-
-        $map = [
-            'JAN' => 1, 'JANUARI' => 1, 'JANUARY' => 1,
-            'FEB' => 2, 'FEBRUARI' => 2, 'FEBRUARY' => 2,
-            'MAR' => 3, 'MARET' => 3, 'MARCH' => 3,
-            'APR' => 4, 'APRIL' => 4,
-            'MEI' => 5, 'MAY' => 5,
-            'JUN' => 6, 'JUNI' => 6, 'JUNE' => 6,
-            'JUL' => 7, 'JULI' => 7, 'JULY' => 7,
-            'AGU' => 8, 'AGS' => 8, 'AGST' => 8, 'AGUSTUS' => 8, 'AUG' => 8, 'AUGUST' => 8,
-            'SEP' => 9, 'SEPT' => 9, 'SEPTEMBER' => 9,
-            'OKT' => 10, 'OKTOBER' => 10, 'OCT' => 10, 'OCTOBER' => 10,
-            'NOV' => 11, 'NOP' => 11, 'NOVEMBER' => 11,
-            'DES' => 12, 'DESEMBER' => 12, 'DEC' => 12, 'DECEMBER' => 12,
-        ];
-
-        return $map[$clean] ?? null;
+        return TrainingMetricService::parseMonthNumber($monthStr);
     }
 
     public function index(Request $request)

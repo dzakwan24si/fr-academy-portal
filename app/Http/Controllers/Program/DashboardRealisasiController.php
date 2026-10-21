@@ -14,6 +14,7 @@ use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
 use App\Services\ProgramFilterHelper;
 use App\Services\SpreadsheetReader;
+use App\Services\TrainingMetricService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
@@ -29,205 +30,37 @@ class DashboardRealisasiController extends Controller
 
     public function parseMonthNumber($value): ?int
     {
-        if ($value === null || $value === '' || $value === 'all') {
-            return null;
-        }
-        if (is_numeric($value)) {
-            $num = (int) $value;
-
-            return ($num >= 1 && $num <= 12) ? $num : null;
-        }
-
-        $upper = strtoupper(substr(trim((string) $value), 0, 3));
-        $map = [
-            'JAN' => 1, 'FEB' => 2, 'MAR' => 3, 'APR' => 4,
-            'MEI' => 5, 'MAY' => 5, 'JUN' => 6, 'JUL' => 7,
-            'AGU' => 8, 'AGS' => 8, 'AUG' => 8, 'SEP' => 9,
-            'OKT' => 10, 'OCT' => 10, 'NOV' => 11, 'DES' => 12, 'DEC' => 12,
-        ];
-
-        return $map[$upper] ?? null;
+        return TrainingMetricService::parseMonthNumber($value);
     }
 
     public function extractYearFromField($val): ?int
     {
-        if (empty($val)) {
-            return null;
-        }
-        if ($val instanceof \DateTimeInterface) {
-            return (int) $val->format('Y');
-        }
-        if (is_numeric($val) && (int) $val >= 2000 && (int) $val <= 2100) {
-            return (int) $val;
-        }
-        if (is_array($val)) {
-            foreach ($val as $item) {
-                $y = $this->extractYearFromField($item);
-                if ($y) {
-                    return $y;
-                }
-            }
-
-            return null;
-        }
-        if (is_string($val)) {
-            $trimmed = trim($val);
-            if (str_starts_with($trimmed, '[') && str_ends_with($trimmed, ']')) {
-                $decoded = json_decode($trimmed, true);
-                if (is_array($decoded)) {
-                    return $this->extractYearFromField($decoded);
-                }
-            }
-            if (preg_match('/\b(20\d{2})\b/', $trimmed, $m)) {
-                return (int) $m[1];
-            }
-            $time = strtotime($trimmed);
-            if ($time !== false && $time > 0) {
-                return (int) date('Y', $time);
-            }
-        }
-
-        return null;
+        return TrainingMetricService::extractYearFromField($val);
     }
 
     public function resolveProgramRegulerYear($p): int
     {
-        // 1. Baca kolom tahun terlebih dahulu
-        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
-            return $y;
-        }
-        // 2. Kemudian tanggal pelaksanaan
-        if ($p->Mulai_program && ($y = $this->extractYearFromField($p->Mulai_program))) {
-            return $y;
-        }
-        if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
-            return $y;
-        }
-        if ($p->Selesai_program && ($y = $this->extractYearFromField($p->Selesai_program))) {
-            return $y;
-        }
-        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) {
-            return $y;
-        }
-
-        return 2026;
+        return TrainingMetricService::resolveProgramRegulerYear($p);
     }
 
     public function resolveProgramNonRegulerYear($p): int
     {
-        // 1. Baca kolom tahun terlebih dahulu
-        if (! empty($p->tahun) && ($y = $this->extractYearFromField($p->tahun))) {
-            return $y;
-        }
-        // 2. Kemudian tanggal pelaksanaan
-        if ($p->start_date && ($y = $this->extractYearFromField($p->start_date))) {
-            return $y;
-        }
-        if (! empty($p->tanggal_pelaksanaan) && ($y = $this->extractYearFromField($p->tanggal_pelaksanaan))) {
-            return $y;
-        }
-        if ($p->end_date && ($y = $this->extractYearFromField($p->end_date))) {
-            return $y;
-        }
-        if ($p->created_at && ($y = $this->extractYearFromField($p->created_at))) {
-            return $y;
-        }
-
-        return 2026;
+        return TrainingMetricService::resolveProgramNonRegulerYear($p);
     }
 
     protected function filterRegulerByYear($programs, int $year)
     {
-        return $programs->filter(function ($p) use ($year) {
-            $pYear = (! empty($p->tahun) && is_numeric($p->tahun)) ? (int) $p->tahun : $this->resolveProgramRegulerYear($p);
-
-            return $pYear === $year;
-        });
+        return TrainingMetricService::filterRegulerByYear($programs, $year);
     }
 
     protected function filterNonRegulerByYear($programs, int $year)
     {
-        return $programs->filter(function ($p) use ($year) {
-            return $this->resolveProgramNonRegulerYear($p) === $year;
-        });
+        return TrainingMetricService::filterNonRegulerByYear($programs, $year);
     }
 
     protected function filterRecordsByYearAndCumulativeMonth($records, int $year, ?int $selectedMonthNum, array $regulerYearById = [], array $regulerYearByAng = [])
     {
-        return $records->filter(function ($r) use ($year, $selectedMonthNum, $regulerYearById, $regulerYearByAng) {
-            // 1. Year filter
-            $rYear = null;
-            if ($r->program_type === 'reguler') {
-                if ($r->program_id && isset($regulerYearById[(int) $r->program_id])) {
-                    $rYear = $regulerYearById[(int) $r->program_id];
-                } elseif (! empty($r->notes)) {
-                    $norm = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $r->notes)));
-                    $norm = str_replace(
-                        ['FIELD ASSISTANT', 'ESTATE CADET TRAINEE', 'ESTATE CADET', 'MILL ASSISTANT', 'ADMIN ASSISTANT', 'PROCESSING', 'PABRIK'],
-                        ['FAT', 'ECT', 'ECT', 'MAT', 'AAT', 'PMT', 'PMT'],
-                        $norm
-                    );
-                    $norm = preg_replace('/[^A-Z0-9]/', ' ', $norm);
-                    $norm = implode('-', array_values(array_filter(explode(' ', $norm))));
-                    if (isset($regulerYearByAng[$norm])) {
-                        $rYear = $regulerYearByAng[$norm];
-                    }
-                }
-            }
-
-            if ($rYear === null) {
-                if (! empty($r->tahun)) {
-                    $rYear = (int) $r->tahun;
-                } elseif (! empty($r->training_date)) {
-                    $rYear = (int) date('Y', strtotime($r->training_date));
-                } elseif (method_exists($r, 'activityDates')) {
-                    $dates = $r->activityDates();
-                    foreach ($dates as $d) {
-                        if ($d) {
-                            $rYear = (int) date('Y', strtotime($d));
-                            break;
-                        }
-                    }
-                } elseif (! empty($r->created_at)) {
-                    $rYear = (int) date('Y', strtotime($r->created_at));
-                } else {
-                    $rYear = 2026;
-                }
-            }
-
-            if ($rYear !== $year) {
-                // Allow carry-over training records (from previous year) for reguler programs
-                if (! ($r->program_type === 'reguler' && $rYear === $year - 1)) {
-                    return false;
-                }
-            }
-
-            // 2. Month cumulative filter
-            if ($selectedMonthNum !== null) {
-                $mNum = null;
-                if ($r->bulan) {
-                    $mNum = $this->parseMonthNumber($r->bulan);
-                }
-                if (! $mNum && $r->training_date) {
-                    $mNum = (int) date('n', strtotime($r->training_date));
-                }
-                if (! $mNum && method_exists($r, 'activityDates')) {
-                    $dates = $r->activityDates();
-                    foreach ($dates as $d) {
-                        if ($d) {
-                            $mNum = (int) date('n', strtotime($d));
-                            break;
-                        }
-                    }
-                }
-
-                if ($mNum !== null && $mNum > $selectedMonthNum) {
-                    return false;
-                }
-            }
-
-            return true;
-        });
+        return TrainingMetricService::filterRecordsByYearAndCumulativeMonth($records, $year, $selectedMonthNum, [], $regulerYearById, $regulerYearByAng);
     }
 
     public function index(Request $request)
@@ -355,31 +188,8 @@ class DashboardRealisasiController extends Controller
         $metrics = Cache::remember($cacheKey, 300, function () use ($year, $selectedMonthNum, $region, $programType, $selectedProgram, $category, $unit, $level, $trainingRecordQuery) {
             // 1. Progress MT Per Program Tables (Separated into Staf & Mandor)
             $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
-
-            $normalizeName = function (?string $name): string {
-            if (! $name) {
-                return '';
-            }
-            $clean = strtolower(trim($name));
-            $clean = preg_replace('/[.\-_,]/', ' ', $clean);
-            $clean = preg_replace('/\s+/', ' ', $clean);
-            $clean = str_replace('deofinka', 'df', $clean);
-
-            return trim($clean);
-        };
-
-        $normalizeAngkatan = function (string $name): string {
-            $str = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', $name)));
-            $str = str_replace(
-                ['FIELD ASSISTANT', 'ESTATE CADET TRAINEE', 'ESTATE CADET', 'MILL ASSISTANT', 'ADMIN ASSISTANT', 'PROCESSING', 'PABRIK'],
-                ['FAT', 'ECT', 'ECT', 'MAT', 'AAT', 'PMT', 'PMT'],
-                $str
-            );
-            $str = preg_replace('/[^A-Z0-9]/', ' ', $str);
-            $parts = array_values(array_filter(explode(' ', $str)));
-
-            return implode('-', $parts);
-        };
+            $normalizeName = fn (?string $name) => TrainingMetricService::normalizeName($name);
+            $normalizeAngkatan = fn (string $name) => TrainingMetricService::normalizeAngkatan($name);
 
         $allEmployees = MonitoringEmployee::all();
         $empByAngkatan = [];
