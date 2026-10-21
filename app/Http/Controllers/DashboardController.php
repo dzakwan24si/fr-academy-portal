@@ -180,18 +180,35 @@ class DashboardController extends Controller
             }
         }
 
-        $allTrainingRecords = TrainingRecord::where(function ($q) {
-            $q->where('program_type', 'reguler')
-                ->orWhere('notes', 'LIKE', 'FAT%')
-                ->orWhere('notes', 'LIKE', 'MAT%')
-                ->orWhere('notes', 'LIKE', 'TAT%')
-                ->orWhere('notes', 'LIKE', 'AAT%')
-                ->orWhere('notes', 'LIKE', 'DMT%')
-                ->orWhere('notes', 'LIKE', 'ECT%')
-                ->orWhere('notes', 'LIKE', 'PMT%')
-                ->orWhere('notes', 'LIKE', 'PKT%');
-        })->get();
-        $allTrainingRecords = $this->filterRecordsByYearAndCumulativeMonth($allTrainingRecords, $year, $selectedMonthNum, $regulerYearIds);
+        $regulerPrefixes = ['FAT', 'MAT', 'TAT', 'AAT', 'DMT', 'ECT', 'PMT', 'PKT'];
+        if ($records !== null) {
+            $allTrainingRecords = $records->filter(function ($r) use ($regulerPrefixes) {
+                if ($r->program_type === 'reguler') {
+                    return true;
+                }
+                $notes = strtoupper(trim((string) $r->notes));
+                foreach ($regulerPrefixes as $prefix) {
+                    if (str_starts_with($notes, $prefix)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            });
+        } else {
+            $allTrainingRecords = TrainingRecord::where(function ($q) {
+                $q->where('program_type', 'reguler')
+                    ->orWhere('notes', 'LIKE', 'FAT%')
+                    ->orWhere('notes', 'LIKE', 'MAT%')
+                    ->orWhere('notes', 'LIKE', 'TAT%')
+                    ->orWhere('notes', 'LIKE', 'AAT%')
+                    ->orWhere('notes', 'LIKE', 'DMT%')
+                    ->orWhere('notes', 'LIKE', 'ECT%')
+                    ->orWhere('notes', 'LIKE', 'PMT%')
+                    ->orWhere('notes', 'LIKE', 'PKT%');
+            })->get();
+            $allTrainingRecords = $this->filterRecordsByYearAndCumulativeMonth($allTrainingRecords, $year, $selectedMonthNum, $regulerYearIds);
+        }
 
         $trByAngkatan = [];
         foreach ($allTrainingRecords as $r) {
@@ -230,23 +247,48 @@ class DashboardController extends Controller
         $regPctPart = $regPlanPart > 0 ? round(($regRealPart / $regPlanPart) * 100) : 0;
 
         // 2 & 3. NON REGULER (SOFTSKILL & TEKNIKAL)
-        $regulerPrefixes = ['FAT', 'MAT', 'TAT', 'AAT', 'DMT', 'ECT', 'PMT', 'PKT'];
-        $trNonReg = TrainingRecord::where(function ($q) {
-            $q->where('program_type', 'non_reguler')
-                ->orWhere('reg_non_reg', 'LIKE', '%non%')
-                ->orWhereIn('notes', ['Softskill', 'Traksi', 'Administrasi', 'Mill', 'Estate', 'Downstream']);
-        })->get();
+        if ($records !== null) {
+            $trNonReg = $records->filter(function ($r) use ($regulerPrefixes) {
+                if ($r->program_type === 'non_reguler') {
+                    $notes = strtoupper(trim((string) $r->notes));
+                    foreach ($regulerPrefixes as $prefix) {
+                        if (str_starts_with($notes, $prefix)) {
+                            return false;
+                        }
+                    }
 
-        $trNonReg = $this->filterRecordsByYearAndCumulativeMonth($trNonReg, $year, $selectedMonthNum)->filter(function ($r) use ($regulerPrefixes) {
-            $notes = strtoupper(trim((string) $r->notes));
-            foreach ($regulerPrefixes as $prefix) {
-                if (str_starts_with($notes, $prefix)) {
-                    return false;
+                    return true;
                 }
-            }
+                if (str_contains(strtolower((string) $r->reg_non_reg), 'non')) {
+                    return true;
+                }
+                $notes = strtoupper(trim((string) $r->notes));
+                foreach ($regulerPrefixes as $prefix) {
+                    if (str_starts_with($notes, $prefix)) {
+                        return false;
+                    }
+                }
 
-            return true;
-        });
+                return in_array($r->notes, ['Softskill', 'Traksi', 'Administrasi', 'Mill', 'Estate', 'Downstream']);
+            });
+        } else {
+            $trNonReg = TrainingRecord::where(function ($q) {
+                $q->where('program_type', 'non_reguler')
+                    ->orWhere('reg_non_reg', 'LIKE', '%non%')
+                    ->orWhereIn('notes', ['Softskill', 'Traksi', 'Administrasi', 'Mill', 'Estate', 'Downstream']);
+            })->get();
+
+            $trNonReg = $this->filterRecordsByYearAndCumulativeMonth($trNonReg, $year, $selectedMonthNum)->filter(function ($r) use ($regulerPrefixes) {
+                $notes = strtoupper(trim((string) $r->notes));
+                foreach ($regulerPrefixes as $prefix) {
+                    if (str_starts_with($notes, $prefix)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+        }
 
         $softPrograms = $nonRegulerPrograms->filter(fn ($p) => $p->isSoftSkill());
         $softPlanBatch = (int) $softPrograms->sum(fn ($p) => (int) ($p->TARGET_BATCH ?? $p->total_batch ?? 0));
@@ -258,7 +300,7 @@ class DashboardController extends Controller
         $tekPlanPart = (int) $tekPrograms->sum(fn ($p) => (int) ($p->TARGET_PESERTA ?? $p->target_total ?? 0));
 
         $technicalNotes = ['ESTATE' => true, 'MILL' => true, 'TRACTION' => true, 'TRAKSI' => true, 'DOWNSTREAM' => true, 'ADMINISTRASI' => true, 'ADMIN' => true];
-        $allSoftProgramIds = array_flip(ProgramNonReguler::all()->filter(fn ($p) => $p->isSoftSkill())->pluck('id_nonreguler')->all());
+        $allSoftProgramIds = array_flip($softProgramIds);
 
         $softRecords = [];
         $tekRecords = [];
@@ -490,6 +532,7 @@ class DashboardController extends Controller
             $lvlIdx = array_search('LVL', $header);
             $progIdx = array_search('PROG', $header);
             $programIdx = array_search('Program', $header);
+            $tahunIdx = array_search('Tahun', $header);
             $ketIdx = array_search('Keterangan', $header);
             $ketResignIdx = array_search('Keterangan Resign', $header);
             $tglResignIdx = array_search('Tanggal Resign', $header);
