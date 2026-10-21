@@ -51,7 +51,7 @@
             <div class="space-y-0.5">
                 <a href="{{ route('administrasi.program.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors {{ request()->routeIs('administrasi.program.index', 'administrasi.program.show') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="layers-3" class="w-4 h-4 shrink-0"></i><span>Program</span>
+                    <i data-lucide="layers-3" class="w-4 h-4 shrink-0"></i><span>Program Training</span>
                 </a>
                 <a href="{{ route('administrasi.realisasi-vs-batch.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors {{ request()->routeIs('administrasi.realisasi-vs-batch.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">

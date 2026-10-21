@@ -978,11 +978,13 @@
         if (elResign) elResign.textContent = sumResign;
         if (elLulus) elLulus.textContent = sumStaff;
 
-        const kpiPesertaText = document.getElementById('kpiMtJumlahPesertaText');
+        const elKpiPeserta = document.getElementById('kpiMtJumlahPeserta');
+        const elKpiTarget = document.getElementById('kpiMtTargetPeserta');
         const kpiPercentage = document.getElementById('kpiMtPercentage');
         const kpiProgressBar = document.getElementById('kpiMtProgressBar');
 
-        if (kpiPesertaText) kpiPesertaText.textContent = sumKelas + ' / ' + sumRencana;
+        if (elKpiPeserta) elKpiPeserta.textContent = sumKelas.toLocaleString();
+        if (elKpiTarget) elKpiTarget.textContent = sumRencana.toLocaleString();
         if (sumRencana > 0) {
             const pct = Math.round((sumKelas / sumRencana) * 100);
             if (kpiPercentage) kpiPercentage.textContent = pct + '%';

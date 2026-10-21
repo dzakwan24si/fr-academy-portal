@@ -28,8 +28,7 @@ class TraineeApiController extends Controller
         $trainee = Trainee::with('trainingProgram')->where('nik', $request->nik)->where('status', 'aktif')->first();
 
         if ($trainee) {
-            // Hapus token lama agar hanya bisa login di 1 perangkat (opsional)
-            $trainee->tokens()->delete();
+            // Token lama tidak dihapus agar sesi tetap stabil dan tidak ter-logout tiba-tiba
 
             // Buat token baru
             $token = $trainee->createToken('trainee-auth-token')->plainTextToken;
@@ -138,19 +137,27 @@ class TraineeApiController extends Controller
         // Cek tugas pending
         $pendingTasks = Task::whereHas('dailyClass', function ($q) use ($trainee) {
             $q->whereHas('attendances', function ($subQ) use ($trainee) {
-                $subQ->where('trainee_id', $trainee->id)
-                    ->whereNotIn('status', ['alpha', 'belum']);
+                $subQ->where('trainee_id', $trainee->id);
             });
         })->whereDoesntHave('submissions', function ($q) use ($trainee) {
             $q->where('trainee_id', $trainee->id)->where('status', 'sudah');
         })->count();
+
+$pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
+            ->whereHas('attendances', function ($query) use ($trainee) {
+                $query->where('trainee_id', $trainee->id);
+            })
+            ->whereDoesntHave('traineeEvaluations', function ($query) use ($trainee) {
+                $query->where('trainee_id', $trainee->id);
+            })->count();
 
         return response()->json([
             'status' => 'success',
             'data' => [
                 'todayAttendance' => $todayAttendance,
                 'pendingTasks' => $pendingTasks,
-                'pendingEvaluation' => $todayAttendanceRecord && $todayAttendanceRecord->dailyClass->is_evaluation_open && ! TraineeEvaluation::where('daily_class_id', $todayAttendanceRecord->daily_class_id)->where('trainee_id', $trainee->id)->exists(),
+                'pendingEvaluations' => $pendingEvaluationsCount,
+                'pendingEvaluation' => $pendingEvaluationsCount > 0,
                 'trainee' => $trainee->ui_data,
                 'todayClass' => $todayAttendanceRecord && $todayAttendanceRecord->dailyClass ? $todayAttendanceRecord->dailyClass->title : null,
                 'classInfo' => $todayAttendanceRecord && $todayAttendanceRecord->dailyClass ? [
@@ -181,8 +188,7 @@ class TraineeApiController extends Controller
             $q->where('trainee_id', $trainee->id);
         }])->whereHas('dailyClass', function ($q) use ($trainee) {
             $q->whereHas('attendances', function ($subQ) use ($trainee) {
-                $subQ->where('trainee_id', $trainee->id)
-                    ->whereNotIn('status', ['alpha', 'belum']);
+                $subQ->where('trainee_id', $trainee->id);
             });
         })->orderBy('deadline', 'desc')->get();
 
@@ -433,8 +439,7 @@ class TraineeApiController extends Controller
         // tapi trainee belum mengisi evaluasi.
         $pendingClasses = DailyClass::where('is_evaluation_open', true)
             ->whereHas('attendances', function ($query) use ($trainee) {
-                $query->where('trainee_id', $trainee->id)
-                    ->whereNotIn('status', ['alpha', 'belum']);
+                $query->where('trainee_id', $trainee->id);
             })
             ->whereDoesntHave('traineeEvaluations', function ($query) use ($trainee) {
                 $query->where('trainee_id', $trainee->id);
@@ -458,14 +463,13 @@ class TraineeApiController extends Controller
             return response()->json(['message' => 'Anda sudah mengisi evaluasi untuk sesi ini.'], 400);
         }
 
-        // Verifikasi kehadiran: Pastikan Trainee benar-benar HADIR di setidaknya 1 hari sesi kelas ini
+        // Verifikasi pendaftaran kelas
         $hasAttended = Attendance::where('trainee_id', $trainee->id)
             ->where('daily_class_id', $dailyClass->id)
-            ->whereNotIn('status', ['alpha', 'belum'])
             ->exists();
 
         if (! $hasAttended) {
-            return response()->json(['message' => 'Anda tidak dapat mengisi evaluasi karena status Anda tidak hadir di kelas ini.'], 403);
+            return response()->json(['message' => 'Anda tidak terdaftar dalam kelas ini.'], 403);
         }
 
         $validated = $request->validate([

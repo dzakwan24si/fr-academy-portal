@@ -363,7 +363,7 @@ class NonRegulerDailyClassController extends Controller
                             $headerMap['nik'] = $colIdx;
                         } elseif (str_contains($colClean, 'name') || str_contains($colClean, 'nama')) {
                             $headerMap['name'] = $colIdx;
-                        } elseif (str_contains($colClean, 'talent')) {
+                        } elseif (str_contains($colClean, 'talent') || str_contains($colClean, 'jabatan') || str_contains($colClean, 'posisi') || str_contains($colClean, 'role')) {
                             $headerMap['talent_to'] = $colIdx;
                         } elseif (str_contains($colClean, 'unit')) {
                             $headerMap['unit'] = $colIdx;
@@ -707,9 +707,11 @@ class NonRegulerDailyClassController extends Controller
             'is_evaluation_open' => ! $dailyClass->is_evaluation_open,
         ]);
 
-        $status = $dailyClass->is_evaluation_open ? 'dibuka' : 'ditutup';
+        $message = $dailyClass->is_evaluation_open
+            ? 'Form evaluasi berhasil dikirim dan dibuka untuk peserta!'
+            : 'Akses evaluasi untuk sesi ini berhasil ditutup.';
 
-        return back()->with('success', "Evaluasi untuk sesi ini berhasil {$status}.");
+        return back()->with('success', $message);
     }
 
     public function clearEvaluation(DailyClass $dailyClass)

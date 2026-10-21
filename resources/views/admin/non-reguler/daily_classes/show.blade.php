@@ -9,6 +9,20 @@
 @endphp
     <div x-data="{ showAddTask: false, selectedDay: '{{ count($dates) > 0 ? $dates[0] : '' }}', attendanceCounts: {{ json_encode($attendanceCounts) }} }">
         
+    @if(session('success'))
+        <div class="mb-6 flex items-center justify-between p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl shadow-sm">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-xl bg-emerald-500 text-white flex items-center justify-center shrink-0 shadow-sm">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+                <div>
+                    <p class="text-sm font-bold text-emerald-950">Berhasil!</p>
+                    <p class="text-xs text-emerald-700 mt-0.5">{{ session('success') }}</p>
+                </div>
+            </div>
+        </div>
+    @endif
+
     <!-- Premium Header Section -->
     <div class="relative bg-white rounded-3xl p-8 mb-8 shadow-sm border border-slate-200 overflow-hidden">
         <!-- Decorative Background Pattern -->
@@ -22,6 +36,12 @@
                     <span class="inline-flex items-center px-2.5 py-1 bg-emerald-100 text-emerald-800 rounded-md text-xs font-bold uppercase tracking-wide">
                         {{ $dailyClass->trainingProgram->name }}
                     </span>
+                    @if($dailyClass->is_evaluation_open)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-600 text-white rounded-md text-xs font-bold tracking-wide shadow-sm">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-200 animate-pulse"></span>
+                            Evaluasi Terkirim & Dibuka
+                        </span>
+                    @endif
                     @if($dailyClass->date)
                         @php
                             \Carbon\Carbon::setLocale('id');
@@ -372,7 +392,7 @@
                         <div class="bg-white rounded-xl border border-slate-200 p-6 mb-8 flex items-center justify-between shadow-sm">
                             <div>
                                 <p class="text-sm font-medium text-slate-500 uppercase tracking-wide">Total Partisipasi</p>
-                                <h2 class="text-3xl font-black text-slate-800 mt-1">{{ $totalEvals }} <span class="text-lg font-medium text-slate-500">Trainee</span></h2>
+                                <h2 class="text-3xl font-black text-slate-800 mt-1">{{ $totalEvals }} <span class="text-lg font-medium text-slate-500">Peserta</span></h2>
                             </div>
                             <div class="w-12 h-12 bg-emerald-50 rounded-full flex items-center justify-center text-[#28844b]">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
@@ -562,7 +582,7 @@
         @else
         <div class="bg-gray-50 rounded-xl p-8 border border-dashed border-gray-300 text-center">
             <svg class="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <p class="text-gray-500 font-medium">Belum ada trainee yang mengisi evaluasi untuk sesi ini.</p>
+            <p class="text-gray-500 font-medium">Belum ada peserta yang mengisi evaluasi untuk sesi ini.</p>
         </div>
         @endif
     </div>
@@ -607,7 +627,7 @@
                           <th class="px-6 py-3 font-semibold text-gray-600 w-16">No</th>
                           <th class="px-6 py-3 font-semibold text-gray-600 whitespace-nowrap">Employee ID</th>
                           <th class="px-6 py-3 font-semibold text-gray-600 min-w-[200px]">Employee Name</th>
-                          <th class="px-6 py-3 font-semibold text-gray-600 whitespace-nowrap">Talent To</th>
+                          <th class="px-6 py-3 font-semibold text-gray-600 whitespace-nowrap">Jabatan</th>
                           <th class="px-6 py-3 font-semibold text-gray-600 whitespace-nowrap">Unit</th>
                           <th class="px-6 py-3 font-semibold text-gray-600 whitespace-nowrap border-r border-gray-200">Region</th>
                           
@@ -736,7 +756,7 @@
                         <input type="text" name="name" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required placeholder="Contoh: Ahmad Pajar">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Jabatan (Talent To) <span class="text-gray-400 font-normal">(Opsional)</span></label>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Jabatan <span class="text-gray-400 font-normal">(Opsional)</span></label>
                         <input type="text" name="talent_to" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Contoh: Askep">
                     </div>
                     <div>
@@ -895,7 +915,7 @@
                     <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3 mb-4">
                         <svg class="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <p class="text-xs text-blue-700 font-medium leading-relaxed">
-                            Materi ini adalah wadah. <strong>Silakan tentukan Tanggal Pelatihan dan Trainer untuk batch ini</strong>. Upload file Excel (.xlsx, .csv). Pastikan memiliki baris header dengan nama: No, Employee ID, Employee Name, Talent To, Unit, Region.
+                            Materi ini adalah wadah. <strong>Silakan tentukan Tanggal Pelatihan dan Trainer untuk batch ini</strong>. Upload file Excel (.xlsx, .csv). Pastikan memiliki baris header dengan nama: No, Employee ID, Employee Name, Jabatan, Unit, Region.
                         </p>
                     </div>
                     

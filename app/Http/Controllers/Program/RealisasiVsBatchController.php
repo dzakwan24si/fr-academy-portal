@@ -11,6 +11,7 @@ use App\Models\Program\TrainingRecord;
 use App\Services\ExcelExporter;
 use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class RealisasiVsBatchController extends Controller
@@ -40,9 +41,15 @@ class RealisasiVsBatchController extends Controller
         $subKategori = trim((string) $request->input('sub_kategori', ''));
 
         $rows = $this->buildRows($year, $month, $type, $region, $subKategori);
-        $regions = ProgramNonReguler::pluck('region')->merge(ProgramReguler::pluck('Region'))->filter()->map(fn ($value) => trim((string) $value))->unique()->sort()->values();
-        $subCategories = ProgramNonReguler::whereNotNull('sub_kategori')->where('sub_kategori', '!=', '')->distinct()->pluck('sub_kategori')->filter()->map(fn ($value) => trim((string) $value))->unique()->sort()->values();
-        $activities = ProgramReguler::all()->map(fn ($item) => ['type' => 'reguler', 'id' => $item->getKey(), 'name' => $item->Training_Program])->concat(ProgramNonReguler::all()->map(fn ($item) => ['type' => 'non_reguler', 'id' => $item->getKey(), 'name' => $item->jenis_pelatihan.' - '.$item->region]))->values();
+        $regions = collect(Cache::remember('rvb_regions', 300, function () {
+            return ProgramNonReguler::pluck('region')->merge(ProgramReguler::pluck('Region'))->filter()->map(fn ($value) => trim((string) $value))->unique()->sort()->values()->all();
+        }));
+        $subCategories = collect(Cache::remember('rvb_sub_categories', 300, function () {
+            return ProgramNonReguler::whereNotNull('sub_kategori')->where('sub_kategori', '!=', '')->distinct()->pluck('sub_kategori')->filter()->map(fn ($value) => trim((string) $value))->unique()->sort()->values()->all();
+        }));
+        $activities = collect(Cache::remember('rvb_activities', 300, function () {
+            return ProgramReguler::select('Training_Program', 'Program_reguler_id')->get()->map(fn ($item) => ['type' => 'reguler', 'id' => $item->getKey(), 'name' => $item->Training_Program])->concat(ProgramNonReguler::select('jenis_pelatihan', 'region', 'id_nonreguler')->get()->map(fn ($item) => ['type' => 'non_reguler', 'id' => $item->getKey(), 'name' => $item->jenis_pelatihan.' - '.$item->region]))->values()->all();
+        }));
         $summary = [
             'planned_batch' => $rows->sum('planned_batch'),
             'realized_batch' => $rows->sum('realized_batch'),
@@ -70,6 +77,8 @@ class RealisasiVsBatchController extends Controller
             ['program_type' => $data['program_type'], 'program_id' => $data['program_id'], 'tahun' => $data['tahun'], 'bulan' => $month],
             ['legacy_realized_batch' => $data['legacy_realized_batch'] ?? 0, 'legacy_realized_participants' => $data['legacy_realized_participants'] ?? 0]
         );
+        Cache::increment('rvb_cache_version');
+        Cache::forget('rvb_available_years');
 
         return back()->with('success', 'Realisasi berhasil dibuat tanpa mengubah nilai hasil perhitungan.');
     }
@@ -77,6 +86,8 @@ class RealisasiVsBatchController extends Controller
     public function destroy($id)
     {
         RealisasiVsBatch::findOrFail($id)->delete();
+        Cache::increment('rvb_cache_version');
+        Cache::forget('rvb_available_years');
 
         return back()->with('success', 'Data realisasi dihapus.');
     }
@@ -92,6 +103,8 @@ class RealisasiVsBatchController extends Controller
             "Menghapus semua data realisasi vs batch ({$count} data)",
             ['count' => $count]
         );
+        Cache::increment('rvb_cache_version');
+        Cache::forget('rvb_available_years');
 
         return back()->with('success', "Semua data realisasi vs batch ({$count} data) berhasil dihapus.");
     }
@@ -144,6 +157,8 @@ class RealisasiVsBatchController extends Controller
             "Mengimport {$imported} data realisasi vs target dari file ".$request->file('file')->getClientOriginalName(),
             ['filename' => $request->file('file')->getClientOriginalName(), 'count' => $imported, 'skipped' => $skipped]
         );
+        Cache::increment('rvb_cache_version');
+        Cache::forget('rvb_available_years');
 
         return back()->with('success', "{$imported} data realisasi berhasil disimpan".($skipped ? ". {$skipped} baris dilewati karena ID atau bulan tidak valid" : '').'. Nilai akan digantikan otomatis saat Training Record tersedia.');
     }
@@ -186,10 +201,14 @@ class RealisasiVsBatchController extends Controller
 
     private function buildRows(int $year, ?int $month, string $type, string $region = '', string $subKategori = '')
     {
-        $programs = collect();
-        if ($type !== 'reguler') {
-            $programs = $programs->concat(ProgramNonReguler::all()->map(fn ($program) => $this->programData($program, 'non_reguler', $year, $month)));
-        }
+        $v = (int) Cache::get('rvb_cache_version', 1);
+        $cacheKey = "rvb_rows_v{$v}_{$year}_{$month}_{$type}_{$region}_{$subKategori}";
+
+        $cachedData = Cache::remember($cacheKey, 180, function () use ($year, $month, $type, $region, $subKategori) {
+            $programs = collect();
+            if ($type !== 'reguler') {
+                $programs = $programs->concat(ProgramNonReguler::all()->map(fn ($program) => $this->programData($program, 'non_reguler', $year, $month)));
+            }
         if ($type !== 'non_reguler') {
             $programs = $programs->concat(ProgramReguler::all()->map(fn ($program) => $this->programData($program, 'reguler', $year, $month)));
         }
@@ -328,12 +347,15 @@ class RealisasiVsBatchController extends Controller
                 $realizedBatch = $explicitBatch > 0 ? $explicitBatch : ($realizedParticipants > 0 ? 1 : 0);
             }
 
-            $row = (object) array_merge($program, ['realisasi_id' => null, 'realized_batch' => $realizedBatch, 'realized_participants' => $realizedParticipants]);
-            $row->batch_percent = $this->percent($row->realized_batch, $row->planned_batch);
-            $row->participant_percent = $this->percent($row->realized_participants, $row->planned_participants);
+                $row = array_merge($program, ['realisasi_id' => null, 'realized_batch' => $realizedBatch, 'realized_participants' => $realizedParticipants]);
+                $row['batch_percent'] = $this->percent($row['realized_batch'], $row['planned_batch']);
+                $row['participant_percent'] = $this->percent($row['realized_participants'], $row['planned_participants']);
 
-            return $row;
-        })->values();
+                return $row;
+            })->values()->all();
+        });
+
+        return collect($cachedData)->map(fn ($item) => (object) $item);
     }
 
     public function updateBatch(Request $request)
@@ -350,6 +372,7 @@ class RealisasiVsBatchController extends Controller
         $program = ProgramNonReguler::findOrFail($id);
         $program->update(['realisasi_batch' => $val]);
         ActivityLog::log('Edit', 'Realisasi Vs Target', "Mengubah realisasi batch program non-reguler '{$program->jenis_pelatihan}' menjadi {$val}");
+        Cache::increment('rvb_cache_version');
 
         return response()->json(['message' => 'Realisasi batch berhasil diperbarui.', 'realisasi_batch' => $val]);
     }
@@ -407,43 +430,45 @@ class RealisasiVsBatchController extends Controller
 
     public function availableYears(): array
     {
-        $regYears = ProgramReguler::all()->map(function ($item) {
-            if ($item->Mulai_program) {
-                return (int) $item->Mulai_program->format('Y');
-            }
-            if ($item->tahun) {
-                return (int) $item->tahun;
-            }
-            if ($item->Selesai_program) {
-                return (int) $item->Selesai_program->format('Y');
-            }
+        return Cache::remember('rvb_available_years', 300, function () {
+            $regYears = ProgramReguler::all()->map(function ($item) {
+                if ($item->Mulai_program) {
+                    return (int) $item->Mulai_program->format('Y');
+                }
+                if ($item->tahun) {
+                    return (int) $item->tahun;
+                }
+                if ($item->Selesai_program) {
+                    return (int) $item->Selesai_program->format('Y');
+                }
 
-            return null;
+                return null;
+            });
+
+            $nonRegYears = ProgramNonReguler::all()->map(function ($item) {
+                if ($item->tahun) {
+                    return (int) $item->tahun;
+                }
+                if ($item->start_date) {
+                    return (int) $item->start_date->format('Y');
+                }
+                if ($item->end_date) {
+                    return (int) $item->end_date->format('Y');
+                }
+
+                return null;
+            });
+
+            $rvbYears = RealisasiVsBatch::whereNotNull('tahun')->where('tahun', '>', 0)->distinct()->pluck('tahun')->map(fn ($v) => (int) $v);
+            $trYears = TrainingRecord::whereNotNull('tahun')->where('tahun', '>', 0)->distinct()->pluck('tahun')->map(fn ($v) => (int) $v);
+
+            return collect($regYears->all())
+                ->merge($nonRegYears->all())
+                ->merge($rvbYears->all())
+                ->merge($trYears->all())
+                ->merge([(int) date('Y')])
+                ->filter()->map(fn ($v) => (int) $v)->unique()->sortDesc()->values()->all();
         });
-
-        $nonRegYears = ProgramNonReguler::all()->map(function ($item) {
-            if ($item->tahun) {
-                return (int) $item->tahun;
-            }
-            if ($item->start_date) {
-                return (int) $item->start_date->format('Y');
-            }
-            if ($item->end_date) {
-                return (int) $item->end_date->format('Y');
-            }
-
-            return null;
-        });
-
-        $rvbYears = RealisasiVsBatch::whereNotNull('tahun')->where('tahun', '>', 0)->distinct()->pluck('tahun')->map(fn ($v) => (int) $v);
-        $trYears = TrainingRecord::whereNotNull('tahun')->where('tahun', '>', 0)->distinct()->pluck('tahun')->map(fn ($v) => (int) $v);
-
-        return collect($regYears->all())
-            ->merge($nonRegYears->all())
-            ->merge($rvbYears->all())
-            ->merge($trYears->all())
-            ->merge([(int) date('Y')])
-            ->filter()->map(fn ($v) => (int) $v)->unique()->sortDesc()->values()->all();
     }
 
     private function recordMatchesActivity(TrainingRecord $record, array $program): bool

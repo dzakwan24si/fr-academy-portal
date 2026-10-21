@@ -339,6 +339,21 @@ const DataManagement = () => {
       }
     }
 
+    if (['Mulai_program', 'Selesai_program', 'start_date', 'end_date'].includes(name)) {
+      const s = formType === 'reguler' ? (name === 'Mulai_program' ? value : updatedData.Mulai_program) : (name === 'start_date' ? value : updatedData.start_date);
+      const eDate = formType === 'reguler' ? (name === 'Selesai_program' ? value : updatedData.Selesai_program) : (name === 'end_date' ? value : updatedData.end_date);
+      if (s && eDate && s <= eDate) {
+        const dates = [];
+        let cur = new Date(s);
+        const end = new Date(eDate);
+        while (cur <= end) {
+          dates.push(cur.toISOString().split('T')[0]);
+          cur.setDate(cur.getDate() + 1);
+        }
+        updatedData.tanggal_pelaksanaan = dates;
+      }
+    }
+
     setFormData(updatedData);
   };
 
@@ -1772,6 +1787,26 @@ const DataManagement = () => {
                           containerClassName="w-full"
                         />
                       </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal Mulai Pelaksanaan (Otomatis)</label>
+                        <input
+                          type="date"
+                          name="start_date"
+                          value={formData.start_date || ''}
+                          onChange={handleInputChange}
+                          className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-slate-50 text-slate-700 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal Selesai Pelaksanaan (Otomatis)</label>
+                        <input
+                          type="date"
+                          name="end_date"
+                          value={formData.end_date || ''}
+                          onChange={handleInputChange}
+                          className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-slate-50 text-slate-700 font-medium"
+                        />
+                      </div>
                     </div>
 
                     <div className="border-t border-slate-200 pt-4 mt-4">
@@ -1856,6 +1891,26 @@ const DataManagement = () => {
                           placeholder="Pilih rentang/beberapa tanggal..."
                           inputClass="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
                           containerClassName="w-full"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal Mulai Pelaksanaan (Otomatis)</label>
+                        <input
+                          type="date"
+                          name="Mulai_program"
+                          value={formData.Mulai_program || ''}
+                          onChange={handleInputChange}
+                          className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-slate-50 text-slate-700 font-medium"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Tanggal Selesai Pelaksanaan (Otomatis)</label>
+                        <input
+                          type="date"
+                          name="Selesai_program"
+                          value={formData.Selesai_program || ''}
+                          onChange={handleInputChange}
+                          className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none bg-slate-50 text-slate-700 font-medium"
                         />
                       </div>
                     </div>

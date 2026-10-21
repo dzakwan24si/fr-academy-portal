@@ -16,6 +16,7 @@ use App\Services\ProgramFilterHelper;
 use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class DashboardRealisasiController extends Controller
@@ -138,7 +139,9 @@ class DashboardRealisasiController extends Controller
     protected function filterRegulerByYear($programs, int $year)
     {
         return $programs->filter(function ($p) use ($year) {
-            return $this->resolveProgramRegulerYear($p) === $year;
+            $pYear = (! empty($p->tahun) && is_numeric($p->tahun)) ? (int) $p->tahun : $this->resolveProgramRegulerYear($p);
+
+            return $pYear === $year;
         });
     }
 
@@ -149,27 +152,47 @@ class DashboardRealisasiController extends Controller
         });
     }
 
-    protected function filterRecordsByYearAndCumulativeMonth($records, int $year, ?int $selectedMonthNum)
+    protected function filterRecordsByYearAndCumulativeMonth($records, int $year, ?int $selectedMonthNum, array $regulerYearById = [], array $regulerYearByAng = [])
     {
-        return $records->filter(function ($r) use ($year, $selectedMonthNum) {
+        return $records->filter(function ($r) use ($year, $selectedMonthNum, $regulerYearById, $regulerYearByAng) {
             // 1. Year filter
             $rYear = null;
-            if (! empty($r->tahun)) {
-                $rYear = (int) $r->tahun;
-            } elseif (! empty($r->training_date)) {
-                $rYear = (int) date('Y', strtotime($r->training_date));
-            } elseif (method_exists($r, 'activityDates')) {
-                $dates = $r->activityDates();
-                foreach ($dates as $d) {
-                    if ($d) {
-                        $rYear = (int) date('Y', strtotime($d));
-                        break;
+            if ($r->program_type === 'reguler') {
+                if ($r->program_id && isset($regulerYearById[(int) $r->program_id])) {
+                    $rYear = $regulerYearById[(int) $r->program_id];
+                } elseif (! empty($r->notes)) {
+                    $norm = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $r->notes)));
+                    $norm = str_replace(
+                        ['FIELD ASSISTANT', 'ESTATE CADET TRAINEE', 'ESTATE CADET', 'MILL ASSISTANT', 'ADMIN ASSISTANT', 'PROCESSING', 'PABRIK'],
+                        ['FAT', 'ECT', 'ECT', 'MAT', 'AAT', 'PMT', 'PMT'],
+                        $norm
+                    );
+                    $norm = preg_replace('/[^A-Z0-9]/', ' ', $norm);
+                    $norm = implode('-', array_values(array_filter(explode(' ', $norm))));
+                    if (isset($regulerYearByAng[$norm])) {
+                        $rYear = $regulerYearByAng[$norm];
                     }
                 }
-            } elseif (! empty($r->created_at)) {
-                $rYear = (int) date('Y', strtotime($r->created_at));
-            } else {
-                $rYear = 2026;
+            }
+
+            if ($rYear === null) {
+                if (! empty($r->tahun)) {
+                    $rYear = (int) $r->tahun;
+                } elseif (! empty($r->training_date)) {
+                    $rYear = (int) date('Y', strtotime($r->training_date));
+                } elseif (method_exists($r, 'activityDates')) {
+                    $dates = $r->activityDates();
+                    foreach ($dates as $d) {
+                        if ($d) {
+                            $rYear = (int) date('Y', strtotime($d));
+                            break;
+                        }
+                    }
+                } elseif (! empty($r->created_at)) {
+                    $rYear = (int) date('Y', strtotime($r->created_at));
+                } else {
+                    $rYear = 2026;
+                }
             }
 
             if ($rYear !== $year) {
@@ -209,21 +232,80 @@ class DashboardRealisasiController extends Controller
 
     public function index(Request $request)
     {
-        $trYears = TrainingRecord::whereNotNull('tahun')->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
-        $trDateYears = TrainingRecord::whereNotNull('training_date')->get()->map(fn ($r) => (int) date('Y', strtotime($r->training_date)))->filter()->all();
-        $regYears = ProgramReguler::all()->map(fn ($p) => $this->resolveProgramRegulerYear($p))->filter()->all();
-        $nonRegYears = ProgramNonReguler::all()->map(fn ($p) => $this->resolveProgramNonRegulerYear($p))->filter()->all();
+        $filterOptions = Cache::remember('dreal_filter_options', 300, function () {
+            $trYears = TrainingRecord::whereNotNull('tahun')->distinct()->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
+            $trDateYears = TrainingRecord::whereNotNull('training_date')->distinct()->pluck('training_date')->map(fn ($d) => (int) date('Y', strtotime($d)))->filter()->all();
+            $regYears = ProgramReguler::whereNotNull('tahun')->pluck('tahun')
+                ->merge(ProgramReguler::whereNotNull('Mulai_program')->pluck('Mulai_program')->map(fn ($d) => (int) date('Y', strtotime($d))))
+                ->map(fn ($y) => (int) $y)->filter()->all();
+            $nonRegYears = ProgramNonReguler::whereNotNull('tahun')->pluck('tahun')
+                ->merge(ProgramNonReguler::whereNotNull('start_date')->pluck('start_date')->map(fn ($d) => (int) date('Y', strtotime($d))))
+                ->map(fn ($y) => (int) $y)->filter()->all();
 
-        $years = collect([2024, 2025, 2026, 2027])
-            ->merge($trYears)
-            ->merge($trDateYears)
-            ->merge($regYears)
-            ->merge($nonRegYears)
-            ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
-            ->unique()
-            ->sort()
-            ->values()
-            ->all();
+            $years = collect([2024, 2025, 2026, 2027])
+                ->merge($trYears)
+                ->merge($trDateYears)
+                ->merge($regYears)
+                ->merge($nonRegYears)
+                ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
+                ->unique()
+                ->sort()
+                ->values()
+                ->all();
+
+            $regulerRegions = ProgramReguler::distinct()->pluck('Region')->filter()->map(fn ($r) => trim((string) $r));
+            $nonRegulerRegions = ProgramNonReguler::distinct()->pluck('region')->filter()->map(fn ($r) => trim((string) $r));
+            $recordRegions = TrainingRecord::distinct()->pluck('region')->filter()->map(fn ($r) => trim((string) $r));
+
+            $allRegions = $regulerRegions->merge($nonRegulerRegions)->merge($recordRegions)
+                ->map(function ($r) {
+                    if (strcasecmp($r, 'riau') === 0) {
+                        return 'Riau';
+                    }
+                    if (strcasecmp($r, 'kalbar') === 0) {
+                        return 'Kalbar';
+                    }
+                    if (strcasecmp($r, 'kaltim') === 0 || strcasecmp($r, 'kaltim fr') === 0) {
+                        return 'Kaltim FR';
+                    }
+                    if (strcasecmp($r, 'corporate') === 0) {
+                        return 'Corporate';
+                    }
+
+                    return $r;
+                })
+                ->unique()
+                ->values()
+                ->all();
+
+            $regulerProgramOptions = ProgramReguler::pluck('Training_Program')
+                ->toBase()
+                ->map(function ($p) {
+                    return trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p));
+                })->filter()->unique()->values()->all();
+
+            $nonRegulerProgramOptions = ProgramNonReguler::pluck('jenis_pelatihan')
+                ->toBase()
+                ->map(function ($p) {
+                    return trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p));
+                })->filter()->unique()->values()->all();
+
+            $nonRegulerCategoryOptions = ProgramNonReguler::pluck('kategori_pelatihan')
+                ->concat(ProgramNonReguler::pluck('sub_kategori'))
+                ->filter()
+                ->map(fn ($c) => trim((string) $c))
+                ->unique()
+                ->values()
+                ->all();
+
+            return compact('years', 'allRegions', 'regulerProgramOptions', 'nonRegulerProgramOptions', 'nonRegulerCategoryOptions');
+        });
+
+        $years = $filterOptions['years'];
+        $allRegions = $filterOptions['allRegions'];
+        $regulerProgramOptions = collect($filterOptions['regulerProgramOptions']);
+        $nonRegulerProgramOptions = collect($filterOptions['nonRegulerProgramOptions']);
+        $nonRegulerCategoryOptions = $filterOptions['nonRegulerCategoryOptions'];
 
         $yearDefault = in_array(2026, $years, true) ? 2026 : ($years[count($years) - 1] ?? (int) date('Y'));
         $year = (int) $request->input('year', $yearDefault);
@@ -242,53 +324,6 @@ class DashboardRealisasiController extends Controller
         $category = trim((string) $request->input('category', 'all'));
         $unit = trim((string) $request->input('unit', 'all'));
         $level = trim((string) $request->input('level', 'all'));
-
-        // Collect distinct available regions from databases
-        $regulerRegions = ProgramReguler::distinct()->pluck('Region')->filter()->map(fn ($r) => trim((string) $r));
-        $nonRegulerRegions = ProgramNonReguler::distinct()->pluck('region')->filter()->map(fn ($r) => trim((string) $r));
-        $recordRegions = TrainingRecord::distinct()->pluck('region')->filter()->map(fn ($r) => trim((string) $r));
-
-        $allRegions = $regulerRegions->merge($nonRegulerRegions)->merge($recordRegions)
-            ->map(function ($r) {
-                if (strcasecmp($r, 'riau') === 0) {
-                    return 'Riau';
-                }
-                if (strcasecmp($r, 'kalbar') === 0) {
-                    return 'Kalbar';
-                }
-                if (strcasecmp($r, 'kaltim') === 0 || strcasecmp($r, 'kaltim fr') === 0) {
-                    return 'Kaltim FR';
-                }
-                if (strcasecmp($r, 'corporate') === 0) {
-                    return 'Corporate';
-                }
-
-                return $r;
-            })
-            ->unique()
-            ->values()
-            ->all();
-
-        // Program Options & Category Options for Dropdown Filter
-        $regulerProgramOptions = ProgramReguler::pluck('Training_Program')
-            ->toBase()
-            ->map(function ($p) {
-                return trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p));
-            })->filter()->unique()->values();
-
-        $nonRegulerProgramOptions = ProgramNonReguler::pluck('jenis_pelatihan')
-            ->toBase()
-            ->map(function ($p) {
-                return trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p));
-            })->filter()->unique()->values();
-
-        $nonRegulerCategoryOptions = ProgramNonReguler::pluck('kategori_pelatihan')
-            ->concat(ProgramNonReguler::pluck('sub_kategori'))
-            ->filter()
-            ->map(fn ($c) => trim((string) $c))
-            ->unique()
-            ->values()
-            ->all();
 
         if ($programType === 'reguler') {
             $availablePrograms = $regulerProgramOptions;
@@ -315,10 +350,13 @@ class DashboardRealisasiController extends Controller
             $trainingRecordQuery->where('level', 'LIKE', '%'.$level.'%');
         }
 
-        // 1. Progress MT Per Program Tables (Separated into Staf & Mandor)
-        $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
+        $v = (int) Cache::get('dreal_cache_version', 1);
+        $cacheKey = "dreal_metrics_v{$v}_".md5(json_encode([$year, $selectedMonthCode, $region, $programType, $selectedProgram, $category, $unit, $level]));
+        $metrics = Cache::remember($cacheKey, 300, function () use ($year, $selectedMonthNum, $region, $programType, $selectedProgram, $category, $unit, $level, $trainingRecordQuery) {
+            // 1. Progress MT Per Program Tables (Separated into Staf & Mandor)
+            $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
 
-        $normalizeName = function (?string $name): string {
+            $normalizeName = function (?string $name): string {
             if (! $name) {
                 return '';
             }
@@ -344,8 +382,49 @@ class DashboardRealisasiController extends Controller
         };
 
         $allEmployees = MonitoringEmployee::all();
+        $empByAngkatan = [];
+        $empResignByAngkatan = [];
+        foreach ($allEmployees as $e) {
+            if ($e->angkatan_fr_academy) {
+                $norm = $normalizeAngkatan($e->angkatan_fr_academy);
+                $normN = $normalizeName($e->nama);
+                if ($normN) {
+                    $empByAngkatan[$norm][] = $normN;
+                    $stat = strtoupper(trim($e->status ?: $e->kategori ?: ''));
+                    if (in_array($stat, ['RESIGN', 'TERMINATE']) || ! empty($e->date_terminate) || ! empty($e->alasan_resign)) {
+                        $empResignByAngkatan[$norm][] = $normN;
+                    }
+                }
+            }
+        }
+
+        $allAngkatans = MonitoringAngkatan::pluck('angkatan', 'id_angkatan')->all();
         $allCulled = MonitoringCulled::all();
-        $allAngkatans = MonitoringAngkatan::all();
+        $culledByAngkatan = [];
+        foreach ($allCulled as $c) {
+            $rawAng = $allAngkatans[$c->id_angkatan] ?? null;
+            if ($rawAng) {
+                $norm = $normalizeAngkatan($rawAng);
+                $normN = $normalizeName($c->nama);
+                if ($normN) {
+                    $culledByAngkatan[$norm][] = $normN;
+                }
+            }
+        }
+
+        $chartRegulerMap = ProgramReguler::all()->keyBy('Program_reguler_id');
+        $regulerYearByAng = [];
+        $regulerYearById = [];
+        foreach ($chartRegulerMap as $p) {
+            $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
+            $norm = $normalizeAngkatan($pName);
+            $pYear = (! empty($p->tahun) && is_numeric($p->tahun)) ? (int) $p->tahun : $this->resolveProgramRegulerYear($p);
+            $regulerYearByAng[$norm] = $pYear;
+            if ($p->Program_reguler_id) {
+                $regulerYearById[(int) $p->Program_reguler_id] = $pYear;
+            }
+        }
+
         $allTrainingRecords = (clone $trainingRecordQuery)->where(function ($q) {
             $q->where('program_type', 'reguler')
                 ->orWhere('notes', 'LIKE', 'FAT%')
@@ -357,7 +436,18 @@ class DashboardRealisasiController extends Controller
                 ->orWhere('notes', 'LIKE', 'PMT%')
                 ->orWhere('notes', 'LIKE', 'PKT%');
         })->get();
-        $allTrainingRecords = $this->filterRecordsByYearAndCumulativeMonth($allTrainingRecords, $year, $selectedMonthNum);
+        $allTrainingRecords = $this->filterRecordsByYearAndCumulativeMonth($allTrainingRecords, $year, $selectedMonthNum, $regulerYearById, $regulerYearByAng);
+
+        $trByAngkatan = [];
+        foreach ($allTrainingRecords as $r) {
+            if ($r->notes) {
+                $norm = $normalizeAngkatan($r->notes);
+                $normN = $normalizeName($r->participant_name);
+                if ($normN) {
+                    $trByAngkatan[$norm][] = $normN;
+                }
+            }
+        }
 
         $regulerProgramsQuery = ProgramReguler::query();
         if ($region !== 'all') {
@@ -370,14 +460,14 @@ class DashboardRealisasiController extends Controller
                 $regulerProgramsQuery->where('Region', 'LIKE', '%'.$region.'%');
             }
         }
-        $regulerPrograms = $regulerProgramsQuery->get();
-        $regulerPrograms = $this->filterRegulerByYear($regulerPrograms, $year);
+        $regulerPrograms = $regulerProgramsQuery->get()->filter(function ($p) use ($year) {
+            $pYear = (! empty($p->tahun) && is_numeric($p->tahun)) ? (int) $p->tahun : $this->resolveProgramRegulerYear($p);
 
-        // Khusus kedua tabel ini (TRAINING REGULER - STAF & TRAINING REGULER - MANDOR):
-        // Menampilkan data program berdasarkan kolom "tahun", tidak berdasarkan tanggal pelaksanaan
-        $tableRegulerPrograms = $regulerProgramsQuery->get()->filter(function ($p) use ($year) {
-            return (int) $p->tahun === (int) $year;
+            return $pYear === (int) $year;
         });
+
+        // Tabel dan KPI Card membaca program reguler berdasarkan kolom tahun
+        $tableRegulerPrograms = $regulerPrograms;
 
         if ($programType === 'non_reguler') {
             $regulerPrograms = collect();
@@ -430,59 +520,45 @@ class DashboardRealisasiController extends Controller
             $pName = trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p->Training_Program));
             $normPName = $normalizeAngkatan($pName);
 
-            // Matching helper strictly for this program batch
-            $isMatch = function (string $rawCandidate) use ($normPName, $normalizeAngkatan) {
-                if (trim($rawCandidate) === '') {
-                    return false;
+            $trNames = [];
+            $empNames = [];
+            $culledNames = [];
+            $resignedEmpNames = [];
+
+            foreach ($trByAngkatan as $ang => $nList) {
+                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
+                    foreach ($nList as $n) {
+                        $trNames[$n] = true;
+                    }
                 }
-                $candidate = $normalizeAngkatan($rawCandidate);
-                if ($candidate === $normPName) {
-                    return true;
+            }
+            foreach ($empByAngkatan as $ang => $nList) {
+                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
+                    foreach ($nList as $n) {
+                        $empNames[$n] = true;
+                    }
                 }
-
-                // Special case for AAT II 2025 (Carry Over) which has records labeled AAT II 2026
-                if (str_starts_with($normPName, 'AAT-II') && str_starts_with($candidate, 'AAT-II')) {
-                    return true;
+            }
+            foreach ($culledByAngkatan as $ang => $nList) {
+                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
+                    foreach ($nList as $n) {
+                        $culledNames[$n] = true;
+                    }
                 }
+            }
+            foreach ($empResignByAngkatan as $ang => $nList) {
+                if ($ang === $normPName || (str_starts_with($normPName, 'AAT-II') && str_starts_with($ang, 'AAT-II'))) {
+                    foreach ($nList as $n) {
+                        $resignedEmpNames[$n] = true;
+                    }
+                }
+            }
 
-                return false;
-            };
+            $allInClass = array_unique(array_merge(array_keys($trNames), array_keys($empNames), array_keys($culledNames)));
+            $autoKelas = count($allInClass);
 
-            // 1. Matched Training Records (Unique participant names)
-            $trNames = $allTrainingRecords->filter(fn ($r) => $isMatch((string) $r->notes))
-                ->pluck('participant_name')
-                ->map($normalizeName)
-                ->filter()
-                ->unique();
-
-            // 2. Matched Employees (Unique participant names)
-            $empNames = $allEmployees->filter(fn ($e) => $isMatch((string) $e->angkatan_fr_academy))
-                ->pluck('nama')
-                ->map($normalizeName)
-                ->filter()
-                ->unique();
-
-            // 3. Matched Culled (Unique names)
-            $culledNames = $allCulled->filter(function ($c) use ($allAngkatans, $isMatch) {
-                $ang = $allAngkatans->firstWhere('id_angkatan', $c->id_angkatan);
-
-                return $ang && $isMatch((string) $ang->angkatan);
-            })->pluck('nama')->map($normalizeName)->filter()->unique();
-
-            // 4. Combined in-class participants (Unique across TR, Employees, Culled)
-            $allInClass = $trNames->concat($empNames)->concat($culledNames)->unique()->values();
-            $autoKelas = $allInClass->count();
-
-            // 5. Resigned participants (Deduplicated)
-            $matchingEmps = $allEmployees->filter(fn ($e) => $isMatch((string) $e->angkatan_fr_academy));
-            $resignedEmpNames = $matchingEmps->filter(function ($e) {
-                $stat = strtoupper(trim($e->status ?: $e->kategori ?: ''));
-
-                return in_array($stat, ['RESIGN', 'TERMINATE']) || ! empty($e->date_terminate) || ! empty($e->alasan_resign);
-            })->pluck('nama')->map($normalizeName)->filter()->unique();
-
-            $allResigned = $resignedEmpNames->concat($culledNames)->unique()->values();
-            $autoResign = $allResigned->count();
+            $allResigned = array_unique(array_merge(array_keys($resignedEmpNames), array_keys($culledNames)));
+            $autoResign = count($allResigned);
 
             $rencana = (int) ($p->TARGET_PESERTA ?? $p->target_peserta ?? 0);
             $kelas = ($p->kelas !== null) ? (int) $p->kelas : $autoKelas;
@@ -552,7 +628,10 @@ class DashboardRealisasiController extends Controller
         });
 
         $regulerSelesai = $regulerStaffPrograms->filter(function ($p) use ($today) {
-            $end = $p->Selesai_program ?: (is_array($p->tanggal_pelaksanaan) && ! empty($p->tanggal_pelaksanaan) ? Carbon::parse(end($p->tanggal_pelaksanaan)) : null);
+            $tgl = is_array($p->tanggal_pelaksanaan) ? $p->tanggal_pelaksanaan : [];
+            $lastTgl = ! empty($tgl) ? $tgl[array_key_last($tgl)] : null;
+
+            $end = $p->Selesai_program ?: ($lastTgl ? Carbon::parse($lastTgl) : null);
 
             if (! $end) {
                 return false;
@@ -563,7 +642,9 @@ class DashboardRealisasiController extends Controller
 
         // Program yang belum selesai (termasuk yang sedang berjalan maupun belum mulai) masuk ke Program Berjalan
         $regulerBerjalan = $regulerStaffPrograms->filter(function ($p) use ($today) {
-            $end = $p->Selesai_program ?: (is_array($p->tanggal_pelaksanaan) && ! empty($p->tanggal_pelaksanaan) ? Carbon::parse(end($p->tanggal_pelaksanaan)) : null);
+            $tgl = is_array($p->tanggal_pelaksanaan) ? $p->tanggal_pelaksanaan : [];
+            $lastTgl = ! empty($tgl) ? $tgl[array_key_last($tgl)] : null;
+            $end = $p->Selesai_program ?: ($lastTgl ? Carbon::parse($lastTgl) : null);
 
             return ! ($end && $end < $today);
         })->count();
@@ -695,9 +776,51 @@ class DashboardRealisasiController extends Controller
             }
         }
 
-        $allSoftProgramIds = ProgramNonReguler::all()->filter(fn ($p) => $p->isSoftSkill())->pluck('id_nonreguler')->all();
+        $allSoftProgramIdsMap = array_flip(ProgramNonReguler::all()->filter(fn ($p) => $p->isSoftSkill())->pluck('id_nonreguler')->all());
+        $technicalNotesMap = ['ESTATE' => true, 'MILL' => true, 'TRACTION' => true, 'TRAKSI' => true, 'DOWNSTREAM' => true, 'ADMINISTRASI' => true, 'ADMIN' => true];
 
-        $calcMetrics = function ($progList, $categoryType = 'softskill') use ($trNonReg, $selectedProgram, $cleanStr, $allSoftProgramIds) {
+        $softNonRegRecords = [];
+        $tekNonRegRecords = [];
+
+        foreach ($trNonReg as $r) {
+            $notes = strtoupper(trim((string) $r->notes));
+            $nama = strtolower(trim((string) $r->nama_pelatihan));
+
+            if (isset($technicalNotesMap[$notes])) {
+                $isSoft = false;
+            } else {
+                $isSoft = ($notes === 'SOFTSKILL')
+                    || str_contains($notes, 'SOFT')
+                    || str_contains($nama, 'soft')
+                    || str_contains($nama, 'leadership')
+                    || str_contains($nama, 'supervisory')
+                    || str_contains($nama, 'problem solving')
+                    || str_contains($nama, 'communication')
+                    || str_contains($nama, 'talent development')
+                    || str_contains($nama, 'more precious than gold')
+                    || str_contains($nama, 'training of trainers')
+                    || (bool) preg_match('/\b(tot)\b/i', $nama)
+                    || str_contains($nama, 'fr mengajar')
+                    || ($r->program_id && isset($allSoftProgramIdsMap[(int) $r->program_id]));
+            }
+
+            if ($selectedProgram !== 'all' && $selectedProgram !== '') {
+                $cleanFilter = $cleanStr($selectedProgram);
+                $matchesSelected = str_contains($cleanStr($r->nama_pelatihan), $cleanFilter)
+                    || str_contains($cleanStr($r->notes), $cleanFilter);
+                if (! $matchesSelected) {
+                    continue;
+                }
+            }
+
+            if ($isSoft) {
+                $softNonRegRecords[] = $r;
+            } else {
+                $tekNonRegRecords[] = $r;
+            }
+        }
+
+        $calcMetrics = function ($progList, array $records) {
             $targPeserta = 0;
             $targBatch = 0;
             $realBatch = 0;
@@ -723,54 +846,14 @@ class DashboardRealisasiController extends Controller
                 ];
             }
 
-            $technicalNotes = ['ESTATE', 'MILL', 'TRACTION', 'TRAKSI', 'DOWNSTREAM', 'ADMINISTRASI', 'ADMIN'];
-            $catRecords = $trNonReg->filter(function ($r) use ($allSoftProgramIds, $categoryType, $selectedProgram, $cleanStr, $technicalNotes) {
-                $notes = strtoupper(trim((string) $r->notes));
-                $nama = strtolower(trim((string) $r->nama_pelatihan));
-
-                if (in_array($notes, $technicalNotes, true)) {
-                    $isSoft = false;
-                } else {
-                    $isSoft = ($notes === 'SOFTSKILL')
-                        || str_contains($notes, 'SOFT')
-                        || str_contains($nama, 'soft')
-                        || str_contains($nama, 'leadership')
-                        || str_contains($nama, 'supervisory')
-                        || str_contains($nama, 'problem solving')
-                        || str_contains($nama, 'communication')
-                        || str_contains($nama, 'talent development')
-                        || str_contains($nama, 'more precious than gold')
-                        || str_contains($nama, 'training of trainers')
-                        || (bool) preg_match('/\b(tot)\b/i', $nama)
-                        || str_contains($nama, 'fr mengajar')
-                        || ($r->program_id && in_array((int) $r->program_id, $allSoftProgramIds, true));
-                }
-
-                if ($categoryType === 'softskill' && ! $isSoft) {
-                    return false;
-                }
-                if ($categoryType === 'teknikal' && $isSoft) {
-                    return false;
-                }
-
-                // If specific program is selected in dropdown filter
-                if ($selectedProgram !== 'all' && $selectedProgram !== '') {
-                    $cleanFilter = $cleanStr($selectedProgram);
-                    $matchesSelected = str_contains($cleanStr($r->nama_pelatihan), $cleanFilter)
-                        || str_contains($cleanStr($r->notes), $cleanFilter);
-                    if (! $matchesSelected) {
-                        return false;
-                    }
-                }
-
-                return true;
-            });
-
-            $realPeserta = (int) $catRecords->count();
-
-            // If realBatch wasn't set explicitly by master programs, infer from distinct training sessions
+            $realPeserta = count($records);
             if ($realBatch === 0 && $realPeserta > 0) {
-                $realBatch = (int) $catRecords->map(fn ($r) => ($r->nama_pelatihan ?: $r->notes).'|'.$r->region.'|'.$r->bulan)->unique()->count();
+                $distinct = [];
+                foreach ($records as $r) {
+                    $k = ($r->nama_pelatihan ?: $r->notes).'|'.$r->region.'|'.$r->bulan;
+                    $distinct[$k] = true;
+                }
+                $realBatch = count($distinct);
             }
 
             $pct = $targPeserta > 0 ? round(($realPeserta / $targPeserta) * 100) : 0;
@@ -786,8 +869,8 @@ class DashboardRealisasiController extends Controller
             ];
         };
 
-        $softSkill = $calcMetrics($softPrograms, 'softskill');
-        $teknikal = $calcMetrics($tekPrograms, 'teknikal');
+        $softSkill = $calcMetrics($softPrograms, $softNonRegRecords);
+        $teknikal = $calcMetrics($tekPrograms, $tekNonRegRecords);
 
         // 6. Monthly Chart Data (Jan - Des) - Real-time Per Bulan from TrainingRecord
         // Khusus grafik ini: hanya menampilkan data yang kolom "tahun" di tabel programnya sesuai ($year)
@@ -798,18 +881,32 @@ class DashboardRealisasiController extends Controller
         $chartRegulerMap = ProgramReguler::all()->keyBy('Program_reguler_id');
         $chartNonRegulerMap = ProgramNonReguler::all()->keyBy('id_nonreguler');
 
+        $cleanedRegulerList = [];
+        foreach ($chartRegulerMap as $p) {
+            $pName = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->Training_Program)));
+            if ($pName !== '') {
+                $cleanedRegulerList[] = ['name' => $pName, 'tahun' => $p->tahun];
+            }
+        }
+        $cleanedNonRegulerList = [];
+        foreach ($chartNonRegulerMap as $p) {
+            $pName = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->jenis_pelatihan)));
+            if ($pName !== '') {
+                $cleanedNonRegulerList[] = ['name' => $pName, 'tahun' => $p->tahun];
+            }
+        }
+
         $chartRawRecords = (clone $trainingRecordQuery)->get();
-        $chartYearRecords = $chartRawRecords->filter(function ($r) use ($year, $chartRegulerMap, $chartNonRegulerMap) {
+        $chartYearRecords = $chartRawRecords->filter(function ($r) use ($year, $chartRegulerMap, $chartNonRegulerMap, $cleanedRegulerList, $cleanedNonRegulerList) {
             $pTahun = null;
             if ($r->program_type === 'reguler') {
                 if ($r->program_id && isset($chartRegulerMap[$r->program_id])) {
                     $pTahun = $chartRegulerMap[$r->program_id]->tahun;
                 } else {
                     $note = strtoupper(trim((string) ($r->notes ?: $r->nama_pelatihan)));
-                    foreach ($chartRegulerMap as $p) {
-                        $pName = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->Training_Program)));
-                        if ($pName !== '' && (str_contains($note, $pName) || str_contains($pName, $note))) {
-                            $pTahun = $p->tahun;
+                    foreach ($cleanedRegulerList as $item) {
+                        if (str_contains($note, $item['name']) || str_contains($item['name'], $note)) {
+                            $pTahun = $item['tahun'];
                             break;
                         }
                     }
@@ -819,10 +916,9 @@ class DashboardRealisasiController extends Controller
                     $pTahun = $chartNonRegulerMap[$r->program_id]->tahun;
                 } else {
                     $note = strtoupper(trim((string) ($r->notes ?: $r->nama_pelatihan)));
-                    foreach ($chartNonRegulerMap as $p) {
-                        $pName = strtoupper(trim(preg_replace('/\s*\(.*?\)\s*/', '', (string) $p->jenis_pelatihan)));
-                        if ($pName !== '' && (str_contains($note, $pName) || str_contains($pName, $note))) {
-                            $pTahun = $p->tahun;
+                    foreach ($cleanedNonRegulerList as $item) {
+                        if (str_contains($note, $item['name']) || str_contains($item['name'], $note)) {
+                            $pTahun = $item['tahun'];
                             break;
                         }
                     }
@@ -843,6 +939,7 @@ class DashboardRealisasiController extends Controller
 
         $monthlyPesertaMap = array_fill(1, 12, 0);
         $monthlyProgramSets = array_fill(1, 12, []);
+        $monthlyParticipantSeen = array_fill(1, 12, []);
 
         foreach ($chartYearRecords as $r) {
             $mCode = strtoupper(substr(trim((string) $r->bulan), 0, 3));
@@ -850,9 +947,59 @@ class DashboardRealisasiController extends Controller
             if (! $mNum && $r->training_date) {
                 $mNum = (int) date('n', strtotime($r->training_date));
             }
+
+            // Sync month with parent program schedule if program schedule exists
+            $parentMonths = [];
+            if ($r->program_type === 'reguler' && $r->program_id && isset($chartRegulerMap[$r->program_id])) {
+                $p = $chartRegulerMap[$r->program_id];
+                $dates = is_array($p->tanggal_pelaksanaan) ? $p->tanggal_pelaksanaan : json_decode($p->tanggal_pelaksanaan ?? '[]', true);
+                if (is_array($dates)) {
+                    foreach ($dates as $d) {
+                        if ($d && (int) date('Y', strtotime($d)) === (int) $year) {
+                            $parentMonths[] = (int) date('n', strtotime($d));
+                        }
+                    }
+                }
+                if (empty($parentMonths) && $p->Mulai_program) {
+                    if ((int) date('Y', strtotime($p->Mulai_program)) === (int) $year) {
+                        $parentMonths[] = (int) date('n', strtotime($p->Mulai_program));
+                    }
+                }
+            } elseif ($r->program_type === 'non_reguler' && $r->program_id && isset($chartNonRegulerMap[$r->program_id])) {
+                $p = $chartNonRegulerMap[$r->program_id];
+                $dates = is_array($p->tanggal_pelaksanaan) ? $p->tanggal_pelaksanaan : json_decode($p->tanggal_pelaksanaan ?? '[]', true);
+                if (is_array($dates)) {
+                    foreach ($dates as $d) {
+                        if ($d && (int) date('Y', strtotime($d)) === (int) $year) {
+                            $parentMonths[] = (int) date('n', strtotime($d));
+                        }
+                    }
+                }
+                if (empty($parentMonths) && $p->start_date) {
+                    if ((int) date('Y', strtotime($p->start_date)) === (int) $year) {
+                        $parentMonths[] = (int) date('n', strtotime($p->start_date));
+                    }
+                }
+            }
+            $parentMonths = array_values(array_unique(array_filter($parentMonths)));
+
+            if (! empty($parentMonths)) {
+                if (! $mNum || ! in_array($mNum, $parentMonths, true)) {
+                    $mNum = $parentMonths[0];
+                }
+            }
+
             if ($mNum && isset($monthlyPesertaMap[$mNum])) {
-                $monthlyPesertaMap[$mNum]++;
                 $progKey = $r->program_id ? ($r->program_type.':'.$r->program_id) : ($r->nama_pelatihan ?: $r->notes);
+                if ($r->program_type === 'reguler') {
+                    $pKey = $r->participant_name ? trim(strtolower($r->participant_name)) : ($r->participant_identifier ?: $r->id);
+                    if (! isset($monthlyParticipantSeen[$mNum][$progKey][$pKey])) {
+                        $monthlyParticipantSeen[$mNum][$progKey][$pKey] = true;
+                        $monthlyPesertaMap[$mNum]++;
+                    }
+                } else {
+                    $monthlyPesertaMap[$mNum]++;
+                }
                 $monthlyProgramSets[$mNum][$progKey] = true;
             }
         }
@@ -903,7 +1050,25 @@ class DashboardRealisasiController extends Controller
             ],
         ];
 
-        return view('Administrasi.Pages.Dashboard.dashboard_realisasi', compact(
+        return compact(
+            'regulerMt',
+            'talentProgram',
+            'softSkill',
+            'teknikal',
+            'mtProgramTable',
+            'mtSummary',
+            'mtStafTable',
+            'mtStafSummary',
+            'mtMandorTable',
+            'mtMandorSummary',
+            'monthlyData',
+            'evaluasi'
+        );
+    });
+
+    extract($metrics);
+
+    return view('Administrasi.Pages.Dashboard.dashboard_realisasi', compact(
             'regulerMt',
             'talentProgram',
             'softSkill',
@@ -974,6 +1139,12 @@ class DashboardRealisasiController extends Controller
             "Mengubah data {$program->Training_Program}: Kelas={$kelas}, Resign={$resign}, Staff={$staff}",
             ['id' => $program->Program_reguler_id, 'kelas' => $kelas, 'resign' => $resign, 'staff' => $staff]
         );
+
+        Cache::put('dreal_cache_version', time());
+        Cache::put('dashboard_cache_version', time());
+        Cache::put('rvb_cache_version', time());
+        Cache::forget('dreal_filter_options');
+        Cache::forget('portal_dashboard_years');
 
         return response()->json([
             'success' => true,

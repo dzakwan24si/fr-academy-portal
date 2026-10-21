@@ -227,9 +227,9 @@
                                 <tr class="hover:bg-gray-50/80 transition-colors">
                                     <td class="p-2.5 text-left font-bold text-gray-900 border-r border-gray-200">{{ $t['program'] }}</td>
                                     <td class="p-2 border-r border-gray-200 font-semibold">{{ $t['trainee'] }}</td>
-                                    <td class="p-2 border-r border-gray-200">{{ $t['culled'] }} <span class="text-rose-600 font-bold text-[10px]">({{ $t['pct_culled'] }}%)</span></td>
+                                    <td class="p-2 border-r border-gray-200">{{ $t['culled'] }} <span class="text-amber-600 font-bold text-[10px]">({{ $t['pct_culled'] }}%)</span></td>
                                     <td class="p-2 border-r border-gray-200">{{ $t['passed'] }} <span class="text-blue-600 font-bold text-[10px]">({{ $t['pct_passed'] }}%)</span></td>
-                                    <td class="p-2 border-r border-gray-200">{{ $t['resign'] }} <span class="text-amber-600 font-bold text-[10px]">({{ $t['pct_resign'] }}%)</span></td>
+                                    <td class="p-2 border-r border-gray-200">{{ $t['resign'] }} <span class="text-rose-600 font-bold text-[10px]">({{ $t['pct_resign'] }}%)</span></td>
                                     <td class="p-2 font-bold text-emerald-700">{{ $t['existing'] }} <span class="text-[10px]">({{ $t['pct_existing'] }}%)</span></td>
                                 </tr>
                             @endforeach
@@ -237,9 +237,9 @@
                             <tr class="fr-table-total text-gray-900">
                                 <td class="p-2.5 text-left font-extrabold border-r border-gray-300">TOTAL</td>
                                 <td class="p-2 border-r border-gray-300">{{ $totTrainee['trainee'] }}</td>
-                                <td class="p-2 border-r border-gray-300">{{ $totTrainee['culled'] }} <span class="text-rose-700 font-bold text-[10px]">({{ $totTrainee['pct_culled'] }}%)</span></td>
+                                <td class="p-2 border-r border-gray-300">{{ $totTrainee['culled'] }} <span class="text-amber-700 font-bold text-[10px]">({{ $totTrainee['pct_culled'] }}%)</span></td>
                                 <td class="p-2 border-r border-gray-300">{{ $totTrainee['passed'] }} <span class="text-blue-700 font-bold text-[10px]">({{ $totTrainee['pct_passed'] }}%)</span></td>
-                                <td class="p-2 border-r border-gray-300">{{ $totTrainee['resign'] }} <span class="text-amber-700 font-bold text-[10px]">({{ $totTrainee['pct_resign'] }}%)</span></td>
+                                <td class="p-2 border-r border-gray-300">{{ $totTrainee['resign'] }} <span class="text-rose-700 font-bold text-[10px]">({{ $totTrainee['pct_resign'] }}%)</span></td>
                                 <td class="p-2 font-extrabold text-emerald-800">{{ $totTrainee['existing'] }} <span class="text-[10px]">({{ $totTrainee['pct_existing'] }}%)</span></td>
                             </tr>
                         </tbody>
@@ -799,7 +799,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     {
                         label: 'Culled (%)',
                         data: traineeChartData.culled,
-                        backgroundColor: '#e11d48', // Red / Crimson
+                        backgroundColor: '#f59e0b', // Amber / Yellow
                         borderRadius: 4,
                         barPercentage: 0.8,
                         categoryPercentage: 0.8,
@@ -815,7 +815,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     {
                         label: 'Resign (%)',
                         data: traineeChartData.resign,
-                        backgroundColor: '#f59e0b', // Amber
+                        backgroundColor: '#e11d48', // Red / Crimson
                         borderRadius: 4,
                         barPercentage: 0.8,
                         categoryPercentage: 0.8,

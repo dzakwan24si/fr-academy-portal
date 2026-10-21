@@ -143,7 +143,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16" data-aos="fade-up">
                 <span class="text-green-accent font-bold tracking-wider uppercase text-sm">INFRASTRUKTUR</span>
-                <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white mt-4">Fasilitas Kampus Kubang</h2>
+                <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white mt-4">Fasilitas FR Academy</h2>
                 <p class="text-gray-600 dark:text-gray-400 mt-4 max-w-2xl mx-auto">Kami menyediakan lingkungan yang dirancang khusus untuk mendukung proses belajar mengajar secara optimal.</p>
             </div>
             

@@ -77,11 +77,10 @@
             <tr>
                 <th width="5%">No</th>
                 <th width="15%">NIK</th>
-                <th width="25%">Nama Peserta</th>
-                <th width="15%">Talent To</th>
-                <th width="15%">Unit / Region</th>
+                <th width="30%">Nama Peserta</th>
+                <th width="15%">Jabatan</th>
+                <th width="20%">Unit / Region</th>
                 <th width="15%">Status Kehadiran</th>
-                <th width="10%">Tanda Tangan</th>
             </tr>
         </thead>
         <tbody>
@@ -105,11 +104,10 @@
                             <span class="status-belum">BELUM ABSEN</span>
                         @endif
                     </td>
-                    <td></td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" style="text-align: center; padding: 20px; font-style: italic; color: #666;">
+                    <td colspan="6" style="text-align: center; padding: 20px; font-style: italic; color: #666;">
                         Belum ada data peserta (peserta belum di-import atau belum dimasukkan ke kelas ini).
                     </td>
                 </tr>
