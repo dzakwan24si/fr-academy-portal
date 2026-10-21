@@ -536,7 +536,84 @@ class DashboardController extends Controller
             ];
         }
 
-        if (file_exists($csvPath)) {
+        $allAsisten = Asisten::whereNotNull('level_jabatan')
+            ->where('level_jabatan', '!=', '')
+            ->where('level_jabatan', '!=', '-')
+            ->where(function ($q) {
+                $q->whereNull('status_resign')
+                    ->orWhere(function ($sq) {
+                        $sq->where('status_resign', 'not like', '%Resign%')
+                            ->where('status_resign', 'not like', '%PHK%');
+                    });
+            })
+            ->where(function ($q) {
+                $q->where('keterangan', 'like', '%Eksis%')
+                    ->orWhere('keterangan', 'like', '%Aktif%');
+            })
+            ->where(function ($q) {
+                $q->whereNull('tanggal_resign')
+                    ->orWhere('tanggal_resign', '');
+            })
+            ->where(function ($q) {
+                $q->whereNull('tahun_angkatan')
+                    ->orWhere('tahun_angkatan', '>=', 2011);
+            })
+            ->get();
+
+        if ($allAsisten->isNotEmpty()) {
+            $keywords = [
+                'FAT' => ['FIELD ASSISTANT', 'STAFF OPERATION', 'FAT', 'ESTATE CADET', 'ECT'],
+                'MAT' => ['MILL ASSISTANT', 'MAT'],
+                'AAT' => ['ADMIN ASSISTANT', 'ADMINISTRATION ASSISTANT', 'AAT'],
+                'TAT' => ['TRACTION ASSISTANT', 'TAT'],
+                'DMT' => ['DOWNSTREAM', 'DMT'],
+            ];
+
+            foreach ($allAsisten as $a) {
+                $lvl = strtoupper(trim((string) $a->level_jabatan));
+                $pName = strtoupper((string) $a->program);
+                $batchName = strtoupper((string) $a->batch);
+
+                // Filter only starting from 2011 (pre-2011 are excluded)
+                $rowYear = 0;
+                if (preg_match('/\b(20\d{2})\b/', $pName, $m)) {
+                    $rowYear = (int) $m[1];
+                } elseif (preg_match('/\b(20\d{2})\b/', $batchName, $m)) {
+                    $rowYear = (int) $m[1];
+                } elseif ($a->tahun_angkatan && preg_match('/\b(20\d{2})\b/', (string) $a->tahun_angkatan, $m)) {
+                    $rowYear = (int) $m[1];
+                }
+                if ($rowYear > 0 && $rowYear < 2011) {
+                    continue;
+                }
+
+                $matchedProg = null;
+                foreach ($keywords as $p => $kws) {
+                    foreach ($kws as $kw) {
+                        if (str_contains($pName, $kw) || str_contains($batchName, $kw)) {
+                            $matchedProg = $p;
+                            break 2;
+                        }
+                    }
+                }
+
+                if (! $matchedProg || ! isset($rows[$matchedProg])) {
+                    continue;
+                }
+
+                if (in_array($lvl, ['PC', 'P', 'DIR'], true)) {
+                    $rows[$matchedProg]['pc']++;
+                } elseif ($lvl === 'GM') {
+                    $rows[$matchedProg]['gm']++;
+                } elseif (in_array($lvl, ['MGR', 'MK', 'MM', 'MANAGER'], true)) {
+                    $rows[$matchedProg]['mk_mm']++;
+                } elseif (in_array($lvl, ['ASKEP', 'KTU'], true)) {
+                    $rows[$matchedProg]['askep_ktu']++;
+                } elseif (in_array($lvl, ['ASISTEN', 'ASST', 'STAFF'], true)) {
+                    $rows[$matchedProg]['asst']++;
+                }
+            }
+        } elseif (file_exists($csvPath)) {
             $f = fopen($csvPath, 'r');
             $header = fgetcsv($f, 0, ';', '"', '\\');
             $lvlIdx = array_search('LVL', $header);
@@ -628,84 +705,6 @@ class DashboardController extends Controller
                 }
             }
             fclose($f);
-        } else {
-            // Fallback to Asisten table in database (exclude resigned / non-active, and only starting from 2011)
-            $allAsisten = Asisten::whereNotNull('level_jabatan')
-                ->where('level_jabatan', '!=', '')
-                ->where('level_jabatan', '!=', '-')
-                ->where(function ($q) {
-                    $q->whereNull('status_resign')
-                        ->orWhere(function ($sq) {
-                            $sq->where('status_resign', 'not like', '%Resign%')
-                                ->where('status_resign', 'not like', '%PHK%');
-                        });
-                })
-                ->where(function ($q) {
-                    $q->where('keterangan', 'like', '%Eksis%')
-                        ->orWhere('keterangan', 'like', '%Aktif%');
-                })
-                ->where(function ($q) {
-                    $q->whereNull('tanggal_resign')
-                        ->orWhere('tanggal_resign', '');
-                })
-                ->where(function ($q) {
-                    $q->whereNull('tahun_angkatan')
-                        ->orWhere('tahun_angkatan', '>=', 2011);
-                })
-                ->get();
-
-            $keywords = [
-                'FAT' => ['FIELD ASSISTANT', 'STAFF OPERATION', 'FAT', 'ESTATE CADET', 'ECT'],
-                'MAT' => ['MILL ASSISTANT', 'MAT'],
-                'AAT' => ['ADMIN ASSISTANT', 'ADMINISTRATION ASSISTANT', 'AAT'],
-                'TAT' => ['TRACTION ASSISTANT', 'TAT'],
-                'DMT' => ['DOWNSTREAM', 'DMT'],
-            ];
-
-            foreach ($allAsisten as $a) {
-                $lvl = strtoupper(trim((string) $a->level_jabatan));
-                $pName = strtoupper((string) $a->program);
-                $batchName = strtoupper((string) $a->batch);
-
-                // Filter only starting from 2011 (pre-2011 are excluded)
-                $rowYear = 0;
-                if (preg_match('/\b(20\d{2})\b/', $pName, $m)) {
-                    $rowYear = (int) $m[1];
-                } elseif (preg_match('/\b(20\d{2})\b/', $batchName, $m)) {
-                    $rowYear = (int) $m[1];
-                } elseif ($a->tahun_angkatan && preg_match('/\b(20\d{2})\b/', (string) $a->tahun_angkatan, $m)) {
-                    $rowYear = (int) $m[1];
-                }
-                if ($rowYear > 0 && $rowYear < 2011) {
-                    continue;
-                }
-
-                $matchedProg = null;
-                foreach ($keywords as $p => $kws) {
-                    foreach ($kws as $kw) {
-                        if (str_contains($pName, $kw) || str_contains($batchName, $kw)) {
-                            $matchedProg = $p;
-                            break 2;
-                        }
-                    }
-                }
-
-                if (! $matchedProg || ! isset($rows[$matchedProg])) {
-                    continue;
-                }
-
-                if (in_array($lvl, ['PC', 'P', 'DIR'], true)) {
-                    $rows[$matchedProg]['pc']++;
-                } elseif ($lvl === 'GM') {
-                    $rows[$matchedProg]['gm']++;
-                } elseif (in_array($lvl, ['MGR', 'MK', 'MM', 'MANAGER'], true)) {
-                    $rows[$matchedProg]['mk_mm']++;
-                } elseif (in_array($lvl, ['ASKEP', 'KTU'], true)) {
-                    $rows[$matchedProg]['askep_ktu']++;
-                } elseif (in_array($lvl, ['ASISTEN', 'ASST', 'STAFF'], true)) {
-                    $rows[$matchedProg]['asst']++;
-                }
-            }
         }
 
         // Calculate totals and percentages
