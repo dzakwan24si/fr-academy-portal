@@ -517,7 +517,6 @@ class DashboardController extends Controller
 
     protected function computeKarirLulusan(int $year): array
     {
-        $csvPath = storage_path('app/alumni_monitoring.csv');
         $programs = ['FAT', 'MAT', 'AAT', 'TAT', 'DMT'];
         $rows = [];
         $totPc = 0;
@@ -560,151 +559,57 @@ class DashboardController extends Controller
             })
             ->get();
 
-        if ($allAsisten->isNotEmpty()) {
-            $keywords = [
-                'FAT' => ['FIELD ASSISTANT', 'STAFF OPERATION', 'FAT', 'ESTATE CADET', 'ECT'],
-                'MAT' => ['MILL ASSISTANT', 'MAT'],
-                'AAT' => ['ADMIN ASSISTANT', 'ADMINISTRATION ASSISTANT', 'AAT'],
-                'TAT' => ['TRACTION ASSISTANT', 'TAT'],
-                'DMT' => ['DOWNSTREAM', 'DMT'],
-            ];
+        $keywords = [
+            'FAT' => ['FIELD ASSISTANT', 'STAFF OPERATION', 'FAT', 'ESTATE CADET', 'ECT'],
+            'MAT' => ['MILL ASSISTANT', 'MAT'],
+            'AAT' => ['ADMIN ASSISTANT', 'ADMINISTRATION ASSISTANT', 'AAT'],
+            'TAT' => ['TRACTION ASSISTANT', 'TAT'],
+            'DMT' => ['DOWNSTREAM', 'DMT'],
+        ];
 
-            foreach ($allAsisten as $a) {
-                $lvl = strtoupper(trim((string) $a->level_jabatan));
-                $pName = strtoupper((string) $a->program);
-                $batchName = strtoupper((string) $a->batch);
+        foreach ($allAsisten as $a) {
+            $lvl = strtoupper(trim((string) $a->level_jabatan));
+            $pName = strtoupper((string) $a->program);
+            $batchName = strtoupper((string) $a->batch);
 
-                // Filter only starting from 2011 (pre-2011 are excluded)
-                $rowYear = 0;
-                if (preg_match('/\b(20\d{2})\b/', $pName, $m)) {
-                    $rowYear = (int) $m[1];
-                } elseif (preg_match('/\b(20\d{2})\b/', $batchName, $m)) {
-                    $rowYear = (int) $m[1];
-                } elseif ($a->tahun_angkatan && preg_match('/\b(20\d{2})\b/', (string) $a->tahun_angkatan, $m)) {
-                    $rowYear = (int) $m[1];
-                }
-                if ($rowYear > 0 && $rowYear < 2011) {
-                    continue;
-                }
+            // Filter only starting from 2011 (pre-2011 are excluded)
+            $rowYear = 0;
+            if (preg_match('/\b(20\d{2})\b/', $pName, $m)) {
+                $rowYear = (int) $m[1];
+            } elseif (preg_match('/\b(20\d{2})\b/', $batchName, $m)) {
+                $rowYear = (int) $m[1];
+            } elseif ($a->tahun_angkatan && preg_match('/\b(20\d{2})\b/', (string) $a->tahun_angkatan, $m)) {
+                $rowYear = (int) $m[1];
+            }
+            if ($rowYear > 0 && $rowYear < 2011) {
+                continue;
+            }
 
-                $matchedProg = null;
-                foreach ($keywords as $p => $kws) {
-                    foreach ($kws as $kw) {
-                        if (str_contains($pName, $kw) || str_contains($batchName, $kw)) {
-                            $matchedProg = $p;
-                            break 2;
-                        }
+            $matchedProg = null;
+            foreach ($keywords as $p => $kws) {
+                foreach ($kws as $kw) {
+                    if (str_contains($pName, $kw) || str_contains($batchName, $kw)) {
+                        $matchedProg = $p;
+                        break 2;
                     }
                 }
-
-                if (! $matchedProg || ! isset($rows[$matchedProg])) {
-                    continue;
-                }
-
-                if (in_array($lvl, ['PC', 'P', 'DIR'], true)) {
-                    $rows[$matchedProg]['pc']++;
-                } elseif ($lvl === 'GM') {
-                    $rows[$matchedProg]['gm']++;
-                } elseif (in_array($lvl, ['MGR', 'MK', 'MM', 'MANAGER'], true)) {
-                    $rows[$matchedProg]['mk_mm']++;
-                } elseif (in_array($lvl, ['ASKEP', 'KTU'], true)) {
-                    $rows[$matchedProg]['askep_ktu']++;
-                } elseif (in_array($lvl, ['ASISTEN', 'ASST', 'STAFF'], true)) {
-                    $rows[$matchedProg]['asst']++;
-                }
             }
-        } elseif (file_exists($csvPath)) {
-            $f = fopen($csvPath, 'r');
-            $header = fgetcsv($f, 0, ';', '"', '\\');
-            $lvlIdx = array_search('LVL', $header);
-            $progIdx = array_search('PROG', $header);
-            $programIdx = array_search('Program', $header);
-            $tahunIdx = array_search('Tahun', $header);
-            $ketIdx = array_search('Keterangan', $header);
-            $ketResignIdx = array_search('Keterangan Resign', $header);
-            $tglResignIdx = array_search('Tanggal Resign', $header);
 
-            while (($row = fgetcsv($f, 0, ';', '"', '\\')) !== false) {
-                if (empty(array_filter($row))) {
-                    continue;
-                }
-                $lvl = strtoupper(trim($row[$lvlIdx] ?? ''));
-                if ($lvl === '' || $lvl === '-') {
-                    continue;
-                }
-
-                $ket = trim($row[$ketIdx] ?? '');
-                $ketResign = trim($row[$ketResignIdx] ?? '');
-                $tglResign = trim($row[$tglResignIdx] ?? '');
-
-                // Trainee must be active (Keterangan: Eksis / Aktif)
-                $ketLower = strtolower($ket);
-                $isEksis = ($ketLower === 'eksis' || $ketLower === 'aktif' || str_contains($ketLower, 'eksis') || str_contains($ketLower, 'aktif'));
-                if (! $isEksis) {
-                    continue;
-                }
-                if (str_contains($ketLower, 'resign') || str_contains($ketLower, 'phk') || str_contains($ketLower, 'culled') || str_contains($ketLower, 'gagal')) {
-                    continue;
-                }
-                if (str_contains(strtolower($ketResign), 'resign') || str_contains(strtolower($ketResign), 'phk')) {
-                    continue;
-                }
-                if (! empty($tglResign)) {
-                    continue;
-                }
-
-                $prog = strtoupper(trim($row[$progIdx] ?? ''));
-                $program = trim($row[$programIdx] ?? '');
-
-                // Filter only starting from 2011 (pre-2011 like 2002-2010 are excluded)
-                $rowYear = 0;
-                if (preg_match('/\b(20\d{2})\b/', $program, $m)) {
-                    $rowYear = (int) $m[1];
-                } elseif (preg_match('/\b(20\d{2})\b/', (string) ($row[$tahunIdx] ?? ''), $m)) {
-                    $rowYear = (int) $m[1];
-                } elseif (preg_match('/\b(20\d{2})\b/', (string) ($row[15] ?? ''), $m)) {
-                    $rowYear = (int) $m[1];
-                } elseif (preg_match('/\b(20\d{2})\b/', (string) ($row[22] ?? ''), $m)) {
-                    $rowYear = (int) $m[1];
-                }
-                if ($rowYear > 0 && $rowYear < 2011) {
-                    continue;
-                }
-
-                if ($prog === 'ECT' || str_contains(strtoupper($program), 'ESTATE CADET')) {
-                    $prog = 'FAT';
-                } elseif ($prog === '') {
-                    $progUpper = strtoupper($program);
-                    if (str_contains($progUpper, 'FIELD ASSISTANT') || str_contains($progUpper, 'STAFF OPERATION') || str_contains($progUpper, 'FAT')) {
-                        $prog = 'FAT';
-                    } elseif (str_contains($progUpper, 'MILL ASSISTANT') || str_contains($progUpper, 'MAT')) {
-                        $prog = 'MAT';
-                    } elseif (str_contains($progUpper, 'ADMIN ASSISTANT') || str_contains($progUpper, 'AAT')) {
-                        $prog = 'AAT';
-                    } elseif (str_contains($progUpper, 'TRACTION ASSISTANT') || str_contains($progUpper, 'TAT')) {
-                        $prog = 'TAT';
-                    } elseif (str_contains($progUpper, 'DOWNSTREAM') || str_contains($progUpper, 'DMT')) {
-                        $prog = 'DMT';
-                    }
-                }
-
-                if (! isset($rows[$prog])) {
-                    continue;
-                }
-
-                if (in_array($lvl, ['PC', 'P', 'DIR'], true)) {
-                    $rows[$prog]['pc']++;
-                } elseif ($lvl === 'GM') {
-                    $rows[$prog]['gm']++;
-                } elseif (in_array($lvl, ['MGR', 'MK', 'MM', 'MANAGER'], true)) {
-                    $rows[$prog]['mk_mm']++;
-                } elseif (in_array($lvl, ['ASKEP', 'KTU'], true)) {
-                    $rows[$prog]['askep_ktu']++;
-                } elseif (in_array($lvl, ['ASISTEN', 'ASST', 'STAFF'], true)) {
-                    $rows[$prog]['asst']++;
-                }
+            if (! $matchedProg || ! isset($rows[$matchedProg])) {
+                continue;
             }
-            fclose($f);
+
+            if (in_array($lvl, ['PC', 'P', 'DIR'], true)) {
+                $rows[$matchedProg]['pc']++;
+            } elseif ($lvl === 'GM') {
+                $rows[$matchedProg]['gm']++;
+            } elseif (in_array($lvl, ['MGR', 'MK', 'MM', 'MANAGER'], true)) {
+                $rows[$matchedProg]['mk_mm']++;
+            } elseif (in_array($lvl, ['ASKEP', 'KTU'], true)) {
+                $rows[$matchedProg]['askep_ktu']++;
+            } elseif (in_array($lvl, ['ASISTEN', 'ASST', 'STAFF'], true)) {
+                $rows[$matchedProg]['asst']++;
+            }
         }
 
         // Calculate totals and percentages
