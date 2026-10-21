@@ -417,12 +417,12 @@ class DashboardRealisasiController extends Controller
 
             $startDate = $p->Mulai_program?->format('Y-m-d') ?: TrainingMetricService::getProgramRegulerStartDate($p);
             $endDate = $p->Selesai_program?->format('Y-m-d') ?: TrainingMetricService::getProgramRegulerEndDate($p);
-            $isFuture = ($startDate && $startDate > $cutoffDate);
+            $hasStarted = ($startDate && $startDate <= $cutoffDate);
 
             $isMandor = str_contains($cleanStr($p->jenis_program_reguler), 'mandor');
             $rencana = (int) ($p->TARGET_PESERTA ?? $p->target_peserta ?? 0);
 
-            if ($isFuture) {
+            if (! $hasStarted) {
                 $kelas = 0;
             } else {
                 $pId = (int) ($p->Program_reguler_id ?? $p->getKey());
@@ -463,8 +463,8 @@ class DashboardRealisasiController extends Controller
                 }
             }
 
-            $resign = ($p->resign !== null && ! $isFuture) ? (int) $p->resign : (! $isFuture ? $autoResign : 0);
-            $staff = ($p->staff !== null && ! $isFuture) ? (int) $p->staff : ((! $isFuture && $p->lulus !== null) ? (int) $p->lulus : max(0, $kelas - $resign));
+            $resign = ($p->resign !== null && $hasStarted) ? (int) $p->resign : ($hasStarted ? $autoResign : 0);
+            $staff = ($p->staff !== null && $hasStarted) ? (int) $p->staff : (($hasStarted && $p->lulus !== null) ? (int) $p->lulus : max(0, $kelas - $resign));
             $lulus = $staff;
 
             $rowItem = [
@@ -556,8 +556,9 @@ class DashboardRealisasiController extends Controller
         foreach ($regulerStaffPrograms as $p) {
             $startDate = $p->Mulai_program?->format('Y-m-d') ?: TrainingMetricService::getProgramRegulerStartDate($p);
             $endDate = $p->Selesai_program?->format('Y-m-d') ?: TrainingMetricService::getProgramRegulerEndDate($p);
+            $hasStarted = ($startDate && $startDate <= $cutoffDate);
 
-            if ($startDate && $startDate > $cutoffDate) {
+            if (! $hasStarted) {
                 if ($selectedMonthNum === null) {
                     $regulerBerjalan++;
                 }
