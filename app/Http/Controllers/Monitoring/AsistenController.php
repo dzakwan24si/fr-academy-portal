@@ -1337,6 +1337,19 @@ class AsistenController extends Controller
             }
         });
 
+        $applyActiveFilter = function ($q) {
+            $q->where(function ($sub) {
+                $sub->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
+            })->where(function ($sub) {
+                $sub->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
+            })->where(function ($sub) {
+                $sub->where('status_resign', 'not like', '%Resign%')
+                    ->where('status_resign', 'not like', '%PHK%')
+                    ->where('keterangan', 'not like', '%Resign%')
+                    ->where('keterangan', 'not like', '%PHK%');
+            });
+        };
+
         if ($filterType === 'resign') {
             $query->where(function ($q) {
                 $q->where('keterangan', 'like', '%Resign%')
@@ -1353,105 +1366,57 @@ class AsistenController extends Controller
                     ->orWhere('status_kelulusan', 'like', '%Gagal%');
             });
         } elseif ($filterType === 'eksis') {
-            $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')
-                    ->orWhere('keterangan', 'Eksis');
-            })->where(function ($q) {
-                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
-            })->where(function ($q) {
-                $q->where('status_resign', 'not like', '%Resign%')
-                    ->where('status_resign', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Resign%')
-                    ->where('keterangan', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Gagal%')
-                    ->where('keterangan', 'not like', '%Culled%');
-            });
-        } elseif ($filterType === 'pc') {
-            $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
-            })->where(function ($q) {
-                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
-            })->where(function ($q) {
-                $q->where('status_resign', 'not like', '%Resign%')
-                    ->where('status_resign', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Resign%')
-                    ->where('keterangan', 'not like', '%PHK%');
-            })->where(function ($q) {
-                $q->whereIn('level_jabatan', ['PC', 'P', 'DIR'])
-                    ->orWhere('level_jabatan', 'like', '%PC%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Controller%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Direktur%');
-            });
-        } elseif ($filterType === 'gm') {
-            $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
-            })->where(function ($q) {
-                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
-            })->where(function ($q) {
-                $q->where('status_resign', 'not like', '%Resign%')
-                    ->where('status_resign', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Resign%')
-                    ->where('keterangan', 'not like', '%PHK%');
-            })->where(function ($q) {
-                $q->where('level_jabatan', 'GM')
-                    ->orWhere('level_jabatan', 'like', '%GM%')
-                    ->orWhere('jabatan_terakhir', 'like', '%General Manager%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Group Manager%');
-            });
-        } elseif ($filterType === 'mgr') {
-            $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
-            })->where(function ($q) {
-                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
-            })->where(function ($q) {
-                $q->where('status_resign', 'not like', '%Resign%')
-                    ->where('status_resign', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Resign%')
-                    ->where('keterangan', 'not like', '%PHK%');
-            })->where(function ($q) {
-                $q->whereIn('level_jabatan', ['MGR', 'MK', 'MM', 'MANAGER'])
-                    ->orWhere('level_jabatan', 'like', '%MGR%')
-                    ->orWhere('level_jabatan', 'like', '%Manager%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Manager%');
-            });
-        } elseif ($filterType === 'askep') {
-            $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
-            })->where(function ($q) {
-                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
-            })->where(function ($q) {
-                $q->where('status_resign', 'not like', '%Resign%')
-                    ->where('status_resign', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Resign%')
-                    ->where('keterangan', 'not like', '%PHK%');
-            })->where(function ($q) {
-                $q->whereIn('level_jabatan', ['ASKEP', 'KTU'])
-                    ->orWhere('level_jabatan', 'like', '%ASKEP%')
-                    ->orWhere('level_jabatan', 'like', '%KTU%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Askep%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Kepala Tata Usaha%');
-            });
-        } elseif ($filterType === 'asisten') {
-            $query->where(function ($q) {
-                $q->where('keterangan', 'Aktif')->orWhere('keterangan', 'Eksis');
-            })->where(function ($q) {
-                $q->whereNull('tanggal_resign')->orWhere('tanggal_resign', '');
-            })->where(function ($q) {
-                $q->where('status_resign', 'not like', '%Resign%')
-                    ->where('status_resign', 'not like', '%PHK%')
-                    ->where('keterangan', 'not like', '%Resign%')
-                    ->where('keterangan', 'not like', '%PHK%');
-            })->where(function ($q) {
-                $q->whereIn('level_jabatan', ['ASISTEN', 'ASST', 'STAFF'])
-                    ->orWhere('level_jabatan', 'like', '%ASISTEN%')
-                    ->orWhere('level_jabatan', 'like', '%ASST%')
-                    ->orWhere('level_jabatan', 'like', '%Staff%')
-                    ->orWhere('jabatan_terakhir', 'like', '%Asisten%')
-                    ->orWhere(function ($fallback) {
+            $applyActiveFilter($query);
+            $query->where('keterangan', 'not like', '%Gagal%')
+                ->where('keterangan', 'not like', '%Culled%');
+        } elseif (in_array($filterType, ['pc', 'gm', 'mgr', 'askep', 'asisten'], true)) {
+            $applyActiveFilter($query);
+
+            $levelMappings = [
+                'pc' => [
+                    'levels' => ['PC', 'P', 'DIR'],
+                    'level_likes' => ['%PC%'],
+                    'titles' => ['%Controller%', '%Direktur%'],
+                ],
+                'gm' => [
+                    'levels' => ['GM'],
+                    'level_likes' => ['%GM%'],
+                    'titles' => ['%General Manager%', '%Group Manager%'],
+                ],
+                'mgr' => [
+                    'levels' => ['MGR', 'MK', 'MM', 'MANAGER'],
+                    'level_likes' => ['%MGR%', '%Manager%'],
+                    'titles' => ['%Manager%'],
+                ],
+                'askep' => [
+                    'levels' => ['ASKEP', 'KTU'],
+                    'level_likes' => ['%ASKEP%', '%KTU%'],
+                    'titles' => ['%Askep%', '%Kepala Tata Usaha%'],
+                ],
+                'asisten' => [
+                    'levels' => ['ASISTEN', 'ASST', 'STAFF'],
+                    'level_likes' => ['%ASISTEN%', '%ASST%', '%Staff%'],
+                    'titles' => ['%Asisten%'],
+                    'allow_null' => true,
+                ],
+            ];
+
+            $cfg = $levelMappings[$filterType];
+            $query->where(function ($q) use ($cfg) {
+                $q->whereIn('level_jabatan', $cfg['levels']);
+                foreach ($cfg['level_likes'] as $like) {
+                    $q->orWhere('level_jabatan', 'like', $like);
+                }
+                foreach ($cfg['titles'] as $title) {
+                    $q->orWhere('jabatan_terakhir', 'like', $title);
+                }
+                if (! empty($cfg['allow_null'])) {
+                    $q->orWhere(function ($fallback) {
                         $fallback->whereNull('level_jabatan')
                             ->orWhere('level_jabatan', '')
                             ->orWhere('level_jabatan', '-');
                     });
+                }
             });
         }
 
