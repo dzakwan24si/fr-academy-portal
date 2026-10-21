@@ -3,8 +3,8 @@
 namespace App\Imports;
 
 use App\Models\Trainee;
+use App\Services\SpreadsheetReader;
 use Illuminate\Http\UploadedFile;
-use PhpOffice\PhpSpreadsheet\IOFactory;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 
 class TraineesImport
@@ -26,48 +26,22 @@ class TraineesImport
     public function import(UploadedFile $file): void
     {
         $extension = strtolower($file->getClientOriginalExtension());
-
-        if ($extension === 'csv') {
-            $this->importCsv($file->getRealPath());
-        } else {
-            $this->importSpreadsheet($file->getRealPath());
-        }
-    }
-
-    private function importCsv(string $path): void
-    {
-        $handle = fopen($path, 'r');
-        // Read BOM if exists
-        $bom = fread($handle, 3);
-        if ($bom !== "\xEF\xBB\xBF") {
-            rewind($handle);
+        $rows = SpreadsheetReader::read($file->getRealPath(), $extension);
+        if (empty($rows)) {
+            return;
         }
 
-        $headers = fgetcsv($handle); // skip header row
+        $headers = array_shift($rows);
         $headers = array_map('strtolower', array_map('trim', $headers));
 
-        $row = 2;
-        while (($data = fgetcsv($handle)) !== false) {
-            $mapped = array_combine($headers, $data);
-            $this->processRow($mapped, $row);
-            $row++;
-        }
-        fclose($handle);
-    }
-
-    private function importSpreadsheet(string $path): void
-    {
-        $spreadsheet = IOFactory::load($path);
-        $sheet = $spreadsheet->getActiveSheet();
-        $rows = $sheet->toArray();
-
-        // First row is headers
-        $headers = array_map('strtolower', array_map('trim', $rows[0]));
-        unset($rows[0]);
-
         foreach ($rows as $index => $row) {
+            if (count($row) < count($headers)) {
+                $row = array_pad($row, count($headers), null);
+            } elseif (count($row) > count($headers)) {
+                $row = array_slice($row, 0, count($headers));
+            }
             $mapped = array_combine($headers, $row);
-            $this->processRow($mapped, $index + 1);
+            $this->processRow($mapped, $index + 2);
         }
     }
 
