@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Administrasi\Mpp;
 use App\Services\ExcelExporter;
+use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
 
 class MppController extends Controller
@@ -400,29 +401,18 @@ class MppController extends Controller
         $fallbackYear = (int) $request->get('year', 2026);
         $fallbackMonth = (int) $request->get('month', 8);
 
-        // Detect delimiter
-        $handle = fopen($filePath, 'r');
-        if (! $handle) {
+        // Read CSV
+        try {
+            $rawRows = SpreadsheetReader::readCsv($filePath);
+        } catch (\Throwable $e) {
             return back()->with('error', 'Gagal membuka file CSV yang diunggah.');
         }
 
-        $firstLine = fgets($handle);
-        rewind($handle);
-
-        $delimiter = ',';
-        if (substr_count($firstLine, ';') > substr_count($firstLine, ',')) {
-            $delimiter = ';';
-        } elseif (substr_count($firstLine, "\t") > substr_count($firstLine, ',')) {
-            $delimiter = "\t";
-        }
-
-        // Read header
-        $rawHeaders = fgetcsv($handle, 0, $delimiter);
-        if (! $rawHeaders) {
-            fclose($handle);
-
+        if (empty($rawRows)) {
             return back()->with('error', 'Format file CSV tidak valid atau file kosong.');
         }
+
+        $rawHeaders = array_shift($rawRows);
 
         // Normalize header mapping
         $headerMap = [];
@@ -458,8 +448,6 @@ class MppController extends Controller
         }
 
         if (! isset($headerMap['nama_jabatan'])) {
-            fclose($handle);
-
             return back()->with('error', 'Header kolom "Nama Jabatan" tidak ditemukan dalam file CSV.');
         }
 
@@ -487,7 +475,7 @@ class MppController extends Controller
         $insertedCount = 0;
         $updatedCount = 0;
 
-        while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+        foreach ($rawRows as $row) {
             if (empty(array_filter($row))) {
                 continue;
             }
@@ -578,8 +566,6 @@ class MppController extends Controller
                 }
             }
         }
-
-        fclose($handle);
 
         $msg = "Import CSV MPP berhasil: {$insertedCount} data baru ditambahkan";
         if ($updatedCount > 0) {

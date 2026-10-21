@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Administrasi\Cuti;
 use App\Services\ExcelExporter;
+use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
@@ -361,49 +362,7 @@ class CutiController extends Controller
 
     private function readSpreadsheet(string $path, string $extension): array
     {
-        if (strtolower($extension) !== 'xlsx') {
-            $handle = fopen($path, 'rb');
-            $rows = [];
-            while (($row = fgetcsv($handle)) !== false) {
-                $rows[] = $row;
-            }
-            fclose($handle);
-
-            return $rows;
-        }
-        $zip = new ZipArchive;
-        if ($zip->open($path) !== true) {
-            throw new \RuntimeException('File Excel tidak dapat dibaca.');
-        }
-        $shared = [];
-        if (($xml = $zip->getFromName('xl/sharedStrings.xml')) !== false) {
-            $doc = simplexml_load_string($xml);
-            foreach ($doc->si as $item) {
-                $shared[] = (string) ($item->t ?? implode('', array_map('strval', $item->r->t ?? [])));
-            }
-        }
-        $sheet = simplexml_load_string($zip->getFromName('xl/worksheets/sheet1.xml'));
-        $rows = [];
-        foreach ($sheet->sheetData->row as $xmlRow) {
-            $cells = [];
-            foreach ($xmlRow->c as $cell) {
-                preg_match('/([A-Z]+)/', (string) $cell['r'], $match);
-                $column = 0;
-                foreach (str_split($match[1] ?? 'A') as $letter) {
-                    $column = $column * 26 + ord($letter) - 64;
-                }
-                $value = (string) ($cell->v ?? '');
-                if ((string) $cell['t'] === 's') {
-                    $value = $shared[(int) $value] ?? $value;
-                }
-                $cells[$column - 1] = $value;
-            }
-            ksort($cells);
-            $rows[] = array_values($cells);
-        }
-        $zip->close();
-
-        return $rows;
+        return SpreadsheetReader::read($path, $extension);
     }
 
     /**

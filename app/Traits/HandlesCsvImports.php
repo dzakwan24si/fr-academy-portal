@@ -2,8 +2,31 @@
 
 namespace App\Traits;
 
+use App\Services\SpreadsheetReader;
+
 trait HandlesCsvImports
 {
+    /**
+     * Read parsed CSV dataset with clean headers and valid rows.
+     *
+     * @return array{headers: array, cleanHeaders: array, rows: array}
+     */
+    protected function parseCsvDataset(string $filePath): array
+    {
+        $rawRows = SpreadsheetReader::readCsv($filePath);
+        if (empty($rawRows)) {
+            return ['headers' => [], 'cleanHeaders' => [], 'rows' => []];
+        }
+
+        $headers = array_shift($rawRows);
+        $cleanHeaders = $this->cleanCsvHeaders($headers);
+
+        return [
+            'headers' => $headers,
+            'cleanHeaders' => $cleanHeaders,
+            'rows' => $rawRows,
+        ];
+    }
     /**
      * Detect CSV delimiter (comma, semicolon, or tab).
      */

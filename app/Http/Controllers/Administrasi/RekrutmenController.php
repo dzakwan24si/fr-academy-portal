@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Administrasi\Rekrutmen;
 use App\Services\ExcelExporter;
+use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -463,24 +464,23 @@ class RekrutmenController extends Controller
         $file = $request->file('file');
         $mode = $request->input('mode', 'append');
 
-        $filePath = $file->getRealPath();
-        $handle = fopen($filePath, 'r');
-        if ($handle === false) {
+        try {
+            $rawRows = SpreadsheetReader::readCsv($file->getRealPath());
+        } catch (\Throwable $e) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Gagal membaca file CSV.',
             ], 400);
         }
 
-        $header = fgetcsv($handle, 10000, ',');
-        if (! $header) {
-            fclose($handle);
-
+        if (empty($rawRows)) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'File CSV kosong atau format tidak valid.',
             ], 400);
         }
+
+        $header = array_shift($rawRows);
 
         // Clean headers
         $cleanHeader = array_map(function ($col) {
@@ -538,7 +538,7 @@ class RekrutmenController extends Controller
         $errors = [];
         $rowNumber = 1; // 1 is header
 
-        while (($row = fgetcsv($handle, 10000, ',')) !== false) {
+        foreach ($rawRows as $row) {
             $rowNumber++;
             if (empty(array_filter($row, fn ($v) => trim($v) !== ''))) {
                 continue; // Skip empty row
@@ -639,8 +639,6 @@ class RekrutmenController extends Controller
                 'updated_at' => now(),
             ];
         }
-
-        fclose($handle);
 
         if (empty($rowsToInsert) && ! empty($errors)) {
             return response()->json([

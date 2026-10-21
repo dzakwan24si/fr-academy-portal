@@ -384,20 +384,17 @@ class CapexController extends Controller
         $importMode = $request->get('import_mode', 'append');
         $defaultYear = (int) $request->get('tahun', date('Y'));
 
-        $handle = fopen($filePath, 'r');
-        if (! $handle) {
+        try {
+            $dataset = $this->parseCsvDataset($filePath);
+        } catch (\Throwable $e) {
             return back()->with('error', 'Gagal membaca file CSV yang diunggah.');
         }
 
-        $delimiter = $this->detectCsvDelimiter($filePath);
-        $rawHeaders = fgetcsv($handle, 0, $delimiter);
-        if (! $rawHeaders) {
-            fclose($handle);
-
+        if (empty($dataset['headers'])) {
             return back()->with('error', 'Format file CSV tidak valid atau kosong.');
         }
 
-        $cleanHeaders = $this->cleanCsvHeaders($rawHeaders);
+        $cleanHeaders = $dataset['cleanHeaders'];
 
         // Determine if file is RAB or Realisasi
         $detectedType = 'rab';
@@ -492,7 +489,7 @@ class CapexController extends Controller
 
         DB::beginTransaction();
         try {
-            while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+            foreach ($dataset['rows'] as $row) {
                 // Skip empty rows
                 if (empty(array_filter($row, fn ($v) => trim($v) !== ''))) {
                     continue;
@@ -629,7 +626,6 @@ class CapexController extends Controller
             }
 
             DB::commit();
-            fclose($handle);
 
             $typeLabel = $detectedType === 'rab' ? 'RAB' : 'Realisasi';
 
@@ -641,9 +637,6 @@ class CapexController extends Controller
             );
         } catch (\Exception $e) {
             DB::rollBack();
-            if (is_resource($handle)) {
-                fclose($handle);
-            }
 
             return back()->with('error', 'Terjadi kesalahan saat import data: '.$e->getMessage());
         }
