@@ -255,7 +255,6 @@ class TrainingMetricService
                 // Support carry-over training records for reguler programs
                 $isCarryOver = ($r->program_type === 'reguler' && (
                     (! empty($validRegulerProgIds) && $r->program_id && in_array((int) $r->program_id, $validRegulerProgIds, true))
-                    || ($rYear === $year - 1)
                     || str_contains(strtoupper((string) $r->notes), (string) $year)
                 ));
                 if (! $isCarryOver) {
