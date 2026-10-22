@@ -47,7 +47,6 @@ use App\Http\Controllers\Program\ProgramBatchController;
 use App\Http\Controllers\Program\RealisasiVsBatchController;
 use App\Http\Controllers\Program\TrainingRecordController;
 use App\Models\Article;
-use App\Models\Attendance;
 use App\Models\CareerProgram;
 use App\Models\Category;
 use App\Models\Competency\CompetencyDictionary;
@@ -221,6 +220,13 @@ Route::middleware('auth')->prefix('admin')->group(function () {
         Route::post('/slides/delete', [PageSettingController::class, 'deleteSlide'])->name('delete_slide');
         Route::post('/slides/reset', [PageSettingController::class, 'resetSlides'])->name('reset_slides');
         Route::post('/tentang', [PageSettingController::class, 'updateTentang'])->name('update_tentang');
+
+        // Manajemen Menu Portal (Header & Mobile Dropdown)
+        Route::post('/portal-links', [PageSettingController::class, 'storePortalLink'])->name('store_portal_link');
+        Route::post('/portal-links/{id}/update', [PageSettingController::class, 'updatePortalLink'])->name('update_portal_link');
+        Route::post('/portal-links/{id}/delete', [PageSettingController::class, 'deletePortalLink'])->name('delete_portal_link');
+        Route::post('/portal-links/{id}/toggle', [PageSettingController::class, 'togglePortalLink'])->name('toggle_portal_link');
+        Route::post('/portal-links/reset', [PageSettingController::class, 'resetPortalLinks'])->name('reset_portal_links');
     });
 
     // Standar Kompetensi Management

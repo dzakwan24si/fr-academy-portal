@@ -122,4 +122,77 @@ class AppSetting extends Model
             'images/slide4.png',
         ];
     }
+
+    /**
+     * Default list of portal menu links.
+     */
+    public static function defaultPortalLinks(): array
+    {
+        return [
+            [
+                'id' => 'elearning',
+                'name' => 'E-Learning',
+                'url' => 'https://e-learning.first-resources.com',
+                'target' => '_blank',
+                'is_active' => true,
+                'order' => 1,
+            ],
+            [
+                'id' => 'mess',
+                'name' => 'Mess FR Academy',
+                'url' => 'https://mess-fr-academy.my.id/',
+                'target' => '_blank',
+                'is_active' => true,
+                'order' => 2,
+            ],
+            [
+                'id' => 'peta_sdm',
+                'name' => 'Peta SDM Operasional',
+                'url' => 'https://peta-sdm.fr-academy.my.id/',
+                'target' => '_blank',
+                'is_active' => true,
+                'order' => 3,
+            ],
+        ];
+    }
+
+    /**
+     * Get all portal menu links.
+     *
+     * @param  bool  $onlyActive  If true, only returns active links.
+     */
+    public static function getPortalLinks(bool $onlyActive = false): array
+    {
+        $val = static::get('portal_menu_links');
+        if (! $val) {
+            $links = static::defaultPortalLinks();
+        } else {
+            $decoded = json_decode($val, true);
+            $links = is_array($decoded) && ! empty($decoded) ? $decoded : static::defaultPortalLinks();
+        }
+
+        // Sort by order ascending
+        usort($links, function ($a, $b) {
+            $orderA = isset($a['order']) ? (int) $a['order'] : 0;
+            $orderB = isset($b['order']) ? (int) $b['order'] : 0;
+
+            return $orderA <=> $orderB;
+        });
+
+        if ($onlyActive) {
+            $links = array_values(array_filter($links, function ($item) {
+                return ! empty($item['is_active']);
+            }));
+        }
+
+        return $links;
+    }
+
+    /**
+     * Save portal menu links.
+     */
+    public static function savePortalLinks(array $links): void
+    {
+        static::set('portal_menu_links', json_encode(array_values($links)));
+    }
 }

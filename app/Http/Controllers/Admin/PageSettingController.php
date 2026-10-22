@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
+use App\Models\CareerProgram;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -69,7 +70,13 @@ class PageSettingController extends Controller
             'about_philosophy_title' => AppSetting::get('about_philosophy_title', 'Lebih dari Sekadar Pusat Pelatihan — Kami Membentuk Sikap Kerja, Ketajaman Analisis, dan Kepemimpinan Nyata di Lapangan.'),
         ];
 
-        return view('admin.page_settings.index', compact('tab', 'beranda', 'tentang', 'slides'));
+        // Daftar Menu Portal (Header & Mobile Dropdown)
+        $portalLinks = AppSetting::getPortalLinks(false);
+
+        // Daftar Program Karir (Career)
+        $careerPrograms = CareerProgram::latest()->get();
+
+        return view('admin.page_settings.index', compact('tab', 'beranda', 'tentang', 'slides', 'portalLinks', 'careerPrograms'));
     }
 
     /**
@@ -267,5 +274,130 @@ class PageSettingController extends Controller
 
         return redirect()->route('admin.page_settings.index', ['tab' => 'tentang'])
             ->with('success', 'Konten Halaman Tentang Kami berhasil diperbarui!');
+    }
+
+    /**
+     * Tambah tautan/website baru ke Menu Portal.
+     */
+    public function storePortalLink(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'url' => 'required|string|max:255',
+            'target' => 'nullable|in:_blank,_self',
+            'is_active' => 'nullable',
+            'order' => 'nullable|integer|min:0',
+        ]);
+
+        $links = AppSetting::getPortalLinks(false);
+
+        $newOrder = isset($validated['order']) && $validated['order'] !== ''
+            ? (int) $validated['order']
+            : count($links) + 1;
+
+        $newLink = [
+            'id' => 'portal_'.time().'_'.bin2hex(random_bytes(2)),
+            'name' => trim($validated['name']),
+            'url' => trim($validated['url']),
+            'target' => $validated['target'] ?? '_blank',
+            'is_active' => $request->has('is_active'),
+            'order' => $newOrder,
+        ];
+
+        $links[] = $newLink;
+        AppSetting::savePortalLinks($links);
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'portal'])
+            ->with('success', 'Website "'.$newLink['name'].'" berhasil ditambahkan ke menu Portal Header!');
+    }
+
+    /**
+     * Perbarui tautan/website di Menu Portal.
+     */
+    public function updatePortalLink(Request $request, string $id)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+            'url' => 'required|string|max:255',
+            'target' => 'nullable|in:_blank,_self',
+            'is_active' => 'nullable',
+            'order' => 'nullable|integer|min:0',
+        ]);
+
+        $links = AppSetting::getPortalLinks(false);
+        $found = false;
+
+        foreach ($links as &$link) {
+            if ($link['id'] === $id) {
+                $link['name'] = trim($validated['name']);
+                $link['url'] = trim($validated['url']);
+                $link['target'] = $validated['target'] ?? '_blank';
+                $link['is_active'] = $request->has('is_active');
+                if (isset($validated['order'])) {
+                    $link['order'] = (int) $validated['order'];
+                }
+                $found = true;
+                break;
+            }
+        }
+        unset($link);
+
+        if ($found) {
+            AppSetting::savePortalLinks($links);
+
+            return redirect()->route('admin.page_settings.index', ['tab' => 'portal'])
+                ->with('success', 'Menu Portal berhasil diperbarui!');
+        }
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'portal'])
+            ->with('error', 'Menu Portal tidak ditemukan.');
+    }
+
+    /**
+     * Hapus tautan website dari Menu Portal.
+     */
+    public function deletePortalLink(string $id)
+    {
+        $links = AppSetting::getPortalLinks(false);
+        $filtered = array_values(array_filter($links, fn ($item) => $item['id'] !== $id));
+
+        AppSetting::savePortalLinks($filtered);
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'portal'])
+            ->with('success', 'Tautan website berhasil dihapus dari Menu Portal.');
+    }
+
+    /**
+     * Toggle status aktif / non-aktif tautan Menu Portal.
+     */
+    public function togglePortalLink(string $id)
+    {
+        $links = AppSetting::getPortalLinks(false);
+        $statusText = '';
+
+        foreach ($links as &$link) {
+            if ($link['id'] === $id) {
+                $link['is_active'] = empty($link['is_active']);
+                $statusText = $link['is_active'] ? 'diaktifkan' : 'dinonaktifkan';
+                break;
+            }
+        }
+        unset($link);
+
+        AppSetting::savePortalLinks($links);
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'portal'])
+            ->with('success', 'Status menu Portal berhasil '.$statusText.'.');
+    }
+
+    /**
+     * Reset daftar Menu Portal ke default 3 website awal.
+     */
+    public function resetPortalLinks()
+    {
+        AppSetting::savePortalLinks(AppSetting::defaultPortalLinks());
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'portal'])
+            ->with('success', 'Menu Portal berhasil dikembalikan ke pengaturan awal (3 website).');
     }
 }

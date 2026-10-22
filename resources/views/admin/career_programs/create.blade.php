@@ -4,7 +4,7 @@
     <x-slot name="headerSub">Buat program karir baru yang akan ditampilkan di halaman publik.</x-slot>
     
     <x-slot name="headerAction">
-        <a href="{{ route('admin.career_programs.index') }}" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition shadow-sm inline-flex items-center text-sm">
+        <a href="{{ route('admin.page_settings.index', ['tab' => 'karir']) }}" class="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition shadow-sm inline-flex items-center text-sm">
             <i data-lucide="arrow-left" class="w-4 h-4 mr-2"></i> Kembali
         </a>
     </x-slot>

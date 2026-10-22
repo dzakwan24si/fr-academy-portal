@@ -68,10 +68,18 @@
                             PORTAL
                             <svg class="w-4 h-4 ml-1 transition-transform duration-200" :class="{'rotate-180': open}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                         </button>
-                        <div x-show="open" x-transition.opacity class="absolute top-full left-0 mt-0 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700" style="display: none;">
-                            <a href="https://e-learning.first-resources.com" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 transition">E-Learning</a>
-                            <a href="https://mess-fr-academy.my.id/" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 transition">Mess FR Academy</a>
-                            <a href="https://peta-sdm.fr-academy.my.id/" target="_blank" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 transition">Peta SDM Operasional</a>
+                        <div x-show="open" x-transition.opacity class="absolute top-full left-0 mt-0 w-60 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 border border-gray-100 dark:border-gray-700" style="display: none;">
+                            @foreach(\App\Models\AppSetting::getPortalLinks(true) as $portalLink)
+                                <a href="{{ $portalLink['url'] }}" 
+                                   target="{{ $portalLink['target'] ?? '_blank' }}" 
+                                   @if(($portalLink['target'] ?? '_blank') === '_blank') rel="noopener noreferrer" @endif
+                                   class="flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition group">
+                                    <span class="truncate">{{ $portalLink['name'] }}</span>
+                                    @if(($portalLink['target'] ?? '_blank') === '_blank')
+                                        <svg class="w-3.5 h-3.5 text-gray-400 group-hover:text-green-accent transition shrink-0 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                    @endif
+                                </a>
+                            @endforeach
                         </div>
                     </div>
                 </nav>
@@ -157,9 +165,17 @@
                 <a href="{{ route('competency.public') }}" class="block pl-8 pr-3 py-2.5 rounded-md text-sm font-medium text-teal-100 hover:bg-teal-700 hover:text-green-accent transition">&#8627; Standar Kompetensi</a>
                 <a href="/career" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">CAREER</a>
                 <a href="/artikel" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">ARTIKEL</a>
-                <a href="https://e-learning.first-resources.com" target="_blank" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">E-LEARNING</a>
-                <a href="https://mess-fr-academy.my.id/" target="_blank" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">MESS FR ACADEMY</a>
-                <a href="https://peta-sdm.fr-academy.my.id/" target="_blank" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">PETA SDM OPERASIONAL</a>
+                @foreach(\App\Models\AppSetting::getPortalLinks(true) as $portalLink)
+                    <a href="{{ $portalLink['url'] }}" 
+                       target="{{ $portalLink['target'] ?? '_blank' }}" 
+                       @if(($portalLink['target'] ?? '_blank') === '_blank') rel="noopener noreferrer" @endif
+                       class="flex items-center justify-between px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">
+                        <span>{{ strtoupper($portalLink['name']) }}</span>
+                        @if(($portalLink['target'] ?? '_blank') === '_blank')
+                            <svg class="w-4 h-4 text-teal-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        @endif
+                    </a>
+                @endforeach
                 <a href="{{ route('download.app') }}" class="flex items-center gap-2 px-3 py-3 rounded-md text-base font-semibold text-green-300 hover:bg-teal-700 hover:text-white transition">
                     <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     <span>APLIKASI LEARNING ACTIVITY</span>

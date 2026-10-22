@@ -11,9 +11,7 @@ class CareerProgramController extends Controller
 {
     public function index()
     {
-        $programs = CareerProgram::latest()->get();
-
-        return view('admin.career_programs.index', compact('programs'));
+        return redirect()->route('admin.page_settings.index', ['tab' => 'karir']);
     }
 
     public function edit(CareerProgram $career_program)
@@ -45,7 +43,7 @@ class CareerProgramController extends Controller
 
         $career_program->update($validated);
 
-        return redirect()->route('admin.career_programs.index')
+        return redirect()->route('admin.page_settings.index', ['tab' => 'karir'])
             ->with('success', 'Program karir berhasil diperbarui.');
     }
 
@@ -81,7 +79,7 @@ class CareerProgramController extends Controller
             'image' => $imagePath,
         ]);
 
-        return redirect()->route('admin.career_programs.index')->with('success', 'Program karir berhasil ditambahkan.');
+        return redirect()->route('admin.page_settings.index', ['tab' => 'karir'])->with('success', 'Program karir berhasil ditambahkan.');
     }
 
     public function destroy(CareerProgram $careerProgram)
@@ -92,6 +90,6 @@ class CareerProgramController extends Controller
 
         $careerProgram->delete();
 
-        return redirect()->route('admin.career_programs.index')->with('success', 'Program karir berhasil dihapus.');
+        return redirect()->route('admin.page_settings.index', ['tab' => 'karir'])->with('success', 'Program karir berhasil dihapus.');
     }
 }
