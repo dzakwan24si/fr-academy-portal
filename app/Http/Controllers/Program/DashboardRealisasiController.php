@@ -84,6 +84,11 @@ class DashboardRealisasiController extends Controller
 
         $rawRegion = trim((string) $request->input('region', 'all'));
         $region = ($rawRegion === '' || $rawRegion === 'Semua Region') ? 'all' : $rawRegion;
+        if (strcasecmp($region, 'Kulbar') === 0 || strcasecmp($region, 'Kaltim FR') === 0) {
+            $region = 'Kaltim';
+        } elseif (strcasecmp($region, 'Kalbar') === 0) {
+            $region = 'Kalbar';
+        }
         $programType = trim((string) $request->input('program_type', 'all'));
         $selectedProgram = trim((string) $request->input('program', 'all'));
         $category = trim((string) $request->input('category', 'all'));
@@ -152,10 +157,11 @@ class DashboardRealisasiController extends Controller
                 ->map(function ($r) {
                     if (strcasecmp($r, 'riau') === 0) return 'Riau';
                     if (strcasecmp($r, 'kalbar') === 0) return 'Kalbar';
-                    if (strcasecmp($r, 'kaltim') === 0 || strcasecmp($r, 'kaltim fr') === 0) return 'Kaltim FR';
+                    if (strcasecmp($r, 'kulbar') === 0 || strcasecmp($r, 'kaltim') === 0 || strcasecmp($r, 'kaltim fr') === 0) return 'Kaltim';
                     if (strcasecmp($r, 'corporate') === 0) return 'Corporate';
                     return $r;
                 })
+                ->filter(fn ($r) => ! in_array(strtolower($r), ['kulbar']))
                 ->unique()
                 ->values()
                 ->all();
@@ -170,10 +176,10 @@ class DashboardRealisasiController extends Controller
                 ->map(fn ($p) => trim((string) preg_replace('/\s*\(.*?\)\s*/', '', $p)))
                 ->filter()->unique()->values()->all();
 
-            $nonRegulerCategoryOptions = ProgramNonReguler::pluck('kategori_pelatihan')
-                ->concat(ProgramNonReguler::pluck('sub_kategori'))
+            $nonRegulerCategoryOptions = ProgramNonReguler::pluck('sub_kategori')
                 ->filter()
                 ->map(fn ($c) => trim((string) $c))
+                ->reject(fn ($c) => in_array(strtolower($c), ['managerial and leadership', 'technical', 'managerial']))
                 ->unique()
                 ->values()
                 ->all();
@@ -190,10 +196,14 @@ class DashboardRealisasiController extends Controller
 
         $trainingRecordQuery = TrainingRecord::query();
         if ($region !== 'all') {
-            if (strcasecmp($region, 'Kaltim FR') === 0) {
+            if (strcasecmp($region, 'Kaltim') === 0 || strcasecmp($region, 'Kaltim FR') === 0) {
                 $trainingRecordQuery->where(function ($q) {
-                    $q->where('region', 'LIKE', '%kaltim%')->orWhere('region', 'LIKE', '%Kaltim FR%');
+                    $q->where('region', 'LIKE', '%kaltim%')
+                        ->orWhere('region', 'LIKE', '%Kaltim FR%')
+                        ->orWhere('region', 'LIKE', '%kulbar%');
                 });
+            } elseif (strcasecmp($region, 'Kalbar') === 0) {
+                $trainingRecordQuery->where('region', 'LIKE', '%kalbar%');
             } else {
                 $trainingRecordQuery->where('region', 'LIKE', '%'.$region.'%');
             }
@@ -272,10 +282,14 @@ class DashboardRealisasiController extends Controller
 
         $regulerProgramsQuery = ProgramReguler::query();
         if ($region !== 'all') {
-            if (strcasecmp($region, 'Kaltim FR') === 0) {
+            if (strcasecmp($region, 'Kaltim') === 0 || strcasecmp($region, 'Kaltim FR') === 0) {
                 $regulerProgramsQuery->where(function ($q) {
-                    $q->where('Region', 'LIKE', '%kaltim%')->orWhere('Region', 'LIKE', '%Kaltim FR%');
+                    $q->where('Region', 'LIKE', '%kaltim%')
+                        ->orWhere('Region', 'LIKE', '%Kaltim FR%')
+                        ->orWhere('Region', 'LIKE', '%kulbar%');
                 });
+            } elseif (strcasecmp($region, 'Kalbar') === 0) {
+                $regulerProgramsQuery->where('Region', 'LIKE', '%kalbar%');
             } else {
                 $regulerProgramsQuery->where('Region', 'LIKE', '%'.$region.'%');
             }
@@ -659,8 +673,16 @@ class DashboardRealisasiController extends Controller
         // 2. Talent Program Card
         $talentQuery = MonitoringTalent::query();
         if ($region !== 'all') {
-            $searchReg = str_replace([' FR', ' fr'], '', $region);
-            $talentQuery->where('region', 'LIKE', "%{$searchReg}%");
+            if (strcasecmp($region, 'Kaltim') === 0 || strcasecmp($region, 'Kaltim FR') === 0) {
+                $talentQuery->where(function ($q) {
+                    $q->where('region', 'LIKE', '%kaltim%')->orWhere('region', 'LIKE', '%kulbar%');
+                });
+            } elseif (strcasecmp($region, 'Kalbar') === 0) {
+                $talentQuery->where('region', 'LIKE', '%kalbar%');
+            } else {
+                $searchReg = str_replace([' FR', ' fr'], '', $region);
+                $talentQuery->where('region', 'LIKE', "%{$searchReg}%");
+            }
         }
         $totalTalent = $talentQuery->count();
         $sudahPenugasan = (clone $talentQuery)->where(function ($sub) {
@@ -693,10 +715,14 @@ class DashboardRealisasiController extends Controller
         // 3 & 4. Soft Skill & Teknikal
         $nonRegulerProgramsQuery = ProgramNonReguler::query();
         if ($region !== 'all') {
-            if (strcasecmp($region, 'Kaltim FR') === 0) {
+            if (strcasecmp($region, 'Kaltim') === 0 || strcasecmp($region, 'Kaltim FR') === 0) {
                 $nonRegulerProgramsQuery->where(function ($q) {
-                    $q->where('region', 'LIKE', '%kaltim%')->orWhere('region', 'LIKE', '%Kaltim FR%');
+                    $q->where('region', 'LIKE', '%kaltim%')
+                        ->orWhere('region', 'LIKE', '%Kaltim FR%')
+                        ->orWhere('region', 'LIKE', '%kulbar%');
                 });
+            } elseif (strcasecmp($region, 'Kalbar') === 0) {
+                $nonRegulerProgramsQuery->where('region', 'LIKE', '%kalbar%');
             } else {
                 $nonRegulerProgramsQuery->where('region', 'LIKE', '%'.$region.'%');
             }

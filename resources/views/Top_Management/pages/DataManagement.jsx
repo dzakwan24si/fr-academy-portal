@@ -626,7 +626,9 @@ const DataManagement = () => {
   const totalProgram = filteredData.length;
   const totalBatch = filteredData.reduce((acc, curr) => {
     const orig = curr.originalData || {};
-    return acc + (Number(orig.TARGET_BATCH ?? curr.batchCount ?? orig.total_batch) || 1);
+    const val = orig.TARGET_BATCH ?? orig.total_batch ?? curr.batchCount ?? 0;
+    const num = Number(val);
+    return acc + (isNaN(num) ? 0 : num);
   }, 0);
   const totalPeserta = filteredData.reduce((acc, curr) => {
     const orig = curr.originalData || {};
@@ -732,7 +734,9 @@ const DataManagement = () => {
   // Detail totals calculation for current filtered dataset
   const detailTotals = filteredData.reduce((acc, item) => {
     const originalData = item.originalData || {};
-    acc.batch += Number(originalData.TARGET_BATCH ?? item.batchCount ?? originalData.total_batch ?? 1);
+    const bVal = originalData.TARGET_BATCH ?? originalData.total_batch ?? item.batchCount ?? 0;
+    const bNum = Number(bVal);
+    acc.batch += isNaN(bNum) ? 0 : bNum;
     acc.participants += Number(originalData.TARGET_PESERTA ?? item.participants ?? originalData.target_total ?? originalData.target_peserta ?? 0);
     acc.promosiMandor += Number(originalData.Promosi_mandor || 0);
     acc.freshGraduate += Number(originalData.Fresh_Graduate || 0);

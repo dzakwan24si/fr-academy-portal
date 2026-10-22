@@ -72,13 +72,9 @@
                         <option value="staf" {{ $category === 'staf' ? 'selected' : '' }}>Program Reguler Staff</option>
                         <option value="mandor" {{ $category === 'mandor' ? 'selected' : '' }}>Program Reguler Mandor</option>
                     @elseif($programType === 'non_reguler')
-                        <option value="all" {{ ($category === 'all' || !$category) ? 'selected' : '' }}>Semua Kategori Non Reguler</option>
-                        <option value="Managerial and Leadership" {{ $category === 'Managerial and Leadership' || $category === 'managerial' ? 'selected' : '' }}>Managerial and Leadership</option>
-                        <option value="Technical" {{ $category === 'Technical' || $category === 'technical' ? 'selected' : '' }}>Technical</option>
+                        <option value="all" {{ ($category === 'all' || !$category) ? 'selected' : '' }}>Semua Sub-Kategori</option>
                         @foreach($nonRegulerCategoryOptions as $catOpt)
-                            @if(!in_array($catOpt, ['Managerial and Leadership', 'Technical']))
-                                <option value="{{ $catOpt }}" {{ (strcasecmp($category, $catOpt) === 0) ? 'selected' : '' }}>{{ $catOpt }}</option>
-                            @endif
+                            <option value="{{ $catOpt }}" {{ (strcasecmp($category, $catOpt) === 0 || (strcasecmp($catOpt, 'Softskill') === 0 && (strcasecmp($category, 'Managerial and Leadership') === 0 || $category === 'managerial'))) ? 'selected' : '' }}>{{ $catOpt }}</option>
                         @endforeach
                     @else
                         <option value="all">Semua Kategori</option>
@@ -200,11 +196,9 @@
             `;
         } else if (type === 'non_reguler') {
             categoryWrapper.style.display = 'block';
-            let catHtml = '<option value="all">Semua Kategori Non Reguler</option>';
-            catHtml += '<option value="Managerial and Leadership">Managerial and Leadership</option>';
-            catHtml += '<option value="Technical">Technical</option>';
+            let catHtml = '<option value="all">Semua Sub-Kategori</option>';
             nonRegulerCategories.forEach(cat => {
-                if (cat !== 'Managerial and Leadership' && cat !== 'Technical') {
+                if (cat !== 'Managerial and Leadership' && cat !== 'Technical' && cat !== 'managerial') {
                     catHtml += `<option value="${cat}">${cat}</option>`;
                 }
             });
