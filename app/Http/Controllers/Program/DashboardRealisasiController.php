@@ -666,7 +666,9 @@ class DashboardRealisasiController extends Controller
         $sudahPenugasan = (clone $talentQuery)->where(function ($sub) {
             $sub->where('status', 'LIKE', '%sudah penugasan%')->orWhere('status', 'LIKE', '%confirm%');
         })->count();
-        $akanPenugasan = (clone $talentQuery)->where('status', 'LIKE', '%akan penugasan%')->count();
+        $akanPenugasan = (clone $talentQuery)->where(function ($sub) {
+            $sub->where('status', 'LIKE', '%project khusus%')->orWhere('status', 'LIKE', '%akan penugasan%');
+        })->count();
         $belumPenugasan = (clone $talentQuery)->where('status', 'LIKE', '%belum penugasan%')->count();
         $talentPercentage = (float) AppSetting::get('talent_program_progress_materi', 83);
         $talentToBreakdown = (clone $talentQuery)->select('talent_to', DB::raw('count(*) as total'))

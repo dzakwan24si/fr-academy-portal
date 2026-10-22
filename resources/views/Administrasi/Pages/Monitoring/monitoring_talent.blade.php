@@ -109,20 +109,20 @@
             </div>
         </div>
 
-        {{-- Akan Penugasan --}}
+        {{-- Project Khusus --}}
         <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs relative overflow-hidden flex flex-col justify-between">
             <div class="flex items-center justify-between text-slate-500 mb-2">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-amber-800">Akan Penugasan</span>
+                <span class="text-[11px] font-bold uppercase tracking-wider text-amber-800">Project Khusus</span>
                 <div class="w-7 h-7 rounded-lg bg-amber-50 text-amber-700 flex items-center justify-center">
-                    <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                    <i data-lucide="folder-kanban" class="w-3.5 h-3.5"></i>
                 </div>
             </div>
             <div class="flex items-baseline gap-2">
-                <span class="text-2xl font-black text-amber-700">{{ $countAkan }}</span>
+                <span class="text-2xl font-black text-amber-700">{{ $countProjectKhusus ?? $countAkan }}</span>
                 <span class="text-[11px] font-medium text-slate-400">Orang</span>
             </div>
             <div class="mt-2 text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-md w-fit">
-                Pipeline Siap
+                Project Khusus
             </div>
         </div>
 
@@ -176,7 +176,7 @@
                    class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-2xs {{ ($kategori === 'all' || !$kategori) ? 'bg-[#4B6A34] text-white shadow-xs ring-2 ring-[#4B6A34]/20' : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200' }}">
                     <span>Semua Kategori</span>
                     <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold {{ ($kategori === 'all' || !$kategori) ? 'bg-white/20 text-white' : 'bg-slate-200 text-slate-700' }}">
-                        {{ $totalAll }}
+                        {{ $totalAllCategories ?? $totalAll }}
                     </span>
                 </a>
 
@@ -277,7 +277,7 @@
                             $statusClass = 'bg-slate-100 text-slate-700 border-slate-200';
                             if (str_contains($stLower, 'sudah penugasan')) {
                                 $statusClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
-                            } elseif (str_contains($stLower, 'akan penugasan')) {
+                            } elseif (str_contains($stLower, 'project khusus') || str_contains($stLower, 'akan penugasan')) {
                                 $statusClass = 'bg-amber-50 text-amber-700 border-amber-200';
                             } elseif (str_contains($stLower, 'confirm')) {
                                 $statusClass = 'bg-blue-50 text-blue-700 border-blue-200';
@@ -457,7 +457,7 @@
                     <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Status Penugasan</label>
                     <select name="status" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none">
                         <option value="Sudah Penugasan">Sudah Penugasan</option>
-                        <option value="Akan Penugasan">Akan Penugasan</option>
+                        <option value="Project Khusus">Project Khusus</option>
                         <option value="Belum Penugasan">Belum Penugasan</option>
                         <option value="Sudah Confirm Askep">Sudah Confirm Askep</option>
                         <option value="Sudah Confirm Mgr. Mill">Sudah Confirm Mgr. Mill</option>
@@ -554,7 +554,7 @@
                     <label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Status Penugasan</label>
                     <select name="status" id="edit_status" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none">
                         <option value="Sudah Penugasan">Sudah Penugasan</option>
-                        <option value="Akan Penugasan">Akan Penugasan</option>
+                        <option value="Project Khusus">Project Khusus</option>
                         <option value="Belum Penugasan">Belum Penugasan</option>
                         <option value="Sudah Confirm Askep">Sudah Confirm Askep</option>
                         <option value="Sudah Confirm Mgr. Mill">Sudah Confirm Mgr. Mill</option>
@@ -668,7 +668,9 @@
         document.getElementById('edit_region').value = talent.region || '';
         document.getElementById('edit_mentor_lapangan').value = talent.mentor_lapangan || '';
         document.getElementById('edit_mentor_frlc').value = talent.mentor_frlc || '';
-        document.getElementById('edit_status').value = talent.status || 'Sudah Penugasan';
+        let stVal = talent.status || 'Sudah Penugasan';
+        if (stVal.toLowerCase() === 'akan penugasan') stVal = 'Project Khusus';
+        document.getElementById('edit_status').value = stVal;
         document.getElementById('edit_kategori').value = talent.kategori || 'TALENT ESTATE TAHUN 2026';
         document.getElementById('edit_keterangan').value = talent.keterangan || '';
         document.getElementById('edit_periode_penugasan_lama').value = talent.periode_penugasan_lama || '';

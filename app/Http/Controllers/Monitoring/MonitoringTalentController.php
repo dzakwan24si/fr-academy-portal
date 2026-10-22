@@ -48,24 +48,51 @@ class MonitoringTalentController extends Controller
             });
         }
 
-        // Summary KPI Metrics
-        $allTalents = MonitoringTalent::all();
-        $totalAll = $allTalents->count();
+        // Base Query without status for category pills & contextual scope
+        $baseScopeQuery = MonitoringTalent::query()->region($region);
+        if ($talentTo !== 'all' && $talentTo !== '') {
+            $baseScopeQuery->where('talent_to', $talentTo);
+        }
+        if ($search !== '') {
+            $baseScopeQuery->where(function ($q) use ($search) {
+                $q->where('employee_name', 'like', "%{$search}%")
+                    ->orWhere('employee_id', 'like', "%{$search}%")
+                    ->orWhere('posisi_asal', 'like', "%{$search}%")
+                    ->orWhere('talent_to', 'like', "%{$search}%")
+                    ->orWhere('unit', 'like', "%{$search}%")
+                    ->orWhere('mentor_lapangan', 'like', "%{$search}%")
+                    ->orWhere('mentor_frlc', 'like', "%{$search}%")
+                    ->orWhere('keterangan', 'like', "%{$search}%")
+                    ->orWhere('lokasi_penugasan_baru', 'like', "%{$search}%");
+            });
+        }
 
-        $countSudah = $allTalents->filter(fn ($t) => str_contains(strtolower($t->status ?? ''), 'sudah penugasan'))->count();
-        $countAkan = $allTalents->filter(fn ($t) => str_contains(strtolower($t->status ?? ''), 'akan penugasan'))->count();
-        $countBelum = $allTalents->filter(fn ($t) => str_contains(strtolower($t->status ?? ''), 'belum penugasan'))->count();
-        $countConfirm = $allTalents->filter(fn ($t) => str_contains(strtolower($t->status ?? ''), 'confirm'))->count();
+        // Dynamic Category counts (scoped to active region, talent_to, search)
+        $categories = MonitoringTalent::distinct()->pluck('kategori')->filter()->values();
+        $categoryCounts = [];
+        $totalAllCategories = (clone $baseScopeQuery)->count();
+        foreach ($categories as $cat) {
+            $categoryCounts[$cat] = (clone $baseScopeQuery)->category($cat)->count();
+        }
+
+        // Summary KPI Metrics (updated according to active filters)
+        $kpiBaseQuery = (clone $baseScopeQuery)->category($kategori);
+        $kpiTalents = ($status !== 'all' && $status !== '')
+            ? (clone $kpiBaseQuery)->status($status)->get()
+            : (clone $kpiBaseQuery)->get();
+
+        $totalAll = $kpiTalents->count();
+
+        $isProjectKhusus = fn ($s) => str_contains($s, 'project khusus') || str_contains($s, 'akan penugasan');
+
+        $countSudah = $kpiTalents->filter(fn ($t) => str_contains(strtolower($t->status ?? ''), 'sudah penugasan'))->count();
+        $countProjectKhusus = $kpiTalents->filter(fn ($t) => $isProjectKhusus(strtolower($t->status ?? '')))->count();
+        $countAkan = $countProjectKhusus;
+        $countBelum = $kpiTalents->filter(fn ($t) => str_contains(strtolower($t->status ?? ''), 'belum penugasan'))->count();
+        $countConfirm = $kpiTalents->filter(fn ($t) => str_contains(strtolower($t->status ?? ''), 'confirm'))->count();
 
         // Manual Progress Materi Setting
         $progressMateri = (float) AppSetting::get('talent_program_progress_materi', 83);
-
-        // Dynamic Category counts
-        $categories = MonitoringTalent::distinct()->pluck('kategori')->filter()->values();
-        $categoryCounts = [];
-        foreach ($categories as $cat) {
-            $categoryCounts[$cat] = $allTalents->where('kategori', $cat)->count();
-        }
 
         // Filter Dropdown Lists
         $statuses = MonitoringTalent::distinct()->pluck('status')->filter()->values();
@@ -83,8 +110,10 @@ class MonitoringTalentController extends Controller
             'talentTo',
             'search',
             'totalAll',
+            'totalAllCategories',
             'countSudah',
             'countAkan',
+            'countProjectKhusus',
             'countBelum',
             'countConfirm',
             'progressMateri',
