@@ -13,6 +13,12 @@
                 Dokumentasi dan jejak audit aktivitas pengguna di seluruh modul sistem (Tambah, Edit, Hapus, Import).
             </p>
         </div>
+        <div class="flex items-center gap-2 shrink-0">
+            <span class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold bg-white text-gray-700 border border-gray-200 shadow-2xs">
+                <i data-lucide="shield-check" class="w-4 h-4 text-[#509c38]"></i>
+                Auto-Retensi: Maksimal 1.000 Log Terbaru
+            </span>
+        </div>
     </div>
 
     {{-- STATS SUMMARY --}}

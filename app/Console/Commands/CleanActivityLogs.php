@@ -12,26 +12,39 @@ class CleanActivityLogs extends Command
      *
      * @var string
      */
-    protected $signature = 'activity-log:clean {--days=120 : Rentang hari log yang disimpan}';
+    protected $signature = 'activity-log:clean {--days= : Rentang hari log yang disimpan} {--limit=1000 : Batas maksimal data log yang disimpan}';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Clean up activity logs older than specified days (default 120 days)';
+    protected $description = 'Clean up activity logs to maintain max limit (default 1000) or older than specified days';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $days = (int) $this->option('days');
-        $cutoffDate = now()->subDays($days);
+        $deletedCount = 0;
 
-        $deletedCount = ActivityLog::where('created_at', '<', $cutoffDate)->delete();
+        if ($this->option('days')) {
+            $days = (int) $this->option('days');
+            $cutoffDate = now()->subDays($days);
+            $deletedCount += ActivityLog::where('created_at', '<', $cutoffDate)->delete();
+            $this->info("Berhasil menghapus data activity log yang lebih tua dari {$days} hari.");
+        }
 
-        $this->info("Berhasil menghapus {$deletedCount} data activity log yang lebih tua dari {$days} hari (sebelum {$cutoffDate->format('Y-m-d H:i:s')}).");
+        $limit = $this->option('limit') !== null ? (int) $this->option('limit') : ActivityLog::MAX_LOGS;
+        if ($limit > 0) {
+            $pruned = ActivityLog::pruneOldLogs($limit);
+            $deletedCount += $pruned;
+            if ($pruned > 0) {
+                $this->info("Berhasil memangkas {$pruned} data activity log agar tetap maksimal {$limit} data.");
+            } else {
+                $this->info("Data activity log sudah sesuai batas maksimal ({$limit} data).");
+            }
+        }
 
         return Command::SUCCESS;
     }

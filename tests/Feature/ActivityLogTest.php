@@ -112,4 +112,29 @@ class ActivityLogTest extends TestCase
             'module' => 'Inventaris Barang',
         ]);
     }
+
+    public function test_activity_log_auto_prune_maintains_max_limit(): void
+    {
+        for ($i = 1; $i <= 10; $i++) {
+            DB::table('activity_logs')->insert([
+                'action' => 'Tambah',
+                'module' => 'Test Module',
+                'description' => "Log ke-{$i}",
+                'created_at' => now()->subMinutes(10 - $i),
+                'updated_at' => now()->subMinutes(10 - $i),
+            ]);
+        }
+
+        $this->assertEquals(10, ActivityLog::count());
+
+        $deleted = ActivityLog::pruneOldLogs(5);
+        $this->assertEquals(5, $deleted);
+        $this->assertEquals(5, ActivityLog::count());
+
+        // Pastikan 5 yang tersisa adalah 5 log terbaru (Log ke-6 s/d 10)
+        $this->assertDatabaseMissing('activity_logs', ['description' => 'Log ke-1']);
+        $this->assertDatabaseMissing('activity_logs', ['description' => 'Log ke-5']);
+        $this->assertDatabaseHas('activity_logs', ['description' => 'Log ke-6']);
+        $this->assertDatabaseHas('activity_logs', ['description' => 'Log ke-10']);
+    }
 }
