@@ -3,6 +3,10 @@
 <x-slot name="title">Cost Management | FR Academy Enterprise Portal</x-slot>
     <x-slot name="header">Cost Management | FR Academy Enterprise Portal</x-slot>
 
+@push('styles')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+@endpush
+
 
 
 {{-- ============================== PAGE HEADER ============================== --}}
@@ -30,7 +34,7 @@
         </a>
 
         {{-- Export Report --}}
-        <a href="{{ route('administrasi.cost.export', ['year' => $selectedYear, 'month' => $selectedMonth]) }}"
+        <a href="{{ route('administrasi.cost.export', ['year' => $selectedYear, 'month' => $selectedMonth, 'capex' => $selectedCapex]) }}"
            class="flex items-center gap-2 px-3.5 py-2 bg-white border border-[#E5E7EB] text-[#374151] text-xs sm:text-sm font-medium rounded-lg hover:bg-[#F9FAFB] hover:border-[#D1D5DB] transition-all shadow-sm">
             <i data-lucide="download" class="w-4 h-4 text-[#71717A]"></i>
             <span>Export Excel</span>
@@ -55,6 +59,48 @@
     </div>
 </div>
 
+{{-- ============================== CAPEX VIEW TOGGLE TABS (DENGAN CAPEX vs TANPA CAPEX) ============================== --}}
+<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+    <div class="inline-flex p-1 bg-white border border-[#E5E7EB] rounded-2xl shadow-2xs">
+        {{-- Tab 1: Dengan Capex --}}
+        <a href="{{ route('administrasi.cost.index', ['year' => $selectedYear, 'month' => $selectedMonth, 'capex' => 'with']) }}"
+           class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all {{ $selectedCapex !== 'without' ? 'bg-[#4B6A34] text-white shadow-xs' : 'text-[#71717A] hover:text-[#18181B] hover:bg-gray-50' }}"
+           title="Menampilkan semua data pengeluaran termasuk alokasi CAPEX">
+            <i data-lucide="layers" class="w-4 h-4"></i>
+            <span>Dengan Capex</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold {{ $selectedCapex !== 'without' ? 'bg-white/20 text-white' : 'bg-gray-100 text-[#71717A]' }}">
+                Termasuk CAPEX
+            </span>
+        </a>
+
+        {{-- Tab 2: Tanpa Capex --}}
+        <a href="{{ route('administrasi.cost.index', ['year' => $selectedYear, 'month' => $selectedMonth, 'capex' => 'without']) }}"
+           class="flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all {{ $selectedCapex === 'without' ? 'bg-[#4B6A34] text-white shadow-xs' : 'text-[#71717A] hover:text-[#18181B] hover:bg-gray-50' }}"
+           title="Menampilkan data pengeluaran operasional murni tanpa alokasi CAPEX">
+            <i data-lucide="filter" class="w-4 h-4"></i>
+            <span>Tanpa Capex</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full font-semibold {{ $selectedCapex === 'without' ? 'bg-white/20 text-white' : 'bg-gray-100 text-[#71717A]' }}">
+                Tanpa Biaya CAPEX
+            </span>
+        </a>
+    </div>
+
+    {{-- Info Status Badge --}}
+    <div class="flex items-center gap-2">
+        @if($selectedCapex === 'without')
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 shadow-2xs">
+                <i data-lucide="info" class="w-3.5 h-3.5 text-amber-600"></i>
+                <span>Mode Aktif: Biaya Operasional <strong>(Tanpa CAPEX)</strong></span>
+            </span>
+        @else
+            <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
+                <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-[#4B6A34]"></i>
+                <span>Mode Aktif: <strong>Semua Biaya Lengkap</strong> (OPEX + CAPEX)</span>
+            </span>
+        @endif
+    </div>
+</div>
+
 {{-- ============================== UNIFIED FILTER & NAVIGATION CARD ============================== --}}
 <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 mb-6 shadow-2xs space-y-3.5">
     {{-- Row 1: Year Navigation --}}
@@ -73,7 +119,7 @@
             {{-- Horizontal Scrollable List --}}
             <div id="yearTabsContainer" class="flex items-center gap-1.5 overflow-x-auto py-1 px-1 scroll-smooth" style="scrollbar-width: thin;">
                 @foreach ($years as $y)
-                    <a href="{{ route('administrasi.cost.index', ['year' => $y, 'month' => $selectedMonth, 'jenis' => $selectedJenis, 'search' => $search]) }}"
+                    <a href="{{ route('administrasi.cost.index', ['year' => $y, 'month' => $selectedMonth, 'capex' => $selectedCapex]) }}"
                        id="year-tab-{{ $y }}"
                        class="px-4 py-1.5 rounded-xl text-xs font-semibold transition-all whitespace-nowrap {{ (int)$selectedYear === (int)$y ? 'bg-[#4B6A34] text-white shadow-xs' : 'text-[#71717A] hover:text-[#18181B] hover:bg-[#F4F4F5] bg-gray-50 border border-transparent hover:border-[#E5E7EB]' }}">
                         {{ $y }}
@@ -99,55 +145,24 @@
         @endcan
     </div>
 
-    {{-- Row 2: Month Navigation Tabs + Category Filter & Search --}}
-    <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-        {{-- Month Tabs --}}
-        <div class="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-thin flex-1 min-w-0">
-            <a href="{{ route('administrasi.cost.index', ['year' => $selectedYear, 'month' => 'all', 'jenis' => $selectedJenis, 'search' => $search]) }}"
-               class="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap
-                      {{ $selectedMonth === 'all'
-                          ? 'bg-[#4B6A34] text-white shadow-xs'
-                          : 'bg-[#F9FAFB] text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#18181B]' }}">
-                🌟 Semua (Tahunan)
-            </a>
-            @foreach($monthNames as $num => $label)
-            <a href="{{ route('administrasi.cost.index', ['year' => $selectedYear, 'month' => $num, 'jenis' => $selectedJenis, 'search' => $search]) }}"
-               class="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap
-                      {{ (string)$num === (string)$selectedMonth
-                          ? 'bg-[#4B6A34] text-white shadow-xs'
-                          : 'bg-[#F9FAFB] text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#18181B]' }}">
-                {{ $label }}
-            </a>
-            @endforeach
-        </div>
-
-        {{-- Filter Jenis & Search --}}
-        <form method="GET" action="{{ route('administrasi.cost.index') }}" class="flex items-center gap-2 shrink-0 flex-wrap sm:flex-nowrap">
-            <input type="hidden" name="year" value="{{ $selectedYear }}">
-            <input type="hidden" name="month" value="{{ $selectedMonth }}">
-
-            {{-- Filter Jenis Cost --}}
-            <select name="jenis" onchange="this.form.submit()"
-                    class="px-3 py-1.5 text-xs bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[#374151] focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34] outline-none">
-                <option value="all" {{ $selectedJenis === 'all' ? 'selected' : '' }}>— Semua Kategori Cost —</option>
-                @foreach($jenisList as $j)
-                    <option value="{{ $j }}" {{ $selectedJenis === $j ? 'selected' : '' }}>{{ $j }}</option>
-                @endforeach
-            </select>
-
-            {{-- Search Bar --}}
-            <div class="relative">
-                <i data-lucide="search" class="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF]"></i>
-                <input type="text" name="search" value="{{ $search }}" placeholder="Cari account / GL..."
-                       class="pl-8 pr-3 py-1.5 text-xs bg-[#F9FAFB] border border-[#E5E7EB] rounded-lg text-[#374151] placeholder-[#9CA3AF] focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34] outline-none w-44 sm:w-52">
-            </div>
-            @if(!empty($search) || $selectedJenis !== 'all')
-            <a href="{{ route('administrasi.cost.index', ['year' => $selectedYear, 'month' => $selectedMonth]) }}"
-               class="p-1.5 text-[#71717A] hover:text-red-500 rounded-lg hover:bg-[#F4F4F5] transition-colors" title="Reset filter">
-                <i data-lucide="x" class="w-4 h-4"></i>
-            </a>
-            @endif
-        </form>
+    {{-- Row 2: Month Navigation Tabs --}}
+    <div class="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-thin">
+        <a href="{{ route('administrasi.cost.index', ['year' => $selectedYear, 'month' => 'all', 'capex' => $selectedCapex]) }}"
+           class="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap
+                  {{ $selectedMonth === 'all'
+                      ? 'bg-[#4B6A34] text-white shadow-xs'
+                      : 'bg-[#F9FAFB] text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#18181B]' }}">
+            🌟 Semua (Tahunan)
+        </a>
+        @foreach($monthNames as $num => $label)
+        <a href="{{ route('administrasi.cost.index', ['year' => $selectedYear, 'month' => $num, 'capex' => $selectedCapex]) }}"
+           class="flex-shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all whitespace-nowrap
+                  {{ (string)$num === (string)$selectedMonth
+                      ? 'bg-[#4B6A34] text-white shadow-xs'
+                      : 'bg-[#F9FAFB] text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#18181B]' }}">
+            {{ $label }}
+        </a>
+        @endforeach
     </div>
 </div>
 
@@ -234,6 +249,118 @@
 </div>
 @endif
 
+{{-- ============================== VISUAL ANALYTICS & CHARTS ============================== --}}
+<div class="bg-white border border-[#E5E7EB] rounded-2xl p-5 mb-6 shadow-2xs transition-all" id="visualAnalyticsCard">
+    {{-- Card Header with Toggle --}}
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#F4F4F5]">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-[#4B6A34]/10 text-[#4B6A34] flex items-center justify-center shrink-0">
+                <i data-lucide="line-chart" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <div class="flex items-center gap-2 flex-wrap">
+                    <h3 class="font-bold text-base text-[#18181B] tracking-tight">Visualisasi & Analisis Pengeluaran</h3>
+                    <span class="text-[11px] font-semibold text-[#4B6A34] bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                        Tahun {{ $selectedYear }} {{ $selectedMonth === 'all' ? '(Tahunan)' : '- ' . ($monthNames[$selectedMonth] ?? $selectedMonth) }}
+                    </span>
+                    <span class="text-[11px] font-semibold {{ $selectedCapex === 'without' ? 'text-amber-800 bg-amber-50 border-amber-200' : 'text-emerald-800 bg-emerald-50 border-emerald-200' }} border px-2 py-0.5 rounded-full">
+                        {{ $selectedCapex === 'without' ? 'Tanpa CAPEX' : 'Dengan CAPEX' }}
+                    </span>
+                </div>
+                <p class="text-xs text-[#71717A] mt-0.5">Komparasi tren penyerapan anggaran bulanan dan distribusi pengeluaran per kategori</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+            <button type="button" onclick="toggleAnalyticsBody()" id="toggleAnalyticsBtn"
+                    class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] hover:bg-gray-100 text-[#71717A] hover:text-[#18181B] text-xs font-semibold transition-colors">
+                <i data-lucide="chevron-up" id="toggleAnalyticsIcon" class="w-4 h-4 transition-transform duration-200"></i>
+                <span id="toggleAnalyticsText">Sembunyikan Grafik</span>
+            </button>
+        </div>
+    </div>
+
+    {{-- Analytics Body --}}
+    <div id="analyticsBody" class="pt-4">
+        {{-- 2 Columns Chart Grid --}}
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+            {{-- Column 1: Tren Bulanan (Budget vs Realisasi) - 7 cols --}}
+            <div class="lg:col-span-7 bg-[#FAFBF9] border border-[#E5E7EB] rounded-xl p-4 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-3 pb-2 border-b border-[#E5E7EB]">
+                    <div>
+                        <h4 class="text-xs font-bold text-[#18181B] uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="bar-chart-3" class="w-3.5 h-3.5 text-[#4B6A34]"></i>
+                            <span>Tren Penyerapan: Budget vs Realisasi (Jan - Des {{ $selectedYear }})</span>
+                        </h4>
+                        <p class="text-[11px] text-[#71717A] mt-0.5">Perbandingan alokasi anggaran bulanan dengan pengeluaran aktual</p>
+                    </div>
+                </div>
+
+                <div class="h-64 sm:h-72 w-full relative">
+                    <canvas id="monthlyTrendChart"></canvas>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-center gap-4 text-xs pt-3 mt-1 border-t border-[#E5E7EB] text-[#71717A]">
+                    <span class="inline-flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-xs bg-[#CBD5E1]"></span> Budget Anggaran
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-xs bg-[#4B6A34]"></span> Realisasi Aktual (Aman)
+                    </span>
+                    <span class="inline-flex items-center gap-1.5">
+                        <span class="w-3 h-3 rounded-xs bg-[#EF4444]"></span> Realisasi (Overbudget)
+                    </span>
+                </div>
+            </div>
+
+            {{-- Column 2: Proporsi Pengeluaran per Kategori - 5 cols --}}
+            <div class="lg:col-span-5 bg-[#FAFBF9] border border-[#E5E7EB] rounded-xl p-4 flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-3 pb-2 border-b border-[#E5E7EB]">
+                    <div>
+                        <h4 class="text-xs font-bold text-[#18181B] uppercase tracking-wider flex items-center gap-1.5">
+                            <i data-lucide="pie-chart" class="w-3.5 h-3.5 text-[#4B6A34]"></i>
+                            <span>Distribusi per Kategori Biaya</span>
+                        </h4>
+                        <p class="text-[11px] text-[#71717A] mt-0.5">
+                            {{ $selectedMonth === 'all' ? 'Akumulasi seluruh tahun ' . $selectedYear : 'Periode bulan ' . ($monthNames[$selectedMonth] ?? $selectedMonth) }}
+                        </p>
+                    </div>
+                </div>
+
+                @if(count($chartAnalytics['categoryValues']) > 0)
+                <div class="h-52 sm:h-56 w-full relative flex items-center justify-center my-1">
+                    <canvas id="categoryDonutChart"></canvas>
+                </div>
+
+                {{-- Legend list with percentage --}}
+                <div class="space-y-1.5 pt-2 border-t border-[#E5E7EB] max-h-36 overflow-y-auto text-xs pr-1">
+                    @php
+                        $badgeBgColors = ['bg-[#4B6A34]', 'bg-[#2563EB]', 'bg-[#D97706]', 'bg-[#7C3AED]', 'bg-[#DB2777]', 'bg-[#64748B]'];
+                    @endphp
+                    @foreach($chartAnalytics['categoryBreakdown'] as $i => $cat)
+                    <div class="flex items-center justify-between py-0.5 text-xs">
+                        <div class="flex items-center gap-2 truncate pr-2">
+                            <span class="w-2.5 h-2.5 rounded-full shrink-0 {{ $badgeBgColors[$i % count($badgeBgColors)] }}"></span>
+                            <span class="text-[#374151] font-medium truncate" title="{{ $cat['name'] }}">{{ $cat['name'] }}</span>
+                        </div>
+                        <div class="text-right shrink-0">
+                            <span class="font-bold text-[#18181B]">Rp {{ number_format($cat['amount'], 0, ',', '.') }}</span>
+                            <span class="text-[#71717A] text-[10px] ml-1">({{ $cat['percent'] }}%)</span>
+                        </div>
+                    </div>
+                    @endforeach
+                </div>
+                @else
+                <div class="h-64 flex flex-col items-center justify-center text-[#71717A] text-xs">
+                    <i data-lucide="inbox" class="w-8 h-8 text-gray-300 mb-2"></i>
+                    <span>Belum ada realisasi pengeluaran pada periode ini.</span>
+                </div>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- ============================== COST DATA TABLE ============================== --}}
 <div class="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-sm">
     <div class="px-5 py-4 border-b border-[#E5E7EB] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 bg-[#FAFBF9]">
@@ -243,6 +370,11 @@
                 <span class="text-xs font-normal text-[#71717A]">
                     ({{ count($grouped) }} Kategori, Periode: {{ $selectedMonth === 'all' ? 'Semua Bulan' : ($monthNames[$selectedMonth] ?? $selectedMonth) }} {{ $selectedYear }})
                 </span>
+                @if($selectedCapex === 'without')
+                    <span class="text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                        Tanpa Biaya CAPEX
+                    </span>
+                @endif
             </h3>
         </div>
         <div class="flex items-center gap-2 text-xs text-[#71717A]">
@@ -596,7 +728,7 @@
                     <input type="text" name="jenis_cost" list="jenisListAdd" required placeholder="Contoh: BIAYA KARYAWAN"
                            class="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-sm focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34] outline-none uppercase">
                     <datalist id="jenisListAdd">
-                        @foreach($jenisList as $j)
+                        @foreach($jenisList ?? [] as $j)
                             <option value="{{ $j }}">
                         @endforeach
                         <option value="BIAYA KARYAWAN">
@@ -894,6 +1026,201 @@ document.addEventListener('DOMContentLoaded', function () {
     const activeTab = document.getElementById('year-tab-{{ $selectedYear }}');
     if (activeTab) {
         activeTab.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+});
+
+function toggleAnalyticsBody() {
+    const body = document.getElementById('analyticsBody');
+    const icon = document.getElementById('toggleAnalyticsIcon');
+    const text = document.getElementById('toggleAnalyticsText');
+    if (!body) return;
+    const isHidden = body.classList.toggle('hidden');
+    if (isHidden) {
+        if (icon) icon.classList.add('rotate-180');
+        if (text) text.textContent = 'Tampilkan Grafik';
+        localStorage.setItem('cost_analytics_hidden', 'true');
+    } else {
+        if (icon) icon.classList.remove('rotate-180');
+        if (text) text.textContent = 'Sembunyikan Grafik';
+        localStorage.setItem('cost_analytics_hidden', 'false');
+    }
+}
+
+// Format Currency Helpers
+function formatRupiahShort(value) {
+    if (value >= 1000000000) return 'Rp ' + (value / 1000000000).toFixed(1) + ' M';
+    if (value >= 1000000) return 'Rp ' + (value / 1000000).toFixed(0) + ' Jt';
+    if (value >= 1000) return 'Rp ' + (value / 1000).toFixed(0) + ' Rb';
+    return 'Rp ' + (value || 0).toLocaleString('id-ID');
+}
+
+function formatRupiahFull(value) {
+    return 'Rp ' + Math.round(value || 0).toLocaleString('id-ID');
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Restore collapsed state
+    if (localStorage.getItem('cost_analytics_hidden') === 'true') {
+        const body = document.getElementById('analyticsBody');
+        const icon = document.getElementById('toggleAnalyticsIcon');
+        const text = document.getElementById('toggleAnalyticsText');
+        if (body && icon && text) {
+            body.classList.add('hidden');
+            icon.classList.add('rotate-180');
+            text.textContent = 'Tampilkan Grafik';
+        }
+    }
+
+    // Chart 1: Monthly Trend Bar Chart
+    const trendCanvas = document.getElementById('monthlyTrendChart');
+    if (trendCanvas && typeof Chart !== 'undefined') {
+        const monthlyLabels = @json($chartAnalytics['monthlyLabels']);
+        const monthlyBudgets = @json($chartAnalytics['monthlyBudgets']);
+        const monthlyRealisasis = @json($chartAnalytics['monthlyRealisasis']);
+
+        // Dynamic color: green if <= budget, red if overbudget
+        const realisasiColors = monthlyRealisasis.map((r, i) => {
+            const b = monthlyBudgets[i] || 0;
+            return (b > 0 && r > b) ? '#EF4444' : '#4B6A34';
+        });
+
+        new Chart(trendCanvas.getContext('2d'), {
+            type: 'bar',
+            data: {
+                labels: monthlyLabels,
+                datasets: [
+                    {
+                        label: 'Budget Anggaran',
+                        data: monthlyBudgets,
+                        backgroundColor: '#CBD5E1',
+                        hoverBackgroundColor: '#94A3B8',
+                        borderRadius: 6,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.8,
+                    },
+                    {
+                        label: 'Realisasi Aktual',
+                        data: monthlyRealisasis,
+                        backgroundColor: realisasiColors,
+                        hoverBackgroundColor: realisasiColors.map(c => c === '#EF4444' ? '#DC2626' : '#3d5829'),
+                        borderRadius: 6,
+                        barPercentage: 0.7,
+                        categoryPercentage: 0.8,
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: '#18181B',
+                        titleFont: { size: 12, weight: 'bold' },
+                        bodyFont: { size: 12 },
+                        padding: 10,
+                        cornerRadius: 8,
+                        callbacks: {
+                            label: function (context) {
+                                return context.dataset.label + ': ' + formatRupiahFull(context.parsed.y);
+                            },
+                            afterBody: function (contexts) {
+                                if (contexts.length >= 2) {
+                                    const b = contexts[0].parsed.y;
+                                    const r = contexts[1].parsed.y;
+                                    const diff = b - r;
+                                    if (b > 0) {
+                                        const pct = ((r / b) * 100).toFixed(1);
+                                        const status = diff >= 0
+                                            ? `✓ Sisa: ${formatRupiahFull(diff)} (${pct}% serap)`
+                                            : `⚠️ Overbudget: ${formatRupiahFull(Math.abs(diff))} (${pct}% serap)`;
+                                        return '\n' + status;
+                                    }
+                                }
+                                return '';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { display: false },
+                        ticks: {
+                            font: { size: 11, weight: '600' },
+                            color: '#71717A'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: '#F4F4F5',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: { size: 10 },
+                            color: '#A1A1AA',
+                            callback: function (val) {
+                                return formatRupiahShort(val);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Chart 2: Category Donut Chart
+    const donutCanvas = document.getElementById('categoryDonutChart');
+    if (donutCanvas && typeof Chart !== 'undefined') {
+        const catLabels = @json($chartAnalytics['categoryLabels']);
+        const catValues = @json($chartAnalytics['categoryValues']);
+        const palette = ['#4B6A34', '#2563EB', '#D97706', '#7C3AED', '#DB2777', '#64748B'];
+
+        if (catValues.length > 0) {
+            new Chart(donutCanvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: catLabels,
+                    datasets: [{
+                        data: catValues,
+                        backgroundColor: palette.slice(0, catValues.length),
+                        borderWidth: 2,
+                        borderColor: '#FFFFFF',
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#18181B',
+                            titleFont: { size: 12, weight: 'bold' },
+                            bodyFont: { size: 12 },
+                            padding: 10,
+                            cornerRadius: 8,
+                            callbacks: {
+                                label: function (context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const val = context.parsed;
+                                    const pct = total > 0 ? ((val / total) * 100).toFixed(1) : 0;
+                                    return ` ${context.label}: ${formatRupiahFull(val)} (${pct}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
 });
 </script>

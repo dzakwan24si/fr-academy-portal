@@ -4,18 +4,14 @@ namespace App\Http\Controllers\Inventaris;
 
 use App\Http\Controllers\Controller;
 use App\Models\Inventaris\Barang;
-use App\Models\Inventaris\Pembelian;
 use App\Models\Inventaris\StockOpname;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Carbon;
 
 class InventarisSummaryController extends Controller
 {
     public function index(Request $request)
     {
-        $selectedYear = (int) $request->query('year', date('Y'));
-        $years = [2020, 2021, 2022, 2023, 2024, 2025, 2026];
-
         $jenisLokasiFilter = $request->query('jenis_lokasi', '');
         if ($jenisLokasiFilter === 'Gudang') {
             $locations = ['Gudang'];
@@ -25,62 +21,104 @@ class InventarisSummaryController extends Controller
             $locations = ['Gudang', 'Kantor'];
         }
 
-        $summaryData = [];
+        // Get available stock opname dates across requested locations
+        $dateQuery = StockOpname::whereHas('barang', function ($q) use ($locations) {
+            $q->where(function ($sub) use ($locations) {
+                foreach ($locations as $loc) {
+                    $sub->orWhere('jenis_lokasi', $loc)->orWhere('lokasi', $loc);
+                }
+            });
+        });
 
-        // Pre-fetch all Pembelian sums and StockOpname records up to selected year in 2 fast queries
-        $pembelianSums = Pembelian::whereYear('tanggal_pembelian', '<=', $selectedYear)
-            ->select('barang_id', DB::raw('SUM(jumlah) as total'))
-            ->groupBy('barang_id')
-            ->pluck('total', 'barang_id')
+        $availableDates = (clone $dateQuery)
+            ->select('tanggal_stock_opname')
+            ->distinct()
+            ->orderByDesc('tanggal_stock_opname')
+            ->pluck('tanggal_stock_opname')
+            ->map(fn ($d) => Carbon::parse($d)->format('Y-m-d'))
+            ->values()
             ->all();
 
-        $allStockOpnames = StockOpname::whereYear('tanggal_stock_opname', '<=', $selectedYear)
-            ->orderByDesc('tanggal_stock_opname')
-            ->get()
-            ->groupBy('barang_id');
+        $overallLatestDate = $availableDates[0] ?? null;
+        $selectedDate = $request->query('date');
+        if (! $selectedDate || ! in_array($selectedDate, $availableDates, true)) {
+            $selectedDate = $overallLatestDate;
+        }
+
+        // Find latest date specifically for Gudang and Kantor
+        $latestDateGudang = StockOpname::whereHas('barang', function ($q) {
+            $q->where('jenis_lokasi', 'Gudang')->orWhere('lokasi', 'Gudang');
+        })->max('tanggal_stock_opname');
+        if ($latestDateGudang) {
+            $latestDateGudang = Carbon::parse($latestDateGudang)->format('Y-m-d');
+        }
+
+        $latestDateKantor = StockOpname::whereHas('barang', function ($q) {
+            $q->where('jenis_lokasi', 'Kantor')->orWhere('lokasi', 'Kantor');
+        })->max('tanggal_stock_opname');
+        if ($latestDateKantor) {
+            $latestDateKantor = Carbon::parse($latestDateKantor)->format('Y-m-d');
+        }
+
+        $summaryData = [];
+        $kantorRoomSummary = collect([]);
 
         foreach ($locations as $lokasi) {
-            $barangList = Barang::where('jenis_lokasi', $lokasi)
-                ->orWhere('lokasi', $lokasi)
-                ->orderBy('nama_asset', 'asc')
+            // Determine active date for this location:
+            // If user explicitly picked a date, use that date.
+            // Otherwise, use the latest date for this location.
+            $locDate = $request->query('date') ?: ($lokasi === 'Gudang' ? $latestDateGudang : $latestDateKantor);
+
+            if (! $locDate) {
+                $summaryData[$lokasi] = [];
+                continue;
+            }
+
+            $soRecords = StockOpname::with('barang')
+                ->whereHas('barang', function ($q) use ($lokasi) {
+                    $q->where('jenis_lokasi', $lokasi)->orWhere('lokasi', $lokasi);
+                })
+                ->whereDate('tanggal_stock_opname', $locDate)
                 ->get();
 
             $items = [];
-            foreach ($barangList as $barang) {
-                $soList = $allStockOpnames->get($barang->id);
-                $latestSO = $soList ? $soList->first() : null;
-                $totalPembelian = (int) ($pembelianSums[$barang->id] ?? 0);
+            $grouped = $soRecords->groupBy('barang_id');
 
-                $stok = $latestSO ? $latestSO->grand_total : $totalPembelian;
-                $baik = $latestSO ? $latestSO->jumlah_baik : $stok;
-                $rusak = $latestSO ? $latestSO->jumlah_rusak : 0;
-                $keterangan = $latestSO ? $latestSO->keterangan : ($barang->keterangan ?: '-');
+            foreach ($grouped as $bId => $recs) {
+                $barang = $recs->first()->barang;
+                $stok = (int) $recs->sum('grand_total');
+                $baik = (int) $recs->sum('jumlah_baik');
+                $rusak = (int) $recs->sum('jumlah_rusak');
 
-                // Room breakdown for Kantor items
+                $keteranganList = $recs->pluck('keterangan')
+                    ->map(fn ($k) => trim((string) $k))
+                    ->filter(fn ($k) => ! empty($k) && $k !== '-')
+                    ->unique()
+                    ->values();
+
+                $keterangan = $keteranganList->isNotEmpty()
+                    ? $keteranganList->implode('; ')
+                    : ($barang && $barang->keterangan ? $barang->keterangan : '-');
+
                 $roomBreakdown = [];
-                if ($lokasi === 'Kantor' && $soList) {
-                    $latestDate = $latestSO->tanggal_stock_opname;
-                    if ($latestDate) {
-                        $roomRecords = $soList->filter(function ($rec) use ($latestDate) {
-                            return $rec->tanggal_stock_opname === $latestDate && ! empty($rec->lokasi_spesifik);
-                        });
-
-                        foreach ($roomRecords as $rec) {
+                if ($lokasi === 'Kantor') {
+                    foreach ($recs as $rec) {
+                        if (! empty($rec->lokasi_spesifik)) {
                             $roomBreakdown[] = [
                                 'lokasi_spesifik' => $rec->lokasi_spesifik,
-                                'jumlah_baik' => $rec->jumlah_baik,
-                                'jumlah_rusak' => $rec->jumlah_rusak,
-                                'grand_total' => $rec->grand_total,
+                                'jumlah_baik' => (int) $rec->jumlah_baik,
+                                'jumlah_rusak' => (int) $rec->jumlah_rusak,
+                                'grand_total' => (int) $rec->grand_total,
                             ];
                         }
                     }
                 }
 
                 $items[] = [
-                    'id' => $barang->id,
-                    'nama_asset' => $barang->nama_asset,
-                    'satuan' => $barang->satuan,
-                    'jenis_lokasi' => $barang->jenis_lokasi ?: $lokasi,
+                    'id' => $bId,
+                    'nama_asset' => $barang ? $barang->nama_asset : ('Asset #' . $bId),
+                    'satuan' => $barang ? ($barang->satuan ?: 'Unit') : 'Unit',
+                    'jenis_lokasi' => $barang ? ($barang->jenis_lokasi ?: $lokasi) : $lokasi,
                     'stok' => $stok,
                     'baik' => $baik,
                     'rusak' => $rusak,
@@ -89,56 +127,47 @@ class InventarisSummaryController extends Controller
                 ];
             }
 
+            usort($items, fn ($a, $b) => strcasecmp($a['nama_asset'], $b['nama_asset']));
             $summaryData[$lokasi] = $items;
-        }
 
-        // Room summary aggregation for Kantor
-        $kantorRoomSummary = collect([]);
-        if (in_array('Kantor', $locations)) {
-            $kantorBarangSummary = Barang::where(function ($q) {
-                $q->where('jenis_lokasi', 'Kantor')->orWhere('lokasi', 'Kantor');
-            })->get();
+            // Room summary aggregation for Kantor on the active date
+            if ($lokasi === 'Kantor' && $soRecords->isNotEmpty()) {
+                $summaryRoomMap = [];
+                foreach ($soRecords as $rec) {
+                    $roomName = ! empty(trim((string) $rec->lokasi_spesifik))
+                        ? trim($rec->lokasi_spesifik)
+                        : 'Kantor (Umum)';
 
-            $summaryRoomMap = [];
-            foreach ($kantorBarangSummary as $b) {
-                $soList = $allStockOpnames->get($b->id);
-                $latestSO = $soList ? $soList->first() : null;
-                $totalPembelian = (int) ($pembelianSums[$b->id] ?? 0);
+                    if (! isset($summaryRoomMap[$roomName])) {
+                        $summaryRoomMap[$roomName] = (object) [
+                            'lokasi_spesifik' => $roomName,
+                            'total_jenis_barang' => 0,
+                            'total_baik' => 0,
+                            'total_rusak' => 0,
+                            'total_aset' => 0,
+                        ];
+                    }
 
-                $stok = $latestSO ? $latestSO->grand_total : $totalPembelian;
-                $baik = $latestSO ? $latestSO->jumlah_baik : $stok;
-                $rusak = $latestSO ? $latestSO->jumlah_rusak : 0;
-
-                $roomName = ($latestSO && ! empty(trim((string) $latestSO->lokasi_spesifik)))
-                    ? trim($latestSO->lokasi_spesifik)
-                    : (($b->lokasi && ! in_array($b->lokasi, ['Kantor', 'Gudang'])) ? $b->lokasi : 'Kantor (Umum)');
-
-                if (! isset($summaryRoomMap[$roomName])) {
-                    $summaryRoomMap[$roomName] = (object) [
-                        'lokasi_spesifik' => $roomName,
-                        'total_jenis_barang' => 0,
-                        'total_baik' => 0,
-                        'total_rusak' => 0,
-                        'total_aset' => 0,
-                    ];
+                    $summaryRoomMap[$roomName]->total_jenis_barang += 1;
+                    $summaryRoomMap[$roomName]->total_baik += (int) $rec->jumlah_baik;
+                    $summaryRoomMap[$roomName]->total_rusak += (int) $rec->jumlah_rusak;
+                    $summaryRoomMap[$roomName]->total_aset += (int) $rec->grand_total;
                 }
 
-                $summaryRoomMap[$roomName]->total_jenis_barang += 1;
-                $summaryRoomMap[$roomName]->total_baik += $baik;
-                $summaryRoomMap[$roomName]->total_rusak += $rusak;
-                $summaryRoomMap[$roomName]->total_aset += $stok;
+                $summaryRoomList = array_values($summaryRoomMap);
+                usort($summaryRoomList, fn ($a, $b) => strcmp($a->lokasi_spesifik, $b->lokasi_spesifik));
+                $kantorRoomSummary = collect($summaryRoomList);
             }
-
-            $summaryRoomList = array_values($summaryRoomMap);
-            usort($summaryRoomList, fn ($a, $b) => strcmp($a->lokasi_spesifik, $b->lokasi_spesifik));
-            $kantorRoomSummary = collect($summaryRoomList);
         }
 
         return view('Administrasi.Pages.Inventaris.summary', [
             'summaryData' => $summaryData,
             'kantorRoomSummary' => $kantorRoomSummary,
-            'years' => $years,
-            'selectedYear' => (int) $selectedYear,
+            'availableDates' => $availableDates,
+            'selectedDate' => $selectedDate,
+            'overallLatestDate' => $overallLatestDate,
+            'latestDateGudang' => $latestDateGudang,
+            'latestDateKantor' => $latestDateKantor,
             'jenisLokasiFilter' => $jenisLokasiFilter,
             'activeTab' => 'summary',
         ]);

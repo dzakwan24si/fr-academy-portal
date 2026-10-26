@@ -44,8 +44,7 @@ class CostController extends Controller
         sort($years);
 
         $selectedMonth = $request->get('month', 'all'); // 'all' or 1..12
-        $selectedJenis = $request->get('jenis', 'all'); // 'all' or specific jenis_cost
-        $search = trim($request->get('search', ''));
+        $selectedCapex = $request->get('capex', 'with'); // 'with' (Dengan Capex) or 'without' (Tanpa Capex)
 
         // Optionally perform auto-aggregation sync with throttle
         $v = (int) Cache::get('cost_cache_version', 1);
@@ -58,22 +57,14 @@ class CostController extends Controller
         // 2. Query Costs
         $query = Cost::where('tahun', $selectedYear);
 
+        if ($selectedCapex === 'without') {
+            $query->where('jenis_cost', '!=', 'CAPEX');
+        }
+
         if (is_numeric($selectedMonth) && (int) $selectedMonth >= 1 && (int) $selectedMonth <= 12) {
             $query->where(function ($q) use ($selectedMonth) {
                 $q->where('bulan', (int) $selectedMonth)
                     ->orWhereNull('bulan');
-            });
-        }
-
-        if ($selectedJenis !== 'all') {
-            $query->where('jenis_cost', $selectedJenis);
-        }
-
-        if (! empty($search)) {
-            $query->where(function ($q) use ($search) {
-                $q->where('account_name', 'like', "%{$search}%")
-                    ->orWhere('jenis_cost', 'like', "%{$search}%")
-                    ->orWhere('GL_ACCOUNT', 'like', "%{$search}%");
             });
         }
 
@@ -103,10 +94,7 @@ class CostController extends Controller
             $grouped[$key][] = $cost;
         }
 
-        // 4. Distinct Jenis Cost for Filter
-        $jenisList = Cost::where('tahun', $selectedYear)->select('jenis_cost')->distinct()->pluck('jenis_cost')->filter()->values();
-
-        // 5. Summary Totals
+        // 4. Summary Totals
         $totalBudget = (float) $allCosts->sum('budget');
         $totalRealisasi = (float) $allCosts->sum('realisasi');
         $totalBudgetTahunan = (float) $allCosts->sum('budget_tahunan');
@@ -120,16 +108,8 @@ class CostController extends Controller
                         ->orWhereNull('bulan');
                 });
 
-            if ($selectedJenis !== 'all') {
-                $ytdQuery->where('jenis_cost', $selectedJenis);
-            }
-
-            if (! empty($search)) {
-                $ytdQuery->where(function ($q) use ($search) {
-                    $q->where('account_name', 'like', "%{$search}%")
-                        ->orWhere('jenis_cost', 'like', "%{$search}%")
-                        ->orWhere('GL_ACCOUNT', 'like', "%{$search}%");
-                });
+            if ($selectedCapex === 'without') {
+                $ytdQuery->where('jenis_cost', '!=', 'CAPEX');
             }
 
             $totalRealisasiYtd = (float) $ytdQuery->sum('realisasi');
@@ -154,18 +134,112 @@ class CostController extends Controller
             'pctRealisasi'
         );
 
+        // 5. Chart & Visual Analytics Data
+        // A. Monthly Trend (Jan - Des) for selected year
+        $trendQuery = Cost::where('tahun', $selectedYear);
+        if ($selectedCapex === 'without') {
+            $trendQuery->where('jenis_cost', '!=', 'CAPEX');
+        }
+
+        $rawMonthly = $trendQuery->select(
+            'bulan',
+            DB::raw('SUM(budget) as total_budget'),
+            DB::raw('SUM(realisasi) as total_realisasi')
+        )
+        ->whereNotNull('bulan')
+        ->groupBy('bulan')
+        ->orderBy('bulan')
+        ->get()
+        ->keyBy('bulan');
+
+        $monthlyLabels = [];
+        $monthlyBudgets = [];
+        $monthlyRealisasis = [];
+
+        foreach (range(1, 12) as $m) {
+            $mName = self::MONTH_NAMES[$m] ?? "Bln $m";
+            $monthlyLabels[] = substr($mName, 0, 3);
+            $b = isset($rawMonthly[$m]) ? (float) $rawMonthly[$m]->total_budget : 0;
+            $r = isset($rawMonthly[$m]) ? (float) $rawMonthly[$m]->total_realisasi : 0;
+            $monthlyBudgets[] = $b;
+            $monthlyRealisasis[] = $r;
+        }
+
+        // B. Category Breakdown (Doughnut)
+        $catQuery = Cost::where('tahun', $selectedYear);
+        if ($selectedCapex === 'without') {
+            $catQuery->where('jenis_cost', '!=', 'CAPEX');
+        }
+        if (is_numeric($selectedMonth) && (int) $selectedMonth >= 1 && (int) $selectedMonth <= 12) {
+            $catQuery->where(function ($q) use ($selectedMonth) {
+                $q->where('bulan', (int) $selectedMonth)->orWhereNull('bulan');
+            });
+        }
+
+        $rawCategories = $catQuery->select(
+            DB::raw("COALESCE(NULLIF(TRIM(jenis_cost), ''), 'BIAYA UMUM LAINNYA') as cat_name"),
+            DB::raw('SUM(realisasi) as total_r')
+        )
+        ->groupBy('cat_name')
+        ->orderByDesc('total_r')
+        ->get();
+
+        $categoryLabels = [];
+        $categoryValues = [];
+        $categoryBreakdown = [];
+        $otherSum = 0;
+        $totalAllCategories = (float) $rawCategories->sum('total_r');
+
+        foreach ($rawCategories as $index => $catRow) {
+            $val = (float) $catRow->total_r;
+            if ($val <= 0) continue;
+
+            if ($index < 5) {
+                $categoryLabels[] = $catRow->cat_name;
+                $categoryValues[] = $val;
+                $categoryBreakdown[] = [
+                    'name' => $catRow->cat_name,
+                    'amount' => $val,
+                    'percent' => $totalAllCategories > 0 ? round(($val / $totalAllCategories) * 100, 1) : 0,
+                ];
+            } else {
+                $otherSum += $val;
+            }
+        }
+
+        if ($otherSum > 0) {
+            $categoryLabels[] = 'KATEGORI LAINNYA';
+            $categoryValues[] = $otherSum;
+            $categoryBreakdown[] = [
+                'name' => 'KATEGORI LAINNYA',
+                'amount' => $otherSum,
+                'percent' => $totalAllCategories > 0 ? round(($otherSum / $totalAllCategories) * 100, 1) : 0,
+            ];
+        }
+
+        $chartAnalytics = [
+            'monthlyLabels' => $monthlyLabels,
+            'monthlyBudgets' => $monthlyBudgets,
+            'monthlyRealisasis' => $monthlyRealisasis,
+            'categoryLabels' => $categoryLabels,
+            'categoryValues' => $categoryValues,
+            'categoryBreakdown' => $categoryBreakdown,
+            'totalRealized' => $totalAllCategories,
+        ];
+
         $monthNames = self::MONTH_NAMES;
+        $jenisList = Cost::select('jenis_cost')->distinct()->pluck('jenis_cost')->filter()->values();
 
         return view('Administrasi.Pages.Cost.cost', compact(
             'years',
             'selectedYear',
             'selectedMonth',
-            'selectedJenis',
+            'selectedCapex',
             'jenisList',
-            'search',
             'grouped',
             'summary',
-            'monthNames'
+            'monthNames',
+            'chartAnalytics'
         ));
     }
 
@@ -797,8 +871,14 @@ class CostController extends Controller
     {
         $year = (int) $request->get('year', 2026);
         $month = $request->get('month', 'all');
+        $selectedCapex = $request->get('capex', 'with');
 
         $query = Cost::where('tahun', $year);
+
+        if ($selectedCapex === 'without') {
+            $query->where('jenis_cost', '!=', 'CAPEX');
+        }
+
         if (is_numeric($month) && $month >= 1 && $month <= 12) {
             $query->where('bulan', (int) $month);
         }
@@ -821,7 +901,8 @@ class CostController extends Controller
             ];
         }
 
-        $filename = "Cost_Report_{$year}.xlsx";
+        $capexSuffix = $selectedCapex === 'without' ? '_Tanpa_Capex' : '';
+        $filename = "Cost_Report_{$year}{$capexSuffix}.xlsx";
 
         return ExcelExporter::download($filename, $headers, $dataRows, 'Cost Report');
     }

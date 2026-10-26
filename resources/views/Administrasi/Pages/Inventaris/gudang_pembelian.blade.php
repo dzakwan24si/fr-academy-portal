@@ -13,6 +13,10 @@
 
     {{-- Sub-tabs --}}
     <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm shrink-0">
+        <a href="{{ route('administrasi.inventaris.summary') }}"
+           class="px-5 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'summary' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+            Summary
+        </a>
         <a href="{{ route('administrasi.inventaris.gudang.barang') }}"
            class="px-5 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'barang' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
             Barang

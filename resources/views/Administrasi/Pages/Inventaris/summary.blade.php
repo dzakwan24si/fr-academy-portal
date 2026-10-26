@@ -31,7 +31,7 @@
 
         {{-- Feature Sub-tabs --}}
         <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm">
-            <a href="{{ route('administrasi.inventaris.summary', array_merge(request()->query(), ['year' => $selectedYear])) }}"
+            <a href="{{ route('administrasi.inventaris.summary', request()->query()) }}"
                class="px-4 py-2 text-xs font-bold rounded-lg transition-all {{ $activeTab === 'summary' ? 'bg-[#4B6A34] text-white shadow-sm' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
                 Summary
             </a>
@@ -51,20 +51,59 @@
     </div>
 </div>
 
-{{-- ============================== DYNAMIC YEAR FILTER BAR ============================== --}}
-<div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 mb-6 shadow-sm">
-    <div class="text-xs font-bold uppercase tracking-wider text-[#71717A] mb-3 text-center sm:text-left flex items-center gap-2">
-        <i data-lucide="calendar" class="w-4 h-4 text-[#4B6A34]"></i>
-        <span>PERIODE TAHUN SUMMARY INVENTARIS</span>
+{{-- ============================== LATEST STOCK OPNAME INFO & SESSION SELECTOR ============================== --}}
+<div class="bg-white border border-[#E5E7EB] rounded-2xl p-5 mb-6 shadow-sm">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-[#4B6A34] text-white flex items-center justify-center shrink-0 shadow-sm">
+                <i data-lucide="clipboard-check" class="w-5 h-5"></i>
+            </div>
+            <div>
+                <h3 class="text-sm font-bold text-[#18181B]">Data Stock Opname Sesi Terbaru</h3>
+                <p class="text-xs text-[#71717A] mt-0.5">
+                    Rekap kondisi aset murni bersumber dari hasil pelaksanaan Stock Opname terbaru (tanpa penggabungan data pembelian).
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap">
+            @if(!empty($latestDateKantor))
+                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-semibold text-emerald-900 shadow-2xs">
+                    <i data-lucide="building-2" class="w-3.5 h-3.5 text-[#4B6A34]"></i>
+                    <span>Kantor: <strong>{{ \Carbon\Carbon::parse($latestDateKantor)->translatedFormat('d F Y') }}</strong></span>
+                </div>
+            @endif
+            @if(!empty($latestDateGudang))
+                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-semibold text-emerald-900 shadow-2xs">
+                    <i data-lucide="warehouse" class="w-3.5 h-3.5 text-[#4B6A34]"></i>
+                    <span>Gudang: <strong>{{ \Carbon\Carbon::parse($latestDateGudang)->translatedFormat('d F Y') }}</strong></span>
+                </div>
+            @else
+                <div class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-500 shadow-2xs">
+                    <i data-lucide="warehouse" class="w-3.5 h-3.5 text-gray-400"></i>
+                    <span>Gudang: <em>Belum ada sesi SO</em></span>
+                </div>
+            @endif
+        </div>
     </div>
-    <div class="flex items-center gap-2 overflow-x-auto pb-1.5 scrollbar-thin">
-        @foreach($years as $yr)
-        <a href="{{ route('administrasi.inventaris.summary', array_merge(request()->query(), ['year' => $yr])) }}"
-           class="px-5 py-2 text-xs font-bold rounded-xl transition-all whitespace-nowrap {{ (int)$selectedYear === (int)$yr ? 'bg-[#4B6A34] text-white shadow-sm' : 'bg-[#F4F4F5] text-[#52525B] hover:bg-[#E4E4E7] hover:text-[#18181B]' }}">
-            Tahun {{ $yr }}
-        </a>
+
+    @if(count($availableDates) > 1)
+    <div class="mt-4 pt-3 border-t border-[#E5E7EB] flex items-center gap-2 overflow-x-auto scrollbar-thin">
+        <span class="text-[11px] font-bold text-[#71717A] uppercase shrink-0 flex items-center gap-1">
+            <i data-lucide="calendar" class="w-3.5 h-3.5"></i>
+            Sesi Lainnya:
+        </span>
+        @foreach($availableDates as $dt)
+            <a href="{{ route('administrasi.inventaris.summary', array_merge(request()->query(), ['date' => $dt])) }}"
+               class="px-3.5 py-1 text-xs font-bold rounded-lg transition-all whitespace-nowrap {{ $selectedDate === $dt ? 'bg-[#4B6A34] text-white shadow-sm' : 'bg-[#F4F4F5] text-[#52525B] hover:bg-[#E4E4E7] hover:text-[#18181B]' }}">
+                {{ \Carbon\Carbon::parse($dt)->translatedFormat('d F Y') }}
+                @if($dt === $overallLatestDate)
+                    <span class="ml-1 text-[10px] px-1.5 py-0.5 bg-emerald-700 text-white rounded-full font-medium">Terbaru</span>
+                @endif
+            </a>
         @endforeach
     </div>
+    @endif
 </div>
 
 {{-- ============================== SECTION 1: GUDANG ============================== --}}
@@ -75,6 +114,11 @@
         <div class="flex items-center gap-2.5">
             <i data-lucide="warehouse" class="w-5 h-5 text-[#4B6A34]"></i>
             <h2 class="text-sm font-bold text-[#4B6A34] tracking-wider uppercase">REKAP ASET GUDANG</h2>
+            @if(!empty($latestDateGudang))
+                <span class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                    Sesi: {{ \Carbon\Carbon::parse($latestDateGudang)->translatedFormat('d F Y') }}
+                </span>
+            @endif
         </div>
         <span class="text-xs font-bold text-[#71717A] bg-white px-3 py-1 border border-[#E5E7EB] rounded-full">
             {{ count($summaryData['Gudang'] ?? []) }} Jenis Aset
@@ -125,8 +169,8 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="px-6 py-6 text-center text-[#A1A1AA] text-xs">
-                        Tidak ada data inventaris gudang untuk tahun {{ $selectedYear }}.
+                    <td colspan="7" class="px-6 py-8 text-center text-[#A1A1AA] text-xs">
+                        Belum ada data pelaksanaan stock opname untuk inventaris gudang.
                     </td>
                 </tr>
                 @endforelse
@@ -144,6 +188,11 @@
         <div class="flex items-center gap-2.5">
             <i data-lucide="building-2" class="w-5 h-5 text-[#4B6A34]"></i>
             <h2 class="text-sm font-bold text-[#4B6A34] tracking-wider uppercase">REKAP ASET KANTOR (AGREGAT)</h2>
+            @if(!empty($latestDateKantor))
+                <span class="text-[11px] font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full">
+                    Sesi: {{ \Carbon\Carbon::parse($latestDateKantor)->translatedFormat('d F Y') }}
+                </span>
+            @endif
         </div>
         <span class="text-xs font-bold text-[#71717A] bg-white px-3 py-1 border border-[#E5E7EB] rounded-full">
             {{ count($summaryData['Kantor'] ?? []) }} Jenis Aset
@@ -194,8 +243,8 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="7" class="px-6 py-6 text-center text-[#A1A1AA] text-xs">
-                        Tidak ada data inventaris kantor untuk tahun {{ $selectedYear }}.
+                    <td colspan="7" class="px-6 py-8 text-center text-[#A1A1AA] text-xs">
+                        Belum ada data pelaksanaan stock opname untuk inventaris kantor.
                     </td>
                 </tr>
                 @endforelse
@@ -213,6 +262,11 @@
         <div class="flex items-center gap-2.5">
             <i data-lucide="door-open" class="w-5 h-5 text-amber-700"></i>
             <h2 class="text-sm font-bold text-amber-800 tracking-wider uppercase">BREAKDOWN ASET PER RUANGAN KANTOR (LOKASI SPESIFIK)</h2>
+            @if(!empty($latestDateKantor))
+                <span class="text-[11px] font-semibold text-amber-800 bg-amber-100 border border-amber-200 px-2.5 py-0.5 rounded-full">
+                    Sesi: {{ \Carbon\Carbon::parse($latestDateKantor)->translatedFormat('d F Y') }}
+                </span>
+            @endif
         </div>
         <span class="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full border border-amber-200">
             {{ count($kantorRoomSummary) }} Ruangan Terdaftar

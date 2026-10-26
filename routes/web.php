@@ -23,6 +23,7 @@ use App\Http\Controllers\Admin\WeeklyReportController;
 use App\Http\Controllers\Administrasi\ActivityLogController;
 use App\Http\Controllers\Administrasi\CutiController;
 use App\Http\Controllers\Administrasi\MppController;
+use App\Http\Controllers\Administrasi\ProfilTraineeController;
 use App\Http\Controllers\Administrasi\RekrutmenController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompetencyPublicController;
@@ -41,6 +42,7 @@ use App\Http\Controllers\Monitoring\AsistenController;
 use App\Http\Controllers\Monitoring\MonitoringDashboardController;
 use App\Http\Controllers\Monitoring\MonitoringTalentController;
 use App\Http\Controllers\Monitoring\ResignedStaffController;
+use App\Http\Controllers\Talent\TalentPoolController;
 use App\Http\Controllers\Program\DashboardMonitoringTahunanController;
 use App\Http\Controllers\Program\DashboardRealisasiController;
 use App\Http\Controllers\Program\ProgramBatchController;
@@ -353,6 +355,19 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
         Route::get('/api/export', [RekrutmenController::class, 'exportCsv'])->name('api.export');
     });
 
+    // Administrasi - Profil Trainee Routes
+    Route::prefix('administrasi/profil-trainee')->name('administrasi.profil-trainee.')->group(function () {
+        Route::get('/', [ProfilTraineeController::class, 'index'])->name('index');
+        Route::post('/', [ProfilTraineeController::class, 'store'])->name('store');
+        Route::get('/template/download', [ProfilTraineeController::class, 'downloadTemplate'])->name('template');
+        Route::get('/export/report', [ProfilTraineeController::class, 'export'])->name('export');
+        Route::post('/import', [ProfilTraineeController::class, 'import'])->name('import');
+        Route::delete('/destroy-all', [ProfilTraineeController::class, 'destroyAll'])->name('destroyAll');
+        Route::get('/{id}', [ProfilTraineeController::class, 'show'])->name('show')->whereNumber('id');
+        Route::put('/{id}', [ProfilTraineeController::class, 'update'])->name('update')->whereNumber('id');
+        Route::delete('/{id}', [ProfilTraineeController::class, 'destroy'])->name('destroy')->whereNumber('id');
+    });
+
     // Administrasi - Database Asisten Routes
     Route::prefix('administrasi/asisten')->name('administrasi.asisten.')->group(function () {
         Route::get('/', [AsistenController::class, 'index'])->name('index');
@@ -419,6 +434,18 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
         Route::post('/import', [MonitoringTalentController::class, 'import'])->name('import');
         Route::get('/export', [MonitoringTalentController::class, 'export'])->name('export');
         Route::get('/template', [MonitoringTalentController::class, 'template'])->name('template');
+    });
+
+    // Administrasi - Talent Pool Routes
+    Route::prefix('administrasi/talent-pool')->name('administrasi.talent-pool.')->group(function () {
+        Route::get('/', [TalentPoolController::class, 'index'])->name('index');
+        Route::post('/store', [TalentPoolController::class, 'store'])->name('store');
+        Route::put('/{id}', [TalentPoolController::class, 'update'])->name('update');
+        Route::delete('/destroy-all', [TalentPoolController::class, 'destroyAll'])->name('destroyAll');
+        Route::delete('/{id}', [TalentPoolController::class, 'destroy'])->name('destroy');
+        Route::post('/import', [TalentPoolController::class, 'import'])->name('import');
+        Route::get('/export', [TalentPoolController::class, 'export'])->name('export');
+        Route::get('/template', [TalentPoolController::class, 'template'])->name('template');
     });
 
     // Administrasi - Biaya Rekruit Routes (Read: view_cost, Write: edit_cost)
