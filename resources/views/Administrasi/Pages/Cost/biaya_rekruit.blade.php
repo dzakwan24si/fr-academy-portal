@@ -127,48 +127,113 @@
 </div>
 
 {{-- ============================== SUMMARY CARDS + SEARCH ============================== --}}
-<div class="flex flex-col sm:flex-row items-stretch gap-4 mb-5">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
     {{-- Card 1: Total Biaya --}}
-    <div class="bg-white border border-[#E5E7EB] rounded-xl p-5 min-w-[260px] shadow-2xs">
-        <div class="flex items-center justify-between mb-2">
-            <span class="text-[10px] font-bold uppercase tracking-widest text-[#71717A]">Total Biaya Rekruit</span>
-            <div class="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
-                <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-600"></i>
+    <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs relative overflow-hidden flex flex-col justify-between">
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-[#71717A]">Total Biaya Rekruit</span>
+                <div class="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <i data-lucide="wallet" class="w-3.5 h-3.5 text-emerald-600"></i>
+                </div>
             </div>
+            <p class="text-xl sm:text-2xl font-bold text-[#18181B] font-mono">Rp {{ number_format($summary['total_biaya'], 0, ',', '.') }}</p>
         </div>
-        <p class="text-2xl font-bold text-[#18181B] font-mono">Rp {{ number_format($summary['total_biaya'], 0, ',', '.') }}</p>
+        <div class="mt-2 text-[10px] text-[#71717A] flex items-center gap-1">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+            <span>{{ $selectedMonth !== 'all' ? 'Bulan ' . ($months[$selectedMonth] ?? $selectedMonth) : 'Tahun ' . $summary['target_year'] }}</span>
+        </div>
     </div>
 
     {{-- Card 2: Jumlah Transaksi --}}
-    <div class="bg-white border border-[#E5E7EB] rounded-xl p-5 min-w-[200px] shadow-2xs">
-        <div class="flex items-center justify-between mb-2">
-            <span class="text-[10px] font-bold uppercase tracking-widest text-[#71717A]">Jumlah Transaksi</span>
-            <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
-                <i data-lucide="receipt" class="w-3.5 h-3.5 text-blue-600"></i>
+    <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs relative overflow-hidden flex flex-col justify-between">
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-[#71717A]">Jumlah Transaksi</span>
+                <div class="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <i data-lucide="receipt" class="w-3.5 h-3.5 text-blue-600"></i>
+                </div>
             </div>
+            <p class="text-xl sm:text-2xl font-bold text-[#18181B] font-mono">{{ number_format($summary['total_transaksi']) }}</p>
         </div>
-        <p class="text-2xl font-bold text-[#18181B] font-mono">{{ $summary['total_transaksi'] }}</p>
+        <div class="mt-2 text-[10px] text-[#71717A]">
+            <span>Item Transaksi Tercatat</span>
+        </div>
     </div>
 
-    {{-- Search --}}
-    <div class="flex-1 flex items-center">
-        <form method="GET" action="{{ route('administrasi.biaya-rekruit.index') }}" class="w-full max-w-sm ml-auto">
-            <input type="hidden" name="year" value="{{ $selectedYear }}">
-            <input type="hidden" name="month" value="{{ $selectedMonth }}">
-            <div class="relative">
-                <span class="absolute inset-y-0 left-3 flex items-center text-[#A1A1AA]">
-                    <i data-lucide="search" class="w-4 h-4"></i>
-                </span>
-                <input type="text" name="search" value="{{ $search }}" placeholder="Search nama / referensi / PIC..."
-                       class="w-full pl-10 pr-8 py-2.5 border border-[#E5E7EB] rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34] bg-white text-[#18181B]">
-                @if($search)
-                    <a href="{{ route('administrasi.biaya-rekruit.index', ['year' => $selectedYear, 'month' => $selectedMonth]) }}" class="absolute inset-y-0 right-3 flex items-center text-xs text-red-500 hover:text-red-700">
-                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                    </a>
-                @endif
+    {{-- Card 3: Peserta Rekrut (Reguler) --}}
+    <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs relative overflow-hidden flex flex-col justify-between">
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-indigo-800">Peserta Rekrut (Reguler)</span>
+                <div class="w-7 h-7 rounded-lg bg-indigo-50 flex items-center justify-center">
+                    <i data-lucide="users" class="w-3.5 h-3.5 text-indigo-600"></i>
+                </div>
             </div>
-        </form>
+            <div class="flex items-baseline gap-2">
+                <p class="text-xl sm:text-2xl font-bold text-indigo-700 font-mono">{{ number_format($summary['peserta_join']) }}</p>
+                <span class="text-xs font-semibold text-slate-500">Orang</span>
+            </div>
+        </div>
+        <div class="mt-2 flex items-center justify-between pt-1 border-t border-slate-100">
+            <span class="text-[10px] text-slate-500 font-medium">Tahun {{ $summary['target_year'] }} (Non-Carry Over)</span>
+            @can('edit_cost')
+            <button type="button" onclick="openEditPesertaModal()"
+                    class="text-[10px] font-bold text-[#4B6A34] hover:text-[#3d5829] flex items-center gap-1 hover:underline">
+                <i data-lucide="edit-3" class="w-3 h-3"></i>
+                <span>Ubah</span>
+            </button>
+            @endcan
+        </div>
     </div>
+
+    {{-- Card 4: Biaya Rekruit / Orang (Tahunan) --}}
+    <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs relative overflow-hidden flex flex-col justify-between">
+        <div>
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-[10px] font-bold uppercase tracking-widest text-amber-800">Biaya Rekruit / Orang</span>
+                <div class="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
+                    <i data-lucide="badge-percent" class="w-3.5 h-3.5 text-amber-600"></i>
+                </div>
+            </div>
+            @if($summary['peserta_join'] > 0)
+                <p class="text-xl sm:text-2xl font-bold text-amber-700 font-mono">Rp {{ number_format($summary['biaya_per_orang'], 0, ',', '.') }}</p>
+            @else
+                <p class="text-base sm:text-lg font-bold text-slate-400">Belum Diset</p>
+            @endif
+        </div>
+        <div class="mt-2 text-[10px] text-slate-500 truncate">
+            @if($summary['peserta_join'] > 0)
+                <span>Rp {{ number_format($summary['total_biaya_tahunan'], 0, ',', '.') }} ÷ {{ $summary['peserta_join'] }} org</span>
+            @else
+                <span>Klik Ubah pada kartu Peserta</span>
+            @endif
+        </div>
+    </div>
+</div>
+
+{{-- Search & Periode Bar --}}
+<div class="bg-white border border-[#E5E7EB] rounded-2xl p-3 mb-5 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+    <div class="flex items-center gap-2 text-xs font-semibold text-[#71717A]">
+        <i data-lucide="info" class="w-4 h-4 text-[#4B6A34]"></i>
+        <span>Menampilkan Biaya Rekrutmen: <strong class="text-[#18181B]">{{ $selectedYear !== 'all' ? 'Tahun ' . $selectedYear : 'Semua Tahun' }}</strong>{{ $selectedMonth !== 'all' ? ' (Bulan ' . ($months[$selectedMonth] ?? $selectedMonth) . ')' : '' }}</span>
+    </div>
+    <form method="GET" action="{{ route('administrasi.biaya-rekruit.index') }}" class="w-full sm:w-auto sm:min-w-[320px]">
+        <input type="hidden" name="year" value="{{ $selectedYear }}">
+        <input type="hidden" name="month" value="{{ $selectedMonth }}">
+        <div class="relative">
+            <span class="absolute inset-y-0 left-3 flex items-center text-[#A1A1AA]">
+                <i data-lucide="search" class="w-4 h-4"></i>
+            </span>
+            <input type="text" name="search" value="{{ $search }}" placeholder="Search nama / referensi / PIC..."
+                   class="w-full pl-10 pr-8 py-2 border border-[#E5E7EB] rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34] bg-[#F9FAFB] text-[#18181B]">
+            @if($search)
+                <a href="{{ route('administrasi.biaya-rekruit.index', ['year' => $selectedYear, 'month' => $selectedMonth]) }}" class="absolute inset-y-0 right-3 flex items-center text-xs text-red-500 hover:text-red-700">
+                    <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                </a>
+            @endif
+        </div>
+    </form>
 </div>
 
 {{-- ============================== FLASH MESSAGE ============================== --}}
@@ -582,6 +647,57 @@
             </form>
         </div>
     </div>
+
+    {{-- Modal Edit Jumlah Peserta Reguler --}}
+    <div id="modalEditPeserta" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs hidden p-4">
+        <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
+            <div class="flex items-center justify-between p-5 border-b border-[#E5E7EB]">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center">
+                        <i data-lucide="users" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-sm text-[#18181B]">Set Peserta Reguler (Tahun {{ $summary['target_year'] }})</h3>
+                        <p class="text-[11px] text-[#71717A]">Angka dasar untuk kalkulasi Biaya Rekruit / Orang</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeEditPesertaModal()" class="text-[#71717A] hover:text-[#18181B] p-1 rounded-lg">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <form action="{{ route('administrasi.biaya-rekruit.update-peserta') }}" method="POST" class="p-5 space-y-4">
+                @csrf
+                <input type="hidden" name="year" value="{{ $summary['target_year'] }}">
+
+                <div>
+                    <label class="block text-xs font-bold text-[#374151] uppercase tracking-wider mb-1">
+                        Jumlah Peserta Reguler (Orang)
+                    </label>
+                    <div class="relative">
+                        <input type="number" min="0" step="1" name="jumlah_peserta" value="{{ $summary['peserta_join'] }}" required
+                               class="w-full rounded-xl border border-[#E5E7EB] px-4 py-2.5 text-base font-bold text-[#18181B] outline-none focus:border-[#4B6A34] focus:ring-2 focus:ring-[#4B6A34]/20 transition-all">
+                        <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#71717A]">Orang</span>
+                    </div>
+                    <p class="text-[11px] text-[#71717A] mt-1.5 leading-relaxed">
+                        Masukkan total peserta reguler yang berhasil join di tahun <strong>{{ $summary['target_year'] }}</strong> (tidak termasuk peserta carry-over).
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-3 border-t border-[#E5E7EB]">
+                    <button type="button" onclick="closeEditPesertaModal()"
+                            class="px-4 py-2 text-xs font-semibold text-[#52525B] bg-white border border-[#E5E7EB] hover:bg-[#F4F4F5] rounded-xl transition-all">
+                        Batal
+                    </button>
+                    <button type="submit"
+                            class="px-5 py-2 text-xs font-bold text-white bg-[#4B6A34] hover:bg-[#3d5829] rounded-xl transition-all shadow-sm flex items-center gap-1.5">
+                        <i data-lucide="save" class="w-3.5 h-3.5"></i>
+                        Simpan Perubahan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endcan
 
 @push('scripts')
@@ -603,6 +719,19 @@ function openTambahTahunModal() {
 
 function closeTambahTahunModal() {
     const modal = document.getElementById('modalTambahTahun');
+    if (modal) modal.classList.add('hidden');
+}
+
+function openEditPesertaModal() {
+    const modal = document.getElementById('modalEditPeserta');
+    if (modal) {
+        modal.classList.remove('hidden');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+}
+
+function closeEditPesertaModal() {
+    const modal = document.getElementById('modalEditPeserta');
     if (modal) modal.classList.add('hidden');
 }
 

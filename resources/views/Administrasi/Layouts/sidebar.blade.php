@@ -35,7 +35,7 @@
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.dashboard-monitoring-tahunan.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
                     <i data-lucide="calendar-check" class="w-4 h-4 shrink-0"></i>
-                    <span>Dashboard Progress Tahunan</span>
+                    <span>Dashboard Monitoring Tahunan</span>
                 </a>
             </div>
         </details>
@@ -51,7 +51,7 @@
             <div class="space-y-0.5">
                 <a href="{{ route('administrasi.program.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors {{ request()->routeIs('administrasi.program.index', 'administrasi.program.show') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="layers-3" class="w-4 h-4 shrink-0"></i><span>Program Training</span>
+                    <i data-lucide="layers-3" class="w-4 h-4 shrink-0"></i><span>Program</span>
                 </a>
                 <a href="{{ route('administrasi.realisasi-vs-batch.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors {{ request()->routeIs('administrasi.realisasi-vs-batch.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
@@ -74,7 +74,7 @@
 
         <!-- SECTION: Monitoring -->
         <details class="group"
-            {{ request()->routeIs('administrasi.monitoring-summarized.*', 'administrasi.monitoring-alumni.*', 'administrasi.monitoring-lulusan.*', 'administrasi.asisten.*', 'administrasi.monitoring.*', 'administrasi.staf-resign.*') ? 'open' : '' }}>
+            {{ request()->routeIs('administrasi.monitoring-summarized.*', 'administrasi.monitoring-alumni.*', 'administrasi.monitoring-lulusan.*', 'administrasi.asisten.*', 'administrasi.monitoring.*', 'administrasi.monitoring-talent.*') ? 'open' : '' }}>
             <summary
                 class="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA] hover:bg-[#F9FAFB] [&::-webkit-details-marker]:hidden">
                 <span>Monitoring</span>
@@ -106,15 +106,23 @@
                     <span>Database Asisten</span>
                 </a>
 
-                <!-- 4. Monitoring Employee -->
+                <!-- 4. Monitoring Talent -->
+                <a href="{{ route('administrasi.monitoring-talent.index') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                          {{ request()->routeIs('administrasi.monitoring-talent.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                    <i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i>
+                    <span>Monitoring Talent</span>
+                </a>
+
+                <!-- 5. Monitoring Detailed (ganti nama dari Monitoring) -->
                 <a href="{{ route('administrasi.monitoring.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.monitoring.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
                     <i data-lucide="line-chart" class="w-4 h-4 shrink-0"></i>
-                    <span>Monitoring Employee</span>
+                    <span>Monitoring Detailed</span>
                 </a>
-                
-                <!-- 5. Staf Resign -->
+
+                <!-- 6. Staf Resign -->
                 <a href="{{ route('administrasi.staf-resign.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.staf-resign.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
@@ -124,37 +132,9 @@
             </div>
         </details>
 
-        <!-- SECTION: Talent -->
-        <details class="group"
-            {{ request()->routeIs('administrasi.monitoring-talent.*', 'administrasi.talent-pool.*') ? 'open' : '' }}>
-            <summary
-                class="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA] hover:bg-[#F9FAFB] [&::-webkit-details-marker]:hidden">
-                <span>Talent</span>
-                <i data-lucide="chevron-down" class="h-3.5 w-3.5 transition-transform group-open:rotate-180"></i>
-            </summary>
-            <div class="space-y-0.5">
-
-                <!-- 1. Monitoring Talent -->
-                <a href="{{ route('administrasi.monitoring-talent.index') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                          {{ request()->routeIs('administrasi.monitoring-talent.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="sparkles" class="w-4 h-4 shrink-0"></i>
-                    <span>Monitoring Talent</span>
-                </a>
-
-                <!-- 2. Talent Pool -->
-                <a href="{{ route('administrasi.talent-pool.index') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                          {{ request()->routeIs('administrasi.talent-pool.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="users-round" class="w-4 h-4 shrink-0"></i>
-                    <span>Talent Pool</span>
-                </a>
-            </div>
-        </details>
-
         <!-- SECTION: Administration -->
         <details class="group"
-            {{ request()->routeIs('administrasi.cost.*', 'administrasi.capex.*', 'administrasi.vra.*', 'administrasi.biaya-rekruit.*', 'administrasi.rekrutmen.*', 'administrasi.profil-trainee.*', 'administrasi.asisten.*', 'administrasi.cuti.*', 'administrasi.mpp.*') ? 'open' : '' }}>
+            {{ request()->routeIs('administrasi.rekrutmen.*', 'administrasi.asisten.*', 'administrasi.cost.*', 'administrasi.vra.*', 'administrasi.biaya-rekruit.*', 'administrasi.capex.*', 'administrasi.cuti.*', 'administrasi.mpp.*') ? 'open' : '' }}>
             <summary
                 class="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA] hover:bg-[#F9FAFB] [&::-webkit-details-marker]:hidden">
                 <span>Administration</span>
@@ -162,39 +142,7 @@
             </summary>
             <div class="space-y-0.5">
 
-                <!-- 1. Cost -->
-                <a href="{{ route('administrasi.cost.index') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                          {{ request()->routeIs('administrasi.cost.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="banknote" class="w-4 h-4 shrink-0"></i>
-                    <span>Cost</span>
-                </a>
-
-                <!-- 2. CAPEX -->
-                <a href="{{ route('administrasi.capex.index') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                          {{ request()->routeIs('administrasi.capex.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="landmark" class="w-4 h-4 shrink-0"></i>
-                    <span>CAPEX</span>
-                </a>
-
-                <!-- 3. VRA -->
-                <a href="{{ route('administrasi.vra.index') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                          {{ request()->routeIs('administrasi.vra.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="truck" class="w-4 h-4 shrink-0"></i>
-                    <span>VRA</span>
-                </a>
-
-                <!-- 4. Biaya Rekrut -->
-                <a href="{{ route('administrasi.biaya-rekruit.index') }}"
-                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                          {{ request()->routeIs('administrasi.biaya-rekruit.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="user-plus" class="w-4 h-4 shrink-0"></i>
-                    <span>Biaya Rekrut</span>
-                </a>
-
-                <!-- 5. Rekrutmen -->
+                <!-- Rekrutmen Karyawan -->
                 <a href="{{ route('administrasi.rekrutmen.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.rekrutmen.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
@@ -202,15 +150,39 @@
                     <span>Rekrutmen</span>
                 </a>
 
-                <!-- 6. Profil Trainee -->
-                <a href="{{ route('administrasi.profil-trainee.index') }}"
+                <!-- Cost -->
+                <a href="{{ route('administrasi.cost.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
-                          {{ request()->routeIs('administrasi.profil-trainee.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="contact" class="w-4 h-4 shrink-0"></i>
-                    <span>Profil Trainee</span>
+                          {{ request()->routeIs('administrasi.cost.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                    <i data-lucide="banknote" class="w-4 h-4 shrink-0"></i>
+                    <span>Cost</span>
                 </a>
 
-                <!-- 7. Cuti -->
+                <!-- VRA -->
+                <a href="{{ route('administrasi.vra.index') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                          {{ request()->routeIs('administrasi.vra.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                    <i data-lucide="truck" class="w-4 h-4 shrink-0"></i>
+                    <span>VRA</span>
+                </a>
+
+                <!-- Biaya Rekruit -->
+                <a href="{{ route('administrasi.biaya-rekruit.index') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                          {{ request()->routeIs('administrasi.biaya-rekruit.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                    <i data-lucide="user-plus" class="w-4 h-4 shrink-0"></i>
+                    <span>Biaya Rekruit</span>
+                </a>
+
+                <!-- CAPEX -->
+                <a href="{{ route('administrasi.capex.index') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                          {{ request()->routeIs('administrasi.capex.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                    <i data-lucide="landmark" class="w-4 h-4 shrink-0"></i>
+                    <span>CAPEX</span>
+                </a>
+
+                <!-- Cuti -->
                 <a href="{{ route('administrasi.cuti.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.cuti.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
@@ -218,7 +190,7 @@
                     <span>Cuti</span>
                 </a>
 
-                <!-- 8. MPP -->
+                <!-- MPP -->
                 <a href="{{ route('administrasi.mpp.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.mpp.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
@@ -286,7 +258,15 @@
                 <span>Sistem & Pengaturan</span>
                 <i data-lucide="chevron-down" class="h-3.5 w-3.5 transition-transform group-open:rotate-180"></i>
             </summary>
-
+            <div class="space-y-0.5">
+                @canany(['manage_articles', 'manage_users', 'manage_tv_display', 'manage_events'])
+                <a href="{{ route('admin.dashboard') }}"
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
+                          {{ request()->routeIs('admin.dashboard') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                    <i data-lucide="layout-dashboard" class="w-4 h-4 shrink-0"></i>
+                    <span>Dashboard Overview</span>
+                </a>
+                @endcanany
                 <a href="{{ route('administrasi.activity-logs.index') }}"
                     class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.activity-logs.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">

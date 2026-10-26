@@ -457,6 +457,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
 
         Route::middleware('can:edit_cost')->group(function () {
             Route::post('/', [BiayaRekruitController::class, 'store'])->name('store');
+            Route::post('/update-peserta', [BiayaRekruitController::class, 'updatePeserta'])->name('update-peserta');
             Route::post('/import', [BiayaRekruitController::class, 'importCsv'])->name('import');
             Route::delete('/destroy-all', [BiayaRekruitController::class, 'destroyAll'])->name('destroyAll');
             Route::put('/{id}', [BiayaRekruitController::class, 'update'])->name('update');

@@ -153,7 +153,7 @@
             <option value="MEI">Mei (MEI)</option>
             <option value="JUN">Juni (JUN)</option>
             <option value="JUL">Juli (JUL)</option>
-            <option value="AGU">Agustus (AGU)</option>
+            <option value="AGST">Agustus (AGST)</option>
             <option value="SEP">September (SEP)</option>
             <option value="OKT">Oktober (OKT)</option>
             <option value="NOV">November (NOV)</option>
@@ -298,28 +298,6 @@
                 </div>
             </div>
 
-            <!-- Import Mode Selection (Append vs Replace) -->
-            <div>
-                <label class="block text-xs font-semibold text-[#374151] mb-2">Mode Import</label>
-                <div class="grid grid-cols-2 gap-3">
-                    <label class="flex items-start gap-2.5 p-3 border border-[#E5E7EB] rounded-xl cursor-pointer hover:bg-[#F9FAFB] transition-colors has-[:checked]:border-[#4B6A34] has-[:checked]:bg-[#F0F5EB]/30">
-                        <input type="radio" name="import_mode" value="append" checked class="mt-0.5 text-[#4B6A34] focus:ring-[#4B6A34]">
-                        <div>
-                            <span class="text-xs font-bold text-[#18181B] block">Tambah (Append)</span>
-                            <span class="text-[11px] text-[#71717A]">Tambahkan data baru ke data yang sudah ada</span>
-                        </div>
-                    </label>
-
-                    <label class="flex items-start gap-2.5 p-3 border border-[#E5E7EB] rounded-xl cursor-pointer hover:bg-[#F9FAFB] transition-colors has-[:checked]:border-red-500 has-[:checked]:bg-red-50/30">
-                        <input type="radio" name="import_mode" value="replace" class="mt-0.5 text-red-600 focus:ring-red-500">
-                        <div>
-                            <span class="text-xs font-bold text-red-600 block">Timpa Seluruhnya (Replace)</span>
-                            <span class="text-[11px] text-[#71717A]">Kosongkan data lama lalu isi baru dari file</span>
-                        </div>
-                    </label>
-                </div>
-            </div>
-
             {{-- Info Format Kolom & Template --}}
             <div class="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5 flex items-start gap-3">
                 <i data-lucide="info" class="w-4 h-4 text-[#4B6A34] flex-shrink-0 mt-0.5"></i>
@@ -414,11 +392,7 @@ function openEditModal(record) {
     fields.forEach(field => {
         const input = document.getElementById('edit-' + field);
         if (input) {
-            let val = record[field] !== null && record[field] !== undefined ? record[field] : '';
-            if (field === 'bulan' && (val === 'AGS' || val === 'AGST' || val === 'AGUSTUS')) {
-                val = 'AGU';
-            }
-            input.value = val;
+            input.value = record[field] !== null && record[field] !== undefined ? record[field] : '';
         }
     });
 

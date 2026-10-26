@@ -146,7 +146,7 @@ class TalentPoolController extends Controller
         }
 
         if (empty($data['kategori'])) {
-            $data['kategori'] = 'TALENT POOL ' . date('Y');
+            $data['kategori'] = 'ESTATE TAHUN ' . date('Y');
         }
 
         TalentPool::create($data);
@@ -453,7 +453,7 @@ class TalentPoolController extends Controller
                 'Sudah penempatan',
                 'Kebun Sejahtera 1',
                 '2026-05-01',
-                'TALENT POOL 2026',
+                'ESTATE TAHUN 2026',
                 'Penempatan definitif askep',
             ],
             [
@@ -469,7 +469,7 @@ class TalentPoolController extends Controller
                 'Belum Penempatan',
                 '',
                 '',
-                'TALENT POOL 2026',
+                'Mill tahun 2026',
                 'Siap penempatan Q3 2026',
             ],
         ];

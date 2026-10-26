@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Cost;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\AppSetting;
 use App\Models\Cost\BiayaRekruit;
 use App\Services\ExcelExporter;
 use App\Traits\HandlesCsvImports;
@@ -77,10 +78,25 @@ class BiayaRekruitController extends Controller
             $grouped[$jenis][$pj][] = $row;
         }
 
+        // Annual calculation for Peserta Join & Cost per Person
+        $targetYear = ($selectedYear !== 'all' && is_numeric($selectedYear)) ? (int) $selectedYear : (int) date('Y');
+
+        $totalBiayaTahunan = (float) BiayaRekruit::where(function ($q) use ($targetYear) {
+            $q->where('tahun', $targetYear)
+                ->orWhereYear('tanggal', $targetYear);
+        })->sum('total_biaya');
+
+        $pesertaJoin = (int) AppSetting::get("biaya_rekruit_peserta_{$targetYear}", 0);
+        $biayaPerOrang = $pesertaJoin > 0 ? round($totalBiayaTahunan / $pesertaJoin) : 0;
+
         // Summary totals
         $summary = [
             'total_biaya' => (float) $allRecords->sum('total_biaya'),
             'total_transaksi' => $allRecords->count(),
+            'total_biaya_tahunan' => $totalBiayaTahunan,
+            'peserta_join' => $pesertaJoin,
+            'biaya_per_orang' => $biayaPerOrang,
+            'target_year' => $targetYear,
         ];
 
         return view('Administrasi.Pages.Cost.biaya_rekruit', compact(
@@ -456,5 +472,28 @@ class BiayaRekruitController extends Controller
 
         return redirect()->route('administrasi.biaya-rekruit.index')
             ->with('success', "Seluruh data Biaya Rekruit ({$deleted} data) berhasil dihapus.");
+    }
+
+    /**
+     * Update total peserta reguler hasil rekrutmen tahunan.
+     */
+    public function updatePeserta(Request $request)
+    {
+        $validated = $request->validate([
+            'year' => 'required|integer|min:2000|max:2099',
+            'jumlah_peserta' => 'required|integer|min:0',
+        ]);
+
+        $year = (int) $validated['year'];
+        $peserta = (int) $validated['jumlah_peserta'];
+
+        AppSetting::set("biaya_rekruit_peserta_{$year}", $peserta);
+
+        ActivityLog::log('Update', 'Biaya Rekrut', "Memperbarui jumlah peserta reguler rekrutmen tahun {$year} menjadi {$peserta} orang", [
+            'year' => $year,
+            'jumlah_peserta' => $peserta,
+        ]);
+
+        return redirect()->back()->with('success', "Jumlah peserta reguler tahun {$year} berhasil diperbarui ({$peserta} orang).");
     }
 }

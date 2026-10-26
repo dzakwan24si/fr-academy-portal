@@ -400,8 +400,9 @@
                     <input type="date" name="tanggal_penempatan" class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium bg-white">
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kategori / Batch</label>
-                    <input type="text" name="kategori" value="TALENT POOL {{ date('Y') }}" placeholder="Contoh: TALENT POOL 2026" class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium">
+                    <label class="block font-bold text-slate-700 mb-1">Kategori</label>
+                    <input type="text" name="kategori" placeholder="Contoh: ESTATE TAHUN 2026, Mill tahun 2026" class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium">
+                    <p class="text-[11px] text-slate-400 mt-1">Clue: ESTATE TAHUN 2026, Mill tahun 2026</p>
                 </div>
             </div>
 
@@ -478,8 +479,9 @@
                     <input type="date" name="tanggal_penempatan" id="edit_tanggal_penempatan" class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium bg-white">
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kategori / Batch</label>
-                    <input type="text" name="kategori" id="edit_kategori" class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium">
+                    <label class="block font-bold text-slate-700 mb-1">Kategori</label>
+                    <input type="text" name="kategori" id="edit_kategori" placeholder="Contoh: ESTATE TAHUN 2026, Mill tahun 2026" class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium">
+                    <p class="text-[11px] text-slate-400 mt-1">Clue: ESTATE TAHUN 2026, Mill tahun 2026</p>
                 </div>
             </div>
 
