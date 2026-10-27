@@ -76,7 +76,10 @@ class PageSettingController extends Controller
         // Daftar Program Karir (Career)
         $careerPrograms = CareerProgram::latest()->get();
 
-        return view('admin.page_settings.index', compact('tab', 'beranda', 'tentang', 'slides', 'portalLinks', 'careerPrograms'));
+        // Daftar Program Portal (Pelatihan Reguler & Non-Reguler)
+        $portalPrograms = \App\Models\PortalProgram::orderBy('order')->orderBy('id')->get();
+
+        return view('admin.page_settings.index', compact('tab', 'beranda', 'tentang', 'slides', 'portalLinks', 'careerPrograms', 'portalPrograms'));
     }
 
     /**

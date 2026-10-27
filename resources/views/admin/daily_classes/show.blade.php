@@ -23,8 +23,14 @@
                 <span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs font-bold border border-gray-200 uppercase tracking-wide">
                     {{ $dailyClass->trainingProgram->name }}
                 </span>
+                @if($dailyClass->is_completed)
+                    <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded text-xs font-bold border border-emerald-200 flex items-center gap-1">
+                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                        Pelatihan Selesai
+                    </span>
+                @endif
                 <span class="text-gray-500 text-sm font-medium">
-                    {{ $dailyClass->date->format('d M Y') }}
+                    {{ $dailyClass->date ? $dailyClass->date->format('d M Y') : '-' }}
                 </span>
             </div>
             <h1 class="text-2xl font-bold text-gray-800">{{ $dailyClass->title }}</h1>
@@ -33,6 +39,18 @@
         
         <!-- Action Buttons -->
         <div class="flex gap-2">
+            @php
+                $hasClassContent = !empty($dailyClass->date) || $dailyClass->attendances->count() > 0 || $dailyClass->tasks->count() > 0;
+            @endphp
+            @if($hasClassContent)
+            <form action="{{ route('training-reguler.daily-classes.toggle-completed', $dailyClass->id) }}" method="POST" onsubmit="return confirm('{{ $dailyClass->is_completed ? 'Kembalikan status materi ini ke aktif/berjalan?' : 'Tandai materi ini sebagai \"Pelatihan Selesai\"?' }}');">
+                @csrf
+                <button type="submit" class="flex items-center gap-2 px-4 py-2 {{ $dailyClass->is_completed ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-400' }} rounded-lg font-medium text-sm transition-colors shadow-sm">
+                    <svg class="w-4 h-4 {{ $dailyClass->is_completed ? 'text-white' : 'text-emerald-600' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                    Pelatihan Selesai
+                </button>
+            </form>
+            @endif
             @if($dailyClass->qr_code_token)
             <a href="{{ route('training-reguler.daily-classes.print-qr', $dailyClass->id) }}" target="_blank" class="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 border border-indigo-200 rounded-lg hover:bg-indigo-100 font-medium text-sm transition-colors shadow-sm">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
@@ -158,10 +176,18 @@
 
     <!-- Evaluasi Section -->
     <div class="mt-8 mb-6">
-        <h3 class="font-bold text-gray-800 text-lg mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
-            Hasil Evaluasi Training
-        </h3>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h3 class="font-bold text-gray-800 text-lg flex items-center gap-2">
+                <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path></svg>
+                Hasil Evaluasi Training
+            </h3>
+            @if($dailyClass->traineeEvaluations->count() > 0)
+            <a href="{{ route('training-reguler.daily-classes.export-evaluations', $dailyClass->id) }}" class="inline-flex items-center gap-2 bg-[#28844b] hover:bg-[#1d6b3a] text-white text-xs font-semibold py-2 px-3 rounded-lg shadow-sm transition-colors self-start sm:self-auto">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span>Export Excel</span>
+            </a>
+            @endif
+        </div>
         @if($dailyClass->traineeEvaluations->count() > 0)
         <div class="grid grid-cols-1 gap-4">
             @foreach($dailyClass->traineeEvaluations as $eval)

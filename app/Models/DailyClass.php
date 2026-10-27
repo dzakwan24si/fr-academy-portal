@@ -22,6 +22,8 @@ class DailyClass extends Model
         'region',
         'trainer_name',
         'is_evaluation_open',
+        'is_completed',
+        'completed_at',
         'certificate_link',
         'qr_code_token',
         'material_url',
@@ -36,6 +38,8 @@ class DailyClass extends Model
         'date' => 'date',
         'end_date' => 'date',
         'is_evaluation_open' => 'boolean',
+        'is_completed' => 'boolean',
+        'completed_at' => 'datetime',
     ];
 
     public function trainingProgram()

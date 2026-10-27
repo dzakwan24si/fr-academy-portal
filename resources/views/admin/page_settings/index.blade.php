@@ -69,6 +69,11 @@
                 <i data-lucide="external-link" class="w-4 h-4"></i>
                 Menu Portal (Header & Dropdown)
             </a>
+            <a href="{{ route('admin.page_settings.index', ['tab' => 'program']) }}" 
+               class="pb-4 px-2 border-b-2 font-semibold text-sm flex items-center gap-2.5 transition-all whitespace-nowrap {{ $tab === 'program' ? 'border-[#509c38] text-[#509c38]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                <i data-lucide="book-open" class="w-4 h-4"></i>
+                Halaman Program (Katalog & Detail)
+            </a>
             <a href="{{ route('admin.page_settings.index', ['tab' => 'karir']) }}" 
                class="pb-4 px-2 border-b-2 font-semibold text-sm flex items-center gap-2.5 transition-all whitespace-nowrap {{ $tab === 'karir' ? 'border-[#509c38] text-[#509c38]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
                 <i data-lucide="briefcase" class="w-4 h-4"></i>
@@ -799,6 +804,212 @@
                                             <p class="text-base font-bold text-gray-800 mb-1">Belum Ada Program Karir</p>
                                             <p class="text-xs text-gray-500 max-w-sm mx-auto mb-5">Program karir dan lowongan yang Anda tambahkan di sini akan langsung tampil pada halaman publik Karir.</p>
                                             <a href="{{ route('admin.career_programs.create') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#509c38] text-white text-xs font-bold hover:bg-green-700 shadow-sm transition">
+                                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                                Tambah Program Pertama
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        @elseif($tab === 'program')
+            <!-- TAB 5: PROGRAM PELATIHAN (KATALOG & DETAIL PROGRAM) -->
+            <div class="space-y-6" x-data="{ 
+                filter: 'all', 
+                search: '',
+                matches(item) {
+                    const matchesFilter = this.filter === 'all' || 
+                        (this.filter === 'reguler' && item.is_reguler) || 
+                        (this.filter === 'non_reguler' && !item.is_reguler);
+                    const query = this.search.toLowerCase().trim();
+                    const matchesSearch = !query || 
+                        item.title.toLowerCase().includes(query) || 
+                        item.code.toLowerCase().includes(query) || 
+                        item.slug.toLowerCase().includes(query) ||
+                        (item.category && item.category.toLowerCase().includes(query));
+                    return matchesFilter && matchesSearch;
+                }
+            }">
+                <!-- Section Header / Top Action Bar -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center font-bold shrink-0">
+                            <i data-lucide="book-open" class="w-6 h-6 text-[#509c38]"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900">Kelola Halaman Program Pelatihan</h2>
+                            <p class="text-xs text-gray-500">Kelola katalog dan rincian halaman program publik, baik Program Reguler (Poster) maupun Non-Reguler (Minimalis).</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <a href="{{ url('/program/fat') }}" target="_blank" class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:text-[#509c38] hover:bg-gray-50 shadow-sm transition inline-flex items-center gap-2">
+                            <i data-lucide="external-link" class="w-4 h-4"></i>
+                            Pratinjau Web
+                        </a>
+                        <a href="{{ route('admin.portal_programs.create') }}" class="px-5 py-2.5 bg-[#509c38] hover:bg-green-700 text-white font-bold rounded-xl transition shadow-sm inline-flex items-center text-xs sm:text-sm">
+                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Tambah Program Baru
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Stats Overview Cards -->
+                @php
+                    $totalPrograms = $portalPrograms->count();
+                    $regulerCount = $portalPrograms->where('is_reguler', true)->count();
+                    $nonRegulerCount = $portalPrograms->where('is_reguler', false)->count();
+                    $activeCount = $portalPrograms->where('is_active', true)->count();
+                @endphp
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-5">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Program</p>
+                        <p class="text-2xl font-black text-gray-900 mt-1">{{ $totalPrograms }}</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Semua program di portal</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-5">
+                        <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Dengan Kurikulum</p>
+                        <p class="text-2xl font-black text-emerald-700 mt-1">{{ $regulerCount }}</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Memiliki rincian kurikulum</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-5">
+                        <p class="text-xs font-semibold text-teal-600 uppercase tracking-wider">Format Standar</p>
+                        <p class="text-2xl font-black text-teal-700 mt-1">{{ $nonRegulerCount }}</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Judul, deskripsi & gambar</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-5">
+                        <p class="text-xs font-semibold text-blue-600 uppercase tracking-wider">Status Aktif</p>
+                        <p class="text-2xl font-black text-blue-700 mt-1">{{ $activeCount }}</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Tayang di web publik</p>
+                    </div>
+                </div>
+
+                <!-- Filters & Search Bar -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-1.5 p-1 bg-gray-100 rounded-xl">
+                        <button type="button" @click="filter = 'all'" 
+                                :class="filter === 'all' ? 'bg-white text-gray-900 shadow-xs font-bold' : 'text-gray-500 hover:text-gray-900 font-medium'"
+                                class="px-3.5 py-1.5 rounded-lg text-xs transition">
+                            Semua ({{ $totalPrograms }})
+                        </button>
+                        <button type="button" @click="filter = 'reguler'" 
+                                :class="filter === 'reguler' ? 'bg-white text-emerald-700 shadow-xs font-bold' : 'text-gray-500 hover:text-gray-900 font-medium'"
+                                class="px-3.5 py-1.5 rounded-lg text-xs transition">
+                            Dengan Kurikulum ({{ $regulerCount }})
+                        </button>
+                        <button type="button" @click="filter = 'non_reguler'" 
+                                :class="filter === 'non_reguler' ? 'bg-white text-teal-700 shadow-xs font-bold' : 'text-gray-500 hover:text-gray-900 font-medium'"
+                                class="px-3.5 py-1.5 rounded-lg text-xs transition">
+                            Standar ({{ $nonRegulerCount }})
+                        </button>
+                    </div>
+
+                    <div class="relative sm:w-72">
+                        <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" x-model="search" placeholder="Cari nama, kode, slug..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-xs focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                    </div>
+                </div>
+
+                <!-- Table Card -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-gray-50/80 border-b border-gray-200 text-xs uppercase font-semibold text-gray-600 tracking-wider">
+                                    <th class="px-6 py-4">Gambar</th>
+                                    <th class="px-6 py-4">Nama Program & Subtitle</th>
+                                    <th class="px-6 py-4">Tipe Program</th>
+                                    <th class="px-6 py-4 text-center">Status</th>
+                                    <th class="px-6 py-4 text-right">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100 text-sm">
+                                @forelse($portalPrograms as $prog)
+                                    <tr class="hover:bg-gray-50/80 transition-colors"
+                                        x-show="matches({
+                                            title: '{{ addslashes($prog->title) }}',
+                                            code: '{{ addslashes($prog->code ?? '') }}',
+                                            slug: '{{ addslashes($prog->slug) }}',
+                                            category: '{{ addslashes($prog->category_name ?? $prog->category_key) }}',
+                                            is_reguler: {{ $prog->is_reguler ? 'true' : 'false' }}
+                                        })">
+                                        <!-- Visual / Poster Thumbnail -->
+                                        <td class="px-6 py-4">
+                                            <div class="w-14 h-14 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 shrink-0 shadow-xs p-1 flex items-center justify-center">
+                                                <img src="{{ $prog->getResolvedImageUrl() }}" 
+                                                     alt="{{ $prog->title }}" 
+                                                     class="w-full h-full object-contain rounded">
+                                            </div>
+                                        </td>
+
+                                        <!-- Nama Program & Subtitle -->
+                                        <td class="px-6 py-4">
+                                            <p class="font-bold text-gray-900 leading-snug">{{ $prog->title }}</p>
+                                            @if($prog->subtitle)
+                                                <p class="text-xs text-gray-500 mt-0.5 line-clamp-1">{{ $prog->subtitle }}</p>
+                                            @endif
+                                        </td>
+
+                                        <!-- Kategori / Tipe Program -->
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                                                <span class="w-1.5 h-1.5 rounded-full bg-[#509c38]"></span>
+                                                {{ $prog->category_name ?? 'Program Pelatihan' }}
+                                            </span>
+                                            @if(!empty($prog->curriculum_pillars) || !empty($prog->objectives))
+                                                <span class="block text-[10px] text-emerald-600 mt-1 font-medium">+ Rincian Kurikulum</span>
+                                            @endif
+                                        </td>
+
+                                        <!-- Status Aktif -->
+                                        <td class="px-6 py-4 text-center">
+                                            <form action="{{ route('admin.portal_programs.toggle', $prog) }}" method="POST" class="inline-block">
+                                                @csrf
+                                                <button type="submit" 
+                                                        class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer {{ $prog->is_active ? 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100' : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200' }}"
+                                                        title="Klik untuk mengubah status">
+                                                    <i data-lucide="{{ $prog->is_active ? 'check-circle' : 'x-circle' }}" class="w-3.5 h-3.5"></i>
+                                                    {{ $prog->is_active ? 'Aktif' : 'Non-Aktif' }}
+                                                </button>
+                                            </form>
+                                        </td>
+
+                                        <!-- Aksi -->
+                                        <td class="px-6 py-4 text-right">
+                                            <div class="flex items-center justify-end gap-1.5">
+                                                <!-- Edit -->
+                                                <a href="{{ route('admin.portal_programs.edit', $prog) }}" 
+                                                   class="p-2 rounded-lg text-xs font-semibold bg-white text-amber-600 border border-amber-200 hover:bg-amber-50 transition"
+                                                   title="Edit Program">
+                                                    <i data-lucide="edit-2" class="w-4 h-4"></i>
+                                                </a>
+
+                                                <!-- Hapus -->
+                                                <form action="{{ route('admin.portal_programs.destroy', $prog) }}" 
+                                                      method="POST" 
+                                                      onsubmit="return confirm('Apakah Anda yakin ingin menghapus program {{ addslashes($prog->title) }} secara permanen?');" 
+                                                      class="inline-block">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" 
+                                                            class="p-2 rounded-lg text-xs font-semibold bg-white text-rose-600 border border-rose-200 hover:bg-rose-50 transition"
+                                                            title="Hapus Program">
+                                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="px-6 py-16 text-center text-gray-500">
+                                            <div class="w-16 h-16 rounded-2xl bg-gray-100 text-gray-400 flex items-center justify-center mx-auto mb-4">
+                                                <i data-lucide="book-open" class="w-8 h-8"></i>
+                                            </div>
+                                            <p class="text-base font-bold text-gray-800 mb-1">Belum Ada Program Pelatihan</p>
+                                            <p class="text-xs text-gray-500 max-w-sm mx-auto mb-5">Program yang Anda tambahkan di sini akan langsung tampil pada katalog dan halaman detail portal.</p>
+                                            <a href="{{ route('admin.portal_programs.create') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#509c38] text-white text-xs font-bold hover:bg-green-700 shadow-sm transition">
                                                 <i data-lucide="plus" class="w-4 h-4"></i>
                                                 Tambah Program Pertama
                                             </a>

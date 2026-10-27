@@ -227,12 +227,12 @@
             </div>
         </details>
 
-        <!-- SECTION: Standar Kompetensi -->
+        <!-- SECTION: Kompetensi -->
         @can('manage_competency')
         <details class="group" {{ request()->routeIs('admin.competency.*') ? 'open' : '' }}>
             <summary
                 class="flex cursor-pointer list-none items-center justify-between rounded-lg px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-[#A1A1AA] hover:bg-[#F9FAFB] [&::-webkit-details-marker]:hidden">
-                <span>Standar Kompetensi</span>
+                <span>Kompetensi</span>
                 <i data-lucide="chevron-down" class="h-3.5 w-3.5 transition-transform group-open:rotate-180"></i>
             </summary>
             <div class="space-y-0.5">

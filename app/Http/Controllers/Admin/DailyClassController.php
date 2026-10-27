@@ -9,6 +9,7 @@ use App\Models\Task;
 use App\Models\TaskSubmission;
 use App\Models\Trainee;
 use App\Models\TrainingProgram;
+use App\Services\EvaluationExportService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -156,6 +157,26 @@ class DailyClassController extends Controller
         $message = $dailyClass->is_evaluation_open
             ? 'Form evaluasi berhasil dikirim dan dibuka untuk peserta!'
             : 'Akses evaluasi untuk sesi ini berhasil ditutup.';
+
+        return back()->with('success', $message);
+    }
+
+    public function exportEvaluations(DailyClass $dailyClass)
+    {
+        return EvaluationExportService::export($dailyClass);
+    }
+
+    public function toggleCompleted(DailyClass $dailyClass)
+    {
+        $newStatus = ! $dailyClass->is_completed;
+        $dailyClass->update([
+            'is_completed' => $newStatus,
+            'completed_at' => $newStatus ? now() : null,
+        ]);
+
+        $message = $newStatus
+            ? 'Status pelatihan untuk materi "' . $dailyClass->title . '" berhasil diubah menjadi: Pelatihan Selesai!'
+            : 'Status pelatihan untuk materi "' . $dailyClass->title . '" berhasil diubah kembali menjadi aktif/berjalan.';
 
         return back()->with('success', $message);
     }

@@ -1,0 +1,400 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\PortalProgram;
+
+class PortalProgramSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        $programs = array (
+  0 => 
+  array (
+    'id' => 1,
+    'slug' => 'fat',
+    'code' => 'FAT',
+    'title' => 'Field Assistant Training (FAT)',
+    'subtitle' => 'Agronomi & Budidaya Perkebunan Kelapa Sawit',
+    'category_key' => 'trainee',
+    'category_name' => 'Program Trainee',
+    'badge' => 'Agronomi & Lapangan Kebun',
+    'is_reguler' => true,
+    'overview' => 'Program Field Assistant Training (FAT) dirancang untuk menyiapkan calon asisten kebun dengan membekali peserta dengan pengetahuan, keterampilan dan sikap untuk bekerja di Perkebunan Kelapa Sawit. Dilaksanakan secara reguler (terjadwal dan berkesinambungan) selama 6 bulan, serta pendampingan dalam bentuk mentoring, guna menyiapkan calon asisten sebelum berkarir di Perkebunan Kelapa Sawit, sesuai dengan budaya First Resources.',
+    'image' => '/images/posters/poster_fat.jpg',
+    'hero_image' => '/images/programs/fat_estate.jpg',
+    'curriculum_pillars' => 
+    array (
+      0 => 'Materi Kompetensi Umum',
+      1 => 'Materi Kompetensi Teknis',
+      2 => 'Materi Kompetensi Pendukung',
+    ),
+    'objectives' => 
+    array (
+      0 => 'Membekali calon asisten afdeling dengan keterampilan teknis di perkebunan, khususnya kelapa sawit.',
+      1 => 'Membekali calon asisten afdeling dengan keterampilan managerial and leadership.',
+      2 => 'Membentuk pola pikir, perilaku dan sikap mental sebagai Planter sesuai budaya First Resources.',
+    ),
+    'learning_method' => 
+    array (
+      'desc' => '70% experiential learning, 20% social learning, dan 10% formal learning',
+      'ratio' => '70 : 20 : 10',
+    ),
+    'target_role' => 'Calon Asisten Kebun (Planter)',
+    'duration' => '6 Bulan (Reguler & Mentoring Berkesinambungan)',
+    'format' => 'Metode 70:20:10 (70% Experiential, 20% Social, 10% Formal Learning)',
+    'order' => 1,
+    'is_active' => true,
+    'created_at' => '2026-10-27T07:57:27.000000Z',
+    'updated_at' => '2026-10-27T07:57:27.000000Z',
+  ),
+  1 => 
+  array (
+    'id' => 2,
+    'slug' => 'mat',
+    'code' => 'MAT',
+    'title' => 'Mill Assistant Training (MAT)',
+    'subtitle' => 'Teknik Pengolahan & Manajemen Pabrik Kelapa Sawit (PKS)',
+    'category_key' => 'trainee',
+    'category_name' => 'Program Trainee',
+    'badge' => 'Teknik & Pengolahan PKS',
+    'is_reguler' => true,
+    'overview' => 'Program MAT dirancang untuk menyiapkan calon asisten pabrik dengan membekali peserta dengan pengetahuan, keterampilan dan sikap untuk bekerja di Pabrik Kelapa Sawit (PKS). Program MAT dilaksanakan secara reguler (terjadwal dan berkesinambungan) selama 6 bulan, serta pedampingan dalam bentuk mentoring, guna menyiapkan mental sebagai Engineer sebelum berkarir di Perkebunan Kelapa Sawit, sesuai dengan budaya First Resources.',
+    'image' => '/images/posters/poster_mat.jpg',
+    'hero_image' => '/images/programs/mat_mill.jpg',
+    'curriculum_pillars' => 
+    array (
+      0 => 'Materi Kompetensi Umum',
+      1 => 'Materi Kompetensi Teknis',
+      2 => 'Materi Kompetensi Pendukung',
+    ),
+    'objectives' => 
+    array (
+      0 => 'Menyiapkan calon asisten pabrik.',
+      1 => 'Membekali calon asisten pabrik dengan keterampilan teknis di pabrik kelapa sawit.',
+      2 => 'Membekali calon asisten pabrik dengan keterampilan managerial and leadership.',
+      3 => 'Membentuk pola pikir, perilaku dan sikap mental sebagai Engineer sesuai budaya First Resources.',
+    ),
+    'learning_method' => 
+    array (
+      'desc' => '70% experiential learning, 20% social learning, dan 10% formal learning',
+      'ratio' => '70 : 20 : 10',
+    ),
+    'target_role' => 'Calon Asisten Pabrik (Engineer)',
+    'duration' => '6 Bulan (Reguler & Mentoring Berkesinambungan)',
+    'format' => 'Metode 70:20:10 (70% Experiential, 20% Social, 10% Formal Learning)',
+    'order' => 2,
+    'is_active' => true,
+    'created_at' => '2026-10-27T07:57:27.000000Z',
+    'updated_at' => '2026-10-27T07:57:27.000000Z',
+  ),
+  2 => 
+  array (
+    'id' => 3,
+    'slug' => 'tat',
+    'code' => 'TAT',
+    'title' => 'Traction Assistant Training (TAT)',
+    'subtitle' => 'Manajemen Traksi, Armada Angkut & Bengkel Unit',
+    'category_key' => 'trainee',
+    'category_name' => 'Program Trainee',
+    'badge' => 'Traksi & Bengkel Alat Berat',
+    'is_reguler' => true,
+    'overview' => 'Program TAT dirancang untuk menyiapkan calon asisten traksi dengan membekali peserta dengan pengetahuan, keterampilan dan sikap untuk bekerja di unit traksi di perkebunan kelapa sawit. Program TAT dilaksanakan secara reguler (terjadwal dan berkesinambungan) selama 6 bulan, serta pedampingan dalam bentuk mentoring, guna menyiapkan mental sebagai Engineer sebelum berkarir di Perkebunan Kelapa Sawit, sesuai dengan budaya First Resources.',
+    'image' => '/images/posters/poster_tat.jpg',
+    'hero_image' => '/images/programs/tat_traction.jpg',
+    'curriculum_pillars' => 
+    array (
+      0 => 'Materi Kompetensi Umum',
+      1 => 'Materi Kompetensi Teknis',
+      2 => 'Materi Kompetensi Pendukung',
+    ),
+    'objectives' => 
+    array (
+      0 => 'Menyiapkan calon asisten traksi.',
+      1 => 'Membekali calon asisten traksi dengan keterampilan teknis di unit traksi.',
+      2 => 'Membekali calon asisten traksi dengan keterampilan managerial and leadership.',
+      3 => 'Membentuk pola pikir, perilaku dan sikap mental sebagai Engineer sesuai budaya First Resources.',
+    ),
+    'learning_method' => 
+    array (
+      'desc' => '70% experiential learning, 20% social learning, dan 10% formal learning',
+      'ratio' => '70 : 20 : 10',
+    ),
+    'target_role' => 'Calon Asisten Traksi (Engineer)',
+    'duration' => '6 Bulan (Reguler & Mentoring Berkesinambungan)',
+    'format' => 'Metode 70:20:10 (70% Experiential, 20% Social, 10% Formal Learning)',
+    'order' => 3,
+    'is_active' => true,
+    'created_at' => '2026-10-27T07:57:27.000000Z',
+    'updated_at' => '2026-10-27T07:57:27.000000Z',
+  ),
+  3 => 
+  array (
+    'id' => 4,
+    'slug' => 'aat',
+    'code' => 'AAT',
+    'title' => 'Administration Assistant Training (AAT)',
+    'subtitle' => 'Tata Kelola Administrasi, Akuntansi & Finansial Unit',
+    'category_key' => 'trainee',
+    'category_name' => 'Program Trainee',
+    'badge' => 'Administrasi & Finansial',
+    'is_reguler' => true,
+    'overview' => 'Program AAT dirancang untuk menyiapkan calon Kepala Administrasi Kebun (KASI) dengan membekali peserta dengan pengetahuan, keterampilan dan sikap untuk bekerja di Perkebunan Kelapa Sawit. Program AAT dilaksanakan secara reguler (terjadwal dan berkesinambungan) selama 6 bulan, serta pedampingan dalam bentuk mentoring, guna menyiapkan mental sebagai PLANTER sebelum berkarir di Perkebunan Kelapa Sawit, sesuai dengan budaya First Resources.',
+    'image' => '/images/posters/poster_aat.jpg',
+    'hero_image' => '/images/programs/aat_admin.jpg',
+    'curriculum_pillars' => 
+    array (
+      0 => 'Materi Kompetensi Umum',
+      1 => 'Materi Kompetensi Teknis',
+      2 => 'Materi Kompetensi Pendukung',
+    ),
+    'objectives' => 
+    array (
+      0 => 'Menyiapkan calon asisten administrasi.',
+      1 => 'Membekali calon asisten administrasi dengan keterampilan teknis di administrasi.',
+      2 => 'Membekali calon asisten administrasi dengan keterampilan managerial and leadership.',
+      3 => 'Membentuk pola pikir, perilaku dan sikap mental sebagai Planter sesuai budaya First Resources.',
+    ),
+    'learning_method' => 
+    array (
+      'desc' => '70% experiential learning, 20% social learning, dan 10% formal learning',
+      'ratio' => '70 : 20 : 10',
+    ),
+    'target_role' => 'Calon Kepala Administrasi Kebun (KASI) / Planter',
+    'duration' => '6 Bulan (Reguler & Mentoring Berkesinambungan)',
+    'format' => 'Metode 70:20:10 (70% Experiential, 20% Social, 10% Formal Learning)',
+    'order' => 4,
+    'is_active' => true,
+    'created_at' => '2026-10-27T07:57:27.000000Z',
+    'updated_at' => '2026-10-27T07:57:27.000000Z',
+  ),
+  4 => 
+  array (
+    'id' => 5,
+    'slug' => 'dmt',
+    'code' => 'DMT',
+    'title' => 'Downstream (DMT)',
+    'subtitle' => 'Teknologi Kilang Rafinasi, Fraksinasi & Industri Oleokimia Hilir',
+    'category_key' => 'trainee',
+    'category_name' => 'Program Trainee',
+    'badge' => 'Kilang Hilir & Oleokimia',
+    'is_reguler' => true,
+    'overview' => 'Program Downstream Manajemen Training (DMT) dirancang untuk menyiapkan calon supervisor downstream dengan membekali peserta dengan pengetahuan, keterampilan dan sikap untuk bekerja di downstream atau refinery. Dilaksanakan secara reguler (terjadwal dan berkesinambungan) selama 6 bulan, serta pedampingan dalam bentuk mentoring, guna menyiapkan calon asisten sebelum berkarir di unit Downstream, sesuai dengan budaya First Resources.',
+    'image' => '/images/posters/poster_dmt.jpg',
+    'hero_image' => '/images/programs/dmt_downstream.jpg',
+    'curriculum_pillars' => 
+    array (
+      0 => 'Materi Kompetensi Umum',
+      1 => 'Materi Kompetensi Teknis',
+      2 => 'Materi Kompetensi Pendukung',
+    ),
+    'objectives' => 
+    array (
+      0 => 'Menyiapkan calon supervisor downstream.',
+      1 => 'Membekali calon supervisor downstream dengan keterampilan teknis di downstream.',
+      2 => 'Membekali calon supervisor downstream dengan keterampilan managerial and leadership.',
+      3 => 'Membentuk pola pikir, perilaku dan sikap mental sebagai Engineer sesuai budaya First Resources.',
+    ),
+    'learning_method' => 
+    array (
+      'desc' => '70% experiential learning, 20% social learning, dan 10% formal learning',
+      'ratio' => '70 : 20 : 10',
+    ),
+    'target_role' => 'Calon Supervisor Downstream / Asisten Kilang (Engineer)',
+    'duration' => '6 Bulan (Reguler & Mentoring Berkesinambungan)',
+    'format' => 'Metode 70:20:10 (70% Experiential, 20% Social, 10% Formal Learning)',
+    'order' => 5,
+    'is_active' => true,
+    'created_at' => '2026-10-27T07:57:27.000000Z',
+    'updated_at' => '2026-10-27T08:15:14.000000Z',
+  ),
+  5 => 
+  array (
+    'id' => 6,
+    'slug' => 'teknikal-estate',
+    'code' => 'TEK-ESTATE',
+    'title' => 'Teknikal Estate',
+    'subtitle' => 'Agronomi Lanjutan, Peningkatan Standar Budidaya & Pemupukan',
+    'category_key' => 'kejuruan-teknikal',
+    'category_name' => 'Kejuruan Teknikal',
+    'badge' => 'Kejuruan Teknikal Kebun',
+    'is_reguler' => false,
+    'overview' => 'Program peningkatan keahlian teknis agronomi kebun sawit berkelanjutan bagi praktisi aktif. Dirancang untuk mempertajam kapabilitas penyelesaian masalah di lapangan (problem solving), standardisasi teknik kultur teknis terbaik, serta pemanfaatan data analisa laboratorium guna mendongkrak produktivitas tonase TBS per hektar.',
+    'image' => '/images/programs/fat_estate.jpg',
+    'hero_image' => '/images/programs/fat_estate.jpg',
+    'curriculum_pillars' => NULL,
+    'objectives' => NULL,
+    'learning_method' => NULL,
+    'target_role' => 'Mandor, Mandor 1, Asisten Kebun, & Asisten Kepala (Askep)',
+    'duration' => 'Program Modular (1 - 5 Hari per Batch Workshop/Klinik)',
+    'format' => 'Klinik Lapangan, Workshop Singkat, Bedah Kasus Blok, & Pendampingan',
+    'order' => 6,
+    'is_active' => true,
+    'created_at' => '2026-10-27T07:57:27.000000Z',
+    'updated_at' => '2026-10-27T08:28:29.000000Z',
+  ),
+  6 => 
+  array (
+    'id' => 7,
+    'slug' => 'teknikal-mill',
+    'code' => 'TEK-MILL',
+    'title' => 'Teknikal Mill',
+    'subtitle' => 'Keandalan Mesin, Efisiensi Pengolahan & Penekanan Losses PKS',
+    'category_key' => 'kejuruan-teknikal',
+    'category_name' => 'Kejuruan Teknikal',
+    'badge' => 'Kejuruan Teknikal Pabrik',
+    'is_reguler' => false,
+    'overview' => 'Program spesialisasi teknikal bagi tim operasional pabrik kelapa sawit untuk menjaga kontinuitas pengolahan TBS, memaksimalkan rendemen minyak (OER), menekan rasio kehilangan minyak (oil losses), serta menerapkan preventive maintenance mesin pabrik secara disiplin.',
+    'image' => '/images/programs/mat_mill.jpg',
+    'hero_image' => '/images/programs/mat_mill.jpg',
+    'curriculum_pillars' => NULL,
+    'objectives' => NULL,
+    'learning_method' => NULL,
+    'target_role' => 'Operator Mesin, Mandor Pabrik, Asisten PKS, & Masinis',
+    'duration' => 'Program Modular (2 - 5 Hari per Topik Spesifik)',
+    'format' => 'Praktik Stasiun Mesin, Kalibrasi Sensor, Audit Losses, & Bedah Kerusakan',
+    'order' => 7,
+    'is_active' => true,
+    'created_at' => '2026-10-27T07:57:27.000000Z',
+    'updated_at' => '2026-10-27T08:28:22.000000Z',
+  ),
+  7 => 
+  array (
+    'id' => 8,
+    'slug' => 'teknikal-traksi',
+    'code' => 'TEK-TRAKSI',
+    'title' => 'Teknikal Traksi',
+    'subtitle' => 'Perawatan Dump Truck, Workshop Bengkel & Keselamatan Armada',
+    'category_key' => 'kejuruan-teknikal',
+    'category_name' => 'Kejuruan Teknikal',
+    'badge' => 'Kejuruan Teknikal Traksi',
+    'is_reguler' => false,
+    'overview' => 'Program penguatan keahlian bengkel unit perkebunan guna mempertahankan keandalan armada angkutan TBS dan alat berat perbaikan infrastruktur jalan. Menitikberatkan pada preventive maintenance, efisiensi bahan bakar solar, manajemen usia ban, dan keselamatan berkendara di kontur jalan perkebunan.',
+    'image' => '/images/programs/tat_traction.jpg',
+    'hero_image' => '/images/programs/tat_traction.jpg',
+    'curriculum_pillars' => NULL,
+    'objectives' => NULL,
+    'learning_method' => NULL,
+    'target_role' => 'Mekanik Bengkel, Operator Alat Berat, Driver Dump Truck, & Asisten Traksi',
+    'duration' => 'Program Modular (2 - 5 Hari per Modul)',
+    'format' => 'Hands-on Workshop Bengkel, Uji Emisi, Defensive Driving di Jalur Tanah, & Praktik Las',
+    'order' => 8,
+    'is_active' => true,
+    'created_at' => '2026-10-27T07:57:27.000000Z',
+    'updated_at' => '2026-10-27T08:28:11.000000Z',
+  ),
+  8 => 
+  array (
+    'id' => 9,
+    'slug' => 'teknikal-downstream',
+    'code' => 'TEK-DOWNSTREAM',
+    'title' => 'Teknikal Downstream',
+    'subtitle' => 'Rafinasi CPO, Kristalisasi Fraksinasi, Otomasi DCS & Oleokimia',
+    'category_key' => 'kejuruan-teknikal',
+    'category_name' => 'Kejuruan Teknikal',
+    'badge' => 'Kejuruan Teknikal Downstream',
+    'is_reguler' => false,
+    'overview' => 'Program pelatihan penguasaan teknologi pemurnian minyak nabati di kilang industri hilir. Melatih teknisi dan operator dalam mengendalikan parameter kritis fraksinasi, pemurnian vakum, pemeliharaan pompa industri, serta pemenuhan standar mutu pangan global.',
+    'image' => '/images/programs/dmt_downstream.jpg',
+    'hero_image' => '/images/programs/dmt_downstream.jpg',
+    'curriculum_pillars' => NULL,
+    'objectives' => NULL,
+    'learning_method' => NULL,
+    'target_role' => 'Operator Kilang, Teknisi Instrumen/Otomasi, QC Chemist, & Supervisor Kilang',
+    'duration' => 'Program Modular (2 - 5 Hari per Topik)',
+    'format' => 'Simulasi DCS/SCADA, Kalibrasi Sensor, Audit Food Safety, & Praktik Laboratorium',
+    'order' => 9,
+    'is_active' => true,
+    'created_at' => '2026-10-27T07:57:27.000000Z',
+    'updated_at' => '2026-10-27T08:27:58.000000Z',
+  ),
+  9 => 
+  array (
+    'id' => 10,
+    'slug' => 'administrasi-k3',
+    'code' => 'TEK-ADM-K3',
+    'title' => 'Administrasi',
+    'subtitle' => 'Tata Kelola Administrasi Unit, Keselamatan Kerja & Kepatuhan Lingkungan',
+    'category_key' => 'kejuruan-teknikal',
+    'category_name' => 'Kejuruan Teknikal',
+    'badge' => 'Kejuruan Administrasi & K3',
+    'is_reguler' => false,
+    'overview' => 'Program pelatihan yang memastikan kepatuhan regulasi lingkungan hidup, kesiapsiagaan darurat pencegahan kebakaran hutan dan lahan (Karhutla), perlindungan keselamatan kerja karyawan, serta tata kelola administrasi pembukuan unit yang rapi dan terstandardisasi.',
+    'image' => '/images/programs/aat_admin.jpg',
+    'hero_image' => '/images/programs/aat_admin.jpg',
+    'curriculum_pillars' => NULL,
+    'objectives' => NULL,
+    'learning_method' => NULL,
+    'target_role' => 'Staf Tata Usaha, Tim Tanggap Darurat Karhutla, Officer K3 & Sustainability',
+    'duration' => 'Program Modular (2 - 4 Hari per Topik)',
+    'format' => 'Simulasi Kebakaran Lapangan, Audit SOP Dokumen, K3 First Aid, & Studi Kasus Legalitas',
+    'order' => 10,
+    'is_active' => true,
+    'created_at' => '2026-10-27T07:57:27.000000Z',
+    'updated_at' => '2026-10-27T08:27:44.000000Z',
+  ),
+  10 => 
+  array (
+    'id' => 11,
+    'slug' => 'managerial-leadership',
+    'code' => 'MGR-LEAD',
+    'title' => 'Managerial & Leadership',
+    'subtitle' => 'Pengembangan Karakter, Supervisi Berdaya & Kepemimpinan Insan First Resources',
+    'category_key' => 'managerial-leadership',
+    'category_name' => 'Managerial & Leadership',
+    'badge' => 'Managerial & Leadership',
+    'is_reguler' => false,
+    'overview' => 'Program strategis pengembangan kapasitas kepemimpinan bagi seluruh level hierarki manajemen operasional perkebunan. Berfokus pada pembentukan karakter insan First Resources yang berintegritas, kemampuan memimpin tim multikultural, pemecahan masalah operasional berbasis data, serta ketajaman eksekusi strategi bisnis perkebunan kelapa sawit.',
+    'image' => '/images/slide4.png',
+    'hero_image' => '/images/slide4.png',
+    'curriculum_pillars' => NULL,
+    'objectives' => NULL,
+    'learning_method' => NULL,
+    'target_role' => 'Mandor 1, Asisten, Askep, Mill Manager, Estate Manager, & Kepala Departemen',
+    'duration' => 'Program Bertingkat (Workshop Intensif 2 - 4 Hari per Tingkatan Kepemimpinan)',
+    'format' => 'Executive Workshop, Behavioral Coaching, Role-Playing Lapangan, & Analisa Studi Kasus Nyata',
+    'order' => 11,
+    'is_active' => true,
+    'created_at' => '2026-10-27T07:57:27.000000Z',
+    'updated_at' => '2026-10-27T08:27:37.000000Z',
+  ),
+  11 => 
+  array (
+    'id' => 12,
+    'slug' => 'talent-management',
+    'code' => 'TALENT-MGMT',
+    'title' => 'Talent Management',
+    'subtitle' => NULL,
+    'category_key' => 'talent-management',
+    'category_name' => 'Talent Management',
+    'badge' => 'Talent Management',
+    'is_reguler' => false,
+    'overview' => 'Inisiatif strategis First Resources Academy dalam mengidentifikasi, mengasah, dan membina karier para kader pemimpin masa depan (Succession Pipeline). Menggunakan metodologi pembinaan terbukti 70:20:10 untuk mencetak pemimpin tangguh yang siap mengemban amanah strategis perusahaan.',
+    'image' => '/images/talent.png',
+    'hero_image' => '/images/talent.png',
+    'curriculum_pillars' => NULL,
+    'objectives' => NULL,
+    'learning_method' => NULL,
+    'target_role' => 'Karyawan Berkinerja Tinggi (High Performers) Seluruh Divisi',
+    'duration' => 'Program Berkelanjutan Terintegrasi (1 - 2 Tahun Siklus Evaluasi)',
+    'format' => 'Job Enrichment, Strategic Project Assignment, Mentoring Eksekutif, & Rotasi Lintas Fungsi',
+    'order' => 12,
+    'is_active' => true,
+    'created_at' => '2026-10-27T07:57:27.000000Z',
+    'updated_at' => '2026-10-27T08:29:07.000000Z',
+  ),
+);
+
+        foreach ($programs as $prog) {
+            unset($prog['id'], $prog['created_at'], $prog['updated_at']);
+            PortalProgram::updateOrCreate(
+                ['slug' => $prog['slug']],
+                $prog
+            );
+        }
+    }
+}

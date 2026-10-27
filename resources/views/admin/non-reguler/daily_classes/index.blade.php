@@ -163,6 +163,14 @@
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                                 <span>{{ $class->attendances->pluck('trainee_id')->unique()->count() }} Terdaftar</span>
                             </div>
+                            @if($class->is_completed)
+                                <div class="mt-2.5">
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-xs">
+                                        <svg class="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                        Pelatihan Selesai
+                                    </span>
+                                </div>
+                            @endif
                         </div>
                         <div class="flex items-center gap-1 shrink-0">
                             <button onclick="document.getElementById('editModal_{{ $class->id }}').classList.remove('hidden')" class="p-2 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 rounded-xl transition-colors shrink-0 tooltip" title="Edit Materi">
@@ -191,6 +199,8 @@
                         @endif
                     </div>
                     
+
+
                     <div class="mt-2 flex relative z-10">
                         <a href="{{ route('training-non-reguler.daily-classes.show', $class->id) }}" class="flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-[#28844b] hover:text-white transition-all shadow-sm hover:shadow-emerald-200 group/btn">
                             Kelola Peserta & Jadwal
@@ -283,7 +293,6 @@
         </div>
 
     </div>
-    
     <script>
         // Store dailyClasses data for alpine usage
         document.addEventListener('alpine:init', () => {

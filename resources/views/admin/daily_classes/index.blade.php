@@ -177,6 +177,27 @@
                         </div>
                     </div>
                     
+                    @php
+                        $hasContent = !empty($class->date) || $class->attendances->count() > 0 || $class->tasks->count() > 0;
+                    @endphp
+
+                    @if($hasContent)
+                        <form action="{{ route('training-reguler.daily-classes.toggle-completed', $class->id) }}" method="POST" class="mb-2" onsubmit="return confirm('{{ $class->is_completed ? 'Kembalikan status materi ini ke aktif/berjalan?' : 'Tandai materi ini sebagai \"Pelatihan Selesai\"?' }}');">
+                            @csrf
+                            @if($class->is_completed)
+                                <button type="submit" class="w-full flex items-center justify-center gap-2 py-2 bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-xl text-xs font-bold transition-all" title="Klik untuk membatalkan status selesai">
+                                    <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                    <span>Status: Pelatihan Selesai (Batal)</span>
+                                </button>
+                            @else
+                                <button type="submit" class="w-full flex items-center justify-center gap-2 py-2 bg-white text-emerald-700 border border-emerald-300 hover:bg-emerald-600 hover:text-white rounded-xl text-xs font-bold transition-all">
+                                    <svg class="w-4 h-4 text-emerald-600 group-hover:text-white shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <span>Pelatihan Selesai</span>
+                                </button>
+                            @endif
+                        </form>
+                    @endif
+
                     <a href="{{ route('training-reguler.daily-classes.show', $class->id) }}" class="block w-full py-2 bg-white border border-slate-300 text-slate-700 text-center rounded-xl font-bold hover:bg-slate-50 hover:text-[#28844b] hover:border-[#28844b] transition-all shadow-sm">
                         Lihat Detail
                     </a>

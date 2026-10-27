@@ -10,6 +10,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class UpdateTrainingRecordJob implements ShouldQueue
@@ -41,49 +42,111 @@ class UpdateTrainingRecordJob implements ShouldQueue
         $dateObj = Carbon::parse($this->attendanceDate);
         $hariAbsen = $dateObj->format('d');
         $bulanAbsen = strtoupper($dateObj->translatedFormat('M')); // e.g., FEB
-        $tahunAbsen = $dateObj->format('Y');
+        $tahunAbsen = (int) $dateObj->format('Y');
 
         // Kalkulasi Periode (Q1, Q2, Q3, Q4)
         $monthNum = $dateObj->month;
         $periode = 'Q'.ceil($monthNum / 3);
 
-        $parentProgramNonReg = DB::table('program_non_reguler')->where('jenis_pelatihan', $dailyClass->title)->first();
-        
+        $parentProgramNonReg = DB::table('program_non_reguler')
+            ->where('jenis_pelatihan', $dailyClass->title)
+            ->first();
+
+        // Jika materi kelas harian belum terdaftar di program_non_reguler, auto-register agar memiliki ID referensi yang valid
+        if (! $parentProgramNonReg) {
+            $parentProgram = $dailyClass->trainingProgram;
+            $startDateObj = $dailyClass->date ? Carbon::parse($dailyClass->date) : $dateObj;
+            $endDateObj = $dailyClass->end_date ? Carbon::parse($dailyClass->end_date) : $startDateObj;
+            $totalHari = ($startDateObj && $endDateObj) ? ($startDateObj->diffInDays($endDateObj) + 1) : 1;
+            $tglPelaksanaan = $startDateObj ? json_encode([$startDateObj->translatedFormat('d M Y')]) : null;
+
+            $totalJam = 0;
+            if ($dailyClass->start_time && $dailyClass->end_time) {
+                $st = Carbon::parse($dailyClass->start_time);
+                $et = Carbon::parse($dailyClass->end_time);
+                $totalJam = round($st->diffInRealHours($et)) * $totalHari;
+            }
+
+            $catName = $parentProgram ? $parentProgram->name : 'Non Reguler';
+            $subCatName = 'Softskill';
+            if (str_contains(strtolower($catName), 'managerial') || str_contains(strtolower($catName), 'leadership')) {
+                $catName = 'Managerial and Leadership';
+                $subCatName = 'Softskill';
+            } elseif (str_contains(strtolower($catName), 'estate')) {
+                $catName = 'Technical';
+                $subCatName = 'Estate';
+            } elseif (str_contains(strtolower($catName), 'mill')) {
+                $catName = 'Technical';
+                $subCatName = 'Mill';
+            } elseif (str_contains(strtolower($catName), 'traksi')) {
+                $catName = 'Technical';
+                $subCatName = 'Traksi';
+            } elseif (str_contains(strtolower($catName), 'downstream')) {
+                $catName = 'Technical';
+                $subCatName = 'Downstream';
+            } elseif (str_contains(strtolower($catName), 'administrasi')) {
+                $catName = 'Technical';
+                $subCatName = 'Administrasi';
+            }
+
+            $newId = DB::table('program_non_reguler')->insertGetId([
+                'jenis_pelatihan' => $dailyClass->title,
+                'kategori_pelatihan' => $catName,
+                'sub_kategori' => $subCatName,
+                'region' => $dailyClass->region ?: ($trainee->origin ?: 'Riau'),
+                'trainer' => $dailyClass->trainer_name,
+                'lokasi_training' => $dailyClass->location,
+                'start_date' => $dailyClass->date,
+                'end_date' => $dailyClass->end_date,
+                'tanggal_pelaksanaan' => $tglPelaksanaan,
+                'total_hari' => $totalHari,
+                'total_jam' => $totalJam,
+                'tahun' => $startDateObj ? (int) $startDateObj->format('Y') : $tahunAbsen,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $parentProgramNonReg = DB::table('program_non_reguler')->where('id_nonreguler', $newId)->first();
+        }
+
         $idNonReguler = $parentProgramNonReg ? $parentProgramNonReg->id_nonreguler : null;
-        $subKategori = $parentProgramNonReg ? $parentProgramNonReg->sub_kategori : '-';
+        $subKategori = $parentProgramNonReg ? $parentProgramNonReg->sub_kategori : 'Softskill';
         $trainer = $dailyClass->trainer_name ?: ($parentProgramNonReg ? $parentProgramNonReg->trainer : '-');
 
         // Cari record yang sudah ada
         $existingQuery = DB::table('training_records')
             ->where('participant_identifier', $trainee->nik)
-            ->where('nama_pelatihan', $dailyClass->title);
-            
-        if ($idNonReguler) {
-            $existingQuery->orWhere(function($q) use ($trainee, $idNonReguler) {
-                $q->where('participant_identifier', $trainee->nik)
-                  ->where('program_id', $idNonReguler)
-                  ->where('program_type', 'non_reguler');
+            ->where(function ($q) use ($dailyClass, $idNonReguler) {
+                $q->where('nama_pelatihan', $dailyClass->title);
+                if ($idNonReguler) {
+                    $q->orWhere(function ($sq) use ($idNonReguler) {
+                        $sq->where('program_id', $idNonReguler)
+                           ->where('program_type', 'non_reguler');
+                    });
+                }
             });
-        }
-        
+
         $existingRecord = $existingQuery->first();
 
         if ($existingRecord) {
-            // Update record: Tambahkan tanggal baru jika belum ada
-            $tanggalArray = explode(', ', $existingRecord->tanggal);
-            if (! in_array($hariAbsen, $tanggalArray)) {
+            // Update record: Tambahkan tanggal baru jika belum ada dan pastikan program_type & program_id terisi
+            $tanggalArray = array_filter(array_map('trim', explode(',', str_replace(' ', '', (string) $existingRecord->tanggal))));
+            if (! in_array($hariAbsen, $tanggalArray, true)) {
                 $tanggalArray[] = $hariAbsen;
-                // Urutkan tanggal agar rapi
                 sort($tanggalArray);
-                $newTanggal = implode(', ', $tanggalArray);
-
-                DB::table('training_records')
-                    ->where('id', $existingRecord->id)
-                    ->update([
-                        'tanggal' => $newTanggal,
-                        'updated_at' => now(),
-                    ]);
             }
+            $newTanggal = implode(', ', $tanggalArray);
+
+            DB::table('training_records')
+                ->where('id', $existingRecord->id)
+                ->update([
+                    'program_type' => 'non_reguler',
+                    'program_id' => $idNonReguler ?: $existingRecord->program_id,
+                    'reg_non_reg' => 'Non Reguler',
+                    'tanggal' => $newTanggal,
+                    'notes' => $existingRecord->notes && $existingRecord->notes !== '-' ? $existingRecord->notes : $subKategori,
+                    'updated_at' => now(),
+                ]);
         } else {
             // Coba cari Golongan dari riwayat pelatihan sebelumnya
             $gol = DB::table('training_records')
@@ -151,7 +214,7 @@ class UpdateTrainingRecordJob implements ShouldQueue
 
             // Create record baru
             DB::table('training_records')->insert([
-                'program_type' => $idNonReguler ? 'non_reguler' : null,
+                'program_type' => 'non_reguler',
                 'program_id' => $idNonReguler,
                 'nama_pelatihan' => $dailyClass->title,
                 'tempat_pelatihan' => $dailyClass->location ?? '-',
@@ -182,5 +245,12 @@ class UpdateTrainingRecordJob implements ShouldQueue
                 'updated_at' => now(),
             ]);
         }
+
+        // Invalidate caches
+        Cache::increment('tr_cache_version');
+        Cache::forget('tr_years');
+        Cache::forget('tr_non_reg_subcats');
+        Cache::increment('dashboard_cache_version');
+        Cache::increment('rvb_cache_version');
     }
 }

@@ -220,14 +220,12 @@ class CompetencyPublicTest extends TestCase
 
         $html = $this->get('/program')->assertOk()->getContent();
 
-        // desktop dropdown + mobile + footer
+        // desktop + mobile + footer
         $this->assertGreaterThanOrEqual(3, substr_count($html, 'href="'.$url.'"'));
-        // Tidak ada lagi item top-level panjang yang bisa membuat navbar membungkus.
-        $this->assertStringNotContainsString('>STANDAR KOMPETENSI<', $html);
-        // Desktop: sub-menu muncul di dalam dropdown PROGRAM, tepat setelah "Program Kami".
-        $this->assertMatchesRegularExpression('/>Program Kami<\/a>\s*<a href="'.preg_quote($url, '/').'"[^>]*>Standar Kompetensi<\/a>/', $html);
-        // Mobile: item bertingkat tepat setelah PROGRAM.
-        $this->assertMatchesRegularExpression('/>PROGRAM<\/a>\s*<a href="'.preg_quote($url, '/').'"[^>]*>&#8627; Standar Kompetensi<\/a>/', $html);
+        // Menu berdiri sendiri sebagai item top-level dengan nama KOMPETENSI
+        $this->assertStringContainsString('>KOMPETENSI<', $html);
+        // Desktop & Mobile: link KOMPETENSI berdiri sendiri setelah PROGRAM
+        $this->assertMatchesRegularExpression('/>PROGRAM<\/a>\s*<a href="'.preg_quote($url, '/').'"[^>]*>KOMPETENSI<\/a>/', $html);
     }
 
     public function test_sitemap_lists_only_published_dictionaries(): void

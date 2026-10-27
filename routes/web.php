@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\NonRegulerTrainerController;
 use App\Http\Controllers\Admin\NonRegulerTrainingProgramController;
 use App\Http\Controllers\Admin\NonRegulerWeeklyReportController;
 use App\Http\Controllers\Admin\PageSettingController;
+use App\Http\Controllers\Admin\PortalProgramController;
 use App\Http\Controllers\Admin\ProfileController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\TraineeController;
@@ -28,6 +29,7 @@ use App\Http\Controllers\Administrasi\RekrutmenController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompetencyPublicController;
 use App\Http\Controllers\Cost\BiayaRekruitController;
+use App\Http\Controllers\ProgramPublicController;
 use App\Http\Controllers\Cost\CapexController;
 use App\Http\Controllers\Cost\CostController;
 use App\Http\Controllers\Cost\VraController;
@@ -80,9 +82,8 @@ Route::get('/sitemap.xml', function () {
         ->header('Content-Type', 'text/xml');
 })->name('sitemap');
 
-Route::get('/program', function () {
-    return view('program');
-})->name('program');
+Route::get('/program', [ProgramPublicController::class, 'index'])->name('program');
+Route::get('/program/{slug}', [ProgramPublicController::class, 'show'])->name('program.show');
 
 Route::get('/standar-kompetensi/{code?}', [CompetencyPublicController::class, 'show'])
     ->where('code', 'estate|mill')
@@ -214,6 +215,13 @@ Route::middleware('auth')->prefix('admin')->group(function () {
         ->except(['show'])
         ->names('admin.career_programs')
         ->middleware('can:manage_career');
+
+    // Portal Programs (Katalog & Detail Program CMS)
+    Route::resource('portal-programs', PortalProgramController::class)
+        ->except(['show'])
+        ->names('admin.portal_programs');
+    Route::post('portal-programs/{portal_program}/toggle', [PortalProgramController::class, 'toggle'])
+        ->name('admin.portal_programs.toggle');
 
     // Manajemen Konten Halaman (CMS Page Settings)
     Route::prefix('page-settings')->name('admin.page_settings.')->group(function () {
@@ -739,11 +747,13 @@ Route::middleware('auth')->prefix('training-reguler')->group(function () {
     Route::post('daily-classes/{daily_class}/attendance', [DailyClassController::class, 'updateAttendance'])->name('training-reguler.daily-classes.attendance.update');
     Route::post('daily-classes/{daily_class}/generate-qr', [DailyClassController::class, 'generateQr'])->name('training-reguler.daily-classes.generate-qr');
     Route::post('daily-classes/{daily_class}/toggle-evaluation', [DailyClassController::class, 'toggleEvaluation'])->name('training-reguler.daily-classes.toggle-evaluation');
+    Route::post('daily-classes/{daily_class}/toggle-completed', [DailyClassController::class, 'toggleCompleted'])->name('training-reguler.daily-classes.toggle-completed');
     Route::get('daily-classes/{daily_class}/print-qr', [DailyClassController::class, 'printQr'])->name('training-reguler.daily-classes.print-qr');
     Route::get('daily-classes/{daily_class}/print-tasks', [DailyClassController::class, 'printTasks'])->name('training-reguler.daily-classes.print-tasks');
     Route::post('daily-classes/{daily_class}/tasks', [DailyClassController::class, 'storeTask'])->name('training-reguler.daily-classes.tasks.store');
     Route::get('tasks/{task}', [DailyClassController::class, 'showTask'])->name('training-reguler.tasks.show');
     Route::delete('tasks/{task}', [DailyClassController::class, 'destroyTask'])->name('training-reguler.daily-classes.tasks.destroy');
+    Route::get('daily-classes/{daily_class}/export-evaluations', [DailyClassController::class, 'exportEvaluations'])->name('training-reguler.daily-classes.export-evaluations');
     Route::resource('daily-classes', DailyClassController::class)->except(['create', 'edit', 'destroy'])->names('training-reguler.daily-classes');
 });
 
@@ -804,11 +814,13 @@ Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
     Route::post('daily-classes/{daily_class}/generate-certificates', [NonRegulerDailyClassController::class, 'generateCertificates'])->name('training-non-reguler.daily-classes.generate-certificates');
     Route::post('daily-classes/{daily_class}/preview-certificate', [NonRegulerDailyClassController::class, 'previewCertificate'])->name('training-non-reguler.daily-classes.preview-certificate');
     Route::post('daily-classes/{daily_class}/toggle-evaluation', [NonRegulerDailyClassController::class, 'toggleEvaluation'])->name('training-non-reguler.daily-classes.toggle-evaluation');
+    Route::post('daily-classes/{daily_class}/toggle-completed', [NonRegulerDailyClassController::class, 'toggleCompleted'])->name('training-non-reguler.daily-classes.toggle-completed');
     Route::delete('daily-classes/{daily_class}/clear-evaluation', [NonRegulerDailyClassController::class, 'clearEvaluation'])->name('training-non-reguler.daily-classes.clear-evaluation');
     Route::get('daily-classes/{daily_class}/print-qr', [NonRegulerDailyClassController::class, 'printQr'])->name('training-non-reguler.daily-classes.print-qr');
     Route::get('daily-classes/{daily_class}/print-tasks', [NonRegulerDailyClassController::class, 'printTasks'])->name('training-non-reguler.daily-classes.print-tasks');
     Route::get('daily-classes/{daily_class}/print-attendance', [NonRegulerDailyClassController::class, 'printAttendance'])->name('training-non-reguler.daily-classes.print-attendance');
     Route::get('daily-classes/{daily_class}/export-training-record', [NonRegulerDailyClassController::class, 'exportTrainingRecord'])->name('training-non-reguler.daily-classes.export-training-record');
+    Route::get('daily-classes/{daily_class}/export-evaluations', [NonRegulerDailyClassController::class, 'exportEvaluations'])->name('training-non-reguler.daily-classes.export-evaluations');
     Route::post('daily-classes/{daily_class}/tasks', [NonRegulerDailyClassController::class, 'storeTask'])->name('training-non-reguler.daily-classes.tasks.store');
     Route::get('tasks/{task}', [NonRegulerDailyClassController::class, 'showTask'])->name('training-non-reguler.tasks.show');
     Route::delete('tasks/{task}', [NonRegulerDailyClassController::class, 'destroyTask'])->name('training-non-reguler.daily-classes.tasks.destroy');

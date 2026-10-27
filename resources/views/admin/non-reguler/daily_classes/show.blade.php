@@ -42,6 +42,12 @@
                             Evaluasi Terkirim & Dibuka
                         </span>
                     @endif
+                    @if($dailyClass->is_completed)
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-emerald-700 text-white rounded-md text-xs font-bold tracking-wide shadow-sm">
+                            <svg class="w-3.5 h-3.5 text-emerald-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            Pelatihan Selesai
+                        </span>
+                    @endif
                     @if($dailyClass->date)
                         @php
                             \Carbon\Carbon::setLocale('id');
@@ -68,6 +74,18 @@
 
             <!-- ACTION BUTTONS ROW -->
             <div class="flex flex-wrap items-center gap-2">
+                @if($dailyClass->is_completed)
+                    <button type="button" onclick="document.getElementById('completeModal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg hover:bg-emerald-200 font-bold text-sm transition-all shadow-sm" title="Klik untuk mengubah status selesai">
+                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                        Pelatihan Selesai
+                    </button>
+                @else
+                    <button type="button" onclick="document.getElementById('completeModal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-emerald-700 border border-emerald-400 rounded-lg hover:bg-emerald-50 hover:border-emerald-600 font-bold text-sm transition-all shadow-sm">
+                        <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Pelatihan Selesai
+                    </button>
+                @endif
+
                 <button type="button" @click="document.getElementById('editClassModal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 font-medium text-sm transition-all shadow-sm">
                     <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                     Edit Detail Pelatihan
@@ -302,6 +320,12 @@
                 <p class="text-gray-500 text-sm">Menampilkan ringkasan, analisis per pertanyaan, dan respons individu.</p>
             </div>
             <div class="flex items-center gap-2">
+                  @if($dailyClass->traineeEvaluations->count() > 0)
+                  <a href="{{ route('training-non-reguler.daily-classes.export-evaluations', $dailyClass->id) }}" class="bg-[#28844b] hover:bg-[#1d6b3a] text-white font-medium py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2 text-sm">
+                      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                      Export Excel
+                  </a>
+                  @endif
                   <button @click="showEvalModal = true" class="bg-white border border-gray-300 hover:bg-gray-50 text-[#28844b] font-medium py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2">
                       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path></svg>
                       View Responses
@@ -368,9 +392,17 @@
                         <h3 class="font-bold text-slate-800 text-xl">Laporan Evaluasi</h3>
                         <p class="text-sm text-slate-500 mt-1">{{ $dailyClass->title }}</p>
                     </div>
-                    <button @click="showEvalModal = false" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                    </button>
+                    <div class="flex items-center gap-3">
+                        @if($dailyClass->traineeEvaluations->count() > 0)
+                        <a href="{{ route('training-non-reguler.daily-classes.export-evaluations', $dailyClass->id) }}" class="inline-flex items-center gap-2 bg-[#28844b] hover:bg-[#1d6b3a] text-white text-xs font-semibold py-2 px-3 rounded-lg shadow-sm transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            <span>Export Excel</span>
+                        </a>
+                        @endif
+                        <button @click="showEvalModal = false" class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded-lg transition-colors">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                        </button>
+                    </div>
                 </div>
 
                                                 <!-- Tabs -->
@@ -1050,6 +1082,64 @@
     </div>
 
 
+
+    <!-- Modal Konfirmasi Pelatihan Selesai -->
+    <div id="completeModal" class="fixed inset-0 z-[120] flex items-center justify-center hidden bg-slate-900/60 backdrop-blur-sm transition-all p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all text-center p-8 relative">
+            <!-- Close icon button -->
+            <button type="button" onclick="document.getElementById('completeModal').classList.add('hidden')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-100">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+
+            @if($dailyClass->is_completed)
+                <!-- Icon: Amber Undo -->
+                <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-100 flex items-center justify-center mx-auto mb-5 shadow-inner">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                </div>
+
+                <h3 class="text-xl font-black text-slate-800 mb-2">Kembalikan ke Sesi Aktif?</h3>
+                <p class="text-sm text-slate-500 leading-relaxed mb-6">
+                    Materi <strong class="text-slate-800">"{{ $dailyClass->title }}"</strong> akan dikembalikan dari Riwayat Pelatihan ke daftar materi berjalan yang aktif.
+                </p>
+
+                <form action="{{ route('training-non-reguler.daily-classes.toggle-completed', $dailyClass->id) }}" method="POST" class="flex gap-3">
+                    @csrf
+                    <button type="button" onclick="document.getElementById('completeModal').classList.add('hidden')" class="flex-1 px-5 py-3 rounded-xl border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit" class="flex-1 px-5 py-3 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-extrabold shadow-lg shadow-amber-600/30 active:scale-95 transition-all">
+                        Ya, Aktifkan
+                    </button>
+                </form>
+            @else
+                <!-- Icon: Emerald Checkmark -->
+                <div class="w-16 h-16 rounded-2xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center mx-auto mb-5 shadow-inner">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                </div>
+
+                <h3 class="text-xl font-black text-slate-800 mb-2">Selesaikan Pelatihan Ini?</h3>
+                <p class="text-sm text-slate-500 leading-relaxed mb-6">
+                    Materi <strong class="text-slate-800">"{{ $dailyClass->title }}"</strong> akan ditandai sebagai <span class="text-emerald-700 font-bold">Pelatihan Selesai</span> dan dipindahkan ke <strong class="text-slate-800">Riwayat Pelatihan</strong>.
+                </p>
+
+                <div class="p-3 bg-emerald-50/70 rounded-xl border border-emerald-100 mb-6 text-left flex items-start gap-2.5">
+                    <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p class="text-xs text-emerald-800 font-medium">Aplikasi mobile peserta akan otomatis menampilkan ucapan terima kasih telah mengikuti pelatihan ini.</p>
+                </div>
+
+                <form action="{{ route('training-non-reguler.daily-classes.toggle-completed', $dailyClass->id) }}" method="POST" class="flex gap-3">
+                    @csrf
+                    <button type="button" onclick="document.getElementById('completeModal').classList.add('hidden')" class="flex-1 px-5 py-3 rounded-xl border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit" class="flex-1 px-5 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold shadow-lg shadow-emerald-600/30 active:scale-95 transition-all flex items-center justify-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                        Ya, Selesaikan
+                    </button>
+                </form>
+            @endif
+        </div>
+    </div>
 
 </x-admin-layout>
 

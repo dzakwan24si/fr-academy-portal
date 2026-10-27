@@ -11,6 +11,7 @@ use App\Models\TaskSubmission;
 use App\Models\Trainee;
 use App\Models\TrainingProgram;
 use App\Notifications\WebPushBlastNotification;
+use App\Services\EvaluationExportService;
 use App\Services\ExcelExporter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
@@ -24,21 +25,14 @@ class NonRegulerDailyClassController extends Controller
 {
     public function history(Request $request)
     {
-        $today = now()->format('Y-m-d');
         $query = DailyClass::with('trainingProgram', 'tasks', 'attendances', 'traineeEvaluations')
-            ->where(function ($q) use ($today) {
-                $q->where(function ($sq) use ($today) {
-                    $sq->whereNotNull('end_date')->whereDate('end_date', '<', $today);
-                })->orWhere(function ($sq) use ($today) {
-                    $sq->whereNull('end_date')->whereDate('date', '<', $today);
-                });
-            });
+            ->where('is_completed', true);
 
         if ($request->has('program_id') && $request->program_id != '') {
             $query->where('training_program_id', $request->program_id);
         }
 
-        $pastClasses = $query->orderBy('end_date', 'desc')->get();
+        $pastClasses = $query->orderBy('completed_at', 'desc')->orderBy('end_date', 'desc')->get();
         $programs = TrainingProgram::where('type', 'non-reguler')->get();
 
         return view('admin.non-reguler.history.index', compact('pastClasses', 'programs'));
@@ -61,55 +55,11 @@ class NonRegulerDailyClassController extends Controller
 
         $programs = TrainingProgram::where('type', 'non-reguler')->get();
 
-        $today = now()->format('Y-m-d');
-
-        // Auto-clone past classes to keep an empty template in the active list
-        $pastClasses = DailyClass::where(function ($q) use ($today) {
-            $q->where(function ($sq) use ($today) {
-                $sq->whereNotNull('end_date')->whereDate('end_date', '<', $today);
-            })->orWhere(function ($sq) use ($today) {
-                $sq->whereNull('end_date')->whereDate('date', '<', $today);
-            });
-        })->get();
-
-        foreach ($pastClasses as $pastClass) {
-            $hasActive = DailyClass::where('title', $pastClass->title)
-                ->where('training_program_id', $pastClass->training_program_id)
-                ->where(function ($q) use ($today) {
-                    $q->whereNull('date')
-                        ->orWhere(function ($sq) use ($today) {
-                            $sq->whereNotNull('end_date')->whereDate('end_date', '>=', $today);
-                        })
-                        ->orWhere(function ($sq) use ($today) {
-                            $sq->whereNull('end_date')->whereDate('date', '>=', $today);
-                        });
-                })->exists();
-
-            if (! $hasActive) {
-                $newClass = $pastClass->replicate();
-                $newClass->date = null;
-                $newClass->end_date = null;
-                $newClass->start_time = null;
-                $newClass->end_time = null;
-                $newClass->location = null;
-                $newClass->room = null;
-                $newClass->trainer_name = null;
-                $newClass->provider = null;
-                $newClass->region = null;
-                $newClass->qr_code_token = Str::random(32);
-                $newClass->save();
-            }
-        }
-
+        // Hanya tampilkan materi yang belum selesai di daftar materi aktif
         $dailyClasses = DailyClass::with('trainingProgram', 'attendances', 'tasks.submissions', 'traineeEvaluations')
-            ->where(function ($q) use ($today) {
-                $q->whereNull('date') // newly created, no date yet
-                    ->orWhere(function ($sq) use ($today) {
-                        $sq->whereNotNull('end_date')->whereDate('end_date', '>=', $today);
-                    })
-                    ->orWhere(function ($sq) use ($today) {
-                        $sq->whereNull('end_date')->whereDate('date', '>=', $today);
-                    });
+            ->where(function ($q) {
+                $q->whereNull('is_completed')
+                    ->orWhere('is_completed', false);
             })
             ->orderBy('created_at', 'desc')
             ->get();
@@ -164,7 +114,6 @@ class NonRegulerDailyClassController extends Controller
         DB::table('program_non_reguler')->updateOrInsert(
             ['jenis_pelatihan' => $dailyClass->title], // Group by title!
             [
-                'id_nonreguler' => $dailyClass->id,
                 'kategori_pelatihan' => $parentProgram ? $parentProgram->name : 'Non Reguler',
                 'sub_kategori' => $parentProgram ? $parentProgram->name : 'Softskill',
                 'region' => $dailyClass->region ?: 'Nasional',
@@ -175,6 +124,7 @@ class NonRegulerDailyClassController extends Controller
                 'tanggal_pelaksanaan' => $tanggalPelaksanaan,
                 'total_hari' => $totalHari,
                 'total_jam' => $totalJam,
+                'tahun' => $startDateObj ? (int) $startDateObj->format('Y') : (int) date('Y'),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]
@@ -239,7 +189,10 @@ class NonRegulerDailyClassController extends Controller
         }
 
         DB::table('program_non_reguler')
-            ->where('id_nonreguler', $dailyClass->id)
+            ->where(function ($q) use ($dailyClass) {
+                $q->where('jenis_pelatihan', $dailyClass->title)
+                  ->orWhere('id_nonreguler', $dailyClass->id);
+            })
             ->update([
                 'jenis_pelatihan' => $dailyClass->title,
                 'region' => $dailyClass->region ?: 'Nasional',
@@ -721,6 +674,80 @@ class NonRegulerDailyClassController extends Controller
         return back()->with('success', 'Semua respons evaluasi untuk sesi ini berhasil dihapus.');
     }
 
+    public function toggleCompleted(DailyClass $dailyClass)
+    {
+        $newStatus = ! $dailyClass->is_completed;
+
+        if ($newStatus) {
+            // Selesai: Tandai batch/sesi kelas ini selesai (masuk ke Riwayat Pelatihan)
+            $dailyClass->update([
+                'is_completed' => true,
+                'completed_at' => now(),
+            ]);
+
+            // Pastikan card wadah materi di "Daftar Materi" TETAP ADA (dalam keadaan kosong seperti awal)
+            $activeExists = DailyClass::where('training_program_id', $dailyClass->training_program_id)
+                ->where('title', $dailyClass->title)
+                ->where(function ($q) {
+                    $q->whereNull('is_completed')->orWhere('is_completed', false);
+                })
+                ->exists();
+
+            if (! $activeExists) {
+                DailyClass::create([
+                    'training_program_id' => $dailyClass->training_program_id,
+                    'title' => $dailyClass->title,
+                    'description' => $dailyClass->description,
+                    'trainer_name' => null,
+                    'date' => null,
+                    'end_date' => null,
+                    'start_time' => null,
+                    'end_time' => null,
+                    'room' => null,
+                    'location' => null,
+                    'provider' => null,
+                    'region' => null,
+                    'material_url' => null,
+                    'mess_url' => null,
+                    'certificate_link' => null,
+                    'is_completed' => false,
+                    'completed_at' => null,
+                ]);
+            }
+
+            $message = 'Pelatihan "' . $dailyClass->title . '" telah selesai dan diarsipkan ke Riwayat Pelatihan. Materi tetap tersedia di Daftar Materi dalam kondisi kosong untuk sesi berikutnya.';
+        } else {
+            // Aktifkan kembali dari riwayat:
+            // Jika ada card placeholder kosong yang belum terpakai untuk materi ini, hapus dulu agar tidak double
+            $placeholder = DailyClass::where('training_program_id', $dailyClass->training_program_id)
+                ->where('title', $dailyClass->title)
+                ->where(function ($q) {
+                    $q->whereNull('is_completed')->orWhere('is_completed', false);
+                })
+                ->whereNull('date')
+                ->whereDoesntHave('attendances')
+                ->whereDoesntHave('tasks')
+                ->first();
+
+            if ($placeholder) {
+                $placeholder->delete();
+            }
+
+            $dailyClass->update([
+                'is_completed' => false,
+                'completed_at' => null,
+            ]);
+
+            $message = 'Materi "' . $dailyClass->title . '" berhasil dikembalikan ke Daftar Materi Aktif.';
+        }
+
+        if (request()->headers->get('referer') && str_contains(request()->headers->get('referer'), 'daily-classes/' . $dailyClass->id)) {
+            return redirect()->route('training-non-reguler.daily-classes.index')->with('success', $message);
+        }
+
+        return back()->with('success', $message);
+    }
+
     public function destroy(DailyClass $dailyClass)
     {
         // Get all trainee IDs from this class before we delete their attendances
@@ -882,5 +909,10 @@ class NonRegulerDailyClassController extends Controller
         }
 
         return ExcelExporter::download($filename, $headers, $dataRows, 'Training Record');
+    }
+
+    public function exportEvaluations(DailyClass $dailyClass)
+    {
+        return EvaluationExportService::export($dailyClass);
     }
 }

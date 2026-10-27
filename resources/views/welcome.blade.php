@@ -195,7 +195,7 @@
                     <div class="p-8 pt-10 flex flex-col flex-grow">
                         <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Regular Training Program</h3>
                         <p class="text-gray-600 dark:text-gray-300 text-sm mb-6 flex-grow">Program pengembangan berkesinambungan selama enam bulan dengan pendampingan mentoring untuk menyiapkan calon staf dan asisten perkebunan.</p>
-                        <a href="/program#reguler" class="inline-flex items-center text-sm font-bold text-teal-600 dark:text-teal-400 group-hover:text-green-accent transition-colors">
+                        <a href="/program/fat" class="inline-flex items-center text-sm font-bold text-teal-600 dark:text-teal-400 group-hover:text-green-accent transition-colors">
                             Pelajari lebih lanjut 
                             <svg class="ml-2 w-5 h-5 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
                         </a>
@@ -216,7 +216,7 @@
                     <div class="p-8 pt-10 flex flex-col flex-grow">
                         <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Non-Regular Training Program</h3>
                         <p class="text-gray-600 dark:text-gray-300 text-sm mb-6 flex-grow">Pelatihan berdurasi singkat untuk meningkatkan kompetensi teknis dan manajerial staf operasional di Kebun, Pabrik (Mill), Traksi, hingga Administrasi.</p>
-                        <a href="/program#non-reguler" class="inline-flex items-center text-sm font-bold text-teal-600 dark:text-teal-400 group-hover:text-green-accent transition-colors">
+                        <a href="/program/managerial-leadership" class="inline-flex items-center text-sm font-bold text-teal-600 dark:text-teal-400 group-hover:text-green-accent transition-colors">
                             Pelajari lebih lanjut 
                             <svg class="ml-2 w-5 h-5 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
                         </a>
@@ -235,9 +235,9 @@
                         </div>
                     </div>
                     <div class="p-8 pt-10 flex flex-col flex-grow">
-                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Talent Management Program</h3>
-                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-6 flex-grow">Program akselerasi terstruktur yang dirancang khusus untuk mempersiapkan staf berpotensi (high talent) menjadi pemimpin masa depan perusahaan.</p>
-                        <a href="/program#talent" class="inline-flex items-center text-sm font-bold text-teal-600 dark:text-teal-400 group-hover:text-green-accent transition-colors">
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Talent Management</h3>
+                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-6 flex-grow">Program pengembangan terstruktur yang dirancang khusus untuk mempersiapkan staf berpotensi (high talent) menjadi pemimpin masa depan perusahaan.</p>
+                        <a href="/program/talent-management" class="inline-flex items-center text-sm font-bold text-teal-600 dark:text-teal-400 group-hover:text-green-accent transition-colors">
                             Pelajari lebih lanjut 
                             <svg class="ml-2 w-5 h-5 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
                         </a>
