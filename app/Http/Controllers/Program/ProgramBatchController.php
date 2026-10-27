@@ -792,10 +792,6 @@ class ProgramBatchController extends Controller
             if (array_key_exists('Total_orang', $payload)) {
                 $payload['target_peserta'] = $payload['Total_orang'];
             }
-        } else {
-            if (array_key_exists('total_batch', $payload) && ! array_key_exists('realisasi_batch', $payload)) {
-                $payload['realisasi_batch'] = $payload['total_batch'];
-            }
         }
 
         $dateFields = $type === 'reguler' ? ['Mulai_program', 'Selesai_program'] : ['start_date', 'end_date'];
