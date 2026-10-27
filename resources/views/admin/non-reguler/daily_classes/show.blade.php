@@ -75,12 +75,12 @@
             <!-- ACTION BUTTONS ROW -->
             <div class="flex flex-wrap items-center gap-2">
                 @if($dailyClass->is_completed)
-                    <button type="button" onclick="document.getElementById('completeModal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg hover:bg-emerald-200 font-bold text-sm transition-all shadow-sm" title="Klik untuk mengubah status selesai">
+                    <button type="button" @click="document.getElementById('completeModal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg hover:bg-emerald-200 font-bold text-sm transition-all shadow-sm" title="Klik untuk mengubah status selesai">
                         <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                         Pelatihan Selesai
                     </button>
-                @else
-                    <button type="button" onclick="document.getElementById('completeModal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-emerald-700 border border-emerald-400 rounded-lg hover:bg-emerald-50 hover:border-emerald-600 font-bold text-sm transition-all shadow-sm">
+                @elseif($trainees->count() > 0)
+                    <button type="button" @click="document.getElementById('completeModal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-emerald-700 border border-emerald-400 rounded-lg hover:bg-emerald-50 hover:border-emerald-600 font-bold text-sm transition-all shadow-sm" title="Tandai pelatihan ini telah selesai">
                         <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Pelatihan Selesai
                     </button>
@@ -1084,7 +1084,7 @@
 
 
     <!-- Modal Konfirmasi Pelatihan Selesai -->
-    <div id="completeModal" class="fixed inset-0 z-[120] flex items-center justify-center hidden bg-slate-900/60 backdrop-blur-sm transition-all p-4">
+    <div id="completeModal" onclick="if(event.target === this) this.classList.add('hidden')" class="fixed inset-0 z-[120] flex items-center justify-center hidden bg-slate-900/60 backdrop-blur-sm transition-all p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all text-center p-8 relative">
             <!-- Close icon button -->
             <button type="button" onclick="document.getElementById('completeModal').classList.add('hidden')" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 transition-colors p-1.5 rounded-full hover:bg-slate-100">

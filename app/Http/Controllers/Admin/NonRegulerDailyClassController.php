@@ -166,6 +166,7 @@ class NonRegulerDailyClassController extends Controller
         $validated['certificate_link'] = $request->input('certificate_link') ?: null;
 
 
+        $originalTitle = $dailyClass->title;
         $dailyClass->update($validated);
 
         $startDateObj = Carbon::parse($dailyClass->date);
@@ -189,10 +190,7 @@ class NonRegulerDailyClassController extends Controller
         }
 
         DB::table('program_non_reguler')
-            ->where(function ($q) use ($dailyClass) {
-                $q->where('jenis_pelatihan', $dailyClass->title)
-                  ->orWhere('id_nonreguler', $dailyClass->id);
-            })
+            ->where('jenis_pelatihan', $originalTitle ?: $dailyClass->title)
             ->update([
                 'jenis_pelatihan' => $dailyClass->title,
                 'region' => $dailyClass->region ?: 'Nasional',
@@ -282,7 +280,7 @@ class NonRegulerDailyClassController extends Controller
             }
 
             DB::table('program_non_reguler')
-                ->where('id_nonreguler', $dailyClass->id)
+                ->where('jenis_pelatihan', $dailyClass->title)
                 ->update([
                     'region' => $request->region ?: 'Nasional',
                     'trainer' => $request->trainer_name,
@@ -642,7 +640,7 @@ class NonRegulerDailyClassController extends Controller
         ]);
 
         DB::table('program_non_reguler')
-            ->where('id_nonreguler', $dailyClass->id)
+            ->where('jenis_pelatihan', $dailyClass->title)
             ->update([
                 'start_date' => null,
                 'end_date' => null,
@@ -770,10 +768,10 @@ class NonRegulerDailyClassController extends Controller
         }
 
         // Finally, delete the class
-        $classId = $dailyClass->id;
+        $classTitle = $dailyClass->title;
         $dailyClass->delete();
 
-        DB::table('program_non_reguler')->where('id_nonreguler', $classId)->delete();
+        DB::table('program_non_reguler')->where('jenis_pelatihan', $classTitle)->delete();
 
         return back()->with('success', 'Materi beserta pesertanya berhasil dihapus permanen.');
     }
@@ -817,7 +815,7 @@ class NonRegulerDailyClassController extends Controller
     public function exportTrainingRecord(DailyClass $dailyClass)
     {
         $attendances = $dailyClass->attendances()->where('status', 'hadir')->with('trainee')->get();
-        $parentProgram = DB::table('program_non_reguler')->where('id_nonreguler', $dailyClass->training_program_id)->first();
+        $parentProgram = DB::table('program_non_reguler')->where('jenis_pelatihan', $dailyClass->title)->first();
 
         $headers = ['NIK', 'Nama', 'Jenis Kelamin', 'Nama PT', 'Lokasi Kerja', 'Group', 'REGION', 'GOL', 'Jabatan', 'Nama Pelatihan', 'Internal/Eksternal', 'Level', 'Periode', 'Tanggal', 'Bulan', 'Tahun', 'Keterangan', 'program_type', 'program_id'];
 
