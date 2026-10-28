@@ -72,150 +72,168 @@
         </div>
     @endif
 
-    {{-- ============================== 2. SUMMARY KPI CARDS ============================== --}}
-    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-        {{-- Card 1: Total Talent Pool --}}
-        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs relative overflow-hidden flex flex-col justify-between">
+    {{-- ============================== 2. FILTER CARD ============================== --}}
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+        <form method="GET" action="{{ route('administrasi.talent-pool.index') }}" class="space-y-4">
+            {{-- Baris 1: Filter Utama (Tahun & Jenis Kategori) berbentuk Dropdown --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pb-4 border-b border-slate-100">
+                {{-- Dropdown Tahun --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5 flex items-center gap-1.5">
+                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-[#4B6A34]"></i>
+                        <span>Tahun</span>
+                    </label>
+                    <select name="year" onchange="this.form.submit()" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:border-[#4B6A34] focus:ring-2 focus:ring-[#4B6A34]/20 outline-none transition-all cursor-pointer">
+                        <option value="all" {{ ($year === 'all' || !$rawYear || $rawYear === 'all') ? 'selected' : '' }}>Semua Tahun</option>
+                        @foreach($years as $yOption)
+                            <option value="{{ $yOption }}" {{ ((string)$year === (string)$yOption && $rawYear !== 'all') ? 'selected' : '' }}>
+                                Tahun {{ $yOption }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Dropdown Jenis Kategori --}}
+                <div>
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-600 mb-1.5 flex items-center gap-1.5">
+                        <i data-lucide="layers" class="w-3.5 h-3.5 text-[#4B6A34]"></i>
+                        <span>Jenis Kategori</span>
+                    </label>
+                    <select name="jenis_kategori" onchange="this.form.submit()" class="w-full rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white px-3.5 py-2.5 text-xs font-semibold text-slate-800 focus:border-[#4B6A34] focus:ring-2 focus:ring-[#4B6A34]/20 outline-none transition-all cursor-pointer">
+                        <option value="all" {{ ($jenisKategori === 'all' || !$jenisKategori) ? 'selected' : '' }}>Semua Jenis ({{ $totalAllJenis }})</option>
+                        @foreach($jenisKategoriList as $jk)
+                            <option value="{{ $jk }}" {{ strcasecmp($jenisKategori, $jk) === 0 ? 'selected' : '' }}>
+                                {{ $jk }} ({{ $jenisCounts[$jk] ?? 0 }})
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            {{-- Baris 2: Status Penempatan, Region, Target Posisi, Cari Kandidat --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                {{-- Filter Status Penempatan --}}
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Status Penempatan</label>
+                    <select name="status" onchange="this.form.submit()" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 focus:border-[#4B6A34] focus:ring-1 focus:ring-[#4B6A34] outline-none cursor-pointer">
+                        <option value="all" {{ $status === 'all' ? 'selected' : '' }}>Semua Status</option>
+                        @foreach($statusList as $st)
+                            <option value="{{ $st }}" {{ $status === $st ? 'selected' : '' }}>{{ $st }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Filter Region --}}
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Region</label>
+                    <select name="region" onchange="this.form.submit()" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 focus:border-[#4B6A34] focus:ring-1 focus:ring-[#4B6A34] outline-none cursor-pointer">
+                        <option value="all" {{ $region === 'all' ? 'selected' : '' }}>Semua Region</option>
+                        @foreach($regions as $reg)
+                            <option value="{{ $reg }}" {{ $region === $reg ? 'selected' : '' }}>{{ $reg }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Filter Target Posisi (Talent To) --}}
+                <div>
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Target Posisi (Talent To)</label>
+                    <select name="talent_to" onchange="this.form.submit()" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 focus:border-[#4B6A34] focus:ring-1 focus:ring-[#4B6A34] outline-none cursor-pointer">
+                        <option value="all" {{ $talentTo === 'all' ? 'selected' : '' }}>Semua Target Posisi</option>
+                        @foreach($talentToList as $tTo)
+                            <option value="{{ $tTo }}" {{ $talentTo === $tTo ? 'selected' : '' }}>{{ $tTo }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                {{-- Search Bar --}}
+                <div class="sm:col-span-2">
+                    <label class="block text-[11px] font-bold text-slate-600 mb-1">Cari Kandidat</label>
+                    <div class="flex gap-2">
+                        <div class="relative flex-1">
+                            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                            <input type="text" name="search" value="{{ $search }}" placeholder="Cari NIK, Nama, Posisi, Unit, Lokasi..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-700 focus:border-[#4B6A34] focus:ring-1 focus:ring-[#4B6A34] outline-none">
+                        </div>
+                        <button type="submit" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors">
+                            Cari
+                        </button>
+                        @if($search || $status !== 'all' || $region !== 'all' || $talentTo !== 'all' || $year !== 'all' || $jenisKategori !== 'all')
+                            <a href="{{ route('administrasi.talent-pool.index') }}" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center" title="Reset Filter">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    {{-- ============================== 3. SUMMARY KPI CARDS ============================== --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {{-- Card 1: Total Talent Pool (Menghitung status Belum Penempatan) --}}
+        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs relative overflow-hidden flex flex-col justify-between">
             <div class="flex items-center justify-between text-slate-500 mb-2">
                 <span class="text-[11px] font-bold uppercase tracking-wider text-slate-700">Total Talent Pool</span>
-                <div class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
-                    <i data-lucide="users" class="w-4 h-4"></i>
+                <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+                    <i data-lucide="users" class="w-5 h-5"></i>
                 </div>
             </div>
             <div class="flex items-baseline gap-2">
-                <span class="text-2xl font-black text-slate-900">{{ $totalAll }}</span>
-                <span class="text-[11px] font-medium text-slate-400">Kandidat</span>
+                <span class="text-3xl font-black text-slate-900">{{ $countBelum }}</span>
+                <span class="text-xs font-medium text-slate-400">Kandidat</span>
             </div>
-            <div class="mt-2 text-[10px] font-bold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-md w-fit">
-                Seluruh Database Pool
+            <div class="mt-3 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 px-3 py-1 rounded-lg w-fit flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                <span>Status: Belum Penempatan (Aktif Dalam Pool)</span>
             </div>
         </div>
 
         {{-- Card 2: Sudah Penempatan --}}
-        <div class="bg-white rounded-2xl border border-emerald-200/80 p-4 shadow-xs relative overflow-hidden flex flex-col justify-between">
+        <div class="bg-white rounded-2xl border border-emerald-200/80 p-5 shadow-xs relative overflow-hidden flex flex-col justify-between">
             <div class="flex items-center justify-between text-slate-500 mb-2">
                 <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Sudah Penempatan</span>
-                <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
-                    <i data-lucide="check-circle" class="w-4 h-4"></i>
+                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                    <i data-lucide="check-circle" class="w-5 h-5"></i>
                 </div>
             </div>
             <div class="flex items-baseline gap-2">
-                <span class="text-2xl font-black text-emerald-700">{{ $countSudah }}</span>
-                <span class="text-[11px] font-medium text-slate-400">Orang</span>
+                <span class="text-3xl font-black text-emerald-700">{{ $countSudah }}</span>
+                <span class="text-xs font-medium text-slate-400">Orang</span>
             </div>
-            <div class="mt-2 text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md w-fit">
-                {{ $totalAll > 0 ? round(($countSudah / $totalAll) * 100, 1) : 0 }}% Telah Ditempatkan
-            </div>
-        </div>
-
-        {{-- Card 3: Belum Penempatan --}}
-        <div class="bg-white rounded-2xl border border-amber-200/80 p-4 shadow-xs relative overflow-hidden flex flex-col justify-between">
-            <div class="flex items-center justify-between text-slate-500 mb-2">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-amber-800">Belum Penempatan</span>
-                <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
-                    <i data-lucide="clock" class="w-4 h-4"></i>
-                </div>
-            </div>
-            <div class="flex items-baseline gap-2">
-                <span class="text-2xl font-black text-amber-700">{{ $countBelum }}</span>
-                <span class="text-[11px] font-medium text-slate-400">Orang</span>
-            </div>
-            <div class="mt-2 text-[10px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-md w-fit">
-                {{ $totalAll > 0 ? round(($countBelum / $totalAll) * 100, 1) : 0 }}% Menunggu Penempatan
-            </div>
-        </div>
-
-        {{-- Card 4: Rasio Penempatan --}}
-        <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs relative overflow-hidden flex flex-col justify-between">
-            <div class="flex items-center justify-between text-slate-500 mb-2">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-blue-800">Tingkat Penempatan</span>
-                <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
-                    <i data-lucide="percent" class="w-4 h-4"></i>
-                </div>
-            </div>
-            <div class="flex items-baseline gap-2">
-                <span class="text-2xl font-black text-blue-700">{{ $pctPenempatan }}%</span>
-                <span class="text-[11px] font-medium text-slate-400">Rasio Suksesi</span>
-            </div>
-            <div class="mt-2 text-[10px] font-bold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md w-fit">
-                {{ $countSudah }} dari {{ $totalAll }} kandidat
+            <div class="mt-3 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-3 py-1 rounded-lg w-fit flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span>{{ ($countBelum + $countSudah) > 0 ? round(($countSudah / ($countBelum + $countSudah)) * 100, 1) : 0 }}% Telah Ditempatkan</span>
             </div>
         </div>
     </div>
 
-    {{-- ============================== 3. FILTER TABS & SEARCH CARD ============================== --}}
-    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs space-y-4">
-        {{-- Kategori Tabs --}}
-        @if($categories->count() > 0)
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-2 border-b border-slate-100 scrollbar-thin">
-            <a href="{{ route('administrasi.talent-pool.index', array_merge(request()->query(), ['kategori' => 'all'])) }}"
-               class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap {{ $kategori === 'all' ? 'bg-[#4B6A34] text-white shadow-xs' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
-                Semua Kategori ({{ $totalAllCategories }})
-            </a>
-            @foreach($categories as $cat)
-                <a href="{{ route('administrasi.talent-pool.index', array_merge(request()->query(), ['kategori' => $cat])) }}"
-                   class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap {{ $kategori === $cat ? 'bg-[#4B6A34] text-white shadow-xs' : 'bg-slate-50 text-slate-600 hover:bg-slate-100 hover:text-slate-900' }}">
-                    {{ $cat }} ({{ $categoryCounts[$cat] ?? 0 }})
-                </a>
-            @endforeach
+    {{-- ============================== 3.5 GRAFIK TARGET POSISI (TALENT TO) ============================== --}}
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
+            <div>
+                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-lg bg-emerald-50 text-[#4B6A34] flex items-center justify-center">
+                        <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i>
+                    </span>
+                    <span>Distribusi Target Posisi</span>
+                </h3>
+                <p class="text-xs text-slate-500 mt-0.5">Grafik jumlah kandidat talent pool berdasarkan target posisi (Talent To)</p>
+            </div>
+            <div class="text-xs font-semibold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/60 w-fit flex items-center gap-2">
+                <span>Total Target Posisi:</span>
+                <span class="text-slate-900 font-bold bg-white px-2 py-0.5 rounded-md border border-slate-200">{{ count($chartLabels) }}</span>
+            </div>
         </div>
+
+        @if(count($chartLabels) > 0)
+            <div class="h-64 sm:h-72 w-full">
+                <canvas id="chartTargetPosisi"></canvas>
+            </div>
+        @else
+            <div class="h-44 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                <i data-lucide="bar-chart" class="w-8 h-8 text-slate-300 mb-2"></i>
+                <span class="text-xs font-semibold text-slate-500">Tidak ada data target posisi untuk filter yang dipilih</span>
+            </div>
         @endif
-
-        {{-- Form Filter Dropdowns & Search --}}
-        <form method="GET" action="{{ route('administrasi.talent-pool.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
-            <input type="hidden" name="kategori" value="{{ $kategori }}">
-
-            {{-- Filter Status Penempatan --}}
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">Status Penempatan</label>
-                <select name="status" onchange="this.form.submit()" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none">
-                    <option value="all" {{ $status === 'all' ? 'selected' : '' }}>Semua Status</option>
-                    <option value="Sudah penempatan" {{ $status === 'Sudah penempatan' ? 'selected' : '' }}>Sudah penempatan</option>
-                    <option value="Belum Penempatan" {{ $status === 'Belum Penempatan' ? 'selected' : '' }}>Belum Penempatan</option>
-                </select>
-            </div>
-
-            {{-- Filter Region --}}
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">Region</label>
-                <select name="region" onchange="this.form.submit()" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none">
-                    <option value="all" {{ $region === 'all' ? 'selected' : '' }}>Semua Region</option>
-                    @foreach($regions as $reg)
-                        <option value="{{ $reg }}" {{ $region === $reg ? 'selected' : '' }}>{{ $reg }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            {{-- Filter Target Posisi (Talent To) --}}
-            <div>
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">Target Posisi (Talent To)</label>
-                <select name="talent_to" onchange="this.form.submit()" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none">
-                    <option value="all" {{ $talentTo === 'all' ? 'selected' : '' }}>Semua Target Posisi</option>
-                    @foreach($talentToList as $tTo)
-                        <option value="{{ $tTo }}" {{ $talentTo === $tTo ? 'selected' : '' }}>{{ $tTo }}</option>
-                    @endforeach
-                </select>
-            </div>
-
-            {{-- Search Bar --}}
-            <div class="sm:col-span-2">
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">Cari Kandidat</label>
-                <div class="flex gap-2">
-                    <div class="relative flex-1">
-                        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                        <input type="text" name="search" value="{{ $search }}" placeholder="Cari NIK, Nama, Posisi, Unit, Lokasi..." class="w-full pl-9 pr-3 py-2 rounded-xl border border-slate-200 text-xs font-medium text-slate-700 focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none">
-                    </div>
-                    <button type="submit" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors">
-                        Cari
-                    </button>
-                    @if($search || $kategori !== 'all' || $status !== 'all' || $region !== 'all' || $talentTo !== 'all')
-                        <a href="{{ route('administrasi.talent-pool.index') }}" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-colors flex items-center justify-center" title="Reset Filter">
-                            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
-                        </a>
-                    @endif
-                </div>
-            </div>
-        </form>
     </div>
 
     {{-- ============================== 4. DATA TABLE ============================== --}}
@@ -232,7 +250,7 @@
                         <th class="px-3.5 py-3.5">Status Penempatan</th>
                         <th class="px-3.5 py-3.5">Lokasi / Tgl Penempatan</th>
                         <th class="px-3.5 py-3.5">Keterangan</th>
-                        <th class="px-3.5 py-3.5">Kategori</th>
+                        <th class="px-3.5 py-3.5">Jenis Kategori</th>
                         <th class="px-3.5 py-3.5 text-right w-24">Aksi</th>
                     </tr>
                 </thead>
@@ -287,7 +305,7 @@
                                 <div class="font-bold text-slate-800">{{ $item->lokasi_penempatan ?: '-' }}</div>
                                 @if($item->tanggal_penempatan)
                                     <div class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-1">
-                                        <i data-lucide="calendar" class="w-3 h-3 text-slate-400"></i>
+                                        <i data-lucide="calendar" class="w-3.5 h-3.5 text-slate-400"></i>
                                         <span>{{ $item->tanggal_penempatan->format('d/m/Y') }}</span>
                                     </div>
                                 @endif
@@ -298,10 +316,10 @@
                                 <div class="truncate" title="{{ $item->keterangan }}">{{ $item->keterangan ?: '-' }}</div>
                             </td>
 
-                            {{-- Kategori --}}
+                            {{-- Jenis Kategori --}}
                             <td class="px-3.5 py-3.5">
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                                    {{ $item->kategori ?: '-' }}
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                    {{ $item->jenis_kategori ?: '-' }}
                                 </span>
                             </td>
 
@@ -400,9 +418,18 @@
                     <input type="date" name="tanggal_penempatan" class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium bg-white">
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kategori</label>
-                    <input type="text" name="kategori" placeholder="Contoh: ESTATE TAHUN 2026, Mill tahun 2026" class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium">
-                    <p class="text-[11px] text-slate-400 mt-1">Clue: ESTATE TAHUN 2026, Mill tahun 2026</p>
+                    <label class="block font-bold text-slate-700 mb-1">Tahun <span class="text-red-500">*</span></label>
+                    <input type="number" name="tahun" value="{{ date('Y') }}" min="2000" max="2100" required class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Jenis Kategori <span class="text-red-500">*</span></label>
+                    <select name="jenis_kategori" required class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium bg-white">
+                        <option value="Estate">Estate</option>
+                        <option value="Mill">Mill</option>
+                        <option value="Traksi">Traksi</option>
+                        <option value="Administrasi">Administrasi</option>
+                        <option value="Downstream">Downstream</option>
+                    </select>
                 </div>
             </div>
 
@@ -479,9 +506,18 @@
                     <input type="date" name="tanggal_penempatan" id="edit_tanggal_penempatan" class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium bg-white">
                 </div>
                 <div>
-                    <label class="block font-bold text-slate-700 mb-1">Kategori</label>
-                    <input type="text" name="kategori" id="edit_kategori" placeholder="Contoh: ESTATE TAHUN 2026, Mill tahun 2026" class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium">
-                    <p class="text-[11px] text-slate-400 mt-1">Clue: ESTATE TAHUN 2026, Mill tahun 2026</p>
+                    <label class="block font-bold text-slate-700 mb-1">Tahun <span class="text-red-500">*</span></label>
+                    <input type="number" name="tahun" id="edit_tahun" min="2000" max="2100" required class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-700 mb-1">Jenis Kategori <span class="text-red-500">*</span></label>
+                    <select name="jenis_kategori" id="edit_jenis_kategori" required class="w-full px-3 py-2 border border-slate-200 rounded-xl outline-none focus:border-green-600 font-medium bg-white">
+                        <option value="Estate">Estate</option>
+                        <option value="Mill">Mill</option>
+                        <option value="Traksi">Traksi</option>
+                        <option value="Administrasi">Administrasi</option>
+                        <option value="Downstream">Downstream</option>
+                    </select>
                 </div>
             </div>
 
@@ -580,7 +616,78 @@
 </div>
 
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('chartTargetPosisi');
+        if (ctx) {
+            const chartLabels = {!! json_encode($chartLabels) !!};
+            const chartData = {!! json_encode($chartTotals) !!};
+
+            if (chartLabels.length > 0) {
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            label: 'Jumlah Kandidat',
+                            data: chartData,
+                            backgroundColor: '#4B6A34',
+                            hoverBackgroundColor: '#3d562a',
+                            borderRadius: 6,
+                            borderSkipped: false,
+                            maxBarThickness: 45
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                backgroundColor: '#0f172a',
+                                titleFont: { size: 12, weight: 'bold' },
+                                bodyFont: { size: 12 },
+                                padding: 10,
+                                cornerRadius: 8,
+                                callbacks: {
+                                    label: function(context) {
+                                        return ' ' + context.parsed.y + ' Kandidat';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0,
+                                    font: { size: 11, weight: '500' },
+                                    color: '#64748b'
+                                },
+                                grid: {
+                                    color: '#f1f5f9'
+                                }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: {
+                                    font: { size: 11, weight: '600' },
+                                    color: '#334155',
+                                    maxRotation: 30,
+                                    minRotation: 0,
+                                    autoSkip: false
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+    });
+
     function openAddModal() {
         document.getElementById('modalAdd').classList.remove('hidden');
     }
@@ -599,7 +706,8 @@
         document.getElementById('edit_status').value = item.status || 'Belum Penempatan';
         document.getElementById('edit_lokasi_penempatan').value = item.lokasi_penempatan || '';
         document.getElementById('edit_tanggal_penempatan').value = item.tanggal_penempatan ? item.tanggal_penempatan.substring(0, 10) : '';
-        document.getElementById('edit_kategori').value = item.kategori || '';
+        document.getElementById('edit_tahun').value = item.tahun || '';
+        document.getElementById('edit_jenis_kategori').value = item.jenis_kategori || 'Estate';
         document.getElementById('edit_keterangan').value = item.keterangan || '';
         document.getElementById('modalEdit').classList.remove('hidden');
     }

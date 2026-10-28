@@ -19,24 +19,6 @@
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #9CA3AF;
         }
-        .sticky-col-first {
-            position: sticky;
-            left: 0;
-            z-index: 20;
-            background-color: inherit;
-        }
-        .sticky-col-second {
-            position: sticky;
-            left: 56px;
-            z-index: 20;
-            background-color: inherit;
-        }
-        .sticky-col-third {
-            position: sticky;
-            left: 176px;
-            z-index: 20;
-            background-color: inherit;
-        }
     </style>
     @endpush
 
@@ -137,8 +119,65 @@
             </div>
         </div>
 
-        <!-- 2. Ringkasan Statistik (Stats Cards PHP) -->
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-3.5 sm:gap-4">
+        <!-- 2. Filter & Search Bar -->
+        <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs">
+            <form action="{{ route('administrasi.profil-trainee.index') }}" method="GET" class="space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                    <!-- Search Input -->
+                    <div class="relative lg:col-span-2">
+                        <i data-lucide="search" class="w-4 h-4 text-[#A1A1AA] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="text"
+                               name="search"
+                               value="{{ $search }}"
+                               placeholder="Cari ID, Nama, Jabatan, Kampus, Jurusan..."
+                               class="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#509c38]/20 focus:border-[#509c38] transition-all text-[#18181B] placeholder-[#A1A1AA]">
+                    </div>
+
+                    <!-- Filter Nama Jabatan -->
+                    <div>
+                        <select name="nama_jabatan"
+                                onchange="this.form.submit()"
+                                class="w-full px-3 py-2 text-xs sm:text-sm bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#509c38]/20 focus:border-[#509c38] text-[#18181B] transition-all cursor-pointer">
+                            <option value="">Semua Jabatan</option>
+                            @foreach($jabatanList as $j)
+                                <option value="{{ $j }}" {{ $filterJabatan === $j ? 'selected' : '' }}>{{ $j }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Filter Tahun Lulusan -->
+                    <div>
+                        <select name="tahun_lulusan"
+                                onchange="this.form.submit()"
+                                class="w-full px-3 py-2 text-xs sm:text-sm bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#509c38]/20 focus:border-[#509c38] text-[#18181B] transition-all cursor-pointer">
+                            <option value="">Semua Tahun Lulusan</option>
+                            @foreach($years as $y)
+                                <option value="{{ $y }}" {{ ((string)$filterTahunLulus === (string)$y) ? 'selected' : '' }}>{{ $y }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <!-- Action: Cari & Reset -->
+                    <div class="flex items-center gap-2">
+                        <button type="submit"
+                                class="flex-1 bg-[#18181B] hover:bg-black text-white text-xs sm:text-sm font-medium py-2 px-3 rounded-xl transition-colors flex items-center justify-center gap-1.5 shadow-2xs">
+                            <i data-lucide="search" class="w-3.5 h-3.5"></i>
+                            <span>Cari</span>
+                        </button>
+                        @if($search !== '' || $filterGender !== '' || $filterUniversitas !== '' || $filterTahunLulus !== '' || $filterJabatan !== '')
+                            <a href="{{ route('administrasi.profil-trainee.index') }}"
+                               class="p-2 border border-[#E5E7EB] rounded-xl text-[#71717A] hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition-colors shadow-2xs"
+                               title="Reset Semua Filter">
+                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            </a>
+                        @endif
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- 3. Ringkasan Statistik (Stats Cards PHP) -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
             <!-- Card 1: Total Trainee -->
             <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs relative overflow-hidden">
                 <div class="flex items-center justify-between mb-2">
@@ -180,89 +219,97 @@
                     <span class="text-xs text-[#71717A]">Tahun</span>
                 </div>
             </div>
-
-            <!-- Card 4: Proporsi Gender -->
-            <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs relative overflow-hidden">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Distribusi Gender</span>
-                    <span class="p-1.5 rounded-lg bg-purple-50 text-purple-600">
-                        <i data-lucide="user-check" class="w-4 h-4"></i>
-                    </span>
-                </div>
-                <div class="text-sm font-semibold text-[#18181B] flex items-center gap-2">
-                    <span class="text-blue-600">{{ $stats['count_laki'] }} L</span>
-                    <span class="text-[#D4D4D8]">|</span>
-                    <span class="text-pink-600">{{ $stats['count_perempuan'] }} P</span>
-                </div>
-            </div>
-
-            <!-- Card 5: Asal Kampus -->
-            <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs relative overflow-hidden col-span-2 md:col-span-1">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="text-[11px] font-bold uppercase tracking-wider text-[#71717A]">Asal Kampus</span>
-                    <span class="p-1.5 rounded-lg bg-indigo-50 text-indigo-600">
-                        <i data-lucide="graduation-cap" class="w-4 h-4"></i>
-                    </span>
-                </div>
-                <div class="flex items-baseline gap-1.5">
-                    <h3 class="text-2xl font-bold text-indigo-600">{{ $stats['total_universitas'] }}</h3>
-                    <span class="text-xs text-[#71717A]">Universitas</span>
-                </div>
-            </div>
         </div>
 
-        <!-- 3. Filter & Search Bar -->
-        <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs">
-            <form action="{{ route('administrasi.profil-trainee.index') }}" method="GET" class="space-y-3">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-                    <!-- Search Input -->
-                    <div class="relative lg:col-span-2">
-                        <i data-lucide="search" class="w-4 h-4 text-[#A1A1AA] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                        <input type="text"
-                               name="search"
-                               value="{{ $search }}"
-                               placeholder="Cari ID, Nama, Jabatan, Kampus, Jurusan..."
-                               class="w-full pl-10 pr-4 py-2 text-xs sm:text-sm bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#509c38]/20 focus:border-[#509c38] transition-all text-[#18181B] placeholder-[#A1A1AA]">
-                    </div>
-
-                    <!-- Filter Gender -->
-                    <div>
-                        <select name="gender"
-                                class="w-full px-3 py-2 text-xs sm:text-sm bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#509c38]/20 focus:border-[#509c38] text-[#18181B] transition-all">
-                            <option value="">Semua Gender</option>
-                            <option value="Laki-laki" {{ $filterGender === 'Laki-laki' ? 'selected' : '' }}>Laki-laki</option>
-                            <option value="Perempuan" {{ $filterGender === 'Perempuan' ? 'selected' : '' }}>Perempuan</option>
-                        </select>
-                    </div>
-
-                    <!-- Filter Universitas -->
-                    <div>
-                        <select name="universitas"
-                                class="w-full px-3 py-2 text-xs sm:text-sm bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#509c38]/20 focus:border-[#509c38] text-[#18181B] transition-all">
-                            <option value="">Semua Universitas</option>
-                            @foreach($universities as $u)
-                                <option value="{{ $u }}" {{ $filterUniversitas === $u ? 'selected' : '' }}>{{ $u }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <!-- Action Filter / Reset -->
-                    <div class="flex items-center gap-2">
-                        <button type="submit"
-                                class="flex-1 bg-[#18181B] hover:bg-black text-white text-xs sm:text-sm font-medium py-2 px-3 rounded-xl transition-colors flex items-center justify-center gap-1.5">
-                            <i data-lucide="filter" class="w-3.5 h-3.5"></i>
-                            <span>Filter</span>
-                        </button>
-                        @if($search !== '' || $filterGender !== '' || $filterUniversitas !== '' || $filterTahunLulus !== '' || $filterJabatan !== '')
-                            <a href="{{ route('administrasi.profil-trainee.index') }}"
-                               class="p-2 border border-[#E5E7EB] rounded-xl text-[#71717A] hover:bg-[#F4F4F5] hover:text-[#18181B] transition-colors"
-                               title="Reset Filter">
-                                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                            </a>
-                        @endif
-                    </div>
+        <!-- 2.5 Ringkasan Grafik Demografi -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3.5 sm:gap-4">
+            <!-- Chart 1: Asal Universitas (Horizontal Bar) -->
+            <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2 pb-2 border-b border-[#F4F4F5]">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-[#18181B] flex items-center gap-1.5">
+                        <i data-lucide="graduation-cap" class="w-4 h-4 text-[#509c38]"></i>
+                        <span>Asal Universitas</span>
+                    </h4>
+                    <span class="text-[10px] font-bold text-[#509c38] bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-md">{{ count($chartUniversitas['labels']) }} Kampus</span>
                 </div>
-            </form>
+                @if(count($chartUniversitas['labels']) > 0)
+                    <div class="h-56 w-full overflow-y-auto pr-1">
+                        <div style="height: {{ max(220, count($chartUniversitas['labels']) * 28) }}px;" class="w-full relative">
+                            <canvas id="chartUniversitas"></canvas>
+                        </div>
+                    </div>
+                @else
+                    <div class="h-56 flex flex-col items-center justify-center text-[#A1A1AA] bg-[#F9FAFB] rounded-xl border border-dashed border-[#E5E7EB]">
+                        <i data-lucide="bar-chart-2" class="w-6 h-6 text-[#D4D4D8] mb-1"></i>
+                        <span class="text-xs">Belum ada data universitas</span>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Chart 2: Pekerjaan Orang Tua (Doughnut) -->
+            <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2 pb-2 border-b border-[#F4F4F5]">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-[#18181B] flex items-center gap-1.5">
+                        <i data-lucide="briefcase" class="w-4 h-4 text-amber-600"></i>
+                        <span>Pekerjaan Orang Tua</span>
+                    </h4>
+                    <span class="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 px-2 py-0.5 rounded-md">{{ count($chartPekerjaanOrtu['labels']) }} Kategori</span>
+                </div>
+                @if(count($chartPekerjaanOrtu['labels']) > 0)
+                    <div class="h-56 w-full relative">
+                        <canvas id="chartPekerjaanOrtu"></canvas>
+                    </div>
+                @else
+                    <div class="h-56 flex flex-col items-center justify-center text-[#A1A1AA] bg-[#F9FAFB] rounded-xl border border-dashed border-[#E5E7EB]">
+                        <i data-lucide="pie-chart" class="w-6 h-6 text-[#D4D4D8] mb-1"></i>
+                        <span class="text-xs">Belum ada data pekerjaan ortu</span>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Chart 3: Distribusi Suku (Doughnut) -->
+            <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2 pb-2 border-b border-[#F4F4F5]">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-[#18181B] flex items-center gap-1.5">
+                        <i data-lucide="users" class="w-4 h-4 text-purple-600"></i>
+                        <span>Distribusi Suku</span>
+                    </h4>
+                    <span class="text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200/60 px-2 py-0.5 rounded-md">{{ count($chartSuku['labels']) }} Suku</span>
+                </div>
+                @if(count($chartSuku['labels']) > 0)
+                    <div class="h-56 w-full relative">
+                        <canvas id="chartSuku"></canvas>
+                    </div>
+                @else
+                    <div class="h-56 flex flex-col items-center justify-center text-[#A1A1AA] bg-[#F9FAFB] rounded-xl border border-dashed border-[#E5E7EB]">
+                        <i data-lucide="pie-chart" class="w-6 h-6 text-[#D4D4D8] mb-1"></i>
+                        <span class="text-xs">Belum ada data suku</span>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Chart 4: Kota / Provinsi Asal (Horizontal Bar) -->
+            <div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 shadow-2xs flex flex-col justify-between">
+                <div class="flex items-center justify-between mb-2 pb-2 border-b border-[#F4F4F5]">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-[#18181B] flex items-center gap-1.5">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-sky-600"></i>
+                        <span>Kota / Provinsi Asal</span>
+                    </h4>
+                    <span class="text-[10px] font-bold text-sky-700 bg-sky-50 border border-sky-200/60 px-2 py-0.5 rounded-md">{{ count($chartProvinsi['labels']) }} Daerah</span>
+                </div>
+                @if(count($chartProvinsi['labels']) > 0)
+                    <div class="h-56 w-full overflow-y-auto pr-1">
+                        <div style="height: {{ max(220, count($chartProvinsi['labels']) * 28) }}px;" class="w-full relative">
+                            <canvas id="chartProvinsi"></canvas>
+                        </div>
+                    </div>
+                @else
+                    <div class="h-56 flex flex-col items-center justify-center text-[#A1A1AA] bg-[#F9FAFB] rounded-xl border border-dashed border-[#E5E7EB]">
+                        <i data-lucide="bar-chart-2" class="w-6 h-6 text-[#D4D4D8] mb-1"></i>
+                        <span class="text-xs">Belum ada data kota/provinsi</span>
+                    </div>
+                @endif
+            </div>
         </div>
 
         <!-- 4. Table Section -->
@@ -271,9 +318,9 @@
                 <table class="w-full text-left text-xs text-[#18181B] border-collapse min-w-[1300px]">
                     <thead class="bg-[#F9FAFB] text-[#71717A] text-[11px] uppercase font-bold tracking-wider border-b border-[#E5E7EB]">
                         <tr>
-                            <th class="py-3 px-3 text-center w-12 sticky-col-first bg-[#F9FAFB]">No</th>
-                            <th class="py-3 px-3 w-32 sticky-col-second bg-[#F9FAFB]">Trainee ID</th>
-                            <th class="py-3 px-4 min-w-[180px] sticky-col-third bg-[#F9FAFB]">Nama Trainee</th>
+                            <th class="py-3 px-3 text-center w-12 bg-[#F9FAFB]">No</th>
+                            <th class="py-3 px-3 w-32 bg-[#F9FAFB]">Trainee ID</th>
+                            <th class="py-3 px-4 min-w-[180px] bg-[#F9FAFB]">Nama Trainee</th>
                             <th class="py-3 px-4 min-w-[160px]">Nama Jabatan</th>
                             <th class="py-3 px-4 min-w-[180px]">Asal Universitas</th>
                             <th class="py-3 px-4 min-w-[160px]">Jurusan</th>
@@ -283,22 +330,21 @@
                             <th class="py-3 px-3 text-center">IPK</th>
                             <th class="py-3 px-4 min-w-[160px]">Domisili Asal</th>
                             <th class="py-3 px-3 text-center">TB / BB</th>
-                            <th class="py-3 px-3 text-center">Kesehatan</th>
-                            <th class="py-3 px-4 text-center sticky right-0 bg-[#F9FAFB] z-20 min-w-[110px]">Aksi</th>
+                            <th class="py-3 px-4 text-center min-w-[110px]">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-[#E5E7EB]">
                         @forelse($trainees as $index => $t)
                             <tr class="hover:bg-[#F4F4F5]/60 transition-colors group">
-                                <td class="py-3.5 px-3 text-center text-[#71717A] sticky-col-first bg-white group-hover:bg-[#F4F4F5]">
+                                <td class="py-3.5 px-3 text-center text-[#71717A]">
                                     {{ $trainees->firstItem() + $index }}
                                 </td>
-                                <td class="py-3.5 px-3 font-semibold text-[#509c38] sticky-col-second bg-white group-hover:bg-[#F4F4F5]">
+                                <td class="py-3.5 px-3 font-semibold text-[#509c38]">
                                     <span class="inline-block px-2 py-0.5 rounded-md bg-emerald-50 border border-emerald-200 text-[11px]">
                                         {{ $t->trainee_id ?? '-' }}
                                     </span>
                                 </td>
-                                <td class="py-3.5 px-4 font-semibold text-[#18181B] sticky-col-third bg-white group-hover:bg-[#F4F4F5]">
+                                <td class="py-3.5 px-4 font-semibold text-[#18181B]">
                                     <button type="button" onclick="openDetailModal({{ $t->id }})" class="hover:text-[#509c38] text-left">
                                         {{ $t->nama_trainee }}
                                     </button>
@@ -348,18 +394,7 @@
                                 <td class="py-3.5 px-3 text-center text-[#52525B] whitespace-nowrap">
                                     {{ $t->tinggi_badan ? $t->tinggi_badan . 'cm' : '-' }} / {{ $t->berat_badan ? $t->berat_badan . 'kg' : '-' }}
                                 </td>
-                                <td class="py-3.5 px-3 text-center">
-                                    @if(strtolower(trim($t->riwayat_kesehatan ?? '')) === 'ada' || (!empty($t->riwayat_kesehatan) && strtolower($t->riwayat_kesehatan) !== 'tidak ada'))
-                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200" title="{{ $t->catatan_riwayat_kesehatan }}">
-                                            Ada Catatan
-                                        </span>
-                                    @else
-                                        <span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                                            Sehat
-                                        </span>
-                                    @endif
-                                </td>
-                                <td class="py-3.5 px-4 text-center sticky right-0 bg-white group-hover:bg-[#F4F4F5] z-10">
+                                <td class="py-3.5 px-4 text-center">
                                     <div class="flex items-center justify-center gap-1.5">
                                         <!-- Detail Button -->
                                         <button type="button" onclick="openDetailModal({{ $t->id }})"
@@ -386,7 +421,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="14" class="py-12 text-center text-[#71717A]">
+                                <td colspan="13" class="py-12 text-center text-[#71717A]">
                                     <div class="flex flex-col items-center justify-center gap-2">
                                         <i data-lucide="inbox" class="w-10 h-10 text-[#D4D4D8]"></i>
                                         <span class="text-sm font-medium">Belum ada data Profil Trainee.</span>
@@ -1265,6 +1300,222 @@
                     el.classList.add('hidden');
                 }
             });
+        });
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const extendedPalette1 = [
+                '#4B6A34', '#0284c7', '#f59e0b', '#ec4899', '#8b5cf6',
+                '#10b981', '#6366f1', '#14b8a6', '#f97316', '#06b6d4',
+                '#84cc16', '#a855f7', '#e11d48', '#3b82f6', '#d97706',
+                '#059669', '#0d9488', '#475569', '#64748b', '#78716c'
+            ];
+            const extendedPalette2 = [
+                '#059669', '#3b82f6', '#d97706', '#7c3aed', '#db2777',
+                '#06b6d4', '#4B6A34', '#10b981', '#f59e0b', '#8b5cf6',
+                '#ec4899', '#6366f1', '#14b8a6', '#f97316', '#84cc16',
+                '#a855f7', '#e11d48', '#475569', '#64748b', '#78716c'
+            ];
+            function getColors(palette, count) {
+                const colors = [];
+                for (let i = 0; i < count; i++) {
+                    colors.push(palette[i % palette.length]);
+                }
+                return colors;
+            }
+
+            // 1. Chart Asal Universitas (Horizontal Bar)
+            const ctxUniv = document.getElementById('chartUniversitas');
+            if (ctxUniv) {
+                const labelsUniv = {!! json_encode($chartUniversitas['labels']) !!};
+                const dataUniv = {!! json_encode($chartUniversitas['data']) !!};
+                if (labelsUniv.length > 0) {
+                    new Chart(ctxUniv, {
+                        type: 'bar',
+                        data: {
+                            labels: labelsUniv,
+                            datasets: [{
+                                label: 'Jumlah Trainee',
+                                data: dataUniv,
+                                backgroundColor: '#509c38',
+                                hoverBackgroundColor: '#43832f',
+                                borderRadius: 6,
+                                maxBarThickness: 22
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: '#18181B',
+                                    padding: 8,
+                                    cornerRadius: 6,
+                                    callbacks: {
+                                        label: function(ctx) { return ' ' + ctx.parsed.x + ' Trainee'; }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    ticks: { precision: 0, font: { size: 10 } },
+                                    grid: { color: '#F4F4F5' }
+                                },
+                                y: {
+                                    grid: { display: false },
+                                    ticks: { font: { size: 10, weight: '600' }, color: '#3f3f46' }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // 2. Chart Pekerjaan Orang Tua (Doughnut)
+            const ctxOrtu = document.getElementById('chartPekerjaanOrtu');
+            if (ctxOrtu) {
+                const labelsOrtu = {!! json_encode($chartPekerjaanOrtu['labels']) !!};
+                const dataOrtu = {!! json_encode($chartPekerjaanOrtu['data']) !!};
+                if (labelsOrtu.length > 0) {
+                    new Chart(ctxOrtu, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labelsOrtu,
+                            datasets: [{
+                                data: dataOrtu,
+                                backgroundColor: getColors(extendedPalette1, labelsOrtu.length),
+                                borderWidth: 2,
+                                borderColor: '#ffffff',
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '62%',
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        boxWidth: 8,
+                                        padding: 6,
+                                        font: { size: 9.5, weight: '500' },
+                                        color: '#3f3f46'
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: '#18181B',
+                                    padding: 8,
+                                    cornerRadius: 6,
+                                    callbacks: {
+                                        label: function(ctx) { return ' ' + ctx.label + ': ' + ctx.parsed + ' Orang'; }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // 3. Chart Suku (Doughnut)
+            const ctxSuku = document.getElementById('chartSuku');
+            if (ctxSuku) {
+                const labelsSuku = {!! json_encode($chartSuku['labels']) !!};
+                const dataSuku = {!! json_encode($chartSuku['data']) !!};
+                if (labelsSuku.length > 0) {
+                    new Chart(ctxSuku, {
+                        type: 'doughnut',
+                        data: {
+                            labels: labelsSuku,
+                            datasets: [{
+                                data: dataSuku,
+                                backgroundColor: getColors(extendedPalette2, labelsSuku.length),
+                                borderWidth: 2,
+                                borderColor: '#ffffff',
+                                hoverOffset: 4
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            cutout: '62%',
+                            plugins: {
+                                legend: {
+                                    position: 'right',
+                                    labels: {
+                                        boxWidth: 8,
+                                        padding: 6,
+                                        font: { size: 9.5, weight: '500' },
+                                        color: '#3f3f46'
+                                    }
+                                },
+                                tooltip: {
+                                    backgroundColor: '#18181B',
+                                    padding: 8,
+                                    cornerRadius: 6,
+                                    callbacks: {
+                                        label: function(ctx) { return ' ' + ctx.label + ': ' + ctx.parsed + ' Orang'; }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+
+            // 4. Chart Kota / Provinsi Asal (Horizontal Bar)
+            const ctxProv = document.getElementById('chartProvinsi');
+            if (ctxProv) {
+                const labelsProv = {!! json_encode($chartProvinsi['labels']) !!};
+                const dataProv = {!! json_encode($chartProvinsi['data']) !!};
+                if (labelsProv.length > 0) {
+                    new Chart(ctxProv, {
+                        type: 'bar',
+                        data: {
+                            labels: labelsProv,
+                            datasets: [{
+                                label: 'Jumlah Trainee',
+                                data: dataProv,
+                                backgroundColor: '#0284c7',
+                                hoverBackgroundColor: '#0369a1',
+                                borderRadius: 6,
+                                maxBarThickness: 22
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: '#18181B',
+                                    padding: 8,
+                                    cornerRadius: 6,
+                                    callbacks: {
+                                        label: function(ctx) { return ' ' + ctx.parsed.x + ' Trainee'; }
+                                    }
+                                }
+                            },
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    ticks: { precision: 0, font: { size: 10 } },
+                                    grid: { color: '#F4F4F5' }
+                                },
+                                y: {
+                                    grid: { display: false },
+                                    ticks: { font: { size: 10, weight: '600' }, color: '#3f3f46' }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
         });
     </script>
     @endpush

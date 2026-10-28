@@ -18,14 +18,124 @@ class TalentPoolController extends Controller
      */
     public function index(Request $request)
     {
-        $kategori = trim((string) $request->input('kategori', 'all'));
+        $rawYear = $request->input('year', 'all');
+        $year = ($rawYear === 'all' || $rawYear === '' || $rawYear === '0') ? 'all' : (int) $rawYear;
+        $jenisKategori = trim((string) $request->input('jenis_kategori', 'all'));
         $status = trim((string) $request->input('status', 'all'));
         $region = trim((string) $request->input('region', 'all'));
         $talentTo = trim((string) $request->input('talent_to', 'all'));
         $search = trim((string) $request->input('search', ''));
 
+        // Base Scoped Query for Dependent Filter Options & Counts (Year, Region, Status)
+        $baseScopeQuery = TalentPool::query()
+            ->year($year)
+            ->region($region)
+            ->status($status);
+
+        if ($search !== '') {
+            $baseScopeQuery->where(function ($q) use ($search) {
+                $q->where('employee_name', 'like', "%{$search}%")
+                    ->orWhere('employee_id', 'like', "%{$search}%")
+                    ->orWhere('posisi_asal', 'like', "%{$search}%")
+                    ->orWhere('unit', 'like', "%{$search}%")
+                    ->orWhere('mentor_lapangan', 'like', "%{$search}%")
+                    ->orWhere('mentor_frlc', 'like', "%{$search}%")
+                    ->orWhere('keterangan', 'like', "%{$search}%")
+                    ->orWhere('lokasi_penempatan', 'like', "%{$search}%");
+            });
+        }
+
+        // Available Years
+        $dbYears = TalentPool::distinct()->pluck('tahun')->filter()->map(fn ($y) => (int) $y)->unique()->sort()->values()->all();
+        $curYear = (int) date('Y');
+        $years = collect([$curYear - 2, $curYear - 1, $curYear, $curYear + 1])
+            ->merge($dbYears)
+            ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+
+        // Available Jenis Kategori
+        $defaultJenis = ['Estate', 'Mill', 'Traksi', 'Administrasi', 'Downstream'];
+        $dbJenis = TalentPool::distinct()->pluck('jenis_kategori')->filter()->values();
+        $jenisKategoriList = collect($defaultJenis)->merge($dbJenis)->unique()->values()->all();
+
+        // Counts for Jenis Kategori within active Year, Region & Status
+        $totalAllJenis = (clone $baseScopeQuery)->count();
+        $jenisCounts = [];
+        foreach ($jenisKategoriList as $jk) {
+            $jenisCounts[$jk] = (clone $baseScopeQuery)->jenisKategori($jk)->count();
+        }
+
+        // 1. Available Target Posisi (talent_to): Dynamically scoped by active filters (Status, Year, Jenis Kategori, Region)
+        $talentToScopeQuery = TalentPool::query()
+            ->year($year)
+            ->region($region)
+            ->jenisKategori($jenisKategori);
+
+        if ($status !== 'all' && $status !== '') {
+            $talentToScopeQuery->status($status);
+        }
+
+        $talentToList = $talentToScopeQuery
+            ->whereNotNull('talent_to')
+            ->where('talent_to', '!=', '')
+            ->distinct()
+            ->orderBy('talent_to')
+            ->pluck('talent_to')
+            ->values();
+
+        // Reset talent_to to 'all' if selected option is not available under the active filters
+        if ($talentTo !== 'all' && $talentTo !== '' && ! $talentToList->contains($talentTo)) {
+            $talentTo = 'all';
+        }
+
+        // 2. Available Status: Dynamically scoped by active filters (Year, Jenis Kategori, Region, talent_to)
+        $statusScopeQuery = TalentPool::query()
+            ->year($year)
+            ->region($region)
+            ->jenisKategori($jenisKategori);
+
+        if ($talentTo !== 'all' && $talentTo !== '') {
+            $statusScopeQuery->where('talent_to', $talentTo);
+        }
+
+        $statusList = $statusScopeQuery
+            ->whereNotNull('status')
+            ->where('status', '!=', '')
+            ->distinct()
+            ->pluck('status')
+            ->values();
+
+        if ($statusList->isEmpty()) {
+            $statusList = collect(['Sudah penempatan', 'Belum Penempatan']);
+        }
+
+        // Reset status to 'all' if selected option is not available under the active filters
+        if ($status !== 'all' && $status !== '' && ! $statusList->contains($status)) {
+            $status = 'all';
+        }
+
+        // 3. Available Regions: Scoped by Year, Jenis Kategori, Status, talent_to
+        $regionScopeQuery = TalentPool::query()
+            ->year($year)
+            ->jenisKategori($jenisKategori)
+            ->status($status);
+
+        if ($talentTo !== 'all' && $talentTo !== '') {
+            $regionScopeQuery->where('talent_to', $talentTo);
+        }
+
+        $regions = RegionHelper::getCanonicalRegions($regionScopeQuery->distinct()->pluck('region'));
+        if ($region !== 'all' && $region !== '' && ! in_array($region, $regions, true)) {
+            $region = 'all';
+        }
+
+        // Query Utama for Table Data
         $query = TalentPool::query()
-            ->category($kategori)
+            ->year($year)
+            ->jenisKategori($jenisKategori)
             ->region($region)
             ->status($status);
 
@@ -47,13 +157,19 @@ class TalentPoolController extends Controller
             });
         }
 
-        // Base Scope Query for contextual counts
-        $baseScopeQuery = TalentPool::query()->region($region);
+        // Summary KPI Metrics
+        // Note: As requested, KPI Total Talent Pool only counts 'Belum Penempatan'
+        $kpiBaseQuery = TalentPool::query()
+            ->year($year)
+            ->region($region)
+            ->jenisKategori($jenisKategori);
+
         if ($talentTo !== 'all' && $talentTo !== '') {
-            $baseScopeQuery->where('talent_to', $talentTo);
+            $kpiBaseQuery->where('talent_to', $talentTo);
         }
+
         if ($search !== '') {
-            $baseScopeQuery->where(function ($q) use ($search) {
+            $kpiBaseQuery->where(function ($q) use ($search) {
                 $q->where('employee_name', 'like', "%{$search}%")
                     ->orWhere('employee_id', 'like', "%{$search}%")
                     ->orWhere('posisi_asal', 'like', "%{$search}%")
@@ -66,49 +182,77 @@ class TalentPoolController extends Controller
             });
         }
 
-        // Categories & category counts
-        $categories = TalentPool::distinct()->pluck('kategori')->filter()->values();
-        $categoryCounts = [];
-        $totalAllCategories = (clone $baseScopeQuery)->count();
-        foreach ($categories as $cat) {
-            $categoryCounts[$cat] = (clone $baseScopeQuery)->category($cat)->count();
+        if ($status !== 'all' && $status !== '') {
+            $kpiTalents = (clone $kpiBaseQuery)->status($status)->get();
+        } else {
+            $kpiTalents = (clone $kpiBaseQuery)->get();
         }
-
-        // Summary KPI Metrics
-        $kpiBaseQuery = (clone $baseScopeQuery)->category($kategori);
-        $kpiTalents = ($status !== 'all' && $status !== '')
-            ? (clone $kpiBaseQuery)->status($status)->get()
-            : (clone $kpiBaseQuery)->get();
-
-        $totalAll = $kpiTalents->count();
 
         $countSudah = $kpiTalents->filter(fn ($t) => strcasecmp(trim($t->status ?? ''), 'Sudah penempatan') === 0 || str_contains(strtolower($t->status ?? ''), 'sudah'))->count();
         $countBelum = $kpiTalents->filter(fn ($t) => strcasecmp(trim($t->status ?? ''), 'Belum Penempatan') === 0 || str_contains(strtolower($t->status ?? ''), 'belum'))->count();
-        $pctPenempatan = $totalAll > 0 ? round(($countSudah / $totalAll) * 100, 1) : 0;
 
-        // Filter Dropdowns
-        $regions = RegionHelper::getCanonicalRegions(TalentPool::distinct()->pluck('region'));
-        $talentToList = TalentPool::distinct()->pluck('talent_to')->filter()->values();
+        // Chart Metrics: Total count per Target Posisi (talent_to), obeying ALL active filters
+        $chartQuery = TalentPool::query()
+            ->year($year)
+            ->region($region)
+            ->jenisKategori($jenisKategori);
+
+        if ($status !== 'all' && $status !== '') {
+            $chartQuery->status($status);
+        }
+
+        if ($talentTo !== 'all' && $talentTo !== '') {
+            $chartQuery->where('talent_to', $talentTo);
+        }
+
+        if ($search !== '') {
+            $chartQuery->where(function ($q) use ($search) {
+                $q->where('employee_name', 'like', "%{$search}%")
+                    ->orWhere('employee_id', 'like', "%{$search}%")
+                    ->orWhere('posisi_asal', 'like', "%{$search}%")
+                    ->orWhere('talent_to', 'like', "%{$search}%")
+                    ->orWhere('unit', 'like', "%{$search}%")
+                    ->orWhere('mentor_lapangan', 'like', "%{$search}%")
+                    ->orWhere('mentor_frlc', 'like', "%{$search}%")
+                    ->orWhere('keterangan', 'like', "%{$search}%")
+                    ->orWhere('lokasi_penempatan', 'like', "%{$search}%");
+            });
+        }
+
+        $chartRows = $chartQuery
+            ->select('talent_to', DB::raw('count(*) as total'))
+            ->whereNotNull('talent_to')
+            ->where('talent_to', '!=', '')
+            ->groupBy('talent_to')
+            ->orderByDesc('total')
+            ->get();
+
+        $chartLabels = $chartRows->pluck('talent_to')->values()->all();
+        $chartTotals = $chartRows->pluck('total')->map(fn ($v) => (int) $v)->values()->all();
 
         $perPage = (int) $request->input('per_page', 25);
         $talents = $query->orderBy('no', 'asc')->paginate($perPage)->withQueryString();
 
         return view('Administrasi.Pages.Talent.talent_pool', compact(
             'talents',
-            'kategori',
+            'year',
+            'rawYear',
+            'years',
+            'jenisKategori',
+            'jenisKategoriList',
+            'jenisCounts',
+            'totalAllJenis',
             'status',
             'region',
             'talentTo',
             'search',
-            'totalAll',
-            'totalAllCategories',
             'countSudah',
             'countBelum',
-            'pctPenempatan',
-            'categoryCounts',
-            'categories',
             'regions',
-            'talentToList'
+            'talentToList',
+            'statusList',
+            'chartLabels',
+            'chartTotals'
         ));
     }
 
@@ -131,6 +275,8 @@ class TalentPoolController extends Controller
             'lokasi_penempatan' => 'nullable|string|max:255',
             'tanggal_penempatan' => 'nullable|date',
             'kategori' => 'nullable|string|max:255',
+            'tahun' => 'nullable|integer|min:2000|max:2100',
+            'jenis_kategori' => 'nullable|string|max:100',
         ];
     }
 
@@ -249,6 +395,10 @@ class TalentPoolController extends Controller
                 $headerMap['tanggal_penempatan'] = $idx;
             } elseif (in_array($clean, ['kategori', 'category', 'batch'])) {
                 $headerMap['kategori'] = $idx;
+            } elseif (in_array($clean, ['tahun', 'year', 'thn'])) {
+                $headerMap['tahun'] = $idx;
+            } elseif (in_array($clean, ['jenis kategori', 'jenis_kategori', 'jenis', 'tipe kategori', 'category type'])) {
+                $headerMap['jenis_kategori'] = $idx;
             }
         }
 
@@ -301,7 +451,37 @@ class TalentPoolController extends Controller
                 $keterangan = $getVal('keterangan', 10) ?: null;
                 $lokasiPenempatan = $getVal('lokasi_penempatan', 11) ?: null;
                 $tanggalPenempatan = $getVal('tanggal_penempatan', 12) ?: null;
-                $kategori = $getVal('kategori', 13) ?: ('TALENT POOL ' . date('Y'));
+                $kategori = $getVal('kategori', 13) ?: ('ESTATE TAHUN ' . date('Y'));
+
+                $rawTahun = $getVal('tahun', 14);
+                $tahun = (! empty($rawTahun) && is_numeric($rawTahun)) ? (int) $rawTahun : null;
+                $jenisKategori = $getVal('jenis_kategori', 15) ?: null;
+
+                if (! $tahun) {
+                    if (preg_match('/\b(20\d{2})\b/', $kategori, $m)) {
+                        $tahun = (int) $m[1];
+                    } elseif ($tanggalPenempatan) {
+                        $tahun = (int) date('Y', strtotime($tanggalPenempatan));
+                    } else {
+                        $tahun = (int) date('Y');
+                    }
+                }
+                if (! $jenisKategori) {
+                    $lowerCat = strtolower($kategori);
+                    if (str_contains($lowerCat, 'estate') || str_contains($lowerCat, 'kebun')) {
+                        $jenisKategori = 'Estate';
+                    } elseif (str_contains($lowerCat, 'mill') || str_contains($lowerCat, 'mil') || str_contains($lowerCat, 'pks')) {
+                        $jenisKategori = 'Mill';
+                    } elseif (str_contains($lowerCat, 'traksi')) {
+                        $jenisKategori = 'Traksi';
+                    } elseif (str_contains($lowerCat, 'administrasi') || str_contains($lowerCat, 'admin')) {
+                        $jenisKategori = 'Administrasi';
+                    } elseif (str_contains($lowerCat, 'downstream')) {
+                        $jenisKategori = 'Downstream';
+                    } else {
+                        $jenisKategori = 'Estate';
+                    }
+                }
 
                 $insertBatch[] = [
                     'no' => $no,
@@ -318,6 +498,8 @@ class TalentPoolController extends Controller
                     'lokasi_penempatan' => $lokasiPenempatan,
                     'tanggal_penempatan' => $tanggalPenempatan ? date('Y-m-d', strtotime($tanggalPenempatan)) : null,
                     'kategori' => $kategori,
+                    'tahun' => $tahun,
+                    'jenis_kategori' => $jenisKategori,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
@@ -353,15 +535,23 @@ class TalentPoolController extends Controller
      */
     public function export(Request $request)
     {
-        $kategori = trim((string) $request->input('kategori', 'all'));
+        $rawYear = $request->input('year', 'all');
+        $year = ($rawYear === 'all' || $rawYear === '' || $rawYear === '0') ? 'all' : (int) $rawYear;
+        $jenisKategori = trim((string) $request->input('jenis_kategori', 'all'));
         $status = trim((string) $request->input('status', 'all'));
         $region = trim((string) $request->input('region', 'all'));
+        $talentTo = trim((string) $request->input('talent_to', 'all'));
         $search = trim((string) $request->input('search', ''));
 
         $query = TalentPool::query()
-            ->category($kategori)
+            ->year($year)
+            ->jenisKategori($jenisKategori)
             ->region($region)
             ->status($status);
+
+        if ($talentTo !== 'all' && $talentTo !== '') {
+            $query->where('talent_to', $talentTo);
+        }
 
         if ($search !== '') {
             $query->where(function ($q) use ($search) {
@@ -388,7 +578,8 @@ class TalentPoolController extends Controller
             'Status Penempatan',
             'Lokasi Penempatan',
             'Tanggal Penempatan',
-            'Kategori',
+            'Tahun',
+            'Jenis Kategori',
             'Keterangan',
         ];
 
@@ -407,7 +598,8 @@ class TalentPoolController extends Controller
                 $r->status,
                 $r->lokasi_penempatan,
                 $r->tanggal_penempatan ? $r->tanggal_penempatan->format('d/m/Y') : '',
-                $r->kategori,
+                $r->tahun,
+                $r->jenis_kategori,
                 $r->keterangan,
             ];
         }
@@ -435,7 +627,8 @@ class TalentPoolController extends Controller
             'Status',
             'Lokasi Penempatan',
             'Tanggal Penempatan',
-            'Kategori',
+            'Tahun',
+            'Jenis Kategori',
             'Keterangan',
         ];
 
@@ -449,33 +642,33 @@ class TalentPoolController extends Controller
                 'Kebun Sukamaju',
                 'RIAU',
                 'Budi Santoso',
-                'Irfan Setiawan',
-                'Sudah penempatan',
-                'Kebun Sejahtera 1',
-                '2026-05-01',
-                'ESTATE TAHUN 2026',
-                'Penempatan definitif askep',
+                'FRLC Team',
+                'Belum Penempatan',
+                '-',
+                '',
+                2026,
+                'Estate',
+                'Kandidat berpotensi tinggi',
             ],
             [
                 2,
                 'EMP002',
-                'Siti Rahmawati',
-                'KTU',
-                'Staff Keuangan Kebun',
-                'PKS Makmur',
-                'KALBAR',
-                'Hendro Wijaya',
-                'Irfan Setiawan',
-                'Belum Penempatan',
-                '',
-                '',
-                'Mill tahun 2026',
-                'Siap penempatan Q3 2026',
+                'Siti Nurhaliza',
+                'KTU Mill',
+                'Mill Manager',
+                'PKS Lubuk Dalam',
+                'RIAU',
+                'Hendro W.',
+                'FRLC Team',
+                'Sudah penempatan',
+                'PKS Riau 2',
+                '2026-02-15',
+                2026,
+                'Mill',
+                'Telah promosi',
             ],
         ];
 
-        $filename = 'Template_Import_Talent_Pool.xlsx';
-
-        return ExcelExporter::download($filename, $headers, $sampleRows, 'Template Talent Pool');
+        return ExcelExporter::download('Template_Talent_Pool.xlsx', $headers, $sampleRows, 'Template Talent Pool');
     }
 }

@@ -250,6 +250,10 @@ Route::middleware('auth')->prefix('admin')->group(function () {
         Route::post('/program-menus/{menuId}/submenus/{subId}/delete', [PageSettingController::class, 'deleteProgramSubmenu'])->name('delete_program_submenu');
         Route::post('/program-menus/{menuId}/submenus/{subId}/toggle', [PageSettingController::class, 'toggleProgramSubmenu'])->name('toggle_program_submenu');
         Route::post('/program-menus/reset', [PageSettingController::class, 'resetProgramMenus'])->name('reset_program_menus');
+
+        // Manajemen Footer & Kontak Global
+        Route::post('/footer', [PageSettingController::class, 'updateFooter'])->name('update_footer');
+        Route::post('/footer/reset', [PageSettingController::class, 'resetFooter'])->name('reset_footer');
     });
 
     // Standar Kompetensi Management
