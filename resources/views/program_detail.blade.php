@@ -30,7 +30,7 @@
     <!-- ===================================================================== -->
     <!-- CONTENT SECTION                                                       -->
     <!-- ===================================================================== -->
-    <section class="py-12 lg:py-16 bg-white dark:bg-gray-950 transition-colors duration-300">
+    <section class="py-12 lg:py-16 bg-white dark:bg-gray-950 transition-colors duration-300" x-data="{ zoomModal: false }">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
             @php
@@ -41,10 +41,10 @@
                 <!-- ================================================================= -->
                 <!-- PROGRAM REGULER: STRICTLY FROM OFFICIAL POSTER                   -->
                 <!-- ================================================================= -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
                     
-                    <!-- Left Column: Deskripsi, Kurikulum, Objective (7 Cols) -->
-                    <div class="lg:col-span-7 space-y-6" data-aos="fade-up">
+                    <!-- Left Column: Deskripsi, Kurikulum, Objective (6 Cols) -->
+                    <div class="lg:col-span-6 space-y-6" data-aos="fade-up">
                         
                         <!-- 1. Deskripsi Program -->
                         <div class="p-6 sm:p-7 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
@@ -105,13 +105,19 @@
 
                     </div>
 
-                    <!-- Right Column: Poster Image & Metode Belajar (5 Cols) -->
-                    <div class="lg:col-span-5 space-y-6" data-aos="fade-up" data-aos-delay="100">
-                        <!-- Poster Image -->
-                        <div class="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-md bg-gray-50 dark:bg-gray-900 p-2">
-                            <img src="{{ asset($program['image']) }}" 
-                                 alt="Poster Resmi {{ $program['title'] }}" 
-                                 class="w-full h-auto object-contain rounded-xl shadow-inner">
+                    <!-- Right Column: Poster Image & Metode Belajar (6 Cols) -->
+                    <div class="lg:col-span-6 space-y-6 lg:sticky lg:top-24" data-aos="fade-up" data-aos-delay="100">
+                        <!-- Poster Image (Enlarged Card & Click to Zoom) -->
+                        <div class="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-xl bg-white dark:bg-gray-900 p-3 sm:p-4">
+                            <div class="relative group cursor-pointer rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center" @click="zoomModal = true">
+                                <img src="{{ asset($program['image']) }}" 
+                                     alt="Poster Resmi {{ $program['title'] }}" 
+                                     class="w-full h-auto min-h-[480px] sm:min-h-[560px] lg:min-h-[640px] max-h-[820px] object-contain rounded-xl shadow-inner transition duration-500 group-hover:scale-[1.02]">
+                                <div class="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white px-3 py-1.5 rounded-xl text-xs font-semibold backdrop-blur-sm transition flex items-center gap-1.5 shadow-md">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                                    Perbesar
+                                </div>
+                            </div>
                         </div>
 
                         <!-- 4. Metode Belajar (di bawah poster) -->
@@ -138,8 +144,8 @@
                 <!-- ================================================================= -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
                     
-                    <!-- Left Column: Deskripsi, Kurikulum, Benefit (7 Cols) -->
-                    <div class="lg:col-span-7 space-y-6" data-aos="fade-up">
+                    <!-- Left Column: Deskripsi, Kurikulum, Benefit (6 Cols) -->
+                    <div class="lg:col-span-6 space-y-6" data-aos="fade-up">
                         
                         <!-- 1. Deskripsi Program (Overview) -->
                         <div class="p-6 sm:p-7 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
@@ -190,18 +196,51 @@
 
                     </div>
 
-                    <!-- Right Column: Gambar Program Saja (5 Cols) -->
-                    <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-24" data-aos="fade-up" data-aos-delay="100">
-                        <div class="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-md bg-white dark:bg-gray-900 p-2">
-                            <img src="{{ asset($program['image'] ?? $program['hero_image']) }}" 
-                                 alt="{{ $program['title'] }}" 
-                                 class="w-full h-auto object-cover rounded-xl shadow-inner border border-gray-100 dark:border-gray-800">
+                    <!-- Right Column: Gambar Program Saja (Diperbesar 6 Cols & Tampilan Eksklusif) -->
+                    <div class="lg:col-span-6 space-y-6 lg:sticky lg:top-24" data-aos="fade-up" data-aos-delay="100">
+                        <div class="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-xl bg-white dark:bg-gray-900 p-3 sm:p-4">
+                            <div class="relative group cursor-pointer rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center" @click="zoomModal = true">
+                                <img src="{{ asset($program['image'] ?? $program['hero_image']) }}" 
+                                     alt="{{ $program['title'] }}" 
+                                     class="w-full h-auto min-h-[380px] sm:min-h-[460px] lg:min-h-[540px] xl:min-h-[580px] max-h-[660px] object-cover rounded-xl shadow-inner border border-gray-100 dark:border-gray-800 transition duration-500 group-hover:scale-[1.02]">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-4">
+                                    <span class="text-white text-xs font-semibold flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-sm">
+                                        <svg class="w-3.5 h-3.5 text-green-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
+                                        Klik untuk Perbesar
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
                 </div>
             @endif
 
+        </div>
+
+        <!-- Lightbox Modal untuk Zoom Gambar Layar Penuh -->
+        <div x-show="zoomModal" 
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0"
+             class="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md flex items-center justify-center p-4 sm:p-6" 
+             style="display: none;"
+             @keydown.escape.window="zoomModal = false">
+            <div @click.away="zoomModal = false" class="relative max-w-5xl w-full flex flex-col items-center">
+                <button @click="zoomModal = false" 
+                        type="button" 
+                        class="absolute -top-12 right-0 text-white/80 hover:text-white p-2 rounded-full bg-white/10 hover:bg-white/20 transition"
+                        title="Tutup">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+                <img src="{{ asset($program['image'] ?? $program['hero_image']) }}" 
+                     alt="{{ $program['title'] }}" 
+                     class="max-w-full max-h-[85vh] w-auto h-auto object-contain rounded-2xl shadow-2xl border border-white/10 bg-black/40">
+                <p class="text-white/90 text-sm mt-3 font-semibold">{{ $program['title'] }}</p>
+            </div>
         </div>
     </section>
 
