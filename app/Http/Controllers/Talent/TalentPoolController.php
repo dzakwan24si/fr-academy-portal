@@ -45,16 +45,20 @@ class TalentPoolController extends Controller
             });
         }
 
-        // Available Years
-        $dbYears = TalentPool::distinct()->pluck('tahun')->filter()->map(fn ($y) => (int) $y)->unique()->sort()->values()->all();
-        $curYear = (int) date('Y');
-        $years = collect([$curYear - 2, $curYear - 1, $curYear, $curYear + 1])
-            ->merge($dbYears)
+        // Available Years: strictly based on values existing in the database
+        $years = TalentPool::distinct()
+            ->pluck('tahun')
+            ->filter()
+            ->map(fn ($y) => (int) $y)
             ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
             ->unique()
             ->sort()
             ->values()
             ->all();
+
+        if (empty($years)) {
+            $years = [(int) date('Y')];
+        }
 
         // Available Jenis Kategori
         $defaultJenis = ['Estate', 'Mill', 'Traksi', 'Administrasi', 'Downstream'];
