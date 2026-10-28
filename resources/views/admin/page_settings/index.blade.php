@@ -1701,8 +1701,8 @@
                             <thead>
                                 <tr class="bg-gray-50/80 border-b border-gray-200 text-xs uppercase font-semibold text-gray-600 tracking-wider">
                                     <th class="px-6 py-4">Gambar</th>
-                                    <th class="px-6 py-4">Nama Program & Subtitle</th>
-                                    <th class="px-6 py-4">Format & Konten</th>
+                                    <th class="px-6 py-4">Nama Program</th>
+                                    <th class="px-6 py-4">Tipe Program</th>
                                     <th class="px-6 py-4 text-center">Status</th>
                                     <th class="px-6 py-4 text-right">Aksi</th>
                                 </tr>
@@ -1726,7 +1726,7 @@
                                             </div>
                                         </td>
 
-                                        <!-- Nama Program & Subtitle -->
+                                        <!-- Nama Program -->
                                         <td class="px-6 py-4">
                                             <div class="flex items-center gap-2">
                                                 <a href="{{ url('/program/' . $prog->slug) }}" target="_blank" class="font-bold text-gray-900 hover:text-[#509c38] transition leading-snug">
@@ -1737,54 +1737,16 @@
                                                 @endif
                                             </div>
                                             @if($prog->subtitle)
-                                                <p class="text-xs text-gray-500 mt-0.5 line-clamp-1">{{ $prog->subtitle }}</p>
+                                                <p class="text-xs text-gray-500 mt-1 line-clamp-1">{{ $prog->subtitle }}</p>
                                             @endif
-                                            <span class="text-[11px] text-gray-400 mt-0.5 block">Slug: <code>/program/{{ $prog->slug }}</code></span>
                                         </td>
 
-                                        <!-- Kategori & Format Program -->
+                                        <!-- Tipe Program -->
                                         <td class="px-6 py-4">
-                                            <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
-                                                @if($prog->is_reguler)
-                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800 border border-teal-200">
-                                                        <i data-lucide="award" class="w-3 h-3"></i>
-                                                        Program Reguler (Trainee)
-                                                    </span>
-                                                @else
-                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">
-                                                        <i data-lucide="file-text" class="w-3 h-3 text-teal-700"></i>
-                                                        Format Standar
-                                                    </span>
-                                                @endif
-
-                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-50 text-gray-600 border border-gray-200">
-                                                    {{ $prog->category_name ?? 'Program Pelatihan' }}
-                                                </span>
-                                            </div>
-
-                                            <div class="flex flex-wrap items-center gap-2 text-[11px]">
-                                                @php
-                                                    $kurCount = is_array($prog->curriculum_pillars) ? count($prog->curriculum_pillars) : 0;
-                                                    $objCount = is_array($prog->objectives) ? count($prog->objectives) : 0;
-                                                @endphp
-                                                @if($kurCount > 0)
-                                                    <span class="inline-flex items-center gap-1 text-emerald-700 font-medium">
-                                                        <i data-lucide="check" class="w-3 h-3 text-emerald-600"></i> Kurikulum ({{ $kurCount }})
-                                                    </span>
-                                                @else
-                                                    <span class="text-gray-400">- Kurikulum kosong</span>
-                                                @endif
-
-                                                <span class="text-gray-300">•</span>
-
-                                                @if($objCount > 0)
-                                                    <span class="inline-flex items-center gap-1 text-teal-700 font-medium">
-                                                        <i data-lucide="check" class="w-3 h-3 text-teal-600"></i> Benefit ({{ $objCount }})
-                                                    </span>
-                                                @else
-                                                    <span class="text-gray-400">- Benefit kosong</span>
-                                                @endif
-                                            </div>
+                                            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
+                                                <span class="w-1.5 h-1.5 rounded-full {{ $prog->is_reguler ? 'bg-emerald-500' : 'bg-teal-600' }}"></span>
+                                                {{ $prog->category_name ?? ($prog->is_reguler ? 'Program Trainee' : 'Program Pelatihan') }}
+                                            </span>
                                         </td>
 
                                         <!-- Status Aktif -->
