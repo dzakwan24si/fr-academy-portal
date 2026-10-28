@@ -449,6 +449,30 @@ class CutiController extends Controller
     }
 
     /**
+     * Remove all resources from storage.
+     */
+    public function destroyAll(Request $request)
+    {
+        $deleted = Cuti::query()->delete();
+
+        ActivityLog::log(
+            'Hapus',
+            'Cuti',
+            "Menghapus seluruh data cuti ({$deleted} data)",
+            ['count' => $deleted]
+        );
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Seluruh data Cuti ({$deleted} data) berhasil dihapus.",
+            ]);
+        }
+
+        return redirect()->route('administrasi.cuti.index')->with('success', "Seluruh data Cuti ({$deleted} data) berhasil dihapus.");
+    }
+
+    /**
      * Store new year navigation
      */
     public function storeYear(Request $request)

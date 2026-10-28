@@ -89,6 +89,13 @@
                 </label>
             </form>
 
+            <!-- Hapus Semua Data Button -->
+            <button type="button" onclick="openModal('modalDeleteAll')"
+                    class="bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 font-medium text-sm rounded-lg px-3.5 py-2 flex items-center gap-2 shadow-2xs transition-colors"
+                    title="Hapus semua data cuti">
+                <i data-lucide="trash-2" class="w-4 h-4 text-rose-600"></i> Hapus Semua
+            </button>
+
             <!-- Add Data Button -->
             <button onclick="openAddModal()"
                     class="bg-[#4B6A34] hover:bg-[#3d562a] text-white font-medium text-sm rounded-lg px-4 py-2 flex items-center gap-2 shadow-sm transition-colors">
@@ -911,6 +918,32 @@
                 </button>
                 <button type="submit" class="px-4 py-2 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-lg">
                     Ya, Hapus Data
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- 11. MODAL: DELETE ALL CONFIRMATION                       -->
+    <!-- ======================================================== -->
+    <div id="modalDeleteAll" class="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 text-center">
+            <div class="w-12 h-12 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center mx-auto mb-3">
+                <i data-lucide="alert-octagon" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-base font-bold text-[#18181B]">Hapus SEMUA Data Cuti?</h3>
+            <p class="text-xs text-[#71717A] mt-2 leading-relaxed">
+                Tindakan ini akan menghapus <strong>seluruh data cuti</strong> di database (semua tahun) secara permanen. Tindakan ini <strong>tidak dapat dibatalkan</strong>.
+            </p>
+
+            <form method="POST" action="{{ route('administrasi.cuti.destroyAll') }}" class="mt-5 flex items-center justify-center gap-2">
+                @csrf
+                @method('DELETE')
+                <button type="button" onclick="closeModal('modalDeleteAll')" class="px-4 py-2 text-xs font-medium text-[#71717A] hover:bg-[#F4F4F5] rounded-lg border border-[#E5E7EB]">
+                    Batal
+                </button>
+                <button type="submit" class="px-4 py-2 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-lg shadow-sm">
+                    Ya, Hapus Semua Data
                 </button>
             </form>
         </div>

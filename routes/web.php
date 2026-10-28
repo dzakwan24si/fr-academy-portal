@@ -347,6 +347,7 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
         Route::get('/template/download', [CutiController::class, 'downloadTemplate'])->name('template');
         Route::post('/year', [CutiController::class, 'storeYear'])->name('year');
         Route::get('/export/report', [CutiController::class, 'export'])->name('export');
+        Route::delete('/destroy-all', [CutiController::class, 'destroyAll'])->name('destroyAll');
         Route::get('/{id}', [CutiController::class, 'show'])->name('show');
         Route::put('/{id}', [CutiController::class, 'update'])->name('update');
         Route::delete('/{id}', [CutiController::class, 'destroy'])->name('destroy');

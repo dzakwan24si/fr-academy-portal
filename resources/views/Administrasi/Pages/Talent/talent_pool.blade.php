@@ -167,73 +167,76 @@
         </form>
     </div>
 
-    {{-- ============================== 3. SUMMARY KPI CARDS ============================== --}}
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {{-- Card 1: Total Talent Pool (Menghitung status Belum Penempatan) --}}
-        <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs relative overflow-hidden flex flex-col justify-between">
-            <div class="flex items-center justify-between text-slate-500 mb-2">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-slate-700">Total Talent Pool</span>
-                <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
-                    <i data-lucide="users" class="w-5 h-5"></i>
+    {{-- ============================== 3. SUMMARY KPI & GRAFIK (SPLIT 2 BAGIAN) ============================== --}}
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+        {{-- BAGIAN 1: KPI CARDS --}}
+        <div class="lg:col-span-5 flex flex-col gap-4">
+            {{-- Card 1: Total Talent Pool (Menghitung status Belum Penempatan) --}}
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs relative overflow-hidden flex flex-col justify-between flex-1">
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-slate-700">Total Talent Pool</span>
+                    <div class="w-9 h-9 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center">
+                        <i data-lucide="users" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-slate-900">{{ $countBelum }}</span>
+                    <span class="text-xs font-medium text-slate-400">Kandidat</span>
+                </div>
+                <div class="mt-3 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 px-3 py-1 rounded-lg w-fit flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+                    <span>Status: Belum Penempatan (Aktif Dalam Pool)</span>
                 </div>
             </div>
-            <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-black text-slate-900">{{ $countBelum }}</span>
-                <span class="text-xs font-medium text-slate-400">Kandidat</span>
-            </div>
-            <div class="mt-3 text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200/60 px-3 py-1 rounded-lg w-fit flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
-                <span>Status: Belum Penempatan (Aktif Dalam Pool)</span>
-            </div>
-        </div>
 
-        {{-- Card 2: Sudah Penempatan --}}
-        <div class="bg-white rounded-2xl border border-emerald-200/80 p-5 shadow-xs relative overflow-hidden flex flex-col justify-between">
-            <div class="flex items-center justify-between text-slate-500 mb-2">
-                <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Sudah Penempatan</span>
-                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
-                    <i data-lucide="check-circle" class="w-5 h-5"></i>
+            {{-- Card 2: Sudah Penempatan --}}
+            <div class="bg-white rounded-2xl border border-emerald-200/80 p-5 shadow-xs relative overflow-hidden flex flex-col justify-between flex-1">
+                <div class="flex items-center justify-between text-slate-500 mb-2">
+                    <span class="text-[11px] font-bold uppercase tracking-wider text-emerald-800">Sudah Penempatan</span>
+                    <div class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+                        <i data-lucide="check-circle" class="w-5 h-5"></i>
+                    </div>
+                </div>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-3xl font-black text-emerald-700">{{ $countSudah }}</span>
+                    <span class="text-xs font-medium text-slate-400">Orang</span>
+                </div>
+                <div class="mt-3 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-3 py-1 rounded-lg w-fit flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span>{{ ($countBelum + $countSudah) > 0 ? round(($countSudah / ($countBelum + $countSudah)) * 100, 1) : 0 }}% Telah Ditempatkan</span>
                 </div>
             </div>
-            <div class="flex items-baseline gap-2">
-                <span class="text-3xl font-black text-emerald-700">{{ $countSudah }}</span>
-                <span class="text-xs font-medium text-slate-400">Orang</span>
-            </div>
-            <div class="mt-3 text-[11px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-3 py-1 rounded-lg w-fit flex items-center gap-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                <span>{{ ($countBelum + $countSudah) > 0 ? round(($countSudah / ($countBelum + $countSudah)) * 100, 1) : 0 }}% Telah Ditempatkan</span>
-            </div>
-        </div>
-    </div>
-
-    {{-- ============================== 3.5 GRAFIK TARGET POSISI (TALENT TO) ============================== --}}
-    <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4 pb-3 border-b border-slate-100">
-            <div>
-                <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                    <span class="w-6 h-6 rounded-lg bg-emerald-50 text-[#4B6A34] flex items-center justify-center">
-                        <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i>
-                    </span>
-                    <span>Distribusi Target Posisi</span>
-                </h3>
-                <p class="text-xs text-slate-500 mt-0.5">Grafik jumlah kandidat talent pool berdasarkan target posisi (Talent To)</p>
-            </div>
-            <div class="text-xs font-semibold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/60 w-fit flex items-center gap-2">
-                <span>Total Target Posisi:</span>
-                <span class="text-slate-900 font-bold bg-white px-2 py-0.5 rounded-md border border-slate-200">{{ count($chartLabels) }}</span>
-            </div>
         </div>
 
-        @if(count($chartLabels) > 0)
-            <div class="h-64 sm:h-72 w-full">
-                <canvas id="chartTargetPosisi"></canvas>
+        {{-- BAGIAN 2: GRAFIK DISTRIBUSI TARGET POSISI --}}
+        <div class="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3 pb-3 border-b border-slate-100">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+                        <span class="w-6 h-6 rounded-lg bg-emerald-50 text-[#4B6A34] flex items-center justify-center">
+                            <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i>
+                        </span>
+                        <span>Distribusi Target Posisi</span>
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Grafik total per target posisi (Talent To)</p>
+                </div>
+                <div class="text-xs font-semibold text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/60 w-fit flex items-center gap-2">
+                    <span>Target Posisi:</span>
+                    <span class="text-slate-900 font-bold bg-white px-2 py-0.5 rounded-md border border-slate-200">{{ count($chartLabels) }}</span>
+                </div>
             </div>
-        @else
-            <div class="h-44 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
-                <i data-lucide="bar-chart" class="w-8 h-8 text-slate-300 mb-2"></i>
-                <span class="text-xs font-semibold text-slate-500">Tidak ada data target posisi untuk filter yang dipilih</span>
-            </div>
-        @endif
+
+            @if(count($chartLabels) > 0)
+                <div class="h-60 sm:h-72 w-full">
+                    <canvas id="chartTargetPosisi"></canvas>
+                </div>
+            @else
+                <div class="h-44 flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 rounded-xl border border-dashed border-slate-200">
+                    <i data-lucide="bar-chart" class="w-8 h-8 text-slate-300 mb-2"></i>
+                    <span class="text-xs font-semibold text-slate-500">Tidak ada data target posisi untuk filter yang dipilih</span>
+                </div>
+            @endif
+        </div>
     </div>
 
     {{-- ============================== 4. DATA TABLE ============================== --}}
@@ -630,7 +633,7 @@
                     data: {
                         labels: chartLabels,
                         datasets: [{
-                            label: 'Jumlah Kandidat',
+                            label: 'Total',
                             data: chartData,
                             backgroundColor: '#4B6A34',
                             hoverBackgroundColor: '#3d562a',
@@ -654,7 +657,7 @@
                                 cornerRadius: 8,
                                 callbacks: {
                                     label: function(context) {
-                                        return ' ' + context.parsed.y + ' Kandidat';
+                                        return ' Total: ' + context.parsed.y;
                                     }
                                 }
                             }
