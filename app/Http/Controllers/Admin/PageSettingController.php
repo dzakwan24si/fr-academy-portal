@@ -49,6 +49,58 @@ class PageSettingController extends Controller
 
             'home_vision_img_1' => AppSetting::getImageUrl('home_vision_img_1', 'https://i.ibb.co.com/hFZ1CScS/slides-6.jpg'),
             'home_vision_img_2' => AppSetting::getImageUrl('home_vision_img_2', 'https://i.ibb.co.com/Rp1kWtfV/image-12.png'),
+
+            // Pilar Program Utama
+            'home_pillars_badge' => AppSetting::get('home_pillars_badge', 'PILAR PROGRAM UTAMA'),
+            'home_pillars_title' => AppSetting::get('home_pillars_title', 'Tiga Pilar Program Utama'),
+            'home_pillars_desc' => AppSetting::get('home_pillars_desc', 'FR Academy berfokus pada pengembangan SDM melalui tiga pilar pembelajaran utama.'),
+
+            'home_p1_title' => AppSetting::get('home_p1_title', 'Regular Training Program'),
+            'home_p1_desc' => AppSetting::get('home_p1_desc', 'Program pengembangan berkesinambungan selama enam bulan dengan pendampingan mentoring untuk menyiapkan calon staf dan asisten perkebunan.'),
+            'home_p1_btn_text' => AppSetting::get('home_p1_btn_text', 'Pelajari lebih lanjut'),
+            'home_p1_btn_url' => AppSetting::get('home_p1_btn_url', '/program/fat'),
+            'home_p1_img' => AppSetting::getImageUrl('home_p1_img', 'images/slide3.png'),
+            'home_p1_icon' => AppSetting::getImageUrl('home_p1_icon', 'images/reguler.png'),
+
+            'home_p2_title' => AppSetting::get('home_p2_title', 'Non-Regular Training Program'),
+            'home_p2_desc' => AppSetting::get('home_p2_desc', 'Pelatihan berdurasi singkat untuk meningkatkan kompetensi teknis dan manajerial staf operasional di Kebun, Pabrik (Mill), Traksi, hingga Administrasi.'),
+            'home_p2_btn_text' => AppSetting::get('home_p2_btn_text', 'Pelajari lebih lanjut'),
+            'home_p2_btn_url' => AppSetting::get('home_p2_btn_url', '/program/managerial-leadership'),
+            'home_p2_img' => AppSetting::getImageUrl('home_p2_img', 'https://i.ibb.co.com/3mg5bHQN/image-14.png'),
+            'home_p2_icon' => AppSetting::getImageUrl('home_p2_icon', 'images/nonreguler.png'),
+
+            'home_p3_title' => AppSetting::get('home_p3_title', 'Talent Management Program'),
+            'home_p3_desc' => AppSetting::get('home_p3_desc', 'Program akselerasi terstruktur yang dirancang khusus untuk mempersiapkan staf berpotensi (high talent) menjadi pemimpin masa depan perusahaan.'),
+            'home_p3_btn_text' => AppSetting::get('home_p3_btn_text', 'Pelajari lebih lanjut'),
+            'home_p3_btn_url' => AppSetting::get('home_p3_btn_url', '/program/talent-management'),
+            'home_p3_img' => AppSetting::getImageUrl('home_p3_img', 'https://i.ibb.co.com/XrLSNbzC/image-13.png'),
+            'home_p3_icon' => AppSetting::getImageUrl('home_p3_icon', 'images/talent.png'),
+
+            // Statistik Capaian
+            'home_stat1_value' => AppSetting::get('home_stat1_value', '300'),
+            'home_stat1_unit' => AppSetting::get('home_stat1_unit', 'Ha'),
+            'home_stat1_label' => AppSetting::get('home_stat1_label', 'Area Praktik & Simulasi'),
+            'home_stat1_icon' => AppSetting::getImageUrl('home_stat1_icon', 'images/300h.png'),
+
+            'home_stat2_value' => AppSetting::get('home_stat2_value', '70:20:10'),
+            'home_stat2_unit' => AppSetting::get('home_stat2_unit', ''),
+            'home_stat2_label' => AppSetting::get('home_stat2_label', 'Metode Pembelajaran (Experiential, Social, Formal)'),
+            'home_stat2_icon' => AppSetting::getImageUrl('home_stat2_icon', 'images/learningmethod.png'),
+
+            'home_stat3_value' => AppSetting::get('home_stat3_value', '3'),
+            'home_stat3_unit' => AppSetting::get('home_stat3_unit', ''),
+            'home_stat3_label' => AppSetting::get('home_stat3_label', 'Pusat Pelatihan & Learning Station'),
+            'home_stat3_icon' => AppSetting::getImageUrl('home_stat3_icon', 'images/3pillar.png'),
+
+            // Program Accordion
+            'home_program_badge' => AppSetting::get('home_program_badge', 'MENCETAK PLANTER & ENGINEER UNGGUL'),
+            'home_program_title' => AppSetting::get('home_program_title', 'Membangun Value, Menumbuhkan Karakter & <br> Menyiapkan Masa Depan'),
+            'home_acc1_title' => AppSetting::get('home_acc1_title', 'PROGRAM REGULER'),
+            'home_acc1_desc' => AppSetting::get('home_acc1_desc', 'Program pelatihan dasar bagi karyawan baru maupun calon karyawan yang akan ditempatkan di berbagai kebun operasional.'),
+            'home_acc2_title' => AppSetting::get('home_acc2_title', 'PROGRAM NON-REGULER'),
+            'home_acc2_desc' => AppSetting::get('home_acc2_desc', 'Pelatihan khusus yang dirancang sesuai dengan kebutuhan spesifik divisi atau tantangan operasional terkini.'),
+            'home_acc3_title' => AppSetting::get('home_acc3_title', 'INISIATIF PROGRAM'),
+            'home_acc3_desc' => AppSetting::get('home_acc3_desc', 'Beragam inisiatif strategis dan kegiatan komprehensif yang dirancang khusus untuk mendorong budaya inovasi, peningkatan kompetensi, serta kolaborasi antar divisi:'),
         ];
 
         // Defaults untuk Tentang Kami
@@ -79,7 +131,13 @@ class PageSettingController extends Controller
         // Daftar Program Portal (Pelatihan Reguler & Non-Reguler)
         $portalPrograms = \App\Models\PortalProgram::orderBy('order')->orderBy('id')->get();
 
-        return view('admin.page_settings.index', compact('tab', 'beranda', 'tentang', 'slides', 'portalLinks', 'careerPrograms', 'portalPrograms'));
+        // Dynamic Pillar Cards (Bisa 1, 3, 5, 7, atau lebih)
+        $pillarCards = AppSetting::getPillarCards();
+
+        // Dynamic Accordions & Poin (Uniform & Fleksibel)
+        $accordions = AppSetting::getAccordions();
+
+        return view('admin.page_settings.index', compact('tab', 'beranda', 'tentang', 'slides', 'portalLinks', 'careerPrograms', 'portalPrograms', 'pillarCards', 'accordions'));
     }
 
     /**
@@ -112,6 +170,35 @@ class PageSettingController extends Controller
 
             'home_vision_img_1' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
             'home_vision_img_2' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+
+            // Card 3: Pilar Program Utama
+            'home_pillars_badge' => 'nullable|string|max:100',
+            'home_pillars_title' => 'required|string|max:255',
+            'home_pillars_desc' => 'required|string',
+            'pillars' => 'nullable|array',
+            'pillar_images.*' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:5120',
+            'pillar_icons.*' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:2048',
+
+            // Card 4: Statistik Capaian
+            'home_stat1_value' => 'required|string|max:50',
+            'home_stat1_unit' => 'nullable|string|max:50',
+            'home_stat1_label' => 'required|string|max:150',
+            'home_stat1_icon' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:2048',
+
+            'home_stat2_value' => 'required|string|max:50',
+            'home_stat2_unit' => 'nullable|string|max:50',
+            'home_stat2_label' => 'required|string|max:150',
+            'home_stat2_icon' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:2048',
+
+            'home_stat3_value' => 'required|string|max:50',
+            'home_stat3_unit' => 'nullable|string|max:50',
+            'home_stat3_label' => 'required|string|max:150',
+            'home_stat3_icon' => 'nullable|image|mimes:jpeg,png,jpg,webp,svg|max:2048',
+
+            // Card 5: Accordion Program
+            'home_program_badge' => 'nullable|string|max:100',
+            'home_program_title' => 'required|string|max:255',
+            'accordions' => 'nullable|array',
         ]);
 
         // Simpan input teks
@@ -120,6 +207,14 @@ class PageSettingController extends Controller
             'home_hero_btn1_text', 'home_hero_btn1_url', 'home_hero_btn2_text', 'home_hero_btn2_url',
             'home_vision_badge', 'home_vision_title', 'home_vision_desc',
             'home_vision_p1_title', 'home_vision_p1_desc', 'home_vision_p2_title', 'home_vision_p2_desc',
+            // Pilar Header
+            'home_pillars_badge', 'home_pillars_title', 'home_pillars_desc',
+            // Stats
+            'home_stat1_value', 'home_stat1_unit', 'home_stat1_label',
+            'home_stat2_value', 'home_stat2_unit', 'home_stat2_label',
+            'home_stat3_value', 'home_stat3_unit', 'home_stat3_label',
+            // Accordion Header
+            'home_program_badge', 'home_program_title',
         ];
 
         foreach ($textFields as $field) {
@@ -157,9 +252,12 @@ class PageSettingController extends Controller
 
         AppSetting::set('home_hero_slides', json_encode(array_values($currentSlides)));
 
-        // Upload foto Visi
-        $visionImages = ['home_vision_img_1', 'home_vision_img_2'];
-        foreach ($visionImages as $imgField) {
+        // Upload foto Visi & Statistik
+        $imageFields = [
+            'home_vision_img_1', 'home_vision_img_2',
+            'home_stat1_icon', 'home_stat2_icon', 'home_stat3_icon',
+        ];
+        foreach ($imageFields as $imgField) {
             if ($request->hasFile($imgField)) {
                 $oldPath = AppSetting::get($imgField);
                 if ($oldPath && ! str_starts_with($oldPath, 'images/') && ! str_starts_with($oldPath, 'http')) {
@@ -169,6 +267,55 @@ class PageSettingController extends Controller
                 $storedPath = $request->file($imgField)->store('page_settings', 'public');
                 AppSetting::set($imgField, $storedPath);
             }
+        }
+
+        // Simpan Pilar Program Dinamis (Bisa 1, 3, 5, 7, atau berapapun)
+        if ($request->has('pillars') && is_array($request->input('pillars'))) {
+            $submittedPillars = $request->input('pillars');
+            $pillarImages = $request->file('pillar_images') ?? [];
+            $pillarIcons = $request->file('pillar_icons') ?? [];
+            $cleanPillars = [];
+
+            foreach ($submittedPillars as $p) {
+                $pId = $p['id'] ?? ('p_'.uniqid());
+                $title = trim($p['title'] ?? '');
+                if ($title === '') {
+                    continue;
+                }
+
+                $imagePath = $p['image'] ?? 'images/slide3.png';
+                if (isset($pillarImages[$pId]) && $pillarImages[$pId]) {
+                    if ($imagePath && ! str_starts_with($imagePath, 'images/') && ! str_starts_with($imagePath, 'http')) {
+                        Storage::disk('public')->delete($imagePath);
+                    }
+                    $imagePath = $pillarImages[$pId]->store('page_settings', 'public');
+                }
+
+                $iconPath = $p['icon'] ?? 'images/reguler.png';
+                if (isset($pillarIcons[$pId]) && $pillarIcons[$pId]) {
+                    if ($iconPath && ! str_starts_with($iconPath, 'images/') && ! str_starts_with($iconPath, 'http')) {
+                        Storage::disk('public')->delete($iconPath);
+                    }
+                    $iconPath = $pillarIcons[$pId]->store('page_settings', 'public');
+                }
+
+                $cleanPillars[] = [
+                    'id' => $pId,
+                    'title' => $title,
+                    'desc' => trim($p['desc'] ?? ''),
+                    'btn_text' => trim($p['btn_text'] ?? 'Pelajari lebih lanjut'),
+                    'btn_url' => trim($p['btn_url'] ?? ''),
+                    'image' => $imagePath,
+                    'icon' => $iconPath,
+                ];
+            }
+
+            AppSetting::set('home_pillars_cards', json_encode(array_values($cleanPillars)));
+        }
+
+        // Simpan Accordion & Poin Dinamis (Uniform & Fleksibel)
+        if ($request->has('accordions') && is_array($request->input('accordions'))) {
+            AppSetting::saveAccordions($request->input('accordions'));
         }
 
         return redirect()->route('admin.page_settings.index', ['tab' => 'beranda'])

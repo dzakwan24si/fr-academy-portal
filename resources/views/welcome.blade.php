@@ -19,6 +19,33 @@
         $visionP2Desc = \App\Models\AppSetting::get('home_vision_p2_desc', 'Terintegrasi dengan kebun 300 Ha dan R&D, dilengkapi ruang kelas, mess 48 kamar, sarana olahraga, hingga area praktik langsung.');
         $visionImg1 = \App\Models\AppSetting::getImageUrl('home_vision_img_1', 'https://i.ibb.co.com/hFZ1CScS/slides-6.jpg');
         $visionImg2 = \App\Models\AppSetting::getImageUrl('home_vision_img_2', 'https://i.ibb.co.com/Rp1kWtfV/image-12.png');
+
+        // Pilar Program Utama
+        $pillarsBadge = \App\Models\AppSetting::get('home_pillars_badge', 'PILAR PROGRAM UTAMA');
+        $pillarsTitle = \App\Models\AppSetting::get('home_pillars_title', 'Tiga Pilar Program Utama');
+        $pillarsDesc = \App\Models\AppSetting::get('home_pillars_desc', 'FR Academy berfokus pada pengembangan SDM melalui pilar pembelajaran utama.');
+        $pillarCards = \App\Models\AppSetting::getPillarCards();
+
+        // Statistik Capaian
+        $stat1Value = \App\Models\AppSetting::get('home_stat1_value', '300');
+        $stat1Unit = \App\Models\AppSetting::get('home_stat1_unit', 'Ha');
+        $stat1Label = \App\Models\AppSetting::get('home_stat1_label', 'Area Praktik & Simulasi');
+        $stat1Icon = \App\Models\AppSetting::getImageUrl('home_stat1_icon', 'images/300h.png');
+
+        $stat2Value = \App\Models\AppSetting::get('home_stat2_value', '70:20:10');
+        $stat2Unit = \App\Models\AppSetting::get('home_stat2_unit', '');
+        $stat2Label = \App\Models\AppSetting::get('home_stat2_label', 'Metode Pembelajaran (Experiential, Social, Formal)');
+        $stat2Icon = \App\Models\AppSetting::getImageUrl('home_stat2_icon', 'images/learningmethod.png');
+
+        $stat3Value = \App\Models\AppSetting::get('home_stat3_value', '3');
+        $stat3Unit = \App\Models\AppSetting::get('home_stat3_unit', '');
+        $stat3Label = \App\Models\AppSetting::get('home_stat3_label', 'Pusat Pelatihan & Learning Station');
+        $stat3Icon = \App\Models\AppSetting::getImageUrl('home_stat3_icon', 'images/3pillar.png');
+
+        // Accordion Section
+        $programBadge = \App\Models\AppSetting::get('home_program_badge', 'MENCETAK PLANTER & ENGINEER UNGGUL');
+        $programTitle = \App\Models\AppSetting::get('home_program_title', "Membangun Value, Menumbuhkan Karakter & <br> Menyiapkan Masa Depan");
+        $accordions = \App\Models\AppSetting::getAccordions();
     @endphp
 
     <!-- Hero Section -->
@@ -175,74 +202,46 @@
 
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
             <div class="text-center max-w-3xl mx-auto mb-16" data-aos="fade-up">
-                <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">PILAR PROGRAM UTAMA</span>
-                <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white mt-4 mb-4">Tiga Pilar Program Utama</h2>
-                <p class="text-gray-600 dark:text-gray-300">FR Academy berfokus pada pengembangan SDM melalui tiga pilar pembelajaran utama.</p>
+                <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">{{ $pillarsBadge }}</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white mt-4 mb-4">{{ $pillarsTitle }}</h2>
+                <p class="text-gray-600 dark:text-gray-300">{{ $pillarsDesc }}</p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <!-- Card 1 -->
-                <div class="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700 flex flex-col" data-aos="fade-up" data-aos-delay="100">
+            @php
+                $pillarCount = count($pillarCards);
+                $gridClass = match(true) {
+                    $pillarCount === 1 => 'grid grid-cols-1 max-w-xl mx-auto gap-8',
+                    $pillarCount === 2 => 'grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-8',
+                    $pillarCount === 4 => 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8',
+                    default => 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8',
+                };
+            @endphp
+            <div class="{{ $gridClass }}">
+                @foreach($pillarCards as $idx => $card)
+                <div class="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700 flex flex-col" data-aos="fade-up" data-aos-delay="{{ (($idx % 3) + 1) * 100 }}">
                     <div class="relative h-56 overflow-hidden">
-                        <img src="{{ asset('images/slide3.png') }}" alt="Agronomi" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
+                        <img src="{{ $card['image_url'] ?? $card['image'] }}" alt="{{ $card['title'] }}" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
                         <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                        @if(!empty($card['icon_url']) || !empty($card['icon']))
                         <div class="absolute -bottom-8 right-8">
                             <div class="w-24 h-24 bg-white dark:bg-gray-800 rounded-2xl p-1.5 shadow-xl flex items-center justify-center border border-gray-100 dark:border-gray-700 transform group-hover:-translate-y-2 transition-transform duration-500 z-20">
-                                <img src="{{ asset('images/reguler.png') }}" alt="Reguler Icon" class="w-full h-full object-contain drop-shadow-sm">
+                                <img src="{{ $card['icon_url'] ?? $card['icon'] }}" alt="{{ $card['title'] }} Icon" class="w-full h-full object-contain drop-shadow-sm">
                             </div>
                         </div>
+                        @endif
                     </div>
                     <div class="p-8 pt-10 flex flex-col flex-grow">
-                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Regular Training Program</h3>
-                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-6 flex-grow">Program pengembangan berkesinambungan selama enam bulan dengan pendampingan mentoring untuk menyiapkan calon staf dan asisten perkebunan.</p>
-                        <a href="/program/fat" class="inline-flex items-center text-sm font-bold text-teal-600 dark:text-teal-400 group-hover:text-green-accent transition-colors">
-                            Pelajari lebih lanjut 
-                            <svg class="ml-2 w-5 h-5 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                        </a>
+                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">{{ $card['title'] }}</h3>
+                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-6 flex-grow">{{ $card['desc'] ?? '' }}</p>
+                        @if(!empty($card['btn_text']))
+                            <a href="{{ !empty($card['btn_url']) ? $card['btn_url'] : '#program' }}" class="inline-flex items-center text-sm font-bold text-teal-600 dark:text-teal-400 group-hover:text-green-accent transition-colors">
+                                {{ $card['btn_text'] }} 
+                                <svg class="ml-2 w-5 h-5 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                            </a>
+                        @endif
                     </div>
                 </div>
-
-                <!-- Card 2 -->
-                <div class="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700 flex flex-col" data-aos="fade-up" data-aos-delay="200">
-                    <div class="relative h-56 overflow-hidden">
-                        <img src="https://i.ibb.co.com/3mg5bHQN/image-14.png" alt="Pabrik" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        <div class="absolute -bottom-8 right-8">
-                            <div class="w-24 h-24 bg-white dark:bg-gray-800 rounded-2xl p-1.5 shadow-xl flex items-center justify-center border border-gray-100 dark:border-gray-700 transform group-hover:-translate-y-2 transition-transform duration-500 z-20">
-                                <img src="{{ asset('images/nonreguler.png') }}" alt="Non-Reguler Icon" class="w-full h-full object-contain drop-shadow-sm">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-8 pt-10 flex flex-col flex-grow">
-                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Non-Regular Training Program</h3>
-                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-6 flex-grow">Pelatihan berdurasi singkat untuk meningkatkan kompetensi teknis dan manajerial staf operasional di Kebun, Pabrik (Mill), Traksi, hingga Administrasi.</p>
-                        <a href="/program/managerial-leadership" class="inline-flex items-center text-sm font-bold text-teal-600 dark:text-teal-400 group-hover:text-green-accent transition-colors">
-                            Pelajari lebih lanjut 
-                            <svg class="ml-2 w-5 h-5 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Card 3 -->
-                <div class="group bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 dark:border-gray-700 flex flex-col" data-aos="fade-up" data-aos-delay="300">
-                    <div class="relative h-56 overflow-hidden">
-                        <img src="https://i.ibb.co.com/XrLSNbzC/image-13.png" alt="Kepemimpinan" class="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700">
-                        <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-                        <div class="absolute -bottom-8 right-8">
-                            <div class="w-24 h-24 bg-white dark:bg-gray-800 rounded-2xl p-1.5 shadow-xl flex items-center justify-center border border-gray-100 dark:border-gray-700 transform group-hover:-translate-y-2 transition-transform duration-500 z-20">
-                                <img src="{{ asset('images/talent.png') }}" alt="Talent Icon" class="w-full h-full object-contain drop-shadow-sm">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="p-8 pt-10 flex flex-col flex-grow">
-                        <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">Talent Management</h3>
-                        <p class="text-gray-600 dark:text-gray-300 text-sm mb-6 flex-grow">Program pengembangan terstruktur yang dirancang khusus untuk mempersiapkan staf berpotensi (high talent) menjadi pemimpin masa depan perusahaan.</p>
-                        <a href="/program/talent-management" class="inline-flex items-center text-sm font-bold text-teal-600 dark:text-teal-400 group-hover:text-green-accent transition-colors">
-                            Pelajari lebih lanjut 
-                            <svg class="ml-2 w-5 h-5 transform group-hover:translate-x-2 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                        </a>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </div>
     </section>
@@ -260,26 +259,53 @@
                 <!-- Stat 1 -->
                 <div class="text-center py-4" data-aos="zoom-in" data-aos-delay="100">
                     <div class="flex justify-center mb-6">
-                        <img src="{{ asset('images/300h.png') }}" alt="Area Icon" class="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-lg">
+                        <img src="{{ $stat1Icon }}" alt="Area Icon" class="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-lg">
                     </div>
-                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span class="counter" data-target="300">0</span><span class="text-green-accent text-4xl"> Ha</span></div>
-                    <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">Area Praktik & Simulasi</div>
+                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1">
+                        @if(is_numeric($stat1Value))
+                            <span class="counter" data-target="{{ $stat1Value }}">0</span>
+                        @else
+                            <span>{{ $stat1Value }}</span>
+                        @endif
+                        @if($stat1Unit)
+                            <span class="text-green-accent text-4xl"> {{ $stat1Unit }}</span>
+                        @endif
+                    </div>
+                    <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">{{ $stat1Label }}</div>
                 </div>
                 <!-- Stat 2 -->
                 <div class="text-center py-4" data-aos="zoom-in" data-aos-delay="200">
                     <div class="flex justify-center mb-6">
-                        <img src="{{ asset('images/learningmethod.png') }}" alt="Method Icon" class="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-lg">
+                        <img src="{{ $stat2Icon }}" alt="Method Icon" class="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-lg">
                     </div>
-                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span>70:20:10</span></div>
-                    <div class="text-teal-200 text-xs md:text-sm uppercase tracking-wider font-semibold px-2">Metode Pembelajaran (Experiential, Social, Formal)</div>
+                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1">
+                        @if(is_numeric($stat2Value))
+                            <span class="counter" data-target="{{ $stat2Value }}">0</span>
+                        @else
+                            <span>{{ $stat2Value }}</span>
+                        @endif
+                        @if($stat2Unit)
+                            <span class="text-green-accent text-4xl"> {{ $stat2Unit }}</span>
+                        @endif
+                    </div>
+                    <div class="text-teal-200 text-xs md:text-sm uppercase tracking-wider font-semibold px-2">{{ $stat2Label }}</div>
                 </div>
                 <!-- Stat 3 -->
                 <div class="text-center py-4" data-aos="zoom-in" data-aos-delay="300">
                     <div class="flex justify-center mb-6">
-                        <img src="{{ asset('images/3pillar.png') }}" alt="Pillars Icon" class="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-lg">
+                        <img src="{{ $stat3Icon }}" alt="Pillars Icon" class="w-24 h-24 md:w-32 md:h-32 object-contain drop-shadow-lg">
                     </div>
-                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1"><span class="counter" data-target="3">0</span></div>
-                    <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">Pusat Pelatihan & Learning Station</div>
+                    <div class="text-5xl font-bold mb-2 flex justify-center items-baseline gap-1">
+                        @if(is_numeric($stat3Value))
+                            <span class="counter" data-target="{{ $stat3Value }}">0</span>
+                        @else
+                            <span>{{ $stat3Value }}</span>
+                        @endif
+                        @if($stat3Unit)
+                            <span class="text-green-accent text-4xl"> {{ $stat3Unit }}</span>
+                        @endif
+                    </div>
+                    <div class="text-teal-200 text-sm uppercase tracking-wider font-semibold">{{ $stat3Label }}</div>
                 </div>
             </div>
         </div>
@@ -334,9 +360,9 @@
     <section id="program" class="py-24 bg-teal-900 dark:bg-gray-950 relative overflow-hidden text-white transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" data-aos="fade-up">
             <div class="mb-16">
-                <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">MENCETAK PLANTER & ENGINEER UNGGUL</span>
+                <span class="text-green-accent font-semibold tracking-wider text-sm uppercase">{{ $programBadge }}</span>
                 <h2 class="text-4xl md:text-5xl font-bold mt-4 leading-tight">
-                    Membangun Value, Menumbuhkan Karakter & <br> Menyiapkan Masa Depan
+                    {!! $programTitle !!}
                 </h2>
             </div>
             
@@ -356,112 +382,40 @@
                     }
                 </style>
 
-                <!-- Accordion Item 1 -->
-                <div class="border-b border-teal-700/50 group accordion-item transition-colors duration-300" :class="selected === 1 ? 'bg-teal-800/50' : 'hover:bg-teal-800/30'">
-                    <button @click="selected = selected === 1 ? null : 1" class="flex items-center w-full text-left py-8 md:py-12 px-4 md:px-8 focus:outline-none">
-                        <span class="text-green-accent font-mono text-xl mr-6 md:mr-10" :class="selected === 1 ? 'opacity-100' : 'opacity-70'">(01)</span>
-                        <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === 1 ? 'text-outline-active' : ''">PROGRAM REGULER</h3>
+                <!-- Dynamic Accordions -->
+                @foreach($accordions as $index => $acc)
+                @php
+                    $accNum = $index + 1;
+                    $accPad = str_pad($accNum, 2, '0', STR_PAD_LEFT);
+                    $accItems = $acc['items'] ?? [];
+                @endphp
+                <div class="border-b border-teal-700/50 group accordion-item transition-colors duration-300" :class="selected === {{ $accNum }} ? 'bg-teal-800/50' : 'hover:bg-teal-800/30'">
+                    <button @click="selected = selected === {{ $accNum }} ? null : {{ $accNum }}" class="flex items-center w-full text-left py-8 md:py-12 px-4 md:px-8 focus:outline-none">
+                        <span class="text-green-accent font-mono text-xl mr-6 md:mr-10" :class="selected === {{ $accNum }} ? 'opacity-100' : 'opacity-70'">({{ $accPad }})</span>
+                        <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === {{ $accNum }} ? 'text-outline-active' : ''">{{ $acc['title'] ?? '' }}</h3>
                     </button>
-                    <div x-show="selected === 1" x-collapse class="px-4 md:px-8 pb-10 md:pl-[6.5rem]">
-                        <p class="mb-6 text-lg text-teal-100 max-w-3xl">Program pelatihan dasar bagi karyawan baru maupun calon karyawan yang akan ditempatkan di berbagai kebun operasional.</p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl text-teal-50">
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span><strong class="text-white">Field Assistant Training (FAT):</strong> Program yang dirancang untuk menyiapkan calon Asisten Kebun agar memiliki pengetahuan, keterampilan, dan sikap kerja sesuai budaya First Resources.</span>
+                    <div x-show="selected === {{ $accNum }}" x-collapse class="px-4 md:px-8 pb-10 md:pl-[6.5rem]">
+                        @if(!empty($acc['desc']))
+                            <p class="mb-6 text-lg text-teal-100 max-w-3xl">{{ $acc['desc'] }}</p>
+                        @endif
+                        @if(!empty($accItems))
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-5xl text-teal-50">
+                                @foreach($accItems as $item)
+                                    <div class="flex items-start">
+                                        <svg class="w-5 h-5 text-green-accent mr-2.5 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <div>
+                                            <strong class="text-white font-semibold">{{ $item['title'] ?? '' }}</strong>
+                                            @if(!empty($item['desc']))
+                                                <p class="text-sm text-teal-100/90 mt-0.5">{{ $item['desc'] }}</p>
+                                            @endif
+                                        </div>
+                                    </div>
+                                @endforeach
                             </div>
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span><strong class="text-white">Mill Assistant Training (MAT):</strong> Program yang dirancang untuk menyiapkan calon Asisten Pabrik dengan kompetensi teknis dan kepemimpinan yang sesuai kebutuhan operasional pabrik.</span>
-                            </div>
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span><strong class="text-white">Traction Assistant Training (TAT):</strong> Program untuk menyiapkan calon Asisten Traksi yang memiliki kemampuan teknis dan manajerial sesuai standar perusahaan.</span>
-                            </div>
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span><strong class="text-white">Administration Assistant Training (AAT):</strong> Program untuk mempersiapkan calon Asisten Administrasi yang memiliki kompetensi administrasi, analisis, dan pengelolaan kerja sesuai budaya perusahaan.</span>
-                            </div>
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span><strong class="text-white">Downstream Management Trainee (DMT):</strong> Program yang dirancang untuk menyiapkan calon supervisor di unit downstream agar memiliki kompetensi teknis dan perilaku kerja yang sesuai dengan kebutuhan operasional.</span>
-                            </div>
-                            <div class="flex items-start md:col-span-2">
-                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span><strong class="text-white">Management Associates Program (MAP):</strong> Program khusus yang ditujukan untuk mempersiapkan high talent menjadi future leader di berbagai business unit. Program ini dirancang sesuai kebutuhan operasional dan mencakup seluruh aspek bisnis perusahaan, mulai dari upstream, downstream, hingga support department. MAP diharapkan menjadi talent pool bagi kader pemimpin perusahaan di masa depan.</span>
-                            </div>
-                        </div>
+                        @endif
                     </div>
                 </div>
-
-                <!-- Accordion Item 2 -->
-                <div class="border-b border-teal-700/50 group accordion-item transition-colors duration-300" :class="selected === 2 ? 'bg-teal-800/50' : 'hover:bg-teal-800/30'">
-                    <button @click="selected = selected === 2 ? null : 2" class="flex items-center w-full text-left py-8 md:py-12 px-4 md:px-8 focus:outline-none">
-                        <span class="text-green-accent font-mono text-xl mr-6 md:mr-10" :class="selected === 2 ? 'opacity-100' : 'opacity-70'">(02)</span>
-                        <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === 2 ? 'text-outline-active' : ''">PROGRAM NON-REGULER</h3>
-                    </button>
-                    <div x-show="selected === 2" x-collapse class="px-4 md:px-8 pb-10 md:pl-[6.5rem]">
-                        <p class="mb-6 text-lg text-teal-100 max-w-3xl">Pelatihan khusus yang dirancang sesuai dengan kebutuhan spesifik divisi atau tantangan operasional terkini.</p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl text-teal-50">
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <div>
-                                    <strong class="text-white block mb-1">Teknikal Estate</strong>
-                                    <span class="text-sm text-teal-100">Training untuk meningkatkan kompetensi teknis para staf di Kebun seperti: Klinik Kerja Mandor, Estate Coaching Program, Pengelolaan TBM, Klinik HPT, Manajemen Pemupukan dll.</span>
-                                </div>
-                            </div>
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <div>
-                                    <strong class="text-white block mb-1">Teknikal Mill</strong>
-                                    <span class="text-sm text-teal-100">Training untuk meningkatkan kompentensi para staf di Pabrik, seperti: Mill Mentoring, Manajemen Operasional Boiler, Pengelolaan Water Treatment, Total Productive Maintenance, Klinik Kinerja Pabrik, dll.</span>
-                                </div>
-                            </div>
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <div>
-                                    <strong class="text-white block mb-1">Teknikal Traksi</strong>
-                                    <span class="text-sm text-teal-100">Training untuk meningkatkan kompentensi para staf di Traksi seperti: Manajemen Workshop, Operation and Maintenance DT, Perawatan Genset, Defensive Driving, Overhaul DT Euro 4, dll.</span>
-                                </div>
-                            </div>
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <div>
-                                    <strong class="text-white block mb-1">Teknikal Downstream</strong>
-                                    <span class="text-sm text-teal-100">Training untuk meningkatkan kompentensi para staf di Downstream seperti: Operation and Maintenance Pump, Ref and Frac Operation for Operator, Sistem Kalibrasi PLC, Operasional Oleochemical for Operator, dll.</span>
-                                </div>
-                            </div>
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <div>
-                                    <strong class="text-white block mb-1">Teknikal Administrasi & Sustain</strong>
-                                    <span class="text-sm text-teal-100">Training untuk meningkatkan kompentensi tenaga Administrasi dan Sustainability, seperti: Pemadaman Kebakaran Hutan dan Lahan, K3-First Aid, Mentoring Asisten Administrasi, Pelatihan Pamong TPA, dll.</span>
-                                </div>
-                            </div>
-                            <div class="flex items-start">
-                                <svg class="w-5 h-5 text-green-accent mr-2 mt-1 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <div>
-                                    <strong class="text-white block mb-1">Managerial & Softskill</strong>
-                                    <span class="text-sm text-teal-100">Training untuk meningkatkan kompetensi Softskills seluruh staf, seperti: Supervisory Management untuk Asisten, Fundamental Leadership untuk Askep, Strategic Leadership untuk Manager, Problem Solving and Decision Making, dll.</span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Accordion Item 3 -->
-                <div class="border-b border-teal-700/50 group accordion-item transition-colors duration-300" :class="selected === 3 ? 'bg-teal-800/50' : 'hover:bg-teal-800/30'">
-                    <button @click="selected = selected === 3 ? null : 3" class="flex items-center w-full text-left py-8 md:py-12 px-4 md:px-8 focus:outline-none">
-                        <span class="text-green-accent font-mono text-xl mr-6 md:mr-10" :class="selected === 3 ? 'opacity-100' : 'opacity-70'">(03)</span>
-                        <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === 3 ? 'text-outline-active' : ''">INISIATIF PROGRAM</h3>
-                    </button>
-                    <div x-show="selected === 3" x-collapse class="px-4 md:px-8 pb-10 md:pl-[6.5rem]">
-                        <p class="mb-6 text-lg text-teal-100 max-w-3xl">Beragam inisiatif strategis dan kegiatan komprehensif yang dirancang khusus untuk mendorong budaya inovasi, peningkatan kompetensi, serta kolaborasi antar divisi:</p>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-6 max-w-2xl">
-                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">✓</span> Klinik Kinerja Mandor</div>
-                            <div class="flex items-center text-teal-50"><span class="w-8 h-8 flex items-center justify-center bg-teal-800 border border-teal-600 rounded-full text-sm font-bold mr-3">✓</span> Learning Festival</div>
-                        </div>
-                    </div>
-                </div>
+                @endforeach
             </div>
         </div>
     </section>

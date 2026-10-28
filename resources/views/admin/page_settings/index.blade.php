@@ -290,6 +290,399 @@
                     </div>
                 </div>
 
+                <!-- Card 3: Pilar Program Utama -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8"
+                     x-data="{
+                         pillars: {{ \Illuminate\Support\Js::from($pillarCards) }},
+                         addPillar() {
+                             const newId = 'p_' + Date.now();
+                             this.pillars.push({
+                                 id: newId,
+                                 title: 'Pilar Baru',
+                                 desc: '',
+                                 btn_text: 'Pelajari lebih lanjut',
+                                 btn_url: '',
+                                 image: 'images/slide3.png',
+                                 icon: 'images/reguler.png',
+                                 image_url: '{{ asset('images/slide3.png') }}',
+                                 icon_url: '{{ asset('images/reguler.png') }}',
+                                 previewImage: null,
+                                 previewIcon: null
+                             });
+                         },
+                         removePillar(idx) {
+                             if (this.pillars.length <= 1) {
+                                 alert('Minimal harus ada 1 pilar program.');
+                                 return;
+                             }
+                             if (confirm('Apakah Anda yakin ingin menghapus pilar ini?')) {
+                                 this.pillars.splice(idx, 1);
+                             }
+                         },
+                         onImageChange(event, item) {
+                             const file = event.target.files[0];
+                             if (file) {
+                                 item.previewImage = URL.createObjectURL(file);
+                             }
+                         },
+                         onIconChange(event, item) {
+                             const file = event.target.files[0];
+                             if (file) {
+                                 item.previewIcon = URL.createObjectURL(file);
+                             }
+                         }
+                     }">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4 mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center font-bold">
+                                <i data-lucide="layers" class="w-5 h-5 text-[#509c38]"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-bold text-gray-900">Pilar Program Utama</h2>
+                                <p class="text-xs text-gray-500">Kelola daftar pilar program secara dinamis (bebas tambah atau hapus pilar: 1, 2, 3, 5, 7, atau lebih).</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="addPillar()" class="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#509c38] hover:bg-green-700 px-3.5 py-2 rounded-xl transition shadow-sm self-start sm:self-auto">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Tambah Pilar Baru
+                        </button>
+                    </div>
+
+                    <!-- Header Bagian Pilar -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Teks Badge Kecil</label>
+                            <input type="text" name="home_pillars_badge" value="{{ old('home_pillars_badge', $beranda['home_pillars_badge']) }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Judul Bagian Pilar <span class="text-rose-500">*</span></label>
+                            <input type="text" name="home_pillars_title" required value="{{ old('home_pillars_title', $beranda['home_pillars_title']) }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Deskripsi Bagian Pilar <span class="text-rose-500">*</span></label>
+                            <textarea name="home_pillars_desc" rows="2" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">{{ old('home_pillars_desc', $beranda['home_pillars_desc']) }}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Repeater Pilar -->
+                    <div class="space-y-6">
+                        <template x-for="(item, idx) in pillars" :key="item.id || idx">
+                            <div class="bg-gray-50 p-6 rounded-2xl border border-gray-200/80 transition hover:border-gray-300">
+                                <div class="flex items-center justify-between pb-3 mb-4 border-b border-gray-200/60">
+                                    <h3 class="text-sm font-bold text-gray-900 flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-lg bg-[#509c38] text-white flex items-center justify-center text-xs font-bold" x-text="idx + 1"></span>
+                                        <span>Pilar #<span x-text="idx + 1"></span>: <span x-text="item.title || 'Tanpa Judul'"></span></span>
+                                    </h3>
+                                    <button type="button" @click="removePillar(idx)" class="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2.5 py-1 rounded-lg transition" title="Hapus pilar ini">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        Hapus Pilar
+                                    </button>
+                                </div>
+
+                                <!-- Hidden fields for preserving state & mapping files -->
+                                <input type="hidden" :name="'pillars[' + idx + '][id]'" :value="item.id">
+                                <input type="hidden" :name="'pillars[' + idx + '][image]'" :value="item.image">
+                                <input type="hidden" :name="'pillars[' + idx + '][icon]'" :value="item.icon">
+
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Judul Pilar <span class="text-rose-500">*</span></label>
+                                        <input type="text" :name="'pillars[' + idx + '][title]'" x-model="item.title" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Teks Tombol Aksi</label>
+                                        <input type="text" :name="'pillars[' + idx + '][btn_text]'" x-model="item.btn_text" placeholder="Pelajari lebih lanjut" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Deskripsi Pilar <span class="text-rose-500">*</span></label>
+                                        <textarea :name="'pillars[' + idx + '][desc]'" x-model="item.desc" rows="2" required class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition"></textarea>
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Link URL Tombol</label>
+                                        <input type="text" :name="'pillars[' + idx + '][btn_url]'" x-model="item.btn_url" placeholder="/program#reguler" class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                                    </div>
+
+                                    <!-- Foto Cover Pilar -->
+                                    <div class="bg-white p-4 rounded-xl border border-gray-200 flex flex-col">
+                                        <span class="text-xs font-bold text-gray-700 mb-2">Foto Cover Pilar</span>
+                                        <div class="w-full h-32 rounded-lg overflow-hidden bg-gray-200 mb-3 border border-gray-300">
+                                            <img :src="item.previewImage || item.image_url" alt="Cover Pilar" class="w-full h-full object-cover">
+                                        </div>
+                                        <label class="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Ganti Foto Cover:</label>
+                                        <input type="file" :name="'pillar_images[' + item.id + ']'" @change="onImageChange($event, item)" accept="image/*" class="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-[#509c38] hover:file:text-white transition">
+                                    </div>
+
+                                    <!-- Ikon Badge Pilar -->
+                                    <div class="bg-white p-4 rounded-xl border border-gray-200 flex flex-col">
+                                        <span class="text-xs font-bold text-gray-700 mb-2">Ikon Badge Pilar</span>
+                                        <div class="w-full h-32 rounded-lg overflow-hidden bg-gray-100 mb-3 border border-gray-300 flex items-center justify-center p-3">
+                                            <img :src="item.previewIcon || item.icon_url" alt="Icon Pilar" class="max-h-full max-w-full object-contain">
+                                        </div>
+                                        <label class="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Ganti Ikon Badge:</label>
+                                        <input type="file" :name="'pillar_icons[' + item.id + ']'" @change="onIconChange($event, item)" accept="image/*" class="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2.5 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-[#509c38] hover:file:text-white transition">
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
+                        <span class="text-xs text-gray-500">Total: <strong x-text="pillars.length" class="text-gray-900"></strong> Pilar Aktif</span>
+                        <button type="button" @click="addPillar()" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#509c38] hover:text-green-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3.5 py-2 rounded-xl transition shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Tambah Pilar Baru
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 4: Statistik Capaian Perusahaan -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+                    <div class="flex items-center gap-3 border-b border-gray-100 pb-4 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center font-bold">
+                            <i data-lucide="bar-chart-2" class="w-5 h-5 text-[#509c38]"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900">Statistik & Angka Capaian</h2>
+                            <p class="text-xs text-gray-500">Kelola 3 angka capaian utama (misal: luas area kebun simulasi, rasio metode pelatihan, dan jumlah stasiun belajar).</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Stat 1 -->
+                        <div class="bg-gray-50 p-5 rounded-2xl border border-gray-200/80 flex flex-col justify-between space-y-4">
+                            <div>
+                                <span class="text-xs font-bold text-[#509c38] uppercase block mb-3">Statistik #1</span>
+                                <div class="w-full h-24 rounded-xl bg-teal-900/90 mb-3 p-3 flex items-center justify-center border border-teal-800">
+                                    <img src="{{ $beranda['home_stat1_icon'] }}" alt="Stat 1 Icon" class="max-h-full max-w-full object-contain">
+                                </div>
+                                <label class="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Ganti Ikon/Ilustrasi:</label>
+                                <input type="file" name="home_stat1_icon" accept="image/*" class="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-[#509c38] hover:file:text-white transition mb-3">
+                                
+                                <div class="grid grid-cols-2 gap-2 mb-3">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Nilai/Angka <span class="text-rose-500">*</span></label>
+                                        <input type="text" name="home_stat1_value" required value="{{ old('home_stat1_value', $beranda['home_stat1_value']) }}" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Satuan (Unit)</label>
+                                        <input type="text" name="home_stat1_unit" value="{{ old('home_stat1_unit', $beranda['home_stat1_unit']) }}" placeholder="Ha" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Keterangan Label <span class="text-rose-500">*</span></label>
+                                    <input type="text" name="home_stat1_label" required value="{{ old('home_stat1_label', $beranda['home_stat1_label']) }}" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stat 2 -->
+                        <div class="bg-gray-50 p-5 rounded-2xl border border-gray-200/80 flex flex-col justify-between space-y-4">
+                            <div>
+                                <span class="text-xs font-bold text-[#509c38] uppercase block mb-3">Statistik #2</span>
+                                <div class="w-full h-24 rounded-xl bg-teal-900/90 mb-3 p-3 flex items-center justify-center border border-teal-800">
+                                    <img src="{{ $beranda['home_stat2_icon'] }}" alt="Stat 2 Icon" class="max-h-full max-w-full object-contain">
+                                </div>
+                                <label class="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Ganti Ikon/Ilustrasi:</label>
+                                <input type="file" name="home_stat2_icon" accept="image/*" class="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-[#509c38] hover:file:text-white transition mb-3">
+                                
+                                <div class="grid grid-cols-2 gap-2 mb-3">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Nilai/Angka <span class="text-rose-500">*</span></label>
+                                        <input type="text" name="home_stat2_value" required value="{{ old('home_stat2_value', $beranda['home_stat2_value']) }}" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Satuan (Unit)</label>
+                                        <input type="text" name="home_stat2_unit" value="{{ old('home_stat2_unit', $beranda['home_stat2_unit']) }}" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Keterangan Label <span class="text-rose-500">*</span></label>
+                                    <input type="text" name="home_stat2_label" required value="{{ old('home_stat2_label', $beranda['home_stat2_label']) }}" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Stat 3 -->
+                        <div class="bg-gray-50 p-5 rounded-2xl border border-gray-200/80 flex flex-col justify-between space-y-4">
+                            <div>
+                                <span class="text-xs font-bold text-[#509c38] uppercase block mb-3">Statistik #3</span>
+                                <div class="w-full h-24 rounded-xl bg-teal-900/90 mb-3 p-3 flex items-center justify-center border border-teal-800">
+                                    <img src="{{ $beranda['home_stat3_icon'] }}" alt="Stat 3 Icon" class="max-h-full max-w-full object-contain">
+                                </div>
+                                <label class="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Ganti Ikon/Ilustrasi:</label>
+                                <input type="file" name="home_stat3_icon" accept="image/*" class="text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded-lg file:border-0 file:text-[11px] file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-[#509c38] hover:file:text-white transition mb-3">
+                                
+                                <div class="grid grid-cols-2 gap-2 mb-3">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Nilai/Angka <span class="text-rose-500">*</span></label>
+                                        <input type="text" name="home_stat3_value" required value="{{ old('home_stat3_value', $beranda['home_stat3_value']) }}" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Satuan (Unit)</label>
+                                        <input type="text" name="home_stat3_unit" value="{{ old('home_stat3_unit', $beranda['home_stat3_unit']) }}" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Keterangan Label <span class="text-rose-500">*</span></label>
+                                    <input type="text" name="home_stat3_label" required value="{{ old('home_stat3_label', $beranda['home_stat3_label']) }}" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Layanan & Program Unggul (Accordion) -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8"
+                     x-data="{
+                         accordions: {{ \Illuminate\Support\Js::from($accordions) }},
+                         addAccordion() {
+                             const num = this.accordions.length + 1;
+                             const pad = num.toString().padStart(2, '0');
+                             this.accordions.push({
+                                 id: 'acc_' + Date.now(),
+                                 title: 'ITEM ACCORDION ' + pad,
+                                 desc: '',
+                                 items: [
+                                     { title: '', desc: '' }
+                                 ]
+                             });
+                         },
+                         removeAccordion(accIdx) {
+                             if (this.accordions.length <= 1) {
+                                 alert('Minimal harus ada 1 item accordion.');
+                                 return;
+                             }
+                             if (confirm('Apakah Anda yakin ingin menghapus seluruh item accordion ini beserta poin-poinnya?')) {
+                                 this.accordions.splice(accIdx, 1);
+                             }
+                         },
+                         addPoint(accIdx) {
+                             if (!this.accordions[accIdx].items) {
+                                 this.accordions[accIdx].items = [];
+                             }
+                             this.accordions[accIdx].items.push({ title: '', desc: '' });
+                         },
+                         removePoint(accIdx, itemIdx) {
+                             if (this.accordions[accIdx].items.length <= 1) {
+                                 alert('Minimal harus ada 1 poin di dalam accordion ini.');
+                                 return;
+                             }
+                             this.accordions[accIdx].items.splice(itemIdx, 1);
+                         }
+                     }">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4 mb-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center font-bold">
+                                <i data-lucide="folder-kanban" class="w-5 h-5 text-[#509c38]"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-bold text-gray-900">Layanan & Program Unggul (Accordion)</h2>
+                                <p class="text-xs text-gray-500">Kelola judul headline dan item accordion yang fleksibel beserta daftar poin seragam di dalamnya.</p>
+                            </div>
+                        </div>
+                        <button type="button" @click="addAccordion()" class="inline-flex items-center gap-1.5 text-xs font-bold text-white bg-[#509c38] hover:bg-green-700 px-3.5 py-2 rounded-xl transition shadow-sm self-start sm:self-auto">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Tambah Item Accordion
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Teks Badge Kecil</label>
+                            <input type="text" name="home_program_badge" value="{{ old('home_program_badge', $beranda['home_program_badge']) }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Judul Besar Headline <span class="text-rose-500">*</span></label>
+                            <input type="text" name="home_program_title" required value="{{ old('home_program_title', $beranda['home_program_title']) }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                            <p class="text-[11px] text-gray-400 mt-1">Gunakan tag &lt;br&gt; jika ingin membuat baris baru.</p>
+                        </div>
+                    </div>
+
+                    <!-- Accordion List Repeater -->
+                    <div class="space-y-6">
+                        <template x-for="(acc, accIdx) in accordions" :key="acc.id || accIdx">
+                            <div class="bg-gray-50 p-5 sm:p-6 rounded-2xl border border-gray-200/80 space-y-4">
+                                <div class="flex items-center justify-between pb-3 border-b border-gray-200/60">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded bg-teal-100 text-teal-800 text-xs font-mono font-bold" x-text="'(' + (accIdx + 1).toString().padStart(2, '0') + ')'"></span>
+                                        <h3 class="text-sm font-bold text-gray-900 uppercase">
+                                            <span>Item Accordion <span x-text="(accIdx + 1).toString().padStart(2, '0')"></span></span>: <span x-text="acc.title || 'Tanpa Judul'"></span>
+                                        </h3>
+                                    </div>
+                                    <button type="button" @click="removeAccordion(accIdx)" class="inline-flex items-center gap-1 text-xs font-semibold text-rose-600 hover:text-rose-700 bg-rose-50 hover:bg-rose-100 border border-rose-200 px-2.5 py-1 rounded-lg transition" title="Hapus accordion ini">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                        Hapus Item
+                                    </button>
+                                </div>
+
+                                <input type="hidden" :name="'accordions[' + accIdx + '][id]'" :value="acc.id || ('acc_' + accIdx)">
+
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Judul Accordion <span class="text-rose-500">*</span></label>
+                                        <input type="text" :name="'accordions[' + accIdx + '][title]'" x-model="acc.title" required class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition" placeholder="Cth: PROGRAM REGULER">
+                                    </div>
+                                    <div class="md:col-span-2">
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">Deskripsi Singkat / Pengantar <span class="text-rose-500">*</span></label>
+                                        <input type="text" :name="'accordions[' + accIdx + '][desc]'" x-model="acc.desc" required class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition" placeholder="Deskripsi pengantar singkat saat accordion dibuka...">
+                                    </div>
+                                </div>
+
+                                <!-- Dynamic Points Repeater (Uniform across ALL accordions!) -->
+                                <div class="mt-4 pt-4 border-t border-gray-200/70">
+                                    <div class="flex items-center justify-between mb-3">
+                                        <div>
+                                            <h4 class="text-xs font-bold text-gray-800 uppercase flex items-center gap-1.5">
+                                                <svg class="w-4 h-4 text-[#509c38]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path></svg>
+                                                <span>Daftar Poin</span>
+                                            </h4>
+                                            <p class="text-[11px] text-gray-500">Kelola judul poin dan keterangan rincian di dalamnya.</p>
+                                        </div>
+                                        <button type="button" @click="addPoint(accIdx)" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#509c38] hover:text-green-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3 py-1.5 rounded-lg transition shadow-sm">
+                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                            Tambah Poin
+                                        </button>
+                                    </div>
+
+                                    <div class="space-y-3">
+                                        <template x-for="(item, itemIdx) in (acc.items || [])" :key="itemIdx">
+                                            <div class="bg-white p-4 rounded-xl border border-gray-200/90 shadow-sm flex flex-col md:flex-row gap-3 items-start relative group hover:border-emerald-300 transition">
+                                                <div class="w-7 h-7 rounded-lg bg-teal-50 text-teal-800 flex items-center justify-center text-xs font-bold shrink-0 mt-1 border border-teal-100">
+                                                    <span x-text="itemIdx + 1"></span>
+                                                </div>
+                                                <div class="flex-grow w-full grid grid-cols-1 md:grid-cols-3 gap-3">
+                                                    <div>
+                                                        <label class="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Judul Poin <span class="text-rose-500">*</span></label>
+                                                        <input type="text" :name="'accordions[' + accIdx + '][items][' + itemIdx + '][title]'" x-model="item.title" placeholder="Cth: Judul modul, topik, atau inisiatif" required class="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs font-medium focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                                                    </div>
+                                                    <div class="md:col-span-2">
+                                                        <label class="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Deskripsi / Keterangan (Opsional)</label>
+                                                        <textarea :name="'accordions[' + accIdx + '][items][' + itemIdx + '][desc]'" x-model="item.desc" rows="2" placeholder="Penjelasan atau rincian poin (opsional jika hanya berupa list singkat)..." class="w-full px-3 py-2 rounded-lg border border-gray-200 text-xs focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition"></textarea>
+                                                    </div>
+                                                </div>
+                                                <button type="button" @click="removePoint(accIdx, itemIdx)" class="shrink-0 text-gray-400 hover:text-rose-600 p-2 rounded-lg hover:bg-rose-50 transition mt-1" title="Hapus Poin Ini">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
+                        <span class="text-xs text-gray-500">Total: <strong x-text="accordions.length" class="text-gray-900"></strong> Item Accordion</span>
+                        <button type="button" @click="addAccordion()" class="inline-flex items-center gap-1.5 text-xs font-bold text-[#509c38] hover:text-green-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 px-3.5 py-2 rounded-xl transition shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                            Tambah Item Accordion
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Action Button -->
                 <div class="flex items-center justify-end gap-4 sticky bottom-4 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-gray-200 shadow-lg z-30">
                     <button type="submit" class="bg-[#509c38] hover:bg-green-600 text-white font-bold px-6 py-3 rounded-xl shadow-md transition-all flex items-center gap-2">
