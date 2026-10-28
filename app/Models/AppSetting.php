@@ -507,4 +507,206 @@ class AppSetting extends Model
 
         static::set('home_accordions', json_encode(array_values($clean)));
     }
+
+    /**
+     * Default list of Program Navigation Menus (Header & Dropdown).
+     */
+    public static function defaultProgramNavMenus(): array
+    {
+        return [
+            [
+                'id' => 'menu_reguler',
+                'key' => 'reguler',
+                'name' => 'Program Reguler',
+                'has_submenu' => true,
+                'url' => null,
+                'order' => 1,
+                'is_active' => true,
+                'submenus' => [
+                    ['id' => 'sub_fat', 'name' => 'Program FAT', 'url' => '/program/fat', 'order' => 1, 'is_active' => true],
+                    ['id' => 'sub_mat', 'name' => 'Program MAT', 'url' => '/program/mat', 'order' => 2, 'is_active' => true],
+                    ['id' => 'sub_tat', 'name' => 'Program TAT', 'url' => '/program/tat', 'order' => 3, 'is_active' => true],
+                    ['id' => 'sub_dmt', 'name' => 'Program DMT', 'url' => '/program/dmt', 'order' => 4, 'is_active' => true],
+                    ['id' => 'sub_aat', 'name' => 'Program AAT', 'url' => '/program/aat', 'order' => 5, 'is_active' => true],
+                    ['id' => 'sub_pmt', 'name' => 'Program PMT', 'url' => '/program/pmt', 'order' => 6, 'is_active' => true],
+                    ['id' => 'sub_ma', 'name' => 'Program Management Associate', 'url' => '/program/management-associate', 'order' => 7, 'is_active' => true],
+                ],
+            ],
+            [
+                'id' => 'menu_managerial',
+                'key' => 'managerial',
+                'name' => 'Managerial & Leadership',
+                'has_submenu' => true,
+                'url' => null,
+                'order' => 2,
+                'is_active' => true,
+                'submenus' => [
+                    ['id' => 'sub_hic', 'name' => 'High Impact Communication', 'url' => '/program/high-impact-communication', 'order' => 1, 'is_active' => true],
+                    ['id' => 'sub_cip', 'name' => 'Continuous Improvement Program', 'url' => '/program/continuous-improvement-program', 'order' => 2, 'is_active' => true],
+                ],
+            ],
+            [
+                'id' => 'menu_estate',
+                'key' => 'estate',
+                'name' => 'Estate',
+                'has_submenu' => true,
+                'url' => null,
+                'order' => 3,
+                'is_active' => true,
+                'submenus' => [
+                    ['id' => 'sub_kkm', 'name' => 'Klinik Kerja Mandor', 'url' => '/program/klinik-kerja-mandor', 'order' => 1, 'is_active' => true],
+                    ['id' => 'sub_spp', 'name' => 'Sistem Pengancakan Panen', 'url' => '/program/sistem-pengancakan-panen', 'order' => 2, 'is_active' => true],
+                ],
+            ],
+            [
+                'id' => 'menu_mill',
+                'key' => 'mill',
+                'name' => 'Mill',
+                'has_submenu' => true,
+                'url' => null,
+                'order' => 4,
+                'is_active' => true,
+                'submenus' => [
+                    ['id' => 'sub_wtp', 'name' => 'Pengelolaan Water Treatment', 'url' => '/program/pengelolaan-water-treatment', 'order' => 1, 'is_active' => true],
+                    ['id' => 'sub_pmp', 'name' => 'Manajemen perawatan pompa', 'url' => '/program/manajemen-perawatan-pompa', 'order' => 2, 'is_active' => true],
+                ],
+            ],
+            [
+                'id' => 'menu_traksi',
+                'key' => 'traksi',
+                'name' => 'Traksi',
+                'has_submenu' => true,
+                'url' => null,
+                'order' => 5,
+                'is_active' => true,
+                'submenus' => [
+                    ['id' => 'sub_rpdt', 'name' => 'Refreshment Perawatan Dump Truck', 'url' => '/program/refreshment-perawatan-dump-truck', 'order' => 1, 'is_active' => true],
+                    ['id' => 'sub_dd', 'name' => 'Defensive Driving', 'url' => '/program/defensive-driving', 'order' => 2, 'is_active' => true],
+                ],
+            ],
+            [
+                'id' => 'menu_downstream',
+                'key' => 'downstream',
+                'name' => 'Downstream',
+                'has_submenu' => true,
+                'url' => null,
+                'order' => 6,
+                'is_active' => true,
+                'submenus' => [
+                    ['id' => 'sub_so', 'name' => 'Super Olein Training', 'url' => '/program/super-olein-training', 'order' => 1, 'is_active' => true],
+                ],
+            ],
+            [
+                'id' => 'menu_administrasi',
+                'key' => 'administrasi',
+                'name' => 'Administrasi',
+                'has_submenu' => true,
+                'url' => null,
+                'order' => 7,
+                'is_active' => true,
+                'submenus' => [
+                    ['id' => 'sub_damkar', 'name' => 'Damkarhutlabun', 'url' => '/program/damkarhutlabun', 'order' => 1, 'is_active' => true],
+                    ['id' => 'sub_k3', 'name' => 'K3 First Aid', 'url' => '/program/k3-first-aid', 'order' => 2, 'is_active' => true],
+                ],
+            ],
+            [
+                'id' => 'menu_talent',
+                'key' => 'talent',
+                'name' => 'Talent Management',
+                'has_submenu' => false,
+                'url' => '/program/talent-management',
+                'order' => 8,
+                'is_active' => true,
+                'submenus' => [],
+            ],
+        ];
+    }
+
+    /**
+     * Get Program Navigation Menus.
+     */
+    public static function getProgramNavMenus(bool $onlyActive = false): array
+    {
+        $val = static::get('header_program_nav_menus');
+        if (! $val) {
+            $menus = static::defaultProgramNavMenus();
+        } else {
+            $decoded = json_decode($val, true);
+            $menus = is_array($decoded) && ! empty($decoded) ? $decoded : static::defaultProgramNavMenus();
+        }
+
+        // Sort by order
+        usort($menus, fn ($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
+
+        if ($onlyActive) {
+            $menus = array_filter($menus, fn ($m) => ! empty($m['is_active']));
+        }
+
+        foreach ($menus as &$menu) {
+            if (! isset($menu['submenus']) || ! is_array($menu['submenus'])) {
+                $menu['submenus'] = [];
+            } else {
+                usort($menu['submenus'], fn ($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
+                if ($onlyActive) {
+                    $menu['submenus'] = array_values(array_filter($menu['submenus'], fn ($s) => ! empty($s['is_active'])));
+                }
+            }
+        }
+
+        return array_values($menus);
+    }
+
+    /**
+     * Save Program Navigation Menus.
+     */
+    public static function saveProgramNavMenus(array $menus): void
+    {
+        $clean = [];
+        foreach ($menus as $idx => $menu) {
+            if (! is_array($menu)) {
+                continue;
+            }
+            $name = trim($menu['name'] ?? '');
+            if ($name === '') {
+                continue;
+            }
+            $cleanSubmenus = [];
+            if (isset($menu['submenus']) && is_array($menu['submenus'])) {
+                foreach ($menu['submenus'] as $subIdx => $sub) {
+                    if (! is_array($sub)) {
+                        continue;
+                    }
+                    $subName = trim($sub['name'] ?? '');
+                    if ($subName === '') {
+                        continue;
+                    }
+                    $cleanSubmenus[] = [
+                        'id' => $sub['id'] ?? ('sub_'.time().'_'.$subIdx),
+                        'name' => $subName,
+                        'url' => trim($sub['url'] ?? '#'),
+                        'order' => isset($sub['order']) ? (int) $sub['order'] : ($subIdx + 1),
+                        'is_active' => isset($sub['is_active']) ? (bool) $sub['is_active'] : true,
+                    ];
+                }
+                usort($cleanSubmenus, fn ($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
+            }
+
+            $hasSubmenu = ! empty($menu['has_submenu']);
+            $key = trim($menu['key'] ?? '') ?: \Illuminate\Support\Str::slug($name);
+
+            $clean[] = [
+                'id' => $menu['id'] ?? ('menu_'.time().'_'.$idx),
+                'key' => $key,
+                'name' => $name,
+                'has_submenu' => $hasSubmenu,
+                'url' => $hasSubmenu ? null : trim($menu['url'] ?? '#'),
+                'order' => isset($menu['order']) ? (int) $menu['order'] : ($idx + 1),
+                'is_active' => isset($menu['is_active']) ? (bool) $menu['is_active'] : true,
+                'submenus' => $cleanSubmenus,
+            ];
+        }
+
+        usort($clean, fn ($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
+        static::set('header_program_nav_menus', json_encode(array_values($clean)));
+    }
 }

@@ -34,17 +34,16 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
             @php
-                $hasPosterDetails = (!empty($program['curriculum_pillars']) && count($program['curriculum_pillars']) > 0) || 
-                                    (!empty($program['objectives']) && count($program['objectives']) > 0);
+                $isReguler = !empty($program['is_reguler']) || in_array($slug, ['fat', 'mat', 'tat', 'aat', 'dmt', 'pmt', 'management-associate']);
             @endphp
 
-            @if($hasPosterDetails)
+            @if($isReguler)
                 <!-- ================================================================= -->
                 <!-- PROGRAM REGULER: STRICTLY FROM OFFICIAL POSTER                   -->
                 <!-- ================================================================= -->
                 <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
                     
-                    <!-- Left Column: Deskripsi, Kurikulum, Benefit (7 Cols) -->
+                    <!-- Left Column: Deskripsi, Kurikulum, Objective (7 Cols) -->
                     <div class="lg:col-span-7 space-y-6" data-aos="fade-up">
                         
                         <!-- 1. Deskripsi Program -->
@@ -61,44 +60,48 @@
                         </div>
 
                         <!-- 2. Kurikulum -->
-                        <div class="p-6 sm:p-7 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
-                            <div class="flex items-center gap-2 mb-3">
-                                <span class="w-2 h-2 rounded-full bg-green-accent"></span>
-                                <h3 class="text-base sm:text-lg font-bold text-teal-primary dark:text-green-accent">
-                                    KURIKULUM
-                                </h3>
+                        @if(!empty($program['curriculum_pillars']) && count($program['curriculum_pillars']) > 0)
+                            <div class="p-6 sm:p-7 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="w-2 h-2 rounded-full bg-green-accent"></span>
+                                    <h3 class="text-base sm:text-lg font-bold text-teal-primary dark:text-green-accent">
+                                        KURIKULUM
+                                    </h3>
+                                </div>
+                                <ol class="space-y-2 text-sm sm:text-base text-gray-800 dark:text-gray-200 pl-1">
+                                    @foreach($program['curriculum_pillars'] as $cIndex => $pillar)
+                                        <li class="flex items-center gap-3 p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700">
+                                            <span class="w-6 h-6 rounded-full bg-teal-primary text-white text-xs font-bold flex items-center justify-center shrink-0">
+                                                {{ $cIndex + 1 }}
+                                            </span>
+                                            <span class="font-medium">{{ $pillar }}</span>
+                                        </li>
+                                    @endforeach
+                                </ol>
                             </div>
-                            <ol class="space-y-2 text-sm sm:text-base text-gray-800 dark:text-gray-200 pl-1">
-                                @foreach($program['curriculum_pillars'] ?? [] as $cIndex => $pillar)
-                                    <li class="flex items-center gap-3 p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700">
-                                        <span class="w-6 h-6 rounded-full bg-teal-primary text-white text-xs font-bold flex items-center justify-center shrink-0">
-                                            {{ $cIndex + 1 }}
-                                        </span>
-                                        <span class="font-medium">{{ $pillar }}</span>
-                                    </li>
-                                @endforeach
-                            </ol>
-                        </div>
+                        @endif
 
-                        <!-- 3. Benefit -->
-                        <div class="p-6 sm:p-7 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
-                            <div class="flex items-center gap-2 mb-3">
-                                <span class="w-2 h-2 rounded-full bg-green-accent"></span>
-                                <h3 class="text-base sm:text-lg font-bold text-teal-primary dark:text-green-accent">
-                                    BENEFIT
-                                </h3>
+                        <!-- 3. Objective -->
+                        @if(!empty($program['objectives']) && count($program['objectives']) > 0)
+                            <div class="p-6 sm:p-7 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="w-2 h-2 rounded-full bg-green-accent"></span>
+                                    <h3 class="text-base sm:text-lg font-bold text-teal-primary dark:text-green-accent">
+                                        OBJECTIVE
+                                    </h3>
+                                </div>
+                                <ul class="space-y-2.5 text-sm sm:text-base text-gray-800 dark:text-gray-200 pl-1">
+                                    @foreach($program['objectives'] as $oIdx => $objective)
+                                        <li class="flex items-start gap-3 p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700">
+                                            <span class="w-6 h-6 rounded-full bg-green-accent/20 text-teal-primary dark:text-green-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                                                {{ $oIdx + 1 }}
+                                            </span>
+                                            <span class="leading-relaxed font-normal">{{ $objective }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
                             </div>
-                            <ul class="space-y-2.5 text-sm sm:text-base text-gray-800 dark:text-gray-200 pl-1">
-                                @foreach($program['objectives'] ?? [] as $oIdx => $objective)
-                                    <li class="flex items-start gap-3 p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700">
-                                        <span class="w-6 h-6 rounded-full bg-green-accent/20 text-teal-primary dark:text-green-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
-                                            {{ $oIdx + 1 }}
-                                        </span>
-                                        <span class="leading-relaxed font-normal">{{ $objective }}</span>
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </div>
+                        @endif
 
                     </div>
 
@@ -131,31 +134,68 @@
                 </div>
             @else
                 <!-- ================================================================= -->
-                <!-- PROGRAM NON-REGULER: HANYA JUDUL, GAMBAR, DAN DESKRIPSI           -->
+                <!-- PROGRAM NON-REGULER: DESKRIPSI, KURIKULUM, BENEFIT & GAMBAR       -->
                 <!-- ================================================================= -->
-                <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
                     
-                    <!-- Left Column: Judul & Deskripsi Program (7 Cols) -->
-                    <div class="lg:col-span-7" data-aos="fade-up">
-                        <div class="p-6 sm:p-8 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
-                            <span class="text-xs font-bold tracking-widest uppercase text-green-accent block mb-2">
-                                DESKRIPSI PROGRAM
-                            </span>
-                            <h2 class="text-2xl sm:text-3xl font-extrabold text-teal-primary dark:text-white tracking-tight mb-4">
+                    <!-- Left Column: Deskripsi, Kurikulum, Benefit (7 Cols) -->
+                    <div class="lg:col-span-7 space-y-6" data-aos="fade-up">
+                        
+                        <!-- 1. Deskripsi Program (Overview) -->
+                        <div class="p-6 sm:p-7 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
+                            <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-[#114045] dark:bg-teal-900 text-white text-xs font-bold tracking-wide uppercase mb-4 shadow-sm">
+                                Overview
+                            </div>
+                            <h2 class="text-xl sm:text-2xl font-extrabold text-teal-primary dark:text-white tracking-tight mb-3">
                                 {{ $program['title'] }}
                             </h2>
-                            <p class="text-base sm:text-lg text-gray-700 dark:text-gray-300 leading-relaxed font-light">
+                            <p class="text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed font-normal">
                                 {{ $program['overview'] }}
                             </p>
                         </div>
+
+                        <!-- 2. Kurikulum -->
+                        @if(!empty($program['curriculum_pillars']) && count($program['curriculum_pillars']) > 0)
+                            <div class="p-6 sm:p-7 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
+                                <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-[#114045] dark:bg-teal-900 text-white text-xs font-bold tracking-wide uppercase mb-4 shadow-sm">
+                                    Kurikulum
+                                </div>
+                                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-800 dark:text-gray-200">
+                                    @foreach($program['curriculum_pillars'] as $pillar)
+                                        <li class="flex items-start gap-2.5 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/80">
+                                            <span class="w-2 h-2 rounded-full bg-[#114045] dark:bg-green-accent mt-2 shrink-0"></span>
+                                            <span class="leading-relaxed font-normal">{{ $pillar }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        <!-- 3. Benefit -->
+                        @if((!empty($program['objectives']) && count($program['objectives']) > 0) || (!empty($program['benefits']) && count($program['benefits']) > 0))
+                            <div class="p-6 sm:p-7 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
+                                <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-[#114045] dark:bg-teal-900 text-white text-xs font-bold tracking-wide uppercase mb-4 shadow-sm">
+                                    Benefit
+                                </div>
+                                <ul class="space-y-2.5 text-sm sm:text-base text-gray-800 dark:text-gray-200">
+                                    @foreach($program['objectives'] ?? $program['benefits'] ?? [] as $benefit)
+                                        <li class="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/80">
+                                            <span class="w-2 h-2 rounded-full bg-green-accent mt-2 shrink-0"></span>
+                                            <span class="leading-relaxed font-normal">{{ $benefit }}</span>
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
                     </div>
 
-                    <!-- Right Column: Gambar Program (5 Cols) -->
-                    <div class="lg:col-span-5" data-aos="fade-up" data-aos-delay="100">
-                        <div class="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-md bg-gray-50 dark:bg-gray-900 p-2">
+                    <!-- Right Column: Gambar Program Saja (5 Cols) -->
+                    <div class="lg:col-span-5 space-y-6 lg:sticky lg:top-24" data-aos="fade-up" data-aos-delay="100">
+                        <div class="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-md bg-white dark:bg-gray-900 p-2">
                             <img src="{{ asset($program['image'] ?? $program['hero_image']) }}" 
                                  alt="{{ $program['title'] }}" 
-                                 class="w-full h-auto object-cover rounded-xl shadow-inner">
+                                 class="w-full h-auto object-cover rounded-xl shadow-inner border border-gray-100 dark:border-gray-800">
                         </div>
                     </div>
 

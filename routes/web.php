@@ -217,6 +217,8 @@ Route::middleware('auth')->prefix('admin')->group(function () {
         ->middleware('can:manage_career');
 
     // Portal Programs (Katalog & Detail Program CMS)
+    Route::post('portal-programs/sync-default', [PortalProgramController::class, 'syncDefaultPrograms'])
+        ->name('admin.portal_programs.sync_default');
     Route::resource('portal-programs', PortalProgramController::class)
         ->except(['show'])
         ->names('admin.portal_programs');
@@ -237,6 +239,17 @@ Route::middleware('auth')->prefix('admin')->group(function () {
         Route::post('/portal-links/{id}/delete', [PageSettingController::class, 'deletePortalLink'])->name('delete_portal_link');
         Route::post('/portal-links/{id}/toggle', [PageSettingController::class, 'togglePortalLink'])->name('toggle_portal_link');
         Route::post('/portal-links/reset', [PageSettingController::class, 'resetPortalLinks'])->name('reset_portal_links');
+
+        // Manajemen Menu Navigasi Program (Header Dropdown & Sub-Menu)
+        Route::post('/program-menus', [PageSettingController::class, 'storeProgramMenu'])->name('store_program_menu');
+        Route::post('/program-menus/{id}/update', [PageSettingController::class, 'updateProgramMenu'])->name('update_program_menu');
+        Route::post('/program-menus/{id}/delete', [PageSettingController::class, 'deleteProgramMenu'])->name('delete_program_menu');
+        Route::post('/program-menus/{id}/toggle', [PageSettingController::class, 'toggleProgramMenu'])->name('toggle_program_menu');
+        Route::post('/program-menus/{menuId}/submenus', [PageSettingController::class, 'storeProgramSubmenu'])->name('store_program_submenu');
+        Route::post('/program-menus/{menuId}/submenus/{subId}/update', [PageSettingController::class, 'updateProgramSubmenu'])->name('update_program_submenu');
+        Route::post('/program-menus/{menuId}/submenus/{subId}/delete', [PageSettingController::class, 'deleteProgramSubmenu'])->name('delete_program_submenu');
+        Route::post('/program-menus/{menuId}/submenus/{subId}/toggle', [PageSettingController::class, 'toggleProgramSubmenu'])->name('toggle_program_submenu');
+        Route::post('/program-menus/reset', [PageSettingController::class, 'resetProgramMenus'])->name('reset_program_menus');
     });
 
     // Standar Kompetensi Management

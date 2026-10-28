@@ -17,32 +17,39 @@ class ProgramCatalogService
                     ->get();
 
                 if ($dbPrograms->isNotEmpty()) {
+                    $fallback = self::getStaticFallbackPrograms();
                     $programs = [];
                     foreach ($dbPrograms as $p) {
+                        $f = $fallback[$p->slug] ?? [];
                         $programs[$p->slug] = [
                             'id' => $p->id,
                             'slug' => $p->slug,
-                            'code' => $p->code ?? strtoupper($p->slug),
+                            'code' => $p->code ?? ($f['code'] ?? strtoupper($p->slug)),
                             'title' => $p->title,
-                            'subtitle' => $p->subtitle,
-                            'category_key' => $p->category_key ?? 'trainee',
-                            'category_name' => $p->category_name ?? 'Program Pelatihan',
-                            'target_role' => $p->target_role,
-                            'duration' => $p->duration,
-                            'format' => $p->format,
-                            'image' => $p->getResolvedImageUrl(),
-                            'hero_image' => $p->getResolvedHeroImageUrl(),
-                            'badge' => $p->badge,
+                            'subtitle' => $p->subtitle ?? ($f['subtitle'] ?? null),
+                            'category_key' => $p->category_key ?? ($f['category_key'] ?? 'trainee'),
+                            'category_name' => $p->category_name ?? ($f['category_name'] ?? 'Program Pelatihan'),
+                            'target_role' => $p->target_role ?? ($f['target_role'] ?? null),
+                            'duration' => $p->duration ?? ($f['duration'] ?? null),
+                            'format' => $p->format ?? ($f['format'] ?? null),
+                            'image' => $p->getResolvedImageUrl() ?: ($f['image'] ?? '/images/programs/aat_admin.jpg'),
+                            'hero_image' => $p->getResolvedHeroImageUrl() ?: ($f['hero_image'] ?? '/images/programs/aat_admin.jpg'),
+                            'badge' => $p->badge ?? ($f['badge'] ?? null),
                             'is_reguler' => (bool) $p->is_reguler,
-                            'overview' => $p->overview,
-                            'objectives' => $p->objectives ?? [],
-                            'curriculum_pillars' => $p->curriculum_pillars ?? [],
-                            'learning_method' => $p->learning_method ?? [
+                            'overview' => $p->overview ?? ($f['overview'] ?? null),
+                            'objectives' => (!empty($p->objectives) && count($p->objectives) > 0) ? $p->objectives : ($f['objectives'] ?? []),
+                            'curriculum_pillars' => (!empty($p->curriculum_pillars) && count($p->curriculum_pillars) > 0) ? $p->curriculum_pillars : ($f['curriculum_pillars'] ?? []),
+                            'learning_method' => $p->learning_method ?? ($f['learning_method'] ?? [
                                 'ratio' => '70 : 20 : 10',
                                 'desc' => '70% experiential learning, 20% social learning, dan 10% formal learning'
-                            ],
+                            ]),
                             'order' => $p->order,
                         ];
+                    }
+                    foreach ($fallback as $fSlug => $fData) {
+                        if (!isset($programs[$fSlug])) {
+                            $programs[$fSlug] = $fData;
+                        }
                     }
                     return $programs;
                 }
@@ -575,6 +582,74 @@ class ProgramCatalogService
             ],
 
             // =================================================================
+            // PMT
+            // =================================================================
+            'pmt' => [
+                'slug' => 'pmt',
+                'code' => 'PMT',
+                'title' => 'Palm Oil Mill Trainee (PMT)',
+                'subtitle' => 'Pelatihan Calon Asisten Pengolahan Pabrik Kelapa Sawit',
+                'category_key' => 'trainee',
+                'category_name' => 'Program Trainee',
+                'target_role' => 'Calon Asisten Pabrik Kelapa Sawit (Mill Assistant)',
+                'duration' => '6 Bulan (Reguler & Mentoring Berkesinambungan)',
+                'format' => 'Metode 70:20:10 (70% Experiential, 20% Social, 10% Formal Learning)',
+                'image' => '/images/posters/poster_mat.jpg',
+                'hero_image' => '/images/programs/mat_mill.jpg',
+                'badge' => 'Pabrik Kelapa Sawit',
+                'overview' => 'Program Palm Oil Mill Trainee (PMT) dirancang untuk menyiapkan calon asisten pabrik kelapa sawit dengan membekali peserta pengetahuan, keterampilan teknis stasiun pengolahan, dan kepemimpinan operasional pabrik sesuai budaya First Resources.',
+                'objectives' => [
+                    'Menyiapkan calon asisten pengolahan pabrik kelapa sawit.',
+                    'Membekali keterampilan teknis operasional stasiun pabrik dan losses kelapa sawit.',
+                    'Membekali keterampilan managerial and leadership operasional pabrik.',
+                    'Membentuk pola pikir, perilaku dan integritas sesuai budaya First Resources.'
+                ],
+                'curriculum_pillars' => [
+                    'Materi Kompetensi Umum',
+                    'Materi Kompetensi Teknis',
+                    'Materi Kompetensi Pendukung'
+                ],
+                'learning_method' => [
+                    'ratio' => '70 : 20 : 10',
+                    'desc' => '70% experiential learning, 20% social learning, dan 10% formal learning'
+                ]
+            ],
+
+            // =================================================================
+            // MANAGEMENT ASSOCIATE
+            // =================================================================
+            'management-associate' => [
+                'slug' => 'management-associate',
+                'code' => 'PMA',
+                'title' => 'Program Management Associate',
+                'subtitle' => 'Program Akselerasi Kepemimpinan & Manajemen Agribisnis Terintegrasi',
+                'category_key' => 'trainee',
+                'category_name' => 'Program Trainee',
+                'target_role' => 'Management Associate / Calon Pemimpin Operasional Masa Depan',
+                'duration' => '12 Bulan (Akselerasi & Mentoring Eksekutif)',
+                'format' => 'Metode 70:20:10 (70% Experiential, 20% Social, 10% Formal Learning)',
+                'image' => '/images/talent.png',
+                'hero_image' => '/images/slide4.png',
+                'badge' => 'Management Associate',
+                'overview' => 'Program Management Associate dirancang untuk mencetak calon pemimpin masa depan First Resources melalui rotasi strategis, pemecahan masalah bisnis nyata, dan pendampingan eksekutif senior.',
+                'objectives' => [
+                    'Mengakselerasi pembentukan calon pimpinan operasional dan agribisnis.',
+                    'Membekali kompetensi manajerial strategis, analisa bisnis, dan kepemimpinan.',
+                    'Membangun wawasan komprehensif seluruh rantai nilai perkebunan dan industri hilir.',
+                    'Membentuk kepemimpinan berintegritas tinggi sesuai budaya First Resources.'
+                ],
+                'curriculum_pillars' => [
+                    'Materi Kompetensi Umum',
+                    'Materi Kompetensi Teknis',
+                    'Materi Kompetensi Pendukung'
+                ],
+                'learning_method' => [
+                    'ratio' => '70 : 20 : 10',
+                    'desc' => '70% experiential learning, 20% social learning, dan 10% formal learning'
+                ]
+            ],
+
+            // =================================================================
             // 02. PROGRAM KEJURUAN TEKNIKAL
             // =================================================================
             'teknikal-estate' => [
@@ -591,6 +666,12 @@ class ProgramCatalogService
                 'hero_image' => '/images/programs/fat_estate.jpg',
                 'badge' => 'Kejuruan Teknikal Kebun',
                 'overview' => 'Program peningkatan keahlian teknis agronomi kebun sawit berkelanjutan bagi praktisi aktif. Dirancang untuk mempertajam kapabilitas penyelesaian masalah di lapangan (problem solving), standardisasi teknik kultur teknis terbaik, serta pemanfaatan data analisa laboratorium guna mendongkrak produktivitas tonase TBS per hektar.',
+                'curriculum_pillars' => [
+                    'Standar mutu kerja panen & kriteria panen buah sawit prima',
+                    'Kultur teknis pemupukan presisi 4T & kalibrasi takaran pupuk',
+                    'Pengendalian hama & penyakit terpadu (HPT) kelapa sawit',
+                    'Kepemimpinan mandor, komunikasi instruksi kerja & kepatuhan APD',
+                ],
                 'objectives' => [
                     'Meningkatkan kapabilitas mandor dan asisten dalam pengawasan mutu kerja harian.',
                     'Memperbaiki teknik pemupukan 4T guna menekan pemborosan pupuk anorganik bernilai tinggi.',
@@ -672,6 +753,12 @@ class ProgramCatalogService
                 'hero_image' => '/images/programs/mat_mill.jpg',
                 'badge' => 'Kejuruan Teknikal Pabrik',
                 'overview' => 'Program spesialisasi teknikal bagi tim operasional pabrik kelapa sawit untuk menjaga kontinuitas pengolahan TBS, memaksimalkan rendemen minyak (OER), menekan rasio kehilangan minyak (oil losses), serta menerapkan preventive maintenance mesin pabrik secara disiplin.',
+                'curriculum_pillars' => [
+                    'Operasional & optimasi stasiun sterilisasi, thresher, & press',
+                    'Pengelolaan water treatment plant & pencegahan kerak boiler',
+                    'Manajemen perawatan pompa industri, sludge pump, & mechanical seal',
+                    'Audit penekanan oil losses CPO & kendali mutu inti sawit (Kernel)',
+                ],
                 'objectives' => [
                     'Mengurangi angka downtime mendadak mesin akibat kerusakan fatal.',
                     'Menekan persentase oil losses di stasiun kempa, klarifikasi, dan janjang kosong.',
@@ -753,6 +840,12 @@ class ProgramCatalogService
                 'hero_image' => '/images/programs/tat_traction.jpg',
                 'badge' => 'Kejuruan Teknikal Traksi',
                 'overview' => 'Program penguatan keahlian bengkel unit perkebunan guna mempertahankan keandalan armada angkutan TBS dan alat berat perbaikan infrastruktur jalan. Menitikberatkan pada preventive maintenance, efisiensi bahan bakar solar, manajemen usia ban, dan keselamatan berkendara di kontur jalan perkebunan.',
+                'curriculum_pillars' => [
+                    'Pemeriksaan prapengoperasian harian (P2H) armada & alat berat',
+                    'Perawatan dump truck mesin Euro 4 & manajemen bahan bakar biosolar B35',
+                    'Defensive driving di jalur jalan poros & topografi perkebunan',
+                    'Troubleshooting sistem hidrolik, sistem pengereman & kontrol umur ban',
+                ],
                 'objectives' => [
                     'Meningkatkan keterampilan mekanik dalam mendiagnosis kerusakan mesin diesel common rail.',
                     'Menanamkan budaya defensive driving bagi driver guna menekan risiko insiden terbalik di jalan kebun.',
@@ -834,6 +927,12 @@ class ProgramCatalogService
                 'hero_image' => '/images/programs/dmt_downstream.jpg',
                 'badge' => 'Kejuruan Teknikal Downstream',
                 'overview' => 'Program pelatihan penguasaan teknologi pemurnian minyak nabati di kilang industri hilir. Melatih teknisi dan operator dalam mengendalikan parameter kritis fraksinasi, pemurnian vakum, pemeliharaan pompa industri, serta pemenuhan standar mutu pangan global.',
+                'curriculum_pillars' => [
+                    'Proses rafinasi, bleaching & deodorisasi CPO standar mutu pangan global',
+                    'Pengendalian kristalisasi fraksinasi & produksi Super Olein',
+                    'Sistem otomasi instrumen DCS / PLC & interlocking safety kilang',
+                    'Audit food safety, sanitasi industri, & sertifikasi FSSC 22000',
+                ],
                 'objectives' => [
                     'Mengoptimalkan kejernihan minyak goreng dan yield fraksi Olein.',
                     'Mampu membaca alarm peringatan dini di panel DCS untuk mencegah shutdown kilang.',
@@ -915,6 +1014,13 @@ class ProgramCatalogService
                 'hero_image' => '/images/programs/aat_admin.jpg',
                 'badge' => 'Kejuruan Administrasi & K3',
                 'overview' => 'Program pelatihan yang memastikan kepatuhan regulasi lingkungan hidup, kesiapsiagaan darurat pencegahan kebakaran hutan dan lahan (Karhutla), perlindungan keselamatan kerja karyawan, serta tata kelola administrasi pembukuan unit yang rapi dan terstandardisasi.',
+                'curriculum_pillars' => [
+                    'Landasan hukum dan sanksi penanggulangan karhutla perkebunan',
+                    'Pengenalan dan pemeliharaan peralatan Damkar perkebunan',
+                    'K3 First Aid & tanggap darurat medis lapangan',
+                    'Tata kelola administrasi unit & pembukuan logistik gudang',
+                    'Kepatuhan audit sertifikasi ISPO, RSPO & ketertelusuran TBS',
+                ],
                 'objectives' => [
                     'Meningkatkan kesiapsiagaan regu pemadam kebakaran kebun dengan respons waktu cepat.',
                     'Menjamin kepatuhan dokumen ketelusuran (traceability) audit sertifikasi ISPO & RSPO.',
@@ -999,6 +1105,13 @@ class ProgramCatalogService
                 'hero_image' => '/images/slide4.png',
                 'badge' => 'Managerial & Leadership',
                 'overview' => 'Program strategis pengembangan kapasitas kepemimpinan bagi seluruh level hierarki manajemen operasional perkebunan. Berfokus pada pembentukan karakter insan First Resources yang berintegritas, kemampuan memimpin tim multikultural, pemecahan masalah operasional berbasis data, serta ketajaman eksekusi strategi bisnis perkebunan kelapa sawit.',
+                'curriculum_pillars' => [
+                    'Fondasi kepemimpinan proaktif & The 7 Habits of Highly Effective People',
+                    'Leader as Coach & teknik supervisi lapangan yang memberdayakan',
+                    'Problem Solving & Decision Making (PSDM) berbasis data operasional',
+                    'High Impact Communication & presentasi laporan kinerja',
+                    'Budaya continuous improvement & manajemen resolusi konflik tim',
+                ],
                 'objectives' => [
                     'Membangun pola pikir kepemimpinan proaktif dan berorientasi hasil (results-oriented).',
                     'Mengembangkan kemampuan coaching dan mentoring untuk melipatgandakan kinerja bawahan.',
@@ -1092,6 +1205,13 @@ class ProgramCatalogService
                 'hero_image' => '/images/talent.png',
                 'badge' => 'Talent Management',
                 'overview' => 'Inisiatif strategis First Resources Academy dalam mengidentifikasi, mengasah, dan membina karier para kader pemimpin masa depan (Succession Pipeline). Menggunakan metodologi pembinaan terbukti 70:20:10 untuk mencetak pemimpin tangguh yang siap mengemban amanah strategis perusahaan.',
+                'curriculum_pillars' => [
+                    'Talent identification & pemetaan performa via 9-Box Grid',
+                    'Penyusunan Individual Development Plan (IDP) kader pemimpin',
+                    'Pengerjaan Strategic Improvement Project berdampak finansial tinggi',
+                    'Executive coaching & mentoring berkala bersama pimpinan puncak grup',
+                    'Executive Masterclass & benchmarking industri perkebunan modern',
+                ],
                 'objectives' => [
                     'Mengamankan ketersediaan suksesi kepemimpinan di seluruh unit operasional kebun dan pabrik.',
                     'Memberikan penugasan nyata pemecahan problem strategis bernilai ekonomi tinggi bagi grup.',
@@ -1149,6 +1269,408 @@ class ProgramCatalogService
                 ],
                 'career_path' => 'High Performer → Fast-Track Talent Pool → Pemimpin Kunci Operasional & Manajemen Puncak'
             ],
+
+            // =================================================================
+            // 05. PROGRAM SPESIFIK SUB-MENU (NON-REGULER)
+            // =================================================================
+            'damkarhutlabun' => [
+                'slug' => 'damkarhutlabun',
+                'code' => 'DAMKARLABUN',
+                'title' => 'Training Damkarlabun',
+                'subtitle' => 'Pencegahan & Penanggulangan Kebakaran Lahan Perkebunan',
+                'category_key' => 'administrasi',
+                'category_name' => 'Administrasi & K3',
+                'target_role' => 'Tim Damkar Kebun & Karyawan Operasional',
+                'duration' => '1 Hari',
+                'format' => 'Presentasi & Simulasi Pemadaman Kebakaran',
+                'image' => '/images/programs/damkar_training.png',
+                'hero_image' => '/images/programs/damkar_training.png',
+                'badge' => 'Training Damkarlabun',
+                'is_reguler' => false,
+                'overview' => 'Kebakaran lahan perkebunan hampir setiap tahun terjadi diindonesia dan hampir sebagian wilayah diindonesia pada setiap musim kemarau selalu dihadapkan pada permasalahan asap akibat kebakaran lahan. Kebakaran lahan mengakibatkan kerugian baik social, ekonomi, ekologi, penurunan potensi sumber daya alam, kesehatan, pendidikan, transportasi dan konflik satwa liar akibat rusaknya habitat satwa, musnahnya sumber daya genetic, hilangnya sumber mata air bagi masyarakat sekitar hutan, terjadinya pemanasan global dan lain sebagainya.',
+                'curriculum_pillars' => [
+                    'Landasan hukum dan sanksi',
+                    'Peraturan presiden, peraturan menteri dan peraturan daerah',
+                    'Dampak kebakaran',
+                    'Pengenalan peralatan Damkar',
+                    'Strategi pemadaman',
+                    'Administrasi pelaporan titik api ( Hotspot )',
+                ],
+                'objectives' => [
+                    'Menambah knowledge dan skill peserta training dalam penanggulangan kebakaran',
+                    'Mampu meningkatkan kesadaran akan bahaya kebakaran',
+                    'Tetap menjaga koordinasi tim damkar yang sudah dibentuk',
+                    'Meningkatkan kepedulian terhadap maintenance peralatan damkar',
+                    'Mencegah terjadinya kebakaran lahan perkebunan',
+                ],
+                'benefits' => [
+                    'Menambah knowledge dan skill peserta training dalam penanggulangan kebakaran',
+                    'Mampu meningkatkan kesadaran akan bahaya kebakaran',
+                    'Tetap menjaga koordinasi tim damkar yang sudah dibentuk',
+                    'Meningkatkan kepedulian terhadap maintenance peralatan damkar',
+                    'Mencegah terjadinya kebakaran lahan perkebunan',
+                ],
+            ],
+
+            'k3-first-aid' => [
+                'slug' => 'k3-first-aid',
+                'code' => 'K3-FIRST-AID',
+                'title' => 'Training K3 First Aid & Tanggap Darurat',
+                'subtitle' => 'Pertolongan Pertama Pada Kecelakaan Kerja di Lingkungan Perkebunan & Pabrik',
+                'category_key' => 'administrasi',
+                'category_name' => 'Administrasi & K3',
+                'target_role' => 'First Aider, Tim Tanggap Darurat, Mandor, & Karyawan Operasional',
+                'duration' => '2 Hari',
+                'format' => 'Teori Medis Dasar, Praktik CPR & Evakuasi Darurat',
+                'image' => '/images/programs/aat_admin.jpg',
+                'hero_image' => '/images/programs/aat_admin.jpg',
+                'badge' => 'Training K3 First Aid',
+                'is_reguler' => false,
+                'overview' => 'Pelatihan pertolongan pertama pada kecelakaan (P3K) dan tanggap darurat medis di unit perkebunan dan pabrik kelapa sawit untuk menyelamatkan nyawa dan mencegah cedera lebih parah saat terjadi insiden di lapangan.',
+                'curriculum_pillars' => [
+                    'Regulasi K3 dan tata cara pembentukan tim tanggap darurat',
+                    'Bantuan Hidup Dasar (BHD) dan teknik Resusitasi Jantung Paru (RJP/CPR)',
+                    'Penanganan perdarahan, patah tulang, dan luka bakar di tempat kerja',
+                    'Penanganan gigitan ular dan sengatan hewan berbisa di area kebun',
+                    'Prosedur triase, stabilisasi pasien, dan evakuasi menggunakan tandu darurat',
+                ],
+                'objectives' => [
+                    'Meningkatkan kesiapsiagaan first responder di setiap afdeling dan stasiun kerja',
+                    'Meminimalkan risiko kefatalan insiden kerja melalui tindakan medis awal yang tepat',
+                    'Kepatuhan terhadap regulasi K3 Depnaker dan sertifikasi ISPO/RSPO',
+                    'Meningkatkan kesadaran budaya keselamatan kerja di lingkungan operasional',
+                ],
+                'benefits' => [
+                    'Meningkatkan kesiapsiagaan first responder di setiap afdeling dan stasiun kerja',
+                    'Meminimalkan risiko kefatalan insiden kerja melalui tindakan medis awal yang tepat',
+                    'Kepatuhan terhadap regulasi K3 Depnaker dan sertifikasi ISPO/RSPO',
+                    'Meningkatkan kesadaran budaya keselamatan kerja di lingkungan operasional',
+                ],
+            ],
+
+            'high-impact-communication' => [
+                'slug' => 'high-impact-communication',
+                'code' => 'LEAD-COMM',
+                'title' => 'High Impact Communication',
+                'subtitle' => 'Komunikasi Persuasif, Asertif & Berdampak Tinggi bagi Pemimpin',
+                'category_key' => 'managerial',
+                'category_name' => 'Managerial & Leadership',
+                'target_role' => 'Supervisor, Asisten, Askep, & Manajer Operasional',
+                'duration' => '2 Hari',
+                'format' => 'Interactive Workshop, Role Play, & Video Feedback',
+                'image' => '/images/slide4.png',
+                'hero_image' => '/images/slide4.png',
+                'badge' => 'Leadership Development',
+                'is_reguler' => false,
+                'overview' => 'Program pelatihan komunikasi strategis bagi para pimpinan dan supervisor di First Resources. Mengasah kemampuan menyampaikan instruksi secara presisi, mempersuasi tim lintas divisi, serta mempresentasikan ide perbaikan dengan percaya diri dan berdampak nyata.',
+                'curriculum_pillars' => [
+                    'Fondasi komunikasi asertif dan psikologi interaksi kerja',
+                    'Seni mendengarkan aktif (Active Listening) dan empati kepemimpinan',
+                    'Teknik presentasi data operasional yang ringkas dan memikat',
+                    'Manajemen umpan balik (Feedback Delivery) yang konstruktif tanpa konflik',
+                    'Komunikasi krisis dan resolusi ketegangan di lapangan',
+                ],
+                'objectives' => [
+                    'Meningkatkan kejelasan instruksi kerja sehingga meminimalkan salah komunikasi operasional',
+                    'Membangun rasa percaya diri dalam menyampaikan laporan kepada pimpinan dan direksi',
+                    'Mempererat kolaborasi lintas fungsi antara afdeling, bengkel, dan manajemen pabrik',
+                    'Mempercepat penyelesaian hambatan kerja melalui dialog yang solutif',
+                ],
+                'benefits' => [
+                    'Meningkatkan kejelasan instruksi kerja sehingga meminimalkan salah komunikasi operasional',
+                    'Membangun rasa percaya diri dalam menyampaikan laporan kepada pimpinan dan direksi',
+                    'Mempererat kolaborasi lintas fungsi antara afdeling, bengkel, dan manajemen pabrik',
+                    'Mempercepat penyelesaian hambatan kerja melalui dialog yang solutif',
+                ],
+            ],
+
+            'continuous-improvement-program' => [
+                'slug' => 'continuous-improvement-program',
+                'code' => 'LEAD-CIP',
+                'title' => 'Continuous Improvement Program',
+                'subtitle' => 'Membangun Budaya Inovasi, Efisiensi & Eliminasi Pemborosan Operasional',
+                'category_key' => 'managerial',
+                'category_name' => 'Managerial & Leadership',
+                'target_role' => 'Change Agent, Staff Inovasi, Asisten, & Tim QCC/QCP',
+                'duration' => '3 Hari',
+                'format' => 'Workshop Kaizen, Bedah Proyek Lapangan, & Coaching Sidang Inovasi',
+                'image' => '/images/slide3.png',
+                'hero_image' => '/images/slide3.png',
+                'badge' => 'Continuous Improvement',
+                'is_reguler' => false,
+                'overview' => 'Program pembudayaan inovasi berkelanjutan dan efisiensi operasional di seluruh unit First Resources. Mengajarkan metodologi Kaizen, 5S/5R, serta identifikasi pemborosan (Waste Elimination) untuk melahirkan ide-ide terobosan yang menekan biaya operasional.',
+                'curriculum_pillars' => [
+                    'Konsep Lean Management dan identifikasi 8 pemborosan (8 Wastes)',
+                    'Metodologi Kaizen, PDCA (Plan-Do-Check-Act), dan 5S/5R di perkebunan & PKS',
+                    'Teknik Root Cause Analysis (Fishbone Diagram & 5-Whys)',
+                    'Perancangan dan kalkulasi nilai ekonomis proyek inovasi (QCC / QCP)',
+                    'Standardisasi perbaikan operasional dan monitoring jangka panjang',
+                ],
+                'objectives' => [
+                    'Menumbuhkan budaya perbaikan berkelanjutan di setiap level staf dan karyawan',
+                    'Menekan biaya operasional melalui eliminasi inefisiensi di kebun dan pabrik',
+                    'Meningkatkan produktivitas kerja dengan proses yang lebih ramping dan terukur',
+                    'Melahirkan karya-karya inovasi unggulan untuk diimplementasikan di seluruh grup',
+                ],
+                'benefits' => [
+                    'Menumbuhkan budaya perbaikan berkelanjutan di setiap level staf dan karyawan',
+                    'Menekan biaya operasional melalui eliminasi inefisiensi di kebun dan pabrik',
+                    'Meningkatkan produktivitas kerja dengan proses yang lebih ramping dan terukur',
+                    'Melahirkan karya-karya inovasi unggulan untuk diimplementasikan di seluruh grup',
+                ],
+            ],
+
+            'klinik-kerja-mandor' => [
+                'slug' => 'klinik-kerja-mandor',
+                'code' => 'EST-KKM',
+                'title' => 'Klinik Kerja Mandor',
+                'subtitle' => 'Pemantapan Standar Supervisi, Kualitas Panen & Kepemimpinan Mandor',
+                'category_key' => 'estate',
+                'category_name' => 'Estate',
+                'target_role' => 'Mandor Panen, Mandor Rawat, & Mandor 1',
+                'duration' => '2 Hari',
+                'format' => 'Klinik Lapangan, Kalibrasi ancak, & Simulasi Apel Pagi',
+                'image' => '/images/programs/fat_estate.jpg',
+                'hero_image' => '/images/programs/fat_estate.jpg',
+                'badge' => 'Klinik Kerja Mandor',
+                'is_reguler' => false,
+                'overview' => 'Program pemantapan kompetensi lapangan khusus bagi para Mandor kebun kelapa sawit. Berfokus pada kalibrasi standar mutu kerja, kepemimpinan apel pagi, pengawasan ancak panen, serta komunikasi humanis yang tegas untuk menjaga kedisiplinan dan produktivitas pemanen.',
+                'curriculum_pillars' => [
+                    'Standar mutu kerja agronomi dan kriteria panen buah sawit prima',
+                    'Teknik memimpin apel pagi (Morning Briefing) yang memotivasi dan disiplin',
+                    'Supervisi ancak panen dan pengawasan tuntas brondolan di piringan',
+                    'Komunikasi instruksi harian yang jelas, tegas, dan manusiawi',
+                    'Penerapan disiplin Keselamatan & Kesehatan Kerja (K3) serta pemakaian APD',
+                ],
+                'objectives' => [
+                    'Meningkatkan kepatuhan karyawan lapangan terhadap SOP agronomi First Resources',
+                    'Menekan angka buah mentah dan brondolan tertinggal di piringan/pasar pikul',
+                    'Membangun kepemimpinan mandor yang berwibawa dan dihormati oleh tenaga kerja',
+                    'Meningkatkan produktivitas tonase panen harian di setiap kemandoran',
+                ],
+                'benefits' => [
+                    'Meningkatkan kepatuhan karyawan lapangan terhadap SOP agronomi First Resources',
+                    'Menekan angka buah mentah dan brondolan tertinggal di piringan/pasar pikul',
+                    'Membangun kepemimpinan mandor yang berwibawa dan dihormati oleh tenaga kerja',
+                    'Meningkatkan produktivitas tonase panen harian di setiap kemandoran',
+                ],
+            ],
+
+            'sistem-pengancakan-panen' => [
+                'slug' => 'sistem-pengancakan-panen',
+                'code' => 'EST-SPP',
+                'title' => 'Sistem Pengancakan Panen',
+                'subtitle' => 'Tata Kelola Ancak Panen, Pengendalian Rotasi & Ketertiban TPH',
+                'category_key' => 'estate',
+                'category_name' => 'Estate',
+                'target_role' => 'Asisten Afdeling, Mandor 1, Mandor Panen, & Kerani Panen',
+                'duration' => '2 Hari',
+                'format' => 'Praktik Pemetaan Blok, Simulasi Ancak Giring/Tetap, & Audit TPH',
+                'image' => '/images/slide2.png',
+                'hero_image' => '/images/slide2.png',
+                'badge' => 'Sistem Pengancakan Panen',
+                'is_reguler' => false,
+                'overview' => 'Pelatihan tata kelola pengancakan panen sawit (ancak giring vs. ancak tetap) untuk menjamin kerapian perputaran rotasi panen, pemerataan beban kerja pemanen, dan kelancaran evakuasi TBS ke TPH tepat waktu.',
+                'curriculum_pillars' => [
+                    'Pemetaan topografi blok dan penentuan sistem ancak panen terbaik',
+                    'Perhitungan kapasitas panen per pemanen dan penataan rotasi 7-10 hari',
+                    'Pengawasan mutu panen di pasar rintis, piringan, dan tempat pengumpulan hasil (TPH)',
+                    'Sinkronisasi ritase pengangkutan unit dump truck dengan jam pemanenan',
+                    'Administrasi buku mandor dan pencatatan Surat Pengantar Buah (SPB)',
+                ],
+                'objectives' => [
+                    'Menjaga interval rotasi panen tetap stabil tanpa meninggalkan buah lewat matang',
+                    'Menghindari penumpukan buah di TPH yang dapat menaikkan kadar asam lemak bebas (ALB)',
+                    'Meningkatkan pemerataan penghasilan dan motivasi kerja para pemanen',
+                    'Mempermudah ketertelusuran (traceability) tandan buah segar hingga ke PKS',
+                ],
+                'benefits' => [
+                    'Menjaga interval rotasi panen tetap stabil tanpa meninggalkan buah lewat matang',
+                    'Menghindari penumpukan buah di TPH yang dapat menaikkan kadar asam lemak bebas (ALB)',
+                    'Meningkatkan pemerataan penghasilan dan motivasi kerja para pemanen',
+                    'Mempermudah ketertelusuran (traceability) tandan buah segar hingga ke PKS',
+                ],
+            ],
+
+            'pengelolaan-water-treatment' => [
+                'slug' => 'pengelolaan-water-treatment',
+                'code' => 'MILL-WTP',
+                'title' => 'Pengelolaan Water Treatment',
+                'subtitle' => 'Pengolahan Air Baku, Pemeliharaan Demin Plant & Kendali Mutu Air Boiler',
+                'category_key' => 'mill',
+                'category_name' => 'Mill',
+                'target_role' => 'Operator Water Treatment, Mandor Boiler, Laboran QC, & Asisten Pabrik',
+                'duration' => '3 Hari',
+                'format' => 'Praktik Stasiun WTP, Uji Sampel Laboratorium Kimia Air, & Kalibrasi Dosing Pump',
+                'image' => '/images/programs/mat_mill.jpg',
+                'hero_image' => '/images/programs/mat_mill.jpg',
+                'badge' => 'Water Treatment Pabrik',
+                'is_reguler' => false,
+                'overview' => 'Program peningkatan keahlian operasional stasiun pengolahan air (Water Treatment Plant) di Pabrik Kelapa Sawit. Memastikan pasokan air baku yang memenuhi baku mutu boiler guna mencegah korosi, kerak (scale), dan downtime operasional pabrik.',
+                'curriculum_pillars' => [
+                    'Prinsip dasar koagulasi, flokulasi, dan sedimentasi air sungai perkebunan',
+                    'Pengoperasian Sand Filter, Carbon Filter, dan sistem demineralisasi (Demin Plant)',
+                    'Analisis parameter kimia air boiler (TDS, pH, Silica, Hardness, & Oksigen Terlarut)',
+                    'Dosis injeksi bahan kimia penjernih dan pencegah kerak pipa boiler',
+                    'Prosedur blowdown berkala dan perawatan tangki penyimpan air',
+                ],
+                'objectives' => [
+                    'Mencegah kerusakan dan kebocoran pipa boiler akibat pengerakan dan korosi',
+                    'Menjaga efisiensi transfer panas boiler sehingga konsumsi bahan bakar stabil',
+                    'Mengurangi risiko unplanned shutdown di pabrik kelapa sawit',
+                    'Menghasilkan uap (steam) bertekanan optimal untuk penggerak turbin listrik',
+                ],
+                'benefits' => [
+                    'Mencegah kerusakan dan kebocoran pipa boiler akibat pengerakan dan korosi',
+                    'Menjaga efisiensi transfer panas boiler sehingga konsumsi bahan bakar stabil',
+                    'Mengurangi risiko unplanned shutdown di pabrik kelapa sawit',
+                    'Menghasilkan uap (steam) bertekanan optimal untuk penggerak turbin listrik',
+                ],
+            ],
+
+            'manajemen-perawatan-pompa' => [
+                'slug' => 'manajemen-perawatan-pompa',
+                'code' => 'MILL-POMPA',
+                'title' => 'Manajemen Perawatan Pompa',
+                'subtitle' => 'Overhaul, Alignment, Penggantian Seal & Preventive Maintenance Pompa Industri',
+                'category_key' => 'mill',
+                'category_name' => 'Mill',
+                'target_role' => 'Mekanik Pabrik, Mandor Bengkel PKS, & Operator Stasiun Pompa',
+                'duration' => '3 Hari',
+                'format' => 'Bongkar Pasang Pompa, Laser Alignment, Analisa Vibrasi, & Praktik Seal',
+                'image' => '/images/programs/mat_mill.jpg',
+                'hero_image' => '/images/programs/mat_mill.jpg',
+                'badge' => 'Manajemen Perawatan Pompa',
+                'is_reguler' => false,
+                'overview' => 'Pelatihan kejuruan mekanik pabrik kelapa sawit dalam perawatan, penyelarasan, dan overhaul aneka jenis pompa industri (centrifugal, gear pump, sludge pump, dan dosing pump) guna menjaga kontinuitas aliran fluida proses pengolahan.',
+                'curriculum_pillars' => [
+                    'Klasifikasi dan cara kerja pompa fluida kental (crude oil, sludge) dan air',
+                    'Prosedur penggantian mechanical seal, gland packing, dan impeller',
+                    'Teknik alignment poros motor dan pompa menggunakan dial indicator & laser',
+                    'Diagnosis vibrasi, kavitasi, dan suara abnormal pada pompa operasional',
+                    'Penerapan preventive maintenance harian dan jadwal pelumasan bearing',
+                ],
+                'objectives' => [
+                    'Memperpanjang umur pakai (lifetime) pompa-pompa krusial di seluruh stasiun PKS',
+                    'Menghilangkan potensi tumpahan minyak akibat kebocoran seal pompa',
+                    'Mengurangi biaya pembelian sparepart melalui pemeliharaan preventif yang presisi',
+                    'Menjaga kontinuitas proses pengolahan TBS tanpa hambatan macetnya pompa',
+                ],
+                'benefits' => [
+                    'Memperpanjang umur pakai (lifetime) pompa-pompa krusial di seluruh stasiun PKS',
+                    'Menghilangkan potensi tumpahan minyak akibat kebocoran seal pompa',
+                    'Mengurangi biaya pembelian sparepart melalui pemeliharaan preventif yang presisi',
+                    'Menjaga kontinuitas proses pengolahan TBS tanpa hambatan macetnya pompa',
+                ],
+            ],
+
+            'refreshment-perawatan-dump-truck' => [
+                'slug' => 'refreshment-perawatan-dump-truck',
+                'code' => 'TRAK-DT',
+                'title' => 'Refreshment Perawatan Dump Truck',
+                'subtitle' => 'Pemeriksaan Harian P2H, Perawatan Mesin Euro 4 & Keandalan Armada Angkut',
+                'category_key' => 'traksi',
+                'category_name' => 'Traksi',
+                'target_role' => 'Driver Dump Truck, Mekanik Traksi, & Mandor Bengkel Angkutan',
+                'duration' => '2 Hari',
+                'format' => 'Praktik P2H Lapangan, Inspeksi Sistem Rem Udara, & Kalibrasi Mesin',
+                'image' => '/images/programs/tat_traction.jpg',
+                'hero_image' => '/images/programs/tat_traction.jpg',
+                'badge' => 'Perawatan Dump Truck',
+                'is_reguler' => false,
+                'overview' => 'Program penyegaran teknis bagi para pengemudi dan mekanik armada dump truck pengangkut TBS dan CPO. Menekankan disiplin pemeriksaan harian (P2H), pemeliharaan mesin diesel common rail / Euro 4, dan teknik perawatan sistem pengereman serta suspensi di jalur perkebunan.',
+                'curriculum_pillars' => [
+                    'Prosedur wajib Pemeriksaan Prapengoperasian Harian (P2H) armada',
+                    'Karakteristik mesin diesel Euro 4, pemeliharaan filter solar & kualitas B35',
+                    'Pemeriksaan sistem pengereman udara (Air Brake System) dan hidrolik dump',
+                    'Manajemen rotasi dan kontrol tekanan angin ban untuk medan tanah kebun',
+                    'Troubleshooting cepat kerusakan umum di lintasan jalan poros perkebunan',
+                ],
+                'objectives' => [
+                    'Menurunkan angka breakdown armada di tengah jalan kebun',
+                    'Menghemat konsumsi bahan bakar (BBM) melalui pengoperasian yang benar',
+                    'Memperpanjang usia pakai komponen kritis seperti kampas rem, ban, dan kopling',
+                    'Menjamin kelancaran angkut TBS dari afdeling ke pabrik secara tepat waktu',
+                ],
+                'benefits' => [
+                    'Menurunkan angka breakdown armada di tengah jalan kebun',
+                    'Menghemat konsumsi bahan bakar (BBM) melalui pengoperasian yang benar',
+                    'Memperpanjang usia pakai komponen kritis seperti kampas rem, ban, dan kopling',
+                    'Menjamin kelancaran angkut TBS dari afdeling ke pabrik secara tepat waktu',
+                ],
+            ],
+
+            'defensive-driving' => [
+                'slug' => 'defensive-driving',
+                'code' => 'TRAK-DD',
+                'title' => 'Defensive Driving Perkebunan',
+                'subtitle' => 'Keselamatan Mengemudi di Medan Berat & Antisipasi Risiko Jalan Kebun',
+                'category_key' => 'traksi',
+                'category_name' => 'Traksi',
+                'target_role' => 'Driver Dump Truck, Driver Operasional, & Operator Sarana Transportasi',
+                'duration' => '2 Hari',
+                'format' => 'Simulasi Kemudi, Uji Manuver Jalur Licin/Curam, & Evaluasi Perilaku Mengemudi',
+                'image' => '/images/slide2.png',
+                'hero_image' => '/images/slide2.png',
+                'badge' => 'Defensive Driving',
+                'is_reguler' => false,
+                'overview' => 'Program pelatihan berkendara aman (Defensive Driving) yang dirancang khusus untuk medan operasional perkebunan kelapa sawit yang berlumpur, berbukit, dan sempit. Membentuk perilaku mengemudi yang proaktif dalam mengantisipasi bahaya di jalan poros kebun.',
+                'curriculum_pillars' => [
+                    'Prinsip berkendara antisipatif (SIPDE: Search, Identify, Predict, Decide, Execute)',
+                    'Teknik kendali kemudi di tanjakan curam, turunan tajam, dan jalan berlumpur bermuatan penuh',
+                    'Manajemen jarak aman konvoi dan aturan hak jalan di simpang perkebunan',
+                    'Prosedur darurat saat rem blong, ban pecah, atau amblas di jalan kebun',
+                    'Kepatuhan batas kecepatan, larangan penggunaan gawai, dan kepatuhan sabuk keselamatan',
+                ],
+                'objectives' => [
+                    'Meniadakan angka kecelakaan lalu lintas armada perkebunan (Zero Accident)',
+                    'Mengurangi kerusakan armada akibat gaya mengemudi kasar (harsh driving)',
+                    'Menjaga keselamatan jiwa pengemudi, pejalan kaki, dan pekerja kebun',
+                    'Menjaga muatan TBS agar tidak tumpah dan rusak selama proses pengangkutan',
+                ],
+                'benefits' => [
+                    'Meniadakan angka kecelakaan lalu lintas armada perkebunan (Zero Accident)',
+                    'Mengurangi kerusakan armada akibat gaya mengemudi kasar (harsh driving)',
+                    'Menjaga keselamatan jiwa pengemudi, pejalan kaki, dan pekerja kebun',
+                    'Menjaga muatan TBS agar tidak tumpah dan rusak selama proses pengangkutan',
+                ],
+            ],
+
+            'super-olein-training' => [
+                'slug' => 'super-olein-training',
+                'code' => 'DOWN-SO',
+                'title' => 'Super Olein Training',
+                'subtitle' => 'Parameter Kristalisasi, Filtrasi Membran & Optimasi Mutu Minyak Goreng Super',
+                'category_key' => 'downstream',
+                'category_name' => 'Downstream',
+                'target_role' => 'Operator Kilang Fraksinasi, DCS Panelist, QC Analyst, & Shift Supervisor',
+                'duration' => '3 Hari',
+                'format' => 'Simulasi DCS, Pemantauan Kristalisator, & Uji Cloud Point Laboratorium',
+                'image' => '/images/programs/dmt_downstream.jpg',
+                'hero_image' => '/images/programs/dmt_downstream.jpg',
+                'badge' => 'Super Olein Training',
+                'is_reguler' => false,
+                'overview' => 'Pelatihan teknologi kilang hilir (refinery & fractionation) dalam memproduksi minyak goreng kualitas tinggi (Super Olein dengan kriteria IV tinggi dan cloud point rendah). Melatih pemahaman parameter kristalisasi, kontrol suhu pendinginan, dan filtrasi membran vakum.',
+                'curriculum_pillars' => [
+                    'Kimia trigliserida dan karakteristik titik leleh fraksi olein & stearin',
+                    'Pengendalian kurva pendinginan (cooling curve) pada tangki kristalisasi',
+                    'Operasional membran filter press bertekanan tinggi pada stasiun fraksinasi',
+                    'Pemantauan parameter Cloud Point (CP) dan Iodine Value (IV) di laboratorium QC',
+                    'Troubleshooting cacat produk: kabut minyak pada suhu rendah dan oil loss di stearin',
+                ],
+                'objectives' => [
+                    'Menghasilkan Super Olein berkualitas ekspor dengan ketahanan jernih lebih lama',
+                    'Meningkatkan yield fraksi cair (olein) dan menekan kehilangan minyak',
+                    'Memastikan kepatuhan standar mutu pangan internasional (Halal, FSSC 22000)',
+                    'Meningkatkan kompetensi operator DCS dalam membaca deviasi parameter proses',
+                ],
+                'benefits' => [
+                    'Menghasilkan Super Olein berkualitas ekspor dengan ketahanan jernih lebih lama',
+                    'Meningkatkan yield fraksi cair (olein) dan menekan kehilangan minyak',
+                    'Memastikan kepatuhan standar mutu pangan internasional (Halal, FSSC 22000)',
+                    'Meningkatkan kompetensi operator DCS dalam membaca deviasi parameter proses',
+                ],
+            ],
         ];
     }
 
@@ -1158,7 +1680,40 @@ class ProgramCatalogService
     public static function getProgramBySlug(string $slug): ?array
     {
         $programs = self::getAllPrograms();
-        return $programs[$slug] ?? null;
+        if (isset($programs[$slug])) {
+            return $programs[$slug];
+        }
+
+        $fallback = self::getStaticFallbackPrograms();
+        if (isset($fallback[$slug])) {
+            return $fallback[$slug];
+        }
+
+        if ($slug === 'damkarhutlabun' || $slug === 'damkarlabun') {
+            return $programs['damkarhutlabun'] ?? $fallback['damkarhutlabun'] ?? $programs['administrasi-k3'] ?? null;
+        }
+
+        $aliases = [
+            'damkarlabun' => 'damkarhutlabun',
+            'damkar' => 'damkarhutlabun',
+            'k3' => 'k3-first-aid',
+            'first-aid' => 'k3-first-aid',
+            'communication' => 'high-impact-communication',
+            'cip' => 'continuous-improvement-program',
+            'mandor' => 'klinik-kerja-mandor',
+            'ancak' => 'sistem-pengancakan-panen',
+            'water-treatment' => 'pengelolaan-water-treatment',
+            'pompa' => 'manajemen-perawatan-pompa',
+            'dump-truck' => 'refreshment-perawatan-dump-truck',
+            'olein' => 'super-olein-training',
+        ];
+        if (isset($aliases[$slug])) {
+            $targetSlug = $aliases[$slug];
+            if (isset($programs[$targetSlug])) return $programs[$targetSlug];
+            if (isset($fallback[$targetSlug])) return $fallback[$targetSlug];
+        }
+
+        return null;
     }
 
     /**

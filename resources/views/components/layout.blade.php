@@ -48,7 +48,7 @@
                 </div>
 
                 <!-- Desktop Menu (Spacious, Elegant, Well-balanced) -->
-                <nav class="hidden lg:flex items-center gap-1 xl:gap-2 2xl:gap-4 mx-auto px-1 xl:px-2 shrink-0 lg:translate-x-6 xl:translate-x-12 2xl:translate-x-20">
+                <nav class="hidden lg:flex items-center gap-1 xl:gap-2 2xl:gap-4 mx-auto px-1 xl:px-2 shrink-0">
                     <a href="/" class="text-white/90 hover:text-green-accent px-2 xl:px-2.5 2xl:px-3 py-1.5 text-xs 2xl:text-sm font-semibold tracking-normal 2xl:tracking-wider transition whitespace-nowrap rounded-xl hover:bg-white/10">BERANDA</a>
                     <a href="/tentang-kami" class="text-white/90 hover:text-green-accent px-2 xl:px-2.5 2xl:px-3 py-1.5 text-xs 2xl:text-sm font-semibold tracking-normal 2xl:tracking-wider transition whitespace-nowrap rounded-xl hover:bg-white/10">TENTANG</a>
                     <!-- PROGRAM Dropdown with Flyout Sub-menus (Reguler & Non-Reguler) -->
@@ -69,90 +69,43 @@
                              class="absolute top-full left-0 mt-1.5 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl py-2 border border-gray-100 dark:border-gray-700 z-50 text-left" 
                              style="display: none;">
 
-                            <!-- Sub-bab 1: Program Reguler -->
-                            <div class="relative" @mouseenter="subOpen = 'reguler'" @mouseleave="if(subOpen === 'reguler') subOpen = null">
-                                <div class="flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-800 dark:text-gray-100 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition cursor-pointer mx-1.5 rounded-lg"
-                                     :class="{ 'bg-teal-50 dark:bg-gray-700 text-teal-primary dark:text-green-accent': subOpen === 'reguler' }">
-                                    <span>Program Reguler</span>
-                                    <svg class="w-4 h-4 text-gray-400 group-hover:text-teal-primary transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                </div>
-
-                                <!-- Flyout Submenu Reguler -->
-                                <div x-show="subOpen === 'reguler'" 
-                                     x-transition:enter="transition ease-out duration-150"
-                                     x-transition:enter-start="opacity-0 translate-x-1"
-                                     x-transition:enter-end="opacity-100 translate-x-0"
-                                     x-transition:leave="transition ease-in duration-100"
-                                     x-transition:leave-start="opacity-100 translate-x-0"
-                                     x-transition:leave-end="opacity-0 translate-x-1"
-                                     class="absolute top-0 left-full ml-1 w-64 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl py-2 border border-gray-100 dark:border-gray-700 z-50"
-                                     style="display: none;">
-                                    <a href="/program/fat" class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition mx-1 rounded-md">
-                                        <span class="font-bold">FAT</span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">Field Assistant</span>
+                            @php
+                                $headerProgramMenus = \App\Models\AppSetting::getProgramNavMenus(true);
+                            @endphp
+                            @foreach($headerProgramMenus as $pMenu)
+                                @if(!empty($pMenu['has_submenu']) && !empty($pMenu['submenus']))
+                                    <div class="relative" @mouseenter="subOpen = '{{ $pMenu['key'] }}'" @mouseleave="if(subOpen === '{{ $pMenu['key'] }}') subOpen = null">
+                                        <div class="flex items-center justify-between px-4 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white transition cursor-pointer mx-1.5 rounded-lg"
+                                             :class="{ 'bg-gray-100 dark:bg-gray-700 text-black dark:text-white': subOpen === '{{ $pMenu['key'] }}' }">
+                                            <span>{{ $pMenu['name'] }}</span>
+                                            <span class="text-[10px] text-gray-600 dark:text-gray-400 ml-2">▶</span>
+                                        </div>
+                                        <!-- Flyout Submenu -->
+                                        <div x-show="subOpen === '{{ $pMenu['key'] }}'" 
+                                             x-transition:enter="transition ease-out duration-150"
+                                             x-transition:enter-start="opacity-0 translate-x-1"
+                                             x-transition:enter-end="opacity-100 translate-x-0"
+                                             x-transition:leave="transition ease-in duration-100"
+                                             x-transition:leave-start="opacity-100 translate-x-0"
+                                             x-transition:leave-end="opacity-0 translate-x-1"
+                                             class="absolute top-0 left-full -ml-1 pl-2 w-72 z-50"
+                                             style="display: none;">
+                                            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 border border-gray-100 dark:border-gray-700 max-h-[85vh] overflow-y-auto">
+                                                @foreach($pMenu['submenus'] as $sub)
+                                                    <a href="{{ $sub['url'] }}" class="block px-4 py-2 text-sm text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white transition mx-1 rounded-md">
+                                                        {{ $sub['name'] }}
+                                                    </a>
+                                                @endforeach
+                                            </div>
+                                        </div>
+                                    </div>
+                                @else
+                                    <a href="{{ $pMenu['url'] ?? '#' }}" 
+                                       class="flex items-center justify-between px-4 py-2 text-sm font-semibold text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-black dark:hover:text-white transition mx-1.5 rounded-lg">
+                                        <span>{{ $pMenu['name'] }}</span>
                                     </a>
-                                    <a href="/program/mat" class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition mx-1 rounded-md">
-                                        <span class="font-bold">MAT</span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">Mill Assistant</span>
-                                    </a>
-                                    <a href="/program/tat" class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition mx-1 rounded-md">
-                                        <span class="font-bold">TAT</span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">Traction Assistant</span>
-                                    </a>
-                                    <a href="/program/aat" class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition mx-1 rounded-md">
-                                        <span class="font-bold">AAT</span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">Administration</span>
-                                    </a>
-                                    <a href="/program/dmt" class="flex items-center justify-between px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition mx-1 rounded-md">
-                                        <span class="font-bold">DMT</span>
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">Downstream</span>
-                                    </a>
-                                </div>
-                            </div>
-
-                            <!-- Sub-bab 2: Program Non-Reguler -->
-                            <div class="relative" @mouseenter="subOpen = 'non_reguler'" @mouseleave="if(subOpen === 'non_reguler') subOpen = null">
-                                <div class="flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-800 dark:text-gray-100 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition cursor-pointer mx-1.5 rounded-lg"
-                                     :class="{ 'bg-teal-50 dark:bg-gray-700 text-teal-primary dark:text-green-accent': subOpen === 'non_reguler' }">
-                                    <span>Program Non-Reguler</span>
-                                    <svg class="w-4 h-4 text-gray-400 group-hover:text-teal-primary transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-                                </div>
-
-                                <!-- Flyout Submenu Non-Reguler -->
-                                <div x-show="subOpen === 'non_reguler'" 
-                                     x-transition:enter="transition ease-out duration-150"
-                                     x-transition:enter-start="opacity-0 translate-x-1"
-                                     x-transition:enter-end="opacity-100 translate-x-0"
-                                     x-transition:leave="transition ease-in duration-100"
-                                     x-transition:leave-start="opacity-100 translate-x-0"
-                                     x-transition:leave-end="opacity-0 translate-x-1"
-                                     class="absolute top-0 left-full ml-1 w-72 bg-white dark:bg-gray-800 rounded-2xl shadow-2xl py-2 border border-gray-100 dark:border-gray-700 z-50"
-                                     style="display: none;">
-                                    <a href="/program/managerial-leadership" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition mx-1 rounded-md">
-                                        <span class="font-medium">Managerial & Leadership</span>
-                                    </a>
-                                    <a href="/program/teknikal-estate" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition mx-1 rounded-md">
-                                        <span class="font-medium">Teknikal Estate</span>
-                                    </a>
-                                    <a href="/program/teknikal-mill" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition mx-1 rounded-md">
-                                        <span class="font-medium">Teknikal Mill</span>
-                                    </a>
-                                    <a href="/program/teknikal-traksi" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition mx-1 rounded-md">
-                                        <span class="font-medium">Teknikal Traksi</span>
-                                    </a>
-                                    <a href="/program/teknikal-downstream" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition mx-1 rounded-md">
-                                        <span class="font-medium">Teknikal Downstream</span>
-                                    </a>
-                                    <a href="/program/administrasi-k3" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition mx-1 rounded-md">
-                                        <span class="font-medium">Administrasi & K3</span>
-                                    </a>
-                                </div>
-                            </div>
-
-                            <!-- Item 3: Talent Management -->
-                            <a href="/program/talent-management" class="block px-4 py-2.5 text-sm font-semibold text-gray-800 dark:text-gray-100 hover:bg-teal-50 dark:hover:bg-gray-700 hover:text-teal-primary dark:hover:text-green-accent transition mx-1.5 rounded-lg whitespace-nowrap">
-                                Talent Management
-                            </a>
+                                @endif
+                            @endforeach
                         </div>
                     </div>
                     <a href="{{ route('competency.public') }}" class="text-white/90 hover:text-green-accent px-2 xl:px-2.5 2xl:px-3 py-1.5 text-xs 2xl:text-sm font-semibold tracking-normal 2xl:tracking-wider transition whitespace-nowrap rounded-xl hover:bg-white/10">KOMPETENSI</a>
@@ -256,51 +209,38 @@
             <div class="px-4 pt-2 pb-6 space-y-1">
                 <a href="/" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">BERANDA</a>
                 <a href="/tentang-kami" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">TENTANG</a>
-                <!-- Mobile Program Accordion with Sub-babs (Reguler & Non-Reguler) -->
-                <div x-data="{ mobileProgramOpen: false, mobileRegulerOpen: false, mobileNonRegulerOpen: false }" class="space-y-1">
+                <!-- Mobile Program Accordion with 8 Categories -->
+                <div x-data="{ mobileProgramOpen: false, activeCat: null }" class="space-y-1">
                     <button @click.prevent="mobileProgramOpen = !mobileProgramOpen" type="button" class="w-full flex items-center justify-between px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition text-left">
                         <span>PROGRAM</span>
                         <svg class="w-4 h-4 transition-transform duration-200" :class="{'rotate-180': mobileProgramOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                     <div x-show="mobileProgramOpen" class="pl-3 pr-2 py-2 space-y-1 bg-black/20 rounded-lg text-sm" style="display: none;">
                         
-                        <!-- Reguler -->
-                        <div class="pt-1">
-                            <button @click.prevent="mobileRegulerOpen = !mobileRegulerOpen" class="w-full flex items-center justify-between px-3 py-1.5 font-semibold text-white/90">
-                                <span>Program Reguler</span>
-                                <svg class="w-3.5 h-3.5 transition-transform" :class="{'rotate-180': mobileRegulerOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </button>
-                            <div x-show="mobileRegulerOpen" class="pl-5 space-y-1 py-1" style="display: none;">
-                                <a href="/program/fat" class="block py-1 text-xs text-teal-100 hover:text-green-accent">FAT (Field Assistant)</a>
-                                <a href="/program/mat" class="block py-1 text-xs text-teal-100 hover:text-green-accent">MAT (Mill Assistant)</a>
-                                <a href="/program/tat" class="block py-1 text-xs text-teal-100 hover:text-green-accent">TAT (Traction Assistant)</a>
-                                <a href="/program/aat" class="block py-1 text-xs text-teal-100 hover:text-green-accent">AAT (Administration)</a>
-                                <a href="/program/dmt" class="block py-1 text-xs text-teal-100 hover:text-green-accent">DMT (Downstream)</a>
-                            </div>
-                        </div>
-
-                        <!-- Non-Reguler -->
-                        <div class="pt-1">
-                            <button @click.prevent="mobileNonRegulerOpen = !mobileNonRegulerOpen" class="w-full flex items-center justify-between px-3 py-1.5 font-semibold text-white/90">
-                                <span>Program Non-Reguler</span>
-                                <svg class="w-3.5 h-3.5 transition-transform" :class="{'rotate-180': mobileNonRegulerOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </button>
-                            <div x-show="mobileNonRegulerOpen" class="pl-5 space-y-1 py-1" style="display: none;">
-                                <a href="/program/managerial-leadership" class="block py-1 text-xs text-teal-100 hover:text-green-accent">Managerial & Leadership</a>
-                                <a href="/program/teknikal-estate" class="block py-1 text-xs text-teal-100 hover:text-green-accent">Teknikal Estate</a>
-                                <a href="/program/teknikal-mill" class="block py-1 text-xs text-teal-100 hover:text-green-accent">Teknikal Mill</a>
-                                <a href="/program/teknikal-traksi" class="block py-1 text-xs text-teal-100 hover:text-green-accent">Teknikal Traksi</a>
-                                <a href="/program/teknikal-downstream" class="block py-1 text-xs text-teal-100 hover:text-green-accent">Teknikal Downstream</a>
-                                <a href="/program/administrasi-k3" class="block py-1 text-xs text-teal-100 hover:text-green-accent">Administrasi & K3</a>
-                            </div>
-                        </div>
-
-                        <!-- Talent Management -->
-                        <div class="pt-1">
-                            <a href="/program/talent-management" class="block px-3 py-1.5 font-semibold text-white/90 hover:text-green-accent">
-                                Talent Management
-                            </a>
-                        </div>
+                        @foreach($headerProgramMenus as $pMenu)
+                            @if(!empty($pMenu['has_submenu']) && !empty($pMenu['submenus']))
+                                <div class="pt-1">
+                                    <button @click.prevent="activeCat = (activeCat === '{{ $pMenu['key'] }}' ? null : '{{ $pMenu['key'] }}')" class="w-full flex items-center justify-between px-3 py-1.5 font-semibold text-white/90">
+                                        <span>{{ $pMenu['name'] }}</span>
+                                        <svg class="w-3.5 h-3.5 transition-transform" :class="{'rotate-180': activeCat === '{{ $pMenu['key'] }}'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </button>
+                                    <div x-show="activeCat === '{{ $pMenu['key'] }}'" class="pl-5 space-y-1 py-1" style="display: none;">
+                                        @foreach($pMenu['submenus'] as $sub)
+                                            <a href="{{ $sub['url'] }}" class="block py-1 text-xs text-teal-100 hover:text-green-accent">
+                                                {{ $sub['name'] }}
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @else
+                                <div class="pt-1">
+                                    <a href="{{ $pMenu['url'] ?? '#' }}" 
+                                       class="w-full flex items-center justify-between px-3 py-1.5 font-semibold text-white/90 hover:text-green-accent transition">
+                                        <span>{{ $pMenu['name'] }}</span>
+                                    </a>
+                                </div>
+                            @endif
+                        @endforeach
                     </div>
                 </div>
                 <a href="{{ route('competency.public') }}" class="block px-3 py-3 rounded-md text-base font-medium text-white hover:bg-teal-700 hover:text-green-accent transition">KOMPETENSI</a>
@@ -379,6 +319,7 @@
                         <li><a href="/program/aat" class="hover:text-white hover:text-green-accent transition-colors">AAT (Tata Usaha KTU)</a></li>
                         <li><a href="/program/dmt" class="hover:text-white hover:text-green-accent transition-colors">DMT (Kilang Hilir)</a></li>
                         <li><a href="/program/managerial-leadership" class="hover:text-white hover:text-green-accent transition-colors">Managerial & Leadership</a></li>
+                        <li><a href="/program/talent-management" class="hover:text-white hover:text-green-accent transition-colors">Talent Management</a></li>
                         <li><a href="/career" class="text-green-accent font-semibold hover:text-white transition-colors">Peluang Karir &rarr;</a></li>
                     </ul>
                 </div>

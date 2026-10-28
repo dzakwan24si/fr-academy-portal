@@ -193,7 +193,7 @@
                                 <div class="flex items-center space-x-2 mb-2">
                                     <span class="w-2 h-2 rounded-full bg-green-400"></span>
                                     <span class="text-teal-200 text-xs font-bold tracking-widest uppercase">Detail Program</span>
-                                    <span class="text-teal-300/60 text-xs font-mono" x-show="selectedProgram?.code" x-text="'(' + selectedProgram?.code + ')'"></span>
+                                    <span class="text-teal-300/60 text-xs font-semibold" x-show="selectedProgram?.code" x-text="'(' + selectedProgram?.code + ')'"></span>
                                 </div>
                                 <h3 class="text-2xl font-bold text-white leading-tight" id="modal-title" x-text="selectedProgram?.name"></h3>
                             </div>

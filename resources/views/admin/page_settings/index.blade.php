@@ -69,6 +69,11 @@
                 <i data-lucide="external-link" class="w-4 h-4"></i>
                 Menu Portal (Header & Dropdown)
             </a>
+            <a href="{{ route('admin.page_settings.index', ['tab' => 'menu_program']) }}" 
+               class="pb-4 px-2 border-b-2 font-semibold text-sm flex items-center gap-2.5 transition-all whitespace-nowrap {{ $tab === 'menu_program' ? 'border-[#509c38] text-[#509c38]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                <i data-lucide="layers" class="w-4 h-4"></i>
+                Menu Navigasi Program (Header & Dropdown)
+            </a>
             <a href="{{ route('admin.page_settings.index', ['tab' => 'program']) }}" 
                class="pb-4 px-2 border-b-2 font-semibold text-sm flex items-center gap-2.5 transition-all whitespace-nowrap {{ $tab === 'program' ? 'border-[#509c38] text-[#509c38]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
                 <i data-lucide="book-open" class="w-4 h-4"></i>
@@ -1088,6 +1093,379 @@
                     </div>
                 </div>
             </div>
+        @elseif($tab === 'menu_program')
+            <!-- TAB 3B: MANAJEMEN MENU NAVIGASI PROGRAM (HEADER & DROPDOWN) -->
+            <div class="space-y-6" x-data="{ 
+                addMenuModalOpen: false, 
+                editMenuModalOpen: false, 
+                addSubmenuModalOpen: false, 
+                editSubmenuModalOpen: false, 
+                currentMenu: {}, 
+                currentMenuId: '',
+                currentSubmenu: {}, 
+                targetMenuId: '', 
+                targetMenuName: '' 
+            }">
+                <!-- Section Header / Top Action Bar -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center font-bold shrink-0">
+                            <i data-lucide="layers" class="w-6 h-6 text-[#509c38]"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900">Kelola Menu Navigasi Program & Sub-Menu</h2>
+                            <p class="text-xs text-gray-500">
+                                Atur kategori menu dropdown PROGRAM di navbar utama publik, baik menu dengan sub-menu (flyout) maupun menu link langsung.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3 shrink-0">
+                        <form action="{{ route('admin.page_settings.reset_program_menus') }}" method="POST" onsubmit="return confirm('Kembalikan susunan ke 8 menu navigasi standar?')">
+                            @csrf
+                            <button type="submit" class="px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-600 hover:text-rose-600 hover:border-rose-200 shadow-xs transition flex items-center gap-1.5">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>
+                                Reset ke Default
+                            </button>
+                        </form>
+                        <button @click="addMenuModalOpen = true" type="button" class="px-4 py-2.5 bg-[#509c38] hover:bg-green-700 text-white font-bold rounded-xl transition shadow-sm inline-flex items-center text-xs sm:text-sm">
+                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Tambah Menu Kategori
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Stats Overview Cards -->
+                @php
+                    $totalMenus = count($programNavMenus);
+                    $totalSubmenus = array_sum(array_map(fn($m) => count($m['submenus'] ?? []), $programNavMenus));
+                    $activeMenus = count(array_filter($programNavMenus, fn($m) => !empty($m['is_active'])));
+                @endphp
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-5">
+                        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Menu Kategori</p>
+                        <p class="text-2xl font-black text-gray-900 mt-1">{{ $totalMenus }}</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Kategori di menu Program</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-5">
+                        <p class="text-xs font-semibold text-teal-600 uppercase tracking-wider">Total Sub-Menu</p>
+                        <p class="text-2xl font-black text-teal-700 mt-1">{{ $totalSubmenus }}</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Sub-program terdaftar</p>
+                    </div>
+                    <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-5">
+                        <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Status Aktif</p>
+                        <p class="text-2xl font-black text-emerald-700 mt-1">{{ $activeMenus }} Menu</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Tayang di navbar publik</p>
+                    </div>
+                </div>
+
+                <!-- Hierarchical List of Menus and Submenus -->
+                <div class="space-y-4">
+                    @forelse($programNavMenus as $mIdx => $menu)
+                        <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden transition-all hover:border-gray-300">
+                            <!-- Menu Header Bar -->
+                            <div class="p-5 sm:p-6 bg-gray-50/80 border-b border-gray-200 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div class="flex items-center gap-3.5">
+                                    <span class="w-8 h-8 rounded-xl bg-teal-primary text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs">
+                                        {{ $mIdx + 1 }}
+                                    </span>
+                                    <div>
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <h3 class="font-bold text-gray-900 text-base leading-tight">
+                                                {{ $menu['name'] }}
+                                            </h3>
+                                            <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-teal-50 text-teal-800 border border-teal-200">
+                                                {{ count($menu['submenus'] ?? []) }} Sub-Menu
+                                            </span>
+                                            @if(!empty($menu['is_active']))
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center gap-1 text-[11px] font-semibold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-md">
+                                                    <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span> Non-Aktif
+                                                </span>
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons for Menu -->
+                                <div class="flex items-center gap-2 self-end md:self-center shrink-0">
+                                    <button @click="targetMenuId = '{{ $menu['id'] }}'; targetMenuName = '{{ addslashes($menu['name']) }}'; addSubmenuModalOpen = true" 
+                                            type="button" 
+                                            class="px-3 py-1.5 rounded-lg text-xs font-bold bg-teal-50 text-teal-primary border border-teal-200 hover:bg-teal-100 transition inline-flex items-center gap-1">
+                                        <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                        Tambah Sub-Menu
+                                    </button>
+
+                                    <form action="{{ url('/admin/page-settings/program-menus/' . $menu['id'] . '/toggle') }}" method="POST">
+                                        @csrf
+                                        <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-semibold border transition {{ !empty($menu['is_active']) ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100' : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100' }}">
+                                            {{ !empty($menu['is_active']) ? 'Nonaktifkan' : 'Aktifkan' }}
+                                        </button>
+                                    </form>
+
+                                    <button @click="currentMenu = {{ json_encode($menu) }}; editMenuModalOpen = true" 
+                                            type="button" 
+                                            class="p-2 rounded-lg text-gray-500 hover:text-gray-700 hover:bg-gray-200/60 transition" 
+                                            title="Edit Menu">
+                                        <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                    </button>
+
+                                    <form action="{{ url('/admin/page-settings/program-menus/' . $menu['id'] . '/delete') }}" method="POST" onsubmit="return confirm('Hapus menu &quot;{{ $menu['name'] }}&quot; beserta seluruh sub-menunya?')">
+                                        @csrf
+                                        <button type="submit" class="p-2 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Hapus Menu">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+
+                            <!-- Card Body: Submenus Table or Empty Info -->
+                            <div class="p-4 sm:p-6">
+                                    @if(!empty($menu['submenus']) && count($menu['submenus']) > 0)
+                                        <div class="overflow-x-auto rounded-xl border border-gray-100">
+                                            <table class="w-full text-left text-sm">
+                                                <thead class="bg-gray-50 text-xs uppercase text-gray-500 font-semibold border-b border-gray-100">
+                                                    <tr>
+                                                        <th class="px-4 py-3 w-16 text-center">#</th>
+                                                        <th class="px-4 py-3">Nama Sub-Menu</th>
+                                                        <th class="px-4 py-3 text-center w-28">Status</th>
+                                                        <th class="px-4 py-3 text-right w-36">Aksi</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody class="divide-y divide-gray-100">
+                                                    @foreach($menu['submenus'] as $subIdx => $sub)
+                                                        <tr class="hover:bg-gray-50/60 transition">
+                                                            <td class="px-4 py-3 text-center font-bold text-gray-400">
+                                                                {{ $subIdx + 1 }}
+                                                            </td>
+                                                            <td class="px-4 py-3 font-semibold text-gray-900">
+                                                                {{ $sub['name'] }}
+                                                            </td>
+                                                            <td class="px-4 py-3 text-center">
+                                                                @if(!empty($sub['is_active']))
+                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-800">
+                                                                        Aktif
+                                                                    </span>
+                                                                @else
+                                                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600">
+                                                                        Non-Aktif
+                                                                    </span>
+                                                                @endif
+                                                            </td>
+                                                            <td class="px-4 py-3 text-right">
+                                                                <div class="inline-flex items-center gap-1.5 justify-end">
+                                                                    <form action="{{ url('/admin/page-settings/program-menus/' . $menu['id'] . '/submenus/' . $sub['id'] . '/toggle') }}" method="POST">
+                                                                        @csrf
+                                                                        <button type="submit" class="p-1 text-xs rounded text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 transition" title="Toggle Aktif">
+                                                                            <i data-lucide="power" class="w-3.5 h-3.5"></i>
+                                                                        </button>
+                                                                    </form>
+                                                                    <button @click="currentMenuId = '{{ $menu['id'] }}'; currentSubmenu = {{ json_encode($sub) }}; editSubmenuModalOpen = true" 
+                                                                            type="button" 
+                                                                            class="p-1 rounded text-gray-500 hover:text-teal-700 hover:bg-teal-50 transition" 
+                                                                            title="Edit Sub-Menu">
+                                                                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                                                    </button>
+                                                                    <form action="{{ url('/admin/page-settings/program-menus/' . $menu['id'] . '/submenus/' . $sub['id'] . '/delete') }}" method="POST" onsubmit="return confirm('Hapus sub-menu &quot;{{ $sub['name'] }}&quot;?')">
+                                                                        @csrf
+                                                                        <button type="submit" class="p-1 rounded text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition" title="Hapus Sub-Menu">
+                                                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                                                        </button>
+                                                                    </form>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    @endforeach
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    @else
+                                        <div class="p-6 text-center bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+                                            <p class="text-xs text-gray-500 mb-2">Belum ada sub-menu terdaftar untuk kategori ini.</p>
+                                            <button @click="targetMenuId = '{{ $menu['id'] }}'; targetMenuName = '{{ addslashes($menu['name']) }}'; addSubmenuModalOpen = true" 
+                                                    type="button" 
+                                                    class="text-xs font-bold text-[#509c38] hover:underline inline-flex items-center gap-1">
+                                                <i data-lucide="plus" class="w-3 h-3"></i> Tambah Sub-Menu Pertama
+                                            </button>
+                                        </div>
+                                    @endif
+                                </div>
+                        </div>
+                    @empty
+                        <div class="bg-white rounded-2xl border border-gray-200 p-12 text-center">
+                            <i data-lucide="layers" class="w-12 h-12 text-gray-300 mx-auto mb-3"></i>
+                            <h3 class="text-base font-bold text-gray-800">Belum Ada Menu Navigasi Program</h3>
+                            <p class="text-xs text-gray-500 mt-1 mb-4">Mulai dengan menambahkan kategori menu atau mengembalikan ke 8 menu default.</p>
+                            <form action="{{ route('admin.page_settings.reset_program_menus') }}" method="POST" class="inline-block">
+                                @csrf
+                                <button type="submit" class="px-4 py-2 bg-[#509c38] text-white font-bold rounded-xl text-xs shadow-sm hover:bg-green-700 transition">
+                                    Muat 8 Menu Default
+                                </button>
+                            </form>
+                        </div>
+                    @endforelse
+                </div>
+
+                <!-- MODAL 1: Tambah Menu Kategori Utama -->
+                <div x-show="addMenuModalOpen" 
+                     x-transition.opacity 
+                     class="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+                     style="display: none;">
+                    <div @click.away="addMenuModalOpen = false" 
+                         class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-gray-200 transform transition-all">
+                        <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-6">
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <i data-lucide="plus-circle" class="w-5 h-5 text-[#509c38]"></i>
+                                Tambah Menu Kategori
+                            </h3>
+                            <button @click="addMenuModalOpen = false" type="button" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <form action="{{ route('admin.page_settings.store_program_menu') }}" method="POST" class="space-y-4">
+                            @csrf
+
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Nama Menu Kategori <span class="text-rose-500">*</span></label>
+                                <input type="text" name="name" required placeholder="Contoh: Talent Management" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition font-semibold text-gray-900">
+                                <p class="text-[11px] text-gray-400 mt-1.5">Menu baru otomatis diletakkan pada urutan paling bawah.</p>
+                            </div>
+
+                            <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+                                <button @click="addMenuModalOpen = false" type="button" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
+                                    Batal
+                                </button>
+                                <button type="submit" class="bg-[#509c38] hover:bg-green-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 text-xs">
+                                    <i data-lucide="check" class="w-4 h-4"></i>
+                                    Simpan Menu
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- MODAL 2: Edit Menu Kategori Utama -->
+                <div x-show="editMenuModalOpen" 
+                     x-transition.opacity 
+                     class="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+                     style="display: none;">
+                    <div @click.away="editMenuModalOpen = false" 
+                         class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-gray-200 transform transition-all">
+                        <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-6">
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <i data-lucide="edit-3" class="w-5 h-5 text-[#509c38]"></i>
+                                Edit Nama Menu Kategori
+                            </h3>
+                            <button @click="editMenuModalOpen = false" type="button" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <form :action="'{{ url('/admin/page-settings/program-menus') }}/' + currentMenu.id + '/update'" method="POST" class="space-y-4">
+                            @csrf
+
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Nama Menu Kategori <span class="text-rose-500">*</span></label>
+                                <input type="text" name="name" x-model="currentMenu.name" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition font-semibold text-gray-900">
+                            </div>
+
+                            <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+                                <button @click="editMenuModalOpen = false" type="button" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
+                                    Batal
+                                </button>
+                                <button type="submit" class="bg-[#509c38] hover:bg-green-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 text-xs">
+                                    <i data-lucide="check" class="w-4 h-4"></i>
+                                    Simpan Perubahan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- MODAL 3: Tambah Sub-Menu Baru -->
+                <div x-show="addSubmenuModalOpen" 
+                     x-transition.opacity 
+                     class="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+                     style="display: none;">
+                    <div @click.away="addSubmenuModalOpen = false" 
+                         class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-gray-200 transform transition-all">
+                        <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-6">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                    <i data-lucide="plus-circle" class="w-5 h-5 text-[#509c38]"></i>
+                                    Tambah Sub-Menu
+                                </h3>
+                                <p class="text-xs text-gray-500 mt-0.5">
+                                    Kategori Induk: <strong class="text-teal-primary" x-text="targetMenuName"></strong>
+                                </p>
+                            </div>
+                            <button @click="addSubmenuModalOpen = false" type="button" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <form :action="'{{ url('/admin/page-settings/program-menus') }}/' + targetMenuId + '/submenus'" method="POST" class="space-y-4">
+                            @csrf
+
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Nama Sub-Menu <span class="text-rose-500">*</span></label>
+                                <input type="text" name="name" required placeholder="Contoh: Klinik Kerja Mandor" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition font-semibold text-gray-900">
+                                <p class="text-[11px] text-gray-400 mt-1.5">Sub-menu otomatis diletakkan pada urutan paling bawah.</p>
+                            </div>
+
+                            <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+                                <button @click="addSubmenuModalOpen = false" type="button" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
+                                    Batal
+                                </button>
+                                <button type="submit" class="bg-[#509c38] hover:bg-green-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 text-xs">
+                                    <i data-lucide="check" class="w-4 h-4"></i>
+                                    Tambah Sub-Menu
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- MODAL 4: Edit Sub-Menu -->
+                <div x-show="editSubmenuModalOpen" 
+                     x-transition.opacity 
+                     class="fixed inset-0 z-50 overflow-y-auto bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" 
+                     style="display: none;">
+                    <div @click.away="editSubmenuModalOpen = false" 
+                         class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-gray-200 transform transition-all">
+                        <div class="flex items-center justify-between pb-4 border-b border-gray-100 mb-6">
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <i data-lucide="edit-3" class="w-5 h-5 text-[#509c38]"></i>
+                                Edit Nama Sub-Menu
+                            </h3>
+                            <button @click="editSubmenuModalOpen = false" type="button" class="text-gray-400 hover:text-gray-600 p-1 rounded-lg">
+                                <i data-lucide="x" class="w-5 h-5"></i>
+                            </button>
+                        </div>
+
+                        <form :action="'{{ url('/admin/page-settings/program-menus') }}/' + currentMenuId + '/submenus/' + currentSubmenu.id + '/update'" method="POST" class="space-y-4">
+                            @csrf
+
+                            <div>
+                                <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Nama Sub-Menu <span class="text-rose-500">*</span></label>
+                                <input type="text" name="name" x-model="currentSubmenu.name" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition font-semibold text-gray-900">
+                            </div>
+
+                            <div class="pt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+                                <button @click="editSubmenuModalOpen = false" type="button" class="px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
+                                    Batal
+                                </button>
+                                <button type="submit" class="bg-[#509c38] hover:bg-green-600 text-white font-bold px-5 py-2.5 rounded-xl shadow-md transition flex items-center gap-2 text-xs">
+                                    <i data-lucide="check" class="w-4 h-4"></i>
+                                    Simpan Perubahan
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         @elseif($tab === 'karir')
             <!-- TAB 4: PROGRAM KARIR (CAREER) -->
             <div class="space-y-6">
@@ -1234,16 +1612,23 @@
                         </div>
                         <div>
                             <h2 class="text-lg font-bold text-gray-900">Kelola Halaman Program Pelatihan</h2>
-                            <p class="text-xs text-gray-500">Kelola katalog dan rincian halaman program publik, baik Program Reguler (Poster) maupun Non-Reguler (Minimalis).</p>
+                            <p class="text-xs text-gray-500">Kelola katalog dan rincian halaman program publik, baik Program Reguler (Poster) maupun Non-Reguler (Deskripsi, Kurikulum & Benefit).</p>
                         </div>
                     </div>
-                    <div class="flex items-center gap-3 shrink-0">
-                        <a href="{{ url('/program/fat') }}" target="_blank" class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:text-[#509c38] hover:bg-gray-50 shadow-sm transition inline-flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+                        <form action="{{ route('admin.portal_programs.sync_default') }}" method="POST" class="inline" onsubmit="return confirm('Perbarui dan sinkronkan seluruh program standar dari katalog ke database?');">
+                            @csrf
+                            <button type="submit" class="px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:text-[#509c38] hover:bg-gray-50 shadow-sm transition inline-flex items-center gap-2" title="Perbarui katalog default">
+                                <i data-lucide="refresh-cw" class="w-4 h-4 text-emerald-600"></i>
+                                Sinkronkan Program Standar
+                            </button>
+                        </form>
+                        <a href="{{ url('/program/fat') }}" target="_blank" class="px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-gray-700 hover:text-[#509c38] hover:bg-gray-50 shadow-sm transition inline-flex items-center gap-2">
                             <i data-lucide="external-link" class="w-4 h-4"></i>
                             Pratinjau Web
                         </a>
-                        <a href="{{ route('admin.portal_programs.create') }}" class="px-5 py-2.5 bg-[#509c38] hover:bg-green-700 text-white font-bold rounded-xl transition shadow-sm inline-flex items-center text-xs sm:text-sm">
-                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i> Tambah Program Baru
+                        <a href="{{ route('admin.portal_programs.create') }}" class="px-4 py-2.5 bg-[#509c38] hover:bg-green-700 text-white font-bold rounded-xl transition shadow-sm inline-flex items-center text-xs sm:text-sm">
+                            <i data-lucide="plus" class="w-4 h-4 mr-1.5"></i> Tambah Program Baru
                         </a>
                     </div>
                 </div>
@@ -1262,14 +1647,14 @@
                         <p class="text-[11px] text-gray-400 mt-0.5">Semua program di portal</p>
                     </div>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-5">
-                        <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Dengan Kurikulum</p>
-                        <p class="text-2xl font-black text-emerald-700 mt-1">{{ $regulerCount }}</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5">Memiliki rincian kurikulum</p>
+                        <p class="text-xs font-semibold text-teal-700 uppercase tracking-wider">Program Reguler</p>
+                        <p class="text-2xl font-black text-teal-800 mt-1">{{ $regulerCount }}</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Format Trainee 70:20:10</p>
                     </div>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-5">
-                        <p class="text-xs font-semibold text-teal-600 uppercase tracking-wider">Format Standar</p>
-                        <p class="text-2xl font-black text-teal-700 mt-1">{{ $nonRegulerCount }}</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5">Judul, deskripsi & gambar</p>
+                        <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Program Standar</p>
+                        <p class="text-2xl font-black text-emerald-700 mt-1">{{ $nonRegulerCount }}</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">Deskripsi, Kurikulum & Benefit</p>
                     </div>
                     <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-5">
                         <p class="text-xs font-semibold text-blue-600 uppercase tracking-wider">Status Aktif</p>
@@ -1280,27 +1665,27 @@
 
                 <!-- Filters & Search Bar -->
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-                    <div class="flex items-center gap-1.5 p-1 bg-gray-100 rounded-xl">
+                    <div class="flex flex-wrap items-center gap-1.5 p-1 bg-gray-100 rounded-xl">
                         <button type="button" @click="filter = 'all'" 
                                 :class="filter === 'all' ? 'bg-white text-gray-900 shadow-xs font-bold' : 'text-gray-500 hover:text-gray-900 font-medium'"
                                 class="px-3.5 py-1.5 rounded-lg text-xs transition">
                             Semua ({{ $totalPrograms }})
                         </button>
                         <button type="button" @click="filter = 'reguler'" 
-                                :class="filter === 'reguler' ? 'bg-white text-emerald-700 shadow-xs font-bold' : 'text-gray-500 hover:text-gray-900 font-medium'"
+                                :class="filter === 'reguler' ? 'bg-white text-teal-800 shadow-xs font-bold' : 'text-gray-500 hover:text-gray-900 font-medium'"
                                 class="px-3.5 py-1.5 rounded-lg text-xs transition">
-                            Dengan Kurikulum ({{ $regulerCount }})
+                            Program Reguler ({{ $regulerCount }})
                         </button>
                         <button type="button" @click="filter = 'non_reguler'" 
-                                :class="filter === 'non_reguler' ? 'bg-white text-teal-700 shadow-xs font-bold' : 'text-gray-500 hover:text-gray-900 font-medium'"
+                                :class="filter === 'non_reguler' ? 'bg-white text-emerald-700 shadow-xs font-bold' : 'text-gray-500 hover:text-gray-900 font-medium'"
                                 class="px-3.5 py-1.5 rounded-lg text-xs transition">
-                            Standar ({{ $nonRegulerCount }})
+                            Program Standar ({{ $nonRegulerCount }})
                         </button>
                     </div>
 
                     <div class="relative sm:w-72">
                         <i data-lucide="search" class="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-                        <input type="text" x-model="search" placeholder="Cari nama, kode, slug..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-xs focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        <input type="text" x-model="search" placeholder="Cari nama, kode, slug, menu..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-gray-200 text-xs focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
                     </div>
                 </div>
 
@@ -1312,7 +1697,7 @@
                                 <tr class="bg-gray-50/80 border-b border-gray-200 text-xs uppercase font-semibold text-gray-600 tracking-wider">
                                     <th class="px-6 py-4">Gambar</th>
                                     <th class="px-6 py-4">Nama Program & Subtitle</th>
-                                    <th class="px-6 py-4">Tipe Program</th>
+                                    <th class="px-6 py-4">Format & Konten</th>
                                     <th class="px-6 py-4 text-center">Status</th>
                                     <th class="px-6 py-4 text-right">Aksi</th>
                                 </tr>
@@ -1338,21 +1723,63 @@
 
                                         <!-- Nama Program & Subtitle -->
                                         <td class="px-6 py-4">
-                                            <p class="font-bold text-gray-900 leading-snug">{{ $prog->title }}</p>
+                                            <div class="flex items-center gap-2">
+                                                <a href="{{ url('/program/' . $prog->slug) }}" target="_blank" class="font-bold text-gray-900 hover:text-[#509c38] transition leading-snug">
+                                                    {{ $prog->title }}
+                                                </a>
+                                                @if($prog->code)
+                                                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200">{{ $prog->code }}</span>
+                                                @endif
+                                            </div>
                                             @if($prog->subtitle)
                                                 <p class="text-xs text-gray-500 mt-0.5 line-clamp-1">{{ $prog->subtitle }}</p>
                                             @endif
+                                            <span class="text-[11px] text-gray-400 mt-0.5 block">Slug: <code>/program/{{ $prog->slug }}</code></span>
                                         </td>
 
-                                        <!-- Kategori / Tipe Program -->
+                                        <!-- Kategori & Format Program -->
                                         <td class="px-6 py-4">
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 border border-gray-200">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-[#509c38]"></span>
-                                                {{ $prog->category_name ?? 'Program Pelatihan' }}
-                                            </span>
-                                            @if(!empty($prog->curriculum_pillars) || !empty($prog->objectives))
-                                                <span class="block text-[10px] text-emerald-600 mt-1 font-medium">+ Rincian Kurikulum</span>
-                                            @endif
+                                            <div class="flex flex-wrap items-center gap-1.5 mb-1.5">
+                                                @if($prog->is_reguler)
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800 border border-teal-200">
+                                                        <i data-lucide="award" class="w-3 h-3"></i>
+                                                        Program Reguler (Trainee)
+                                                    </span>
+                                                @else
+                                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-700 border border-gray-200">
+                                                        <i data-lucide="file-text" class="w-3 h-3 text-teal-700"></i>
+                                                        Format Standar
+                                                    </span>
+                                                @endif
+
+                                                <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-50 text-gray-600 border border-gray-200">
+                                                    {{ $prog->category_name ?? 'Program Pelatihan' }}
+                                                </span>
+                                            </div>
+
+                                            <div class="flex flex-wrap items-center gap-2 text-[11px]">
+                                                @php
+                                                    $kurCount = is_array($prog->curriculum_pillars) ? count($prog->curriculum_pillars) : 0;
+                                                    $objCount = is_array($prog->objectives) ? count($prog->objectives) : 0;
+                                                @endphp
+                                                @if($kurCount > 0)
+                                                    <span class="inline-flex items-center gap-1 text-emerald-700 font-medium">
+                                                        <i data-lucide="check" class="w-3 h-3 text-emerald-600"></i> Kurikulum ({{ $kurCount }})
+                                                    </span>
+                                                @else
+                                                    <span class="text-gray-400">- Kurikulum kosong</span>
+                                                @endif
+
+                                                <span class="text-gray-300">•</span>
+
+                                                @if($objCount > 0)
+                                                    <span class="inline-flex items-center gap-1 text-teal-700 font-medium">
+                                                        <i data-lucide="check" class="w-3 h-3 text-teal-600"></i> Benefit ({{ $objCount }})
+                                                    </span>
+                                                @else
+                                                    <span class="text-gray-400">- Benefit kosong</span>
+                                                @endif
+                                            </div>
                                         </td>
 
                                         <!-- Status Aktif -->
@@ -1361,7 +1788,7 @@
                                                 @csrf
                                                 <button type="submit" 
                                                         class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition cursor-pointer {{ $prog->is_active ? 'bg-green-50 text-green-700 border border-green-200 hover:bg-green-100' : 'bg-gray-100 text-gray-500 border border-gray-200 hover:bg-gray-200' }}"
-                                                        title="Klik untuk mengubah status">
+                                                        title="Klik untuk mengubah status aktif">
                                                     <i data-lucide="{{ $prog->is_active ? 'check-circle' : 'x-circle' }}" class="w-3.5 h-3.5"></i>
                                                     {{ $prog->is_active ? 'Aktif' : 'Non-Aktif' }}
                                                 </button>
@@ -1371,6 +1798,14 @@
                                         <!-- Aksi -->
                                         <td class="px-6 py-4 text-right">
                                             <div class="flex items-center justify-end gap-1.5">
+                                                <!-- Lihat Web -->
+                                                <a href="{{ url('/program/' . $prog->slug) }}" 
+                                                   target="_blank"
+                                                   class="p-2 rounded-lg text-xs font-semibold bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 hover:text-[#509c38] transition"
+                                                   title="Buka Halaman Web">
+                                                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                                                </a>
+
                                                 <!-- Edit -->
                                                 <a href="{{ route('admin.portal_programs.edit', $prog) }}" 
                                                    class="p-2 rounded-lg text-xs font-semibold bg-white text-amber-600 border border-amber-200 hover:bg-amber-50 transition"
@@ -1402,10 +1837,19 @@
                                             </div>
                                             <p class="text-base font-bold text-gray-800 mb-1">Belum Ada Program Pelatihan</p>
                                             <p class="text-xs text-gray-500 max-w-sm mx-auto mb-5">Program yang Anda tambahkan di sini akan langsung tampil pada katalog dan halaman detail portal.</p>
-                                            <a href="{{ route('admin.portal_programs.create') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#509c38] text-white text-xs font-bold hover:bg-green-700 shadow-sm transition">
-                                                <i data-lucide="plus" class="w-4 h-4"></i>
-                                                Tambah Program Pertama
-                                            </a>
+                                            <div class="flex items-center justify-center gap-3">
+                                                <form action="{{ route('admin.portal_programs.sync_default') }}" method="POST">
+                                                    @csrf
+                                                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition">
+                                                        <i data-lucide="refresh-cw" class="w-4 h-4 text-emerald-600"></i>
+                                                        Sinkronkan Program Standar
+                                                    </button>
+                                                </form>
+                                                <a href="{{ route('admin.portal_programs.create') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#509c38] text-white text-xs font-bold hover:bg-green-700 shadow-sm transition">
+                                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                                    Tambah Program Pertama
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 @endforelse

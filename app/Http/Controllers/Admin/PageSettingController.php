@@ -137,7 +137,10 @@ class PageSettingController extends Controller
         // Dynamic Accordions & Poin (Uniform & Fleksibel)
         $accordions = AppSetting::getAccordions();
 
-        return view('admin.page_settings.index', compact('tab', 'beranda', 'tentang', 'slides', 'portalLinks', 'careerPrograms', 'portalPrograms', 'pillarCards', 'accordions'));
+        // Daftar Menu Navigasi Program (Header & Dropdown)
+        $programNavMenus = AppSetting::getProgramNavMenus(false);
+
+        return view('admin.page_settings.index', compact('tab', 'beranda', 'tentang', 'slides', 'portalLinks', 'careerPrograms', 'portalPrograms', 'pillarCards', 'accordions', 'programNavMenus'));
     }
 
     /**
@@ -549,5 +552,286 @@ class PageSettingController extends Controller
 
         return redirect()->route('admin.page_settings.index', ['tab' => 'portal'])
             ->with('success', 'Menu Portal berhasil dikembalikan ke pengaturan awal (3 website).');
+    }
+
+    /**
+     * Tambah menu utama baru ke Navigasi Program (Header Dropdown).
+     */
+    /**
+     * Simpan menu baru untuk Navigasi Program.
+     */
+    public function storeProgramMenu(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+        ]);
+
+        $menus = AppSetting::getProgramNavMenus(false);
+        $name = trim($validated['name']);
+        $key = \Illuminate\Support\Str::slug($name);
+
+        $newMenu = [
+            'id' => 'menu_' . time() . '_' . bin2hex(random_bytes(2)),
+            'key' => $key,
+            'name' => $name,
+            'has_submenu' => false,
+            'url' => '/program/' . $key,
+            'order' => count($menus) + 1,
+            'is_active' => true,
+            'submenus' => [],
+        ];
+
+        $menus[] = $newMenu;
+        AppSetting::saveProgramNavMenus($menus);
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+            ->with('success', 'Menu "' . $newMenu['name'] . '" berhasil ditambahkan!');
+    }
+
+    /**
+     * Update menu utama Navigasi Program.
+     */
+    public function updateProgramMenu(Request $request, string $id)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+        ]);
+
+        $menus = AppSetting::getProgramNavMenus(false);
+        $found = false;
+
+        foreach ($menus as &$menu) {
+            if ($menu['id'] === $id) {
+                $name = trim($validated['name']);
+                $menu['name'] = $name;
+                if (empty($menu['key'])) {
+                    $menu['key'] = \Illuminate\Support\Str::slug($name);
+                }
+                $found = true;
+                break;
+            }
+        }
+        unset($menu);
+
+        if ($found) {
+            AppSetting::saveProgramNavMenus($menus);
+            return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+                ->with('success', 'Menu Navigasi Program berhasil diperbarui!');
+        }
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+            ->with('error', 'Menu Navigasi Program tidak ditemukan.');
+    }
+
+    /**
+     * Hapus menu utama Navigasi Program (beserta seluruh submenunya).
+     */
+    public function deleteProgramMenu(string $id)
+    {
+        $menus = AppSetting::getProgramNavMenus(false);
+        $filtered = array_values(array_filter($menus, fn ($item) => $item['id'] !== $id));
+
+        // Re-index orders to keep sequential
+        foreach ($filtered as $idx => &$item) {
+            $item['order'] = $idx + 1;
+        }
+        unset($item);
+
+        AppSetting::saveProgramNavMenus($filtered);
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+            ->with('success', 'Menu berhasil dihapus dari Navigasi Program.');
+    }
+
+    /**
+     * Toggle status aktif menu utama Navigasi Program.
+     */
+    public function toggleProgramMenu(string $id)
+    {
+        $menus = AppSetting::getProgramNavMenus(false);
+        $statusText = '';
+
+        foreach ($menus as &$menu) {
+            if ($menu['id'] === $id) {
+                $menu['is_active'] = empty($menu['is_active']);
+                $statusText = $menu['is_active'] ? 'diaktifkan' : 'dinonaktifkan';
+                break;
+            }
+        }
+        unset($menu);
+
+        AppSetting::saveProgramNavMenus($menus);
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+            ->with('success', 'Status menu Program berhasil ' . $statusText . '.');
+    }
+
+    /**
+     * Tambah sub-menu baru di bawah menu utama tertentu.
+     */
+    public function storeProgramSubmenu(Request $request, string $menuId)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+        ]);
+
+        $menus = AppSetting::getProgramNavMenus(false);
+        $found = false;
+        $name = trim($validated['name']);
+        $slug = \Illuminate\Support\Str::slug($name);
+        $url = '/program/' . $slug;
+
+        foreach ($menus as &$menu) {
+            if ($menu['id'] === $menuId) {
+                if (!isset($menu['submenus']) || !is_array($menu['submenus'])) {
+                    $menu['submenus'] = [];
+                }
+
+                $newSub = [
+                    'id' => 'sub_' . time() . '_' . bin2hex(random_bytes(2)),
+                    'name' => $name,
+                    'url' => $url,
+                    'order' => count($menu['submenus']) + 1,
+                    'is_active' => true,
+                ];
+
+                $menu['submenus'][] = $newSub;
+                $menu['has_submenu'] = true;
+                $found = true;
+                break;
+            }
+        }
+        unset($menu);
+
+        if ($found) {
+            AppSetting::saveProgramNavMenus($menus);
+            return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+                ->with('success', 'Sub-menu "' . $name . '" berhasil ditambahkan!');
+        }
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+            ->with('error', 'Menu induk tidak ditemukan.');
+    }
+
+    /**
+     * Update sub-menu.
+     */
+    public function updateProgramSubmenu(Request $request, string $menuId, string $subId)
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:100',
+        ]);
+
+        $menus = AppSetting::getProgramNavMenus(false);
+        $found = false;
+        $name = trim($validated['name']);
+
+        foreach ($menus as &$menu) {
+            if ($menu['id'] === $menuId && isset($menu['submenus']) && is_array($menu['submenus'])) {
+                foreach ($menu['submenus'] as &$sub) {
+                    if ($sub['id'] === $subId) {
+                        $sub['name'] = $name;
+                        // update URL if default /program/ pattern
+                        if (empty($sub['url']) || str_starts_with($sub['url'], '/program/')) {
+                            $sub['url'] = '/program/' . \Illuminate\Support\Str::slug($name);
+                        }
+                        $found = true;
+                        break;
+                    }
+                }
+                unset($sub);
+                break;
+            }
+        }
+        unset($menu);
+
+        if ($found) {
+            AppSetting::saveProgramNavMenus($menus);
+            return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+                ->with('success', 'Sub-menu berhasil diperbarui!');
+        }
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+            ->with('error', 'Sub-menu tidak ditemukan.');
+    }
+
+    /**
+     * Hapus sub-menu.
+     */
+    public function deleteProgramSubmenu(string $menuId, string $subId)
+    {
+        $menus = AppSetting::getProgramNavMenus(false);
+        $found = false;
+
+        foreach ($menus as &$menu) {
+            if ($menu['id'] === $menuId && isset($menu['submenus']) && is_array($menu['submenus'])) {
+                $menu['submenus'] = array_values(array_filter($menu['submenus'], fn ($s) => $s['id'] !== $subId));
+                // Re-index order
+                foreach ($menu['submenus'] as $idx => &$sItem) {
+                    $sItem['order'] = $idx + 1;
+                }
+                unset($sItem);
+
+                $menu['has_submenu'] = count($menu['submenus']) > 0;
+                $found = true;
+                break;
+            }
+        }
+        unset($menu);
+
+        if ($found) {
+            AppSetting::saveProgramNavMenus($menus);
+            return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+                ->with('success', 'Sub-menu berhasil dihapus.');
+        }
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+            ->with('error', 'Sub-menu tidak ditemukan.');
+    }
+
+    /**
+     * Toggle status aktif sub-menu.
+     */
+    public function toggleProgramSubmenu(string $menuId, string $subId)
+    {
+        $menus = AppSetting::getProgramNavMenus(false);
+        $statusText = '';
+        $found = false;
+
+        foreach ($menus as &$menu) {
+            if ($menu['id'] === $menuId && isset($menu['submenus']) && is_array($menu['submenus'])) {
+                foreach ($menu['submenus'] as &$sub) {
+                    if ($sub['id'] === $subId) {
+                        $sub['is_active'] = empty($sub['is_active']);
+                        $statusText = $sub['is_active'] ? 'diaktifkan' : 'dinonaktifkan';
+                        $found = true;
+                        break;
+                    }
+                }
+                unset($sub);
+                break;
+            }
+        }
+        unset($menu);
+
+        if ($found) {
+            AppSetting::saveProgramNavMenus($menus);
+            return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+                ->with('success', 'Status sub-menu berhasil ' . $statusText . '.');
+        }
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+            ->with('error', 'Sub-menu tidak ditemukan.');
+    }
+
+    /**
+     * Reset daftar Menu Navigasi Program ke 8 menu default.
+     */
+    public function resetProgramMenus()
+    {
+        AppSetting::saveProgramNavMenus(AppSetting::defaultProgramNavMenus());
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+            ->with('success', 'Menu Navigasi Program berhasil dikembalikan ke pengaturan default (8 menu standar).');
     }
 }
