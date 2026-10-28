@@ -79,6 +79,11 @@
                 <i data-lucide="briefcase" class="w-4 h-4"></i>
                 Program Karir (Career)
             </a>
+            <a href="{{ route('admin.page_settings.index', ['tab' => 'footer']) }}" 
+               class="pb-4 px-2 border-b-2 font-semibold text-sm flex items-center gap-2.5 transition-all whitespace-nowrap {{ $tab === 'footer' ? 'border-[#509c38] text-[#509c38]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }}">
+                <i data-lucide="layout-template" class="w-4 h-4"></i>
+                Footer & Kontak Global
+            </a>
         </div>
 
         @if($tab === 'beranda')
@@ -1414,6 +1419,181 @@
                     </div>
                 </div>
             </div>
+        @elseif($tab === 'footer')
+            <!-- TAB 6: FOOTER & KONTAK GLOBAL FORM -->
+            <form action="{{ route('admin.page_settings.update_footer') }}" method="POST" class="space-y-8">
+                @csrf
+
+                <!-- Header Actions Bar with Reset -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center font-bold shrink-0">
+                            <i data-lucide="layout-template" class="w-6 h-6 text-[#509c38]"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900">Kelola Footer & Informasi Kontak Global</h2>
+                            <p class="text-xs text-gray-500">Pengaturan ini akan langsung diterapkan pada bagian bawah (footer) di seluruh halaman publik portal FR Academy.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 shrink-0">
+                        <button type="submit" form="reset-footer-form" onclick="return confirm('Kembalikan seluruh teks, kontak, sosmed, dan peta footer ke pengaturan default?');" class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-xs font-semibold text-rose-600 hover:bg-rose-50 shadow-sm transition inline-flex items-center gap-2">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                            Reset ke Standar
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Card 1: Identitas & Kontak Perusahaan -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+                    <div class="flex items-center gap-3 border-b border-gray-100 pb-4 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center font-bold">
+                            <i data-lucide="building" class="w-5 h-5 text-[#509c38]"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900">Identitas Brand & Kontak Resmi</h3>
+                            <p class="text-xs text-gray-500">Nama brand, deskripsi profil singkat, kontak email, telepon, dan teks copyright.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Nama Brand / Headline</label>
+                            <input type="text" name="footer_brand_name" value="{{ old('footer_brand_name', $footer['footer_brand_name'] ?? '') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Teks Hak Cipta (Copyright)</label>
+                            <input type="text" name="footer_copyright" value="{{ old('footer_copyright', $footer['footer_copyright'] ?? '') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Deskripsi Ringkas Perusahaan</label>
+                            <textarea name="footer_tagline" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">{{ old('footer_tagline', $footer['footer_tagline'] ?? '') }}</textarea>
+                            <p class="text-[11px] text-gray-400 mt-1">Muncul tepat di bawah logo FR Academy pada kolom pertama footer.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Email Kontak Resmi</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                                    <i data-lucide="mail" class="w-4 h-4"></i>
+                                </div>
+                                <input type="email" name="footer_email" value="{{ old('footer_email', $footer['footer_email'] ?? '') }}" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Nomor Telepon / Tampilan</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                                    <i data-lucide="phone" class="w-4 h-4"></i>
+                                </div>
+                                <input type="text" name="footer_phone" value="{{ old('footer_phone', $footer['footer_phone'] ?? '') }}" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                            </div>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Link WhatsApp (URL Direct)</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+                                    <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                </div>
+                                <input type="url" name="footer_wa_url" value="{{ old('footer_wa_url', $footer['footer_wa_url'] ?? '') }}" placeholder="https://wa.me/628xxxxxxxx" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                            </div>
+                            <p class="text-[11px] text-gray-400 mt-1">Tautan ketika nomor telepon diklik di footer. Format: https://wa.me/628...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2: Media Sosial -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+                    <div class="flex items-center gap-3 border-b border-gray-100 pb-4 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center font-bold">
+                            <i data-lucide="share-2" class="w-5 h-5 text-[#509c38]"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900">Tautan Media Sosial Resmi</h3>
+                            <p class="text-xs text-gray-500">Ikon media sosial otomatis disembunyikan di footer jika kolom link dikosongkan.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">LinkedIn Profile / Company URL</label>
+                            <input type="url" name="footer_social_linkedin" value="{{ old('footer_social_linkedin', $footer['footer_social_linkedin'] ?? '') }}" placeholder="https://linkedin.com/..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Instagram URL</label>
+                            <input type="url" name="footer_social_instagram" value="{{ old('footer_social_instagram', $footer['footer_social_instagram'] ?? '') }}" placeholder="https://instagram.com/..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Facebook Page URL</label>
+                            <input type="url" name="footer_social_facebook" value="{{ old('footer_social_facebook', $footer['footer_social_facebook'] ?? '') }}" placeholder="https://facebook.com/..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">YouTube Channel URL</label>
+                            <input type="url" name="footer_social_youtube" value="{{ old('footer_social_youtube', $footer['footer_social_youtube'] ?? '') }}" placeholder="https://youtube.com/..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Lokasi & Google Maps -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+                    <div class="flex items-center gap-3 border-b border-gray-100 pb-4 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center font-bold">
+                            <i data-lucide="map-pin" class="w-5 h-5 text-[#509c38]"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-base font-bold text-gray-900">Lokasi Pusat Pelatihan & Google Maps</h3>
+                            <p class="text-xs text-gray-500">Pengaturan peta interaktif dan alamat kantor pusat pelatihan.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Judul Bagian Lokasi</label>
+                            <input type="text" name="footer_location_title" value="{{ old('footer_location_title', $footer['footer_location_title'] ?? '') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Teks Tombol Arahkan ke Maps</label>
+                            <input type="text" name="footer_maps_button_text" value="{{ old('footer_maps_button_text', $footer['footer_maps_button_text'] ?? '') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Teks Alamat Singkat</label>
+                            <input type="text" name="footer_location_address" value="{{ old('footer_location_address', $footer['footer_location_address'] ?? '') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                            <p class="text-[11px] text-gray-400 mt-1">Contoh: Pusat Pelatihan Terpadu FR Academy, Kampar, Riau.</p>
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">URL Google Maps Langsung (Link Buka)</label>
+                            <input type="url" name="footer_maps_view_url" value="{{ old('footer_maps_view_url', $footer['footer_maps_view_url'] ?? '') }}" placeholder="https://maps.google.com/..." class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">URL Embed Iframe Google Maps</label>
+                            <textarea name="footer_maps_embed_url" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm font-mono text-xs focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">{{ old('footer_maps_embed_url', $footer['footer_maps_embed_url'] ?? '') }}</textarea>
+                            <p class="text-[11px] text-gray-400 mt-1">Salin URL dari atribut `src="..."` pada fitur 'Bagikan / Sematkan Peta' di Google Maps.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Button Sticky -->
+                <div class="flex items-center justify-end gap-4 sticky bottom-4 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-gray-200 shadow-lg z-30">
+                    <button type="submit" class="bg-[#509c38] hover:bg-green-600 text-white font-bold px-6 py-3 rounded-xl shadow-md transition-all flex items-center gap-2">
+                        <i data-lucide="save" class="w-4 h-4"></i>
+                        Simpan Pengaturan Footer & Kontak
+                    </button>
+                </div>
+            </form>
+
+            <form id="reset-footer-form" action="{{ route('admin.page_settings.reset_footer') }}" method="POST" class="hidden">
+                @csrf
+            </form>
         @endif
     </div>
 </x-admin-layout>

@@ -507,4 +507,52 @@ class AppSetting extends Model
 
         static::set('home_accordions', json_encode(array_values($clean)));
     }
+
+    /**
+     * Default konfigurasi untuk Footer & Kontak Global.
+     */
+    public static function defaultFooterSettings(): array
+    {
+        return [
+            'footer_brand_name' => 'FR ACADEMY',
+            'footer_tagline' => 'Pusat pengembangan kompetensi teknis, riset agronomi, kepemimpinan operasional, dan pembentukan karakter insan perkebunan kelapa sawit First Resources Group.',
+            'footer_email' => 'yogie.hizkia@first-resources.co.id',
+            'footer_phone' => '+62 852 7855 4025',
+            'footer_wa_url' => 'https://wa.me/6285278554025',
+            'footer_copyright' => '© 2026 First Resources Academy. All rights reserved.',
+
+            // Sosial Media
+            'footer_social_linkedin' => 'https://linkedin.com/company/first-resources-limited',
+            'footer_social_facebook' => 'https://facebook.com/firstresources',
+            'footer_social_instagram' => 'https://instagram.com/firstresources',
+            'footer_social_youtube' => 'https://youtube.com/@firstresources',
+
+            // Lokasi & Peta
+            'footer_location_title' => 'Lokasi Pusat Pelatihan',
+            'footer_location_address' => 'Pusat Pelatihan Terpadu FR Academy, Kampar, Riau.',
+            'footer_maps_embed_url' => 'https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15958.629399435649!2d101.41169300600109!3d0.4705599827050588!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31d5a86a6058e579%3A0xc3f1a26c4f03cb71!2sFirst%20Resources%20Learning%20Centre!5e0!3m2!1sen!2sid!4v1709618143491!5m2!1sen!2sid',
+            'footer_maps_view_url' => 'https://maps.google.com/maps?q=First+Resources+Learning+Centre',
+            'footer_maps_button_text' => 'Buka di Google Maps',
+        ];
+    }
+
+    /**
+     * Dapatkan konfigurasi Footer & Kontak Global lengkap dengan fallback default.
+     */
+    public static function getFooterSettings(): array
+    {
+        $defaults = static::defaultFooterSettings();
+        $settings = [];
+
+        foreach ($defaults as $key => $defaultVal) {
+            $settings[$key] = static::get($key, $defaultVal);
+        }
+
+        // Kompatibilitas alias jika ada perbedaan key
+        if (! isset($settings['footer_maps_view_url'])) {
+            $settings['footer_maps_view_url'] = $settings['footer_maps_button_url'] ?? 'https://maps.google.com/maps?q=First+Resources+Learning+Centre';
+        }
+
+        return $settings;
+    }
 }

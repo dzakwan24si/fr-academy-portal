@@ -237,6 +237,10 @@ Route::middleware('auth')->prefix('admin')->group(function () {
         Route::post('/portal-links/{id}/delete', [PageSettingController::class, 'deletePortalLink'])->name('delete_portal_link');
         Route::post('/portal-links/{id}/toggle', [PageSettingController::class, 'togglePortalLink'])->name('toggle_portal_link');
         Route::post('/portal-links/reset', [PageSettingController::class, 'resetPortalLinks'])->name('reset_portal_links');
+
+        // Manajemen Footer & Kontak Global
+        Route::post('/footer', [PageSettingController::class, 'updateFooter'])->name('update_footer');
+        Route::post('/footer/reset', [PageSettingController::class, 'resetFooter'])->name('reset_footer');
     });
 
     // Standar Kompetensi Management

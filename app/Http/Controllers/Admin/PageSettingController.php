@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AppSetting;
 use App\Models\CareerProgram;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 
 class PageSettingController extends Controller
@@ -129,7 +130,9 @@ class PageSettingController extends Controller
         $careerPrograms = CareerProgram::latest()->get();
 
         // Daftar Program Portal (Pelatihan Reguler & Non-Reguler)
-        $portalPrograms = \App\Models\PortalProgram::orderBy('order')->orderBy('id')->get();
+        $portalPrograms = Schema::hasTable('portal_programs')
+            ? \App\Models\PortalProgram::orderBy('order')->orderBy('id')->get()
+            : collect();
 
         // Dynamic Pillar Cards (Bisa 1, 3, 5, 7, atau lebih)
         $pillarCards = AppSetting::getPillarCards();
@@ -137,7 +140,10 @@ class PageSettingController extends Controller
         // Dynamic Accordions & Poin (Uniform & Fleksibel)
         $accordions = AppSetting::getAccordions();
 
-        return view('admin.page_settings.index', compact('tab', 'beranda', 'tentang', 'slides', 'portalLinks', 'careerPrograms', 'portalPrograms', 'pillarCards', 'accordions'));
+        // Pengaturan Footer & Kontak Global
+        $footer = AppSetting::getFooterSettings();
+
+        return view('admin.page_settings.index', compact('tab', 'beranda', 'tentang', 'slides', 'portalLinks', 'careerPrograms', 'portalPrograms', 'pillarCards', 'accordions', 'footer'));
     }
 
     /**
@@ -549,5 +555,51 @@ class PageSettingController extends Controller
 
         return redirect()->route('admin.page_settings.index', ['tab' => 'portal'])
             ->with('success', 'Menu Portal berhasil dikembalikan ke pengaturan awal (3 website).');
+    }
+
+    /**
+     * Simpan pembaruan pengaturan Footer & Kontak Global.
+     */
+    public function updateFooter(Request $request)
+    {
+        $validated = $request->validate([
+            'footer_brand_name' => 'nullable|string|max:100',
+            'footer_tagline' => 'nullable|string|max:500',
+            'footer_email' => 'nullable|string|max:150',
+            'footer_phone' => 'nullable|string|max:50',
+            'footer_wa_url' => 'nullable|string|max:255',
+            'footer_copyright' => 'nullable|string|max:255',
+
+            'footer_social_linkedin' => 'nullable|string|max:255',
+            'footer_social_facebook' => 'nullable|string|max:255',
+            'footer_social_instagram' => 'nullable|string|max:255',
+            'footer_social_youtube' => 'nullable|string|max:255',
+
+            'footer_location_title' => 'nullable|string|max:100',
+            'footer_location_address' => 'nullable|string|max:255',
+            'footer_maps_embed_url' => 'nullable|string|max:1000',
+            'footer_maps_view_url' => 'nullable|string|max:500',
+            'footer_maps_button_text' => 'nullable|string|max:100',
+        ]);
+
+        foreach ($validated as $key => $val) {
+            AppSetting::set($key, (string) ($val ?? ''));
+        }
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'footer'])
+            ->with('success', 'Pengaturan Footer & Kontak Global berhasil disimpan!');
+    }
+
+    /**
+     * Reset pengaturan Footer & Kontak ke default.
+     */
+    public function resetFooter()
+    {
+        foreach (AppSetting::defaultFooterSettings() as $key => $val) {
+            AppSetting::set($key, (string) $val);
+        }
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'footer'])
+            ->with('success', 'Pengaturan Footer berhasil dikembalikan ke standar awal.');
     }
 }
