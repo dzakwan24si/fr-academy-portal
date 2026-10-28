@@ -22,8 +22,8 @@ class ProfilTraineeController extends Controller
         $filterGender = $request->get('gender', '');
         $filterPendidikan = $request->get('pendidikan', '');
         $filterUniversitas = $request->get('universitas', '');
-        $filterTahunLulus = $request->get('tahun_lulus', '');
-        $filterJabatan = $request->get('jabatan', '');
+        $filterTahunLulus = $request->get('tahun_lulusan', $request->get('tahun_lulus', ''));
+        $filterJabatan = $request->get('nama_jabatan', $request->get('jabatan', ''));
 
         // Base Query
         $query = ProfilTrainee::query();
@@ -60,22 +60,22 @@ class ProfilTraineeController extends Controller
             $query->where('nama_jabatan', $filterJabatan);
         }
 
-        // Summary Statistics (calculated on full or filtered data)
-        $totalTrainee = ProfilTrainee::count();
-        $avgIpk = ProfilTrainee::whereNotNull('ipk')->where('ipk', '>', 0)->avg('ipk');
-        $avgUsia = ProfilTrainee::whereNotNull('usia')->where('usia', '>', 0)->avg('usia');
-        $countLaki = ProfilTrainee::whereRaw('LOWER(jenis_kelamin) LIKE ?', ['%laki%'])->count();
-        $countPerempuan = ProfilTrainee::whereRaw('LOWER(jenis_kelamin) LIKE ?', ['%perempuan%'])->count();
-        $totalUniversitas = ProfilTrainee::whereNotNull('asal_universitas')->where('asal_universitas', '!=', '')->distinct('asal_universitas')->count('asal_universitas');
+        // Summary Statistics (scoped by active filters)
+        $totalTrainee = (clone $query)->count();
+        $avgIpk = (clone $query)->whereNotNull('ipk')->where('ipk', '>', 0)->avg('ipk');
+        $avgUsia = (clone $query)->whereNotNull('usia')->where('usia', '>', 0)->avg('usia');
 
         $stats = [
             'total_trainee' => $totalTrainee,
             'avg_ipk' => $avgIpk ? number_format($avgIpk, 2) : '0.00',
             'avg_usia' => $avgUsia ? number_format($avgUsia, 1) : '0',
-            'count_laki' => $countLaki,
-            'count_perempuan' => $countPerempuan,
-            'total_universitas' => $totalUniversitas,
         ];
+
+        // Demographic Charts Data (All data distribution, scoped by active filters)
+        $chartUniversitas = $this->getDistribution($query, 'asal_universitas');
+        $chartPekerjaanOrtu = $this->getDistribution($query, 'pekerjaan_orangtua');
+        $chartSuku = $this->getDistribution($query, 'suku');
+        $chartProvinsi = $this->getDistribution($query, 'kota_provinsi_asal');
 
         // Filter Dropdown Options
         $universities = ProfilTrainee::whereNotNull('asal_universitas')
@@ -116,8 +116,46 @@ class ProfilTraineeController extends Controller
             'universities',
             'pendidikanList',
             'years',
-            'jabatanList'
+            'jabatanList',
+            'chartUniversitas',
+            'chartPekerjaanOrtu',
+            'chartSuku',
+            'chartProvinsi'
         ));
+    }
+
+    /**
+     * Get distribution of all categories for a given column (ordered by count descending).
+     */
+    protected function getDistribution($baseQuery, string $field): array
+    {
+        $rows = (clone $baseQuery)
+            ->select($field, DB::raw('count(*) as total'))
+            ->whereNotNull($field)
+            ->where($field, '!=', '')
+            ->groupBy($field)
+            ->orderByDesc('total')
+            ->get();
+
+        if ($rows->isEmpty()) {
+            return ['labels' => [], 'data' => []];
+        }
+
+        $labels = $rows->pluck($field)->map(fn ($val) => trim((string) $val))->values()->all();
+        $data = $rows->pluck('total')->map(fn ($v) => (int) $v)->values()->all();
+
+        return [
+            'labels' => $labels,
+            'data' => $data,
+        ];
+    }
+
+    /**
+     * Backward-compatible alias for distribution.
+     */
+    protected function getTopDistribution($baseQuery, string $field, int $limit = 6): array
+    {
+        return $this->getDistribution($baseQuery, $field);
     }
 
     /**
@@ -228,8 +266,8 @@ class ProfilTraineeController extends Controller
         $filterGender = $request->get('gender', '');
         $filterPendidikan = $request->get('pendidikan', '');
         $filterUniversitas = $request->get('universitas', '');
-        $filterTahunLulus = $request->get('tahun_lulus', '');
-        $filterJabatan = $request->get('jabatan', '');
+        $filterTahunLulus = $request->get('tahun_lulusan', $request->get('tahun_lulus', ''));
+        $filterJabatan = $request->get('nama_jabatan', $request->get('jabatan', ''));
 
         $query = ProfilTrainee::query();
 
