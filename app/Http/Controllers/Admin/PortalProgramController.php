@@ -21,9 +21,11 @@ class PortalProgramController extends Controller
     /**
      * Show the form for creating a new program.
      */
-    public function create()
+    public function create(Request $request)
     {
-        return view('admin.portal_programs.create');
+        $categories = array_map(fn($m) => $m['name'], \App\Models\AppSetting::getProgramNavMenus());
+        $prefilledCategory = $request->query('category', '');
+        return view('admin.portal_programs.create', compact('categories', 'prefilledCategory'));
     }
 
     /**
@@ -120,7 +122,11 @@ class PortalProgramController extends Controller
             'is_active' => $request->has('is_active') ? true : true,
         ]);
 
-        return redirect()->route('admin.page_settings.index', ['tab' => 'program'])
+        // Sinkronkan ke menu navigasi agar kategori baru otomatis terdaftar di navbar
+        $navMenus = \App\Models\AppSetting::getProgramNavMenus(false);
+        \App\Models\AppSetting::saveProgramNavMenus($navMenus);
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
             ->with('success', 'Program pelatihan "' . $validated['title'] . '" berhasil ditambahkan.');
     }
 
@@ -129,7 +135,8 @@ class PortalProgramController extends Controller
      */
     public function edit(PortalProgram $portal_program)
     {
-        return view('admin.portal_programs.edit', compact('portal_program'));
+        $categories = array_map(fn($m) => $m['name'], \App\Models\AppSetting::getProgramNavMenus());
+        return view('admin.portal_programs.edit', compact('portal_program', 'categories'));
     }
 
     /**
@@ -220,7 +227,11 @@ class PortalProgramController extends Controller
             'is_active' => $request->has('is_active') ? true : ($portal_program->is_active ?? true),
         ]);
 
-        return redirect()->route('admin.page_settings.index', ['tab' => 'program'])
+        // Sinkronkan ke menu navigasi agar perubahan kategori otomatis ter-update
+        $navMenus = \App\Models\AppSetting::getProgramNavMenus(false);
+        \App\Models\AppSetting::saveProgramNavMenus($navMenus);
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
             ->with('success', 'Program pelatihan "' . $portal_program->title . '" berhasil diperbarui.');
     }
 
@@ -240,7 +251,7 @@ class PortalProgramController extends Controller
         $title = $portal_program->title;
         $portal_program->delete();
 
-        return redirect()->route('admin.page_settings.index', ['tab' => 'program'])
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
             ->with('success', 'Program "' . $title . '" berhasil dihapus.');
     }
 
@@ -254,7 +265,7 @@ class PortalProgramController extends Controller
 
         $status = $portal_program->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
-        return redirect()->route('admin.page_settings.index', ['tab' => 'program'])
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
             ->with('success', 'Status program "' . $portal_program->title . '" berhasil ' . $status . '.');
     }
 

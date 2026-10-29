@@ -17,6 +17,9 @@ class PageSettingController extends Controller
     public function index(Request $request)
     {
         $tab = $request->query('tab', 'beranda');
+        if ($tab === 'program') {
+            return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program']);
+        }
 
         // Dynamic Hero Slides
         $rawSlides = AppSetting::getRawHeroSlides();
@@ -567,28 +570,50 @@ class PageSettingController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100',
+            'menu_type' => 'nullable|string|in:category,direct',
+            'url' => 'nullable|string|max:255',
         ]);
 
         $menus = AppSetting::getProgramNavMenus(false);
         $name = trim($validated['name']);
         $key = \Illuminate\Support\Str::slug($name);
+        $menuType = $validated['menu_type'] ?? 'category';
+        $hasSubmenu = ($menuType === 'category');
+        $url = $hasSubmenu ? null : ($validated['url'] ?? ('/program/' . $key));
 
         $newMenu = [
             'id' => 'menu_' . time() . '_' . bin2hex(random_bytes(2)),
             'key' => $key,
             'name' => $name,
-            'has_submenu' => false,
-            'url' => '/program/' . $key,
+            'has_submenu' => $hasSubmenu,
+            'url' => $url,
             'order' => count($menus) + 1,
             'is_active' => true,
             'submenus' => [],
         ];
 
+        // Jika merupakan menu langsung (tanpa sub-menu, seperti Talent Management),
+        // otomatis buat / pastikan ada record PortalProgram agar admin langsung bisa mengisi kontennya
+        if (!$hasSubmenu) {
+            \App\Models\PortalProgram::firstOrCreate(
+                ['slug' => $key],
+                [
+                    'title' => $name,
+                    'category_name' => $name,
+                    'category_key' => $key,
+                    'is_reguler' => false,
+                    'overview' => 'Deskripsi dan rincian lengkap program ' . $name . '.',
+                    'is_active' => true,
+                    'order' => count($menus) + 1,
+                ]
+            );
+        }
+
         $menus[] = $newMenu;
         AppSetting::saveProgramNavMenus($menus);
 
         return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
-            ->with('success', 'Menu "' . $newMenu['name'] . '" berhasil ditambahkan!');
+            ->with('success', 'Menu "' . $newMenu['name'] . '" berhasil ditambahkan' . (!$hasSubmenu ? ' dan halaman program siap dikelola!' : '!'));
     }
 
     /**
@@ -598,6 +623,8 @@ class PageSettingController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100',
+            'menu_type' => 'nullable|string|in:category,direct',
+            'url' => 'nullable|string|max:255',
         ]);
 
         $menus = AppSetting::getProgramNavMenus(false);
@@ -610,6 +637,27 @@ class PageSettingController extends Controller
                 if (empty($menu['key'])) {
                     $menu['key'] = \Illuminate\Support\Str::slug($name);
                 }
+
+                if (isset($validated['menu_type'])) {
+                    $hasSubmenu = ($validated['menu_type'] === 'category');
+                    $menu['has_submenu'] = $hasSubmenu;
+                    $menu['url'] = $hasSubmenu ? null : ($validated['url'] ?: ('/program/' . $menu['key']));
+
+                    if (!$hasSubmenu) {
+                        \App\Models\PortalProgram::firstOrCreate(
+                            ['slug' => $menu['key']],
+                            [
+                                'title' => $name,
+                                'category_name' => $name,
+                                'category_key' => $menu['key'],
+                                'is_reguler' => false,
+                                'overview' => 'Deskripsi dan rincian lengkap program ' . $name . '.',
+                                'is_active' => true,
+                            ]
+                        );
+                    }
+                }
+
                 $found = true;
                 break;
             }
@@ -684,8 +732,10 @@ class PageSettingController extends Controller
         $slug = \Illuminate\Support\Str::slug($name);
         $url = '/program/' . $slug;
 
+        $targetMenu = null;
         foreach ($menus as &$menu) {
             if ($menu['id'] === $menuId) {
+                $targetMenu = $menu;
                 if (!isset($menu['submenus']) || !is_array($menu['submenus'])) {
                     $menu['submenus'] = [];
                 }
@@ -707,9 +757,24 @@ class PageSettingController extends Controller
         unset($menu);
 
         if ($found) {
+            // Sinkronkan juga langsung ke database PortalProgram agar halaman detailnya siap dan tidak 404
+            $menuKey = $targetMenu['key'] ?? str_replace(['menu_', ' '], ['', '_'], strtolower($targetMenu['name']));
+            \App\Models\PortalProgram::firstOrCreate(
+                ['slug' => $slug],
+                [
+                    'title' => $name,
+                    'category_name' => $targetMenu['name'],
+                    'category_key' => $menuKey,
+                    'is_reguler' => $menuKey === 'reguler',
+                    'overview' => 'Deskripsi program pelatihan ' . $name . '.',
+                    'is_active' => true,
+                    'order' => count($targetMenu['submenus'] ?? []) + 1,
+                ]
+            );
+
             AppSetting::saveProgramNavMenus($menus);
             return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
-                ->with('success', 'Sub-menu "' . $name . '" berhasil ditambahkan!');
+                ->with('success', 'Sub-menu "' . $name . '" berhasil ditambahkan dan otomatis terhubung ke katalog program!');
         }
 
         return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
@@ -725,9 +790,22 @@ class PageSettingController extends Controller
             'name' => 'required|string|max:100',
         ]);
 
+        $name = trim($validated['name']);
+
+        // Jika sub-menu berasal dari database PortalProgram
+        if (str_starts_with($subId, 'prog_')) {
+            $progId = (int) str_replace('prog_', '', $subId);
+            $prog = \App\Models\PortalProgram::find($progId);
+            if ($prog) {
+                $prog->title = $name;
+                $prog->save();
+                return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+                    ->with('success', "Program '{$prog->title}' berhasil diperbarui.");
+            }
+        }
+
         $menus = AppSetting::getProgramNavMenus(false);
         $found = false;
-        $name = trim($validated['name']);
 
         foreach ($menus as &$menu) {
             if ($menu['id'] === $menuId && isset($menu['submenus']) && is_array($menu['submenus'])) {
@@ -763,6 +841,18 @@ class PageSettingController extends Controller
      */
     public function deleteProgramSubmenu(string $menuId, string $subId)
     {
+        // Jika sub-menu berasal dari database PortalProgram
+        if (str_starts_with($subId, 'prog_')) {
+            $progId = (int) str_replace('prog_', '', $subId);
+            $prog = \App\Models\PortalProgram::find($progId);
+            if ($prog) {
+                $title = $prog->title;
+                $prog->delete();
+                return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+                    ->with('success', "Program '{$title}' berhasil dihapus dari database & menu.");
+            }
+        }
+
         $menus = AppSetting::getProgramNavMenus(false);
         $found = false;
 
@@ -797,6 +887,19 @@ class PageSettingController extends Controller
      */
     public function toggleProgramSubmenu(string $menuId, string $subId)
     {
+        // Jika sub-menu berasal dari database PortalProgram
+        if (str_starts_with($subId, 'prog_')) {
+            $progId = (int) str_replace('prog_', '', $subId);
+            $prog = \App\Models\PortalProgram::find($progId);
+            if ($prog) {
+                $prog->is_active = !$prog->is_active;
+                $prog->save();
+                $statusText = $prog->is_active ? 'diaktifkan' : 'dinonaktifkan';
+                return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
+                    ->with('success', "Status program '{$prog->title}' berhasil {$statusText}.");
+            }
+        }
+
         $menus = AppSetting::getProgramNavMenus(false);
         $statusText = '';
         $found = false;

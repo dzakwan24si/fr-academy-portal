@@ -111,7 +111,7 @@
                         <div class="rounded-2xl overflow-hidden border border-gray-200 dark:border-gray-800 shadow-xl bg-white dark:bg-gray-900 p-3 sm:p-4">
                             <div class="relative group cursor-pointer rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center" @click="zoomModal = true">
                                 <img src="{{ asset($program['image']) }}" 
-                                     alt="Poster Resmi {{ $program['title'] }}" 
+                                     alt="Foto Program {{ $program['title'] }}" 
                                      class="w-full h-auto min-h-[480px] sm:min-h-[560px] lg:min-h-[640px] max-h-[820px] object-contain rounded-xl shadow-inner transition duration-500 group-hover:scale-[1.02]">
                                 <div class="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white px-3 py-1.5 rounded-xl text-xs font-semibold backdrop-blur-sm transition flex items-center gap-1.5 shadow-md">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>

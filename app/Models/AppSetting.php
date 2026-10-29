@@ -642,14 +642,132 @@ class AppSetting extends Model
             $menus = array_filter($menus, fn ($m) => ! empty($m['is_active']));
         }
 
+        // Sinkronisasi otomatis dari database program (PortalProgram) sebagai Single Source of Truth
+        try {
+            $programQuery = \App\Models\PortalProgram::query();
+            if ($onlyActive) {
+                $programQuery->where('is_active', true);
+            }
+            $portalPrograms = $programQuery->orderBy('order')->orderBy('id')->get();
+        } catch (\Throwable $e) {
+            $portalPrograms = collect();
+        }
+
+        $matchedProgIds = [];
         foreach ($menus as &$menu) {
-            if (! isset($menu['submenus']) || ! is_array($menu['submenus'])) {
+            $menuKey = $menu['key'] ?? null;
+            if (!$menuKey) {
+                $menuKey = str_replace(['menu_', ' '], ['', '_'], strtolower($menu['name'] ?? ''));
+            }
+
+            // Jika menu ini dikonfigurasi sebagai menu tautan langsung (tanpa sub-menu, contohnya Talent Management)
+            $isDirectLink = isset($menu['has_submenu']) && $menu['has_submenu'] === false;
+            if ($isDirectLink) {
                 $menu['submenus'] = [];
-            } else {
-                usort($menu['submenus'], fn ($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
-                if ($onlyActive) {
-                    $menu['submenus'] = array_values(array_filter($menu['submenus'], fn ($s) => ! empty($s['is_active'])));
+                $menu['has_submenu'] = false;
+                if (empty($menu['url'])) {
+                    $menu['url'] = url('/program/' . ($menuKey === 'talent' ? 'talent-management' : $menuKey));
                 }
+                continue;
+            }
+
+            // Temukan program dari database yang masuk ke kategori menu ini
+            $matchedPrograms = $portalPrograms->filter(function ($prog) use ($menuKey, $menu) {
+                return $prog->menu_key === $menuKey
+                    || $prog->category_key === $menuKey
+                    || \Illuminate\Support\Str::slug($prog->category_name ?? '') === $menuKey
+                    || \Illuminate\Support\Str::slug($menu['name'] ?? '') === $prog->category_key;
+            });
+
+            if ($matchedPrograms->isNotEmpty()) {
+                $dynamicSubmenus = [];
+                foreach ($matchedPrograms as $prog) {
+                    $matchedProgIds[$prog->id] = true;
+                    $dynamicSubmenus[] = [
+                        'id' => 'prog_' . $prog->id,
+                        'program_id' => $prog->id,
+                        'name' => $prog->title,
+                        'url' => url('/program/' . $prog->slug),
+                        'order' => $prog->order ?? 1,
+                        'is_active' => (bool) $prog->is_active,
+                        'is_dynamic' => true,
+                    ];
+                }
+
+                // Pertahankan link eksternal khusus jika ada (bukan prog_ dan url eksternal)
+                $customSubmenus = [];
+                if (!empty($menu['submenus']) && is_array($menu['submenus'])) {
+                    foreach ($menu['submenus'] as $existingSub) {
+                        $id = $existingSub['id'] ?? '';
+                        if (!str_starts_with($id, 'prog_') && (str_starts_with($existingSub['url'] ?? '', 'http://') || str_starts_with($existingSub['url'] ?? '', 'https://'))) {
+                            $customSubmenus[] = $existingSub;
+                        }
+                    }
+                }
+
+                $menu['submenus'] = array_merge($dynamicSubmenus, $customSubmenus);
+                $menu['has_submenu'] = true;
+            } else {
+                if (! isset($menu['submenus']) || ! is_array($menu['submenus'])) {
+                    $menu['submenus'] = [];
+                }
+            }
+
+            usort($menu['submenus'], fn ($a, $b) => ($a['order'] ?? 0) <=> ($b['order'] ?? 0));
+            if ($onlyActive) {
+                $menu['submenus'] = array_values(array_filter($menu['submenus'], fn ($s) => ! empty($s['is_active'])));
+            }
+        }
+        unset($menu);
+
+        // Auto-discover kategori program yang baru ditambahkan tetapi belum terdaftar sebagai menu
+        $unmatched = $portalPrograms->filter(function ($prog) use ($matchedProgIds, $menus) {
+            if (isset($matchedProgIds[$prog->id])) {
+                return false;
+            }
+            // Abaikan jika sudah terhubung ke menu direct link (misal talent-management)
+            foreach ($menus as $m) {
+                if (empty($m['has_submenu']) && !empty($m['url']) && str_contains($m['url'], $prog->slug)) {
+                    return false;
+                }
+            }
+            return true;
+        });
+
+        if ($unmatched->isNotEmpty()) {
+            $grouped = $unmatched->groupBy(function ($prog) {
+                return $prog->category_key ?: \Illuminate\Support\Str::slug($prog->category_name ?: 'lainnya');
+            });
+
+            foreach ($grouped as $catKey => $progsInCat) {
+                $catName = $progsInCat->first()->category_name ?: ucfirst($catKey);
+                $subs = [];
+                foreach ($progsInCat as $p) {
+                    $subs[] = [
+                        'id' => 'prog_' . $p->id,
+                        'program_id' => $p->id,
+                        'name' => $p->title,
+                        'url' => url('/program/' . $p->slug),
+                        'order' => $p->order ?? 1,
+                        'is_active' => (bool) $p->is_active,
+                        'is_dynamic' => true,
+                    ];
+                }
+
+                if ($onlyActive) {
+                    $subs = array_values(array_filter($subs, fn ($s) => ! empty($s['is_active'])));
+                }
+
+                $menus[] = [
+                    'id' => 'menu_' . $catKey,
+                    'key' => $catKey,
+                    'name' => $catName,
+                    'has_submenu' => true,
+                    'url' => null,
+                    'order' => count($menus) + 1,
+                    'is_active' => true,
+                    'submenus' => $subs,
+                ];
             }
         }
 

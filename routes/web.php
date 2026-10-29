@@ -43,7 +43,6 @@ use App\Http\Controllers\Inventaris\InventarisSummaryController;
 use App\Http\Controllers\Monitoring\AsistenController;
 use App\Http\Controllers\Monitoring\MonitoringDashboardController;
 use App\Http\Controllers\Monitoring\MonitoringTalentController;
-use App\Http\Controllers\Monitoring\ResignedStaffController;
 use App\Http\Controllers\Talent\TalentPoolController;
 use App\Http\Controllers\Program\DashboardMonitoringTahunanController;
 use App\Http\Controllers\Program\DashboardRealisasiController;
@@ -704,14 +703,6 @@ Route::middleware(['auth', 'can:access_administrasi'])->group(function () {
         Route::post('/reset-data', [MonitoringDashboardController::class, 'resetData'])->name('reset-data');
     });
 
-    // Administrasi - Staf Resign
-    Route::get('/administrasi/staf-resign', [ResignedStaffController::class, 'index'])->name('administrasi.staf-resign.index');
-    Route::post('/administrasi/staf-resign', [ResignedStaffController::class, 'store'])->name('administrasi.staf-resign.store');
-    Route::put('/administrasi/staf-resign/{id}', [ResignedStaffController::class, 'update'])->name('administrasi.staf-resign.update');
-    Route::delete('/administrasi/staf-resign/{id}', [ResignedStaffController::class, 'destroy'])->name('administrasi.staf-resign.destroy');
-    Route::get('/administrasi/staf-resign/template', [ResignedStaffController::class, 'downloadTemplate'])->name('administrasi.staf-resign.template');
-    Route::post('/administrasi/staf-resign/import/preview', [ResignedStaffController::class, 'previewImport'])->name('administrasi.staf-resign.import-preview');
-    Route::post('/administrasi/staf-resign/import/process', [ResignedStaffController::class, 'processImport'])->name('administrasi.staf-resign.import-process');
 
     // Administrasi - Monitoring Karyawan (React SPA) Routes
     Route::get('/administrasi/monitoring/{any?}', function () {
