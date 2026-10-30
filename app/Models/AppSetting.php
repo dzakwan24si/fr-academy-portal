@@ -148,7 +148,7 @@ class AppSetting extends Model
             [
                 'id' => 'peta_sdm',
                 'name' => 'Peta SDM Operasional',
-                'url' => 'https://petasdm-academy.first-resources.com/',
+                'url' => 'https://monitoringops-academy.first-resources.com/',
                 'target' => '_blank',
                 'is_active' => true,
                 'order' => 3,

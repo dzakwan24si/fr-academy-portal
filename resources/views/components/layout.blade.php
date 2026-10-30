@@ -11,6 +11,8 @@
     <link rel="icon" type="image/svg+xml" href="{{ asset('images/faviconfr.svg') }}">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Alpine Plugins -->
+    <script defer src="https://cdn.jsdelivr.net/npm/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
     <!-- Alpine JS -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <!-- AOS CSS -->
@@ -354,7 +356,7 @@
                         <li><a href="/" class="hover:text-white hover:text-green-accent transition-colors">Beranda Utama</a></li>
                         <li><a href="/tentang-kami" class="hover:text-white hover:text-green-accent transition-colors">Tentang Kami</a></li>
                         <li><a href="{{ route('competency.public') }}" class="hover:text-white hover:text-green-accent transition-colors">Kompetensi</a></li>
-                        <li><a href="https://petasdm-academy.first-resources.com/" target="_blank" class="hover:text-white hover:text-green-accent transition-colors">Peta SDM Operasional</a></li>
+                        <li><a href="https://monitoringops-academy.first-resources.com/" target="_blank" class="hover:text-white hover:text-green-accent transition-colors">Peta SDM Operasional</a></li>
                         <li><a href="/artikel" class="hover:text-white hover:text-green-accent transition-colors">Artikel & Berita</a></li>
                         <li><a href="/tv-display" class="hover:text-white hover:text-green-accent transition-colors">TV Display Mode</a></li>
                         <li><a href="/login" class="hover:text-white hover:text-green-accent transition-colors">Login Admin / Staf</a></li>
