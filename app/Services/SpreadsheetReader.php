@@ -73,17 +73,32 @@ class SpreadsheetReader
     }
 
     /**
-     * Read XLSX directly via ZipArchive.
+     * Read XLSX directly via ZipArchive, or fallback to pure-PHP / system unzip
+     * if ext-zip (ZipArchive) is not installed in the PHP environment.
      */
     public static function readXlsx(string $path): array
     {
-        $zip = new ZipArchive;
-        if ($zip->open($path) !== true) {
-            throw new \RuntimeException('File Excel (.xlsx) tidak dapat dibaca.');
+        $zip = null;
+        if (class_exists(\ZipArchive::class)) {
+            $zipInstance = new \ZipArchive;
+            if ($zipInstance->open($path) === true) {
+                $zip = $zipInstance;
+            }
         }
 
+        $getEntry = function (string $entryName) use ($zip, $path): ?string {
+            if ($zip !== null) {
+                $content = $zip->getFromName($entryName);
+                if ($content !== false) {
+                    return $content;
+                }
+            }
+
+            return self::extractZipEntryFallback($path, $entryName);
+        };
+
         $shared = [];
-        if (($xml = $zip->getFromName('xl/sharedStrings.xml')) !== false) {
+        if (($xml = $getEntry('xl/sharedStrings.xml')) !== null) {
             $doc = simplexml_load_string($xml);
             if ($doc && isset($doc->si)) {
                 foreach ($doc->si as $item) {
@@ -92,18 +107,18 @@ class SpreadsheetReader
             }
         }
 
-        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
-        if ($sheetXml === false) {
-            for ($i = 1; $i <= 10; $i++) {
-                $sheetXml = $zip->getFromName("xl/worksheets/sheet{$i}.xml");
-                if ($sheetXml !== false) {
-                    break;
-                }
+        $sheetXml = null;
+        for ($i = 1; $i <= 10; $i++) {
+            $sheetXml = $getEntry("xl/worksheets/sheet{$i}.xml");
+            if ($sheetXml !== null) {
+                break;
             }
         }
 
-        if ($sheetXml === false) {
-            $zip->close();
+        if ($sheetXml === null) {
+            if ($zip !== null) {
+                $zip->close();
+            }
             throw new \RuntimeException('Worksheet Excel tidak ditemukan.');
         }
 
@@ -153,9 +168,118 @@ class SpreadsheetReader
             }
         }
 
-        $zip->close();
+        if ($zip !== null) {
+            $zip->close();
+        }
 
         return $rows;
+    }
+
+    /**
+     * Fallback extractor for XLSX entries when ZipArchive is unavailable in PHP.
+     * Tries system `unzip` first, then pure-PHP Central Directory parser.
+     */
+    public static function extractZipEntryFallback(string $zipPath, string $targetEntry): ?string
+    {
+        // Fallback 1: System unzip command
+        if (function_exists('shell_exec')) {
+            $cmd = 'unzip -p ' . escapeshellarg($zipPath) . ' ' . escapeshellarg($targetEntry) . ' 2>/dev/null';
+            $output = @shell_exec($cmd);
+            if ($output !== null && $output !== false && strlen($output) > 0) {
+                return $output;
+            }
+        }
+
+        // Fallback 2: Pure PHP Central Directory ZIP parser with gzinflate
+        return self::extractZipEntryPurePhp($zipPath, $targetEntry);
+    }
+
+    /**
+     * Pure-PHP parser that extracts an entry from a standard ZIP file without external extensions.
+     */
+    public static function extractZipEntryPurePhp(string $zipPath, string $targetEntry): ?string
+    {
+        $handle = @fopen($zipPath, 'rb');
+        if (! $handle) {
+            return null;
+        }
+
+        $targetEntry = strtolower(trim(str_replace('\\', '/', $targetEntry), '/'));
+
+        // Find EOCD (End of Central Directory) in trailing 64KB
+        fseek($handle, 0, SEEK_END);
+        $fileSize = ftell($handle);
+        $readLen = min($fileSize, 65557);
+        fseek($handle, -$readLen, SEEK_END);
+        $tail = fread($handle, $readLen);
+
+        $eocdPos = strrpos($tail, "\x50\x4b\x05\x06");
+        if ($eocdPos === false) {
+            fclose($handle);
+
+            return null;
+        }
+
+        $eocdData = unpack('vdisk/vcdDisk/vtotalEntriesDisk/vtotalEntries/VcdSize/VcdOffset', substr($tail, $eocdPos + 4, 18));
+        $cdOffset = $eocdData['cdOffset'];
+        $totalEntries = $eocdData['totalEntries'];
+
+        fseek($handle, $cdOffset, SEEK_SET);
+
+        for ($i = 0; $i < $totalEntries; $i++) {
+            $sig = fread($handle, 4);
+            if ($sig !== "\x50\x4b\x01\x02") {
+                break;
+            }
+
+            $header = fread($handle, 42);
+            if (strlen($header) < 42) {
+                break;
+            }
+
+            $entry = unpack('vverMade/vverNeed/vflag/vmethod/vmodtime/vmoddate/Vcrc/VcompSize/VuncompSize/vnameLen/vextraLen/vcommLen/vdisk/vintAttr/VextAttr/Voffset', $header);
+            $fileName = fread($handle, $entry['nameLen']);
+
+            if ($entry['extraLen'] > 0) {
+                fseek($handle, $entry['extraLen'], SEEK_CUR);
+            }
+            if ($entry['commLen'] > 0) {
+                fseek($handle, $entry['commLen'], SEEK_CUR);
+            }
+
+            $normName = strtolower(trim(str_replace('\\', '/', $fileName), '/'));
+            if ($normName === $targetEntry) {
+                fseek($handle, $entry['offset'], SEEK_SET);
+                $localSig = fread($handle, 4);
+                if ($localSig !== "\x50\x4b\x03\x04") {
+                    fclose($handle);
+
+                    return null;
+                }
+
+                fseek($handle, 22, SEEK_CUR);
+                $localLens = unpack('vnameLen/vextraLen', fread($handle, 4));
+                fseek($handle, $localLens['nameLen'] + $localLens['extraLen'], SEEK_CUR);
+
+                $data = fread($handle, $entry['compSize']);
+                fclose($handle);
+
+                if ($entry['method'] === 0) {
+                    return $data;
+                }
+                if ($entry['method'] === 8) {
+                    $uncomp = @gzinflate($data);
+
+                    return $uncomp !== false ? $uncomp : null;
+                }
+
+                return null;
+            }
+        }
+
+        fclose($handle);
+
+        return null;
     }
 
     /**
