@@ -733,6 +733,8 @@ class CostController extends Controller
 
         $this->clearCostCache();
 
+        $redirectMonth = $targetMonth ?? $request->get('current_month', 'all');
+
         return redirect()
             ->route('administrasi.cost.index', ['year' => $defaultYear, 'month' => $redirectMonth])
             ->with('success', $msg);
