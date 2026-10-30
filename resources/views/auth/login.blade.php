@@ -86,7 +86,9 @@
                     </div>
 
                     <!-- Widget Cloudflare Turnstile -->
-                    <div class="cf-turnstile" data-sitekey="0x4AAAAAAEzPGJLBNyo86KAl" data-theme="light"></div>
+                    <div class="my-2 min-h-[65px] flex items-center">
+                        <div class="cf-turnstile" data-sitekey="0x4AAAAAAEzPGJLBNyo86KAl" data-theme="light"></div>
+                    </div>
 
                     <!-- Options -->
                     <div class="flex items-center justify-between pt-2">

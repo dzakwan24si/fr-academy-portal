@@ -391,7 +391,7 @@
                 @endphp
                 <div class="border-b border-teal-700/50 group accordion-item transition-colors duration-300" :class="selected === {{ $accNum }} ? 'bg-teal-800/50' : 'hover:bg-teal-800/30'">
                     <button @click="selected = selected === {{ $accNum }} ? null : {{ $accNum }}" class="flex items-center w-full text-left py-8 md:py-12 px-4 md:px-8 focus:outline-none">
-                        <span class="text-green-accent font-mono text-xl mr-6 md:mr-10" :class="selected === {{ $accNum }} ? 'opacity-100' : 'opacity-70'">({{ $accPad }})</span>
+                        <span class="text-green-accent font-semibold text-xl mr-6 md:mr-10" :class="selected === {{ $accNum }} ? 'opacity-100' : 'opacity-70'">({{ $accPad }})</span>
                         <h3 class="text-4xl md:text-6xl lg:text-7xl font-bold uppercase text-outline tracking-wide" :class="selected === {{ $accNum }} ? 'text-outline-active' : ''">{{ $acc['title'] ?? '' }}</h3>
                     </button>
                     <div x-show="selected === {{ $accNum }}" x-collapse class="px-4 md:px-8 pb-10 md:pl-[6.5rem]">

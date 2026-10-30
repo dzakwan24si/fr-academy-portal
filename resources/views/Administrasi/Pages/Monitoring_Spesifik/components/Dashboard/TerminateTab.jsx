@@ -22,8 +22,14 @@ export function TerminateTab({ data = [] }) {
   const aggregateByField = (dataset, fieldName) => {
     const grouped = {};
     dataset.forEach(emp => {
-      const val = emp[fieldName];
+      let val = emp[fieldName];
       if (val !== undefined && val !== null && val !== "") {
+        if (typeof val === 'string' && val.endsWith('.0')) {
+          val = val.slice(0, -2);
+        } else if (typeof val === 'number') {
+          val = String(Math.round(val));
+        }
+        val = String(val).trim();
         grouped[val] = (grouped[val] || 0) + 1;
       }
     });
@@ -141,14 +147,14 @@ export function TerminateTab({ data = [] }) {
 
   // 2-7. Smaller charts (These are strictly for Lulusan/Alumni based on Excel data)
   let dataTurnOverLulusanRaw = aggregateByField(resignLulusan, "TAHUN TERMINATE");
-  const yearsInData = dataTurnOverLulusanRaw.map(d => parseInt(d.name)).filter(y => !isNaN(y));
+  const yearsInData = dataTurnOverLulusanRaw.map(d => parseInt(d.name, 10)).filter(y => !isNaN(y) && y > 1900);
   const maxYearTurnOver = Math.max(...yearsInData, 2026, currentYear);
-  const minYearTurnOver = Math.min(...yearsInData, 2019);
+  const minYearTurnOver = Math.min(...yearsInData.filter(y => y >= 2019), 2019);
 
   const dataTurnOverLulusan = [];
   for (let y = Math.min(2019, minYearTurnOver); y <= maxYearTurnOver; y++) {
-    const existing = dataTurnOverLulusanRaw.find(d => String(d.name) === String(y));
-    dataTurnOverLulusan.push(existing || { name: String(y), val: 0 });
+    const existing = dataTurnOverLulusanRaw.find(d => parseInt(d.name, 10) === y);
+    dataTurnOverLulusan.push(existing ? { name: String(y), val: existing.val } : { name: String(y), val: 0 });
   }
   // Sesuai dengan rumus Excel: =SERIES("Total";{"0","1","2","3","4","5","6"};{78,52,43,22,2,3,2};1)
   const dataTurnOverLamaTahun = [

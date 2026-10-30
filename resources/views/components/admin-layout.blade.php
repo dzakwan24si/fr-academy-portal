@@ -140,7 +140,7 @@
 
 <!-- SECTION: Monitoring -->
         <details class="group"
-            {{ request()->routeIs('administrasi.monitoring-summarized.*', 'administrasi.monitoring-alumni.*', 'administrasi.monitoring-lulusan.*', 'administrasi.asisten.*', 'administrasi.monitoring.*', 'administrasi.staf-resign.*') ? 'open' : '' }}>
+            {{ request()->routeIs('administrasi.monitoring-summarized.*', 'administrasi.monitoring-alumni.*', 'administrasi.monitoring-lulusan.*', 'administrasi.asisten.*', 'administrasi.monitoring.*') ? 'open' : '' }}>
             <summary
                 class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-widest text-[#A1A1AA] hover:bg-[#F9FAFB] [&::-webkit-details-marker]:hidden">
                 <span>Monitoring</span>
@@ -180,13 +180,7 @@
                     <span>Monitoring Employee</span>
                 </a>
                 
-                <!-- 5. Staf Resign -->
-                <a href="{{ route('administrasi.staf-resign.index') }}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors
-                          {{ request()->routeIs('administrasi.staf-resign.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
-                    <i data-lucide="user-x" class="w-4 h-4 shrink-0"></i>
-                    <span>Staf Resign</span>
-                </a>
+
             </div>
         </details>
 

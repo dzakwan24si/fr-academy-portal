@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             ArticleSeeder::class,
             PortalProgramSeeder::class,
+            CareerProgramSeeder::class,
+            CompetencySeeder::class,
         ]);
     }
 }

@@ -21,9 +21,11 @@ class PortalProgramController extends Controller
     /**
      * Show the form for creating a new program.
      */
-    public function create()
+    public function create(Request $request)
     {
-        return view('admin.portal_programs.create');
+        $categories = array_map(fn($m) => $m['name'], \App\Models\AppSetting::getProgramNavMenus());
+        $prefilledCategory = $request->query('category', '');
+        return view('admin.portal_programs.create', compact('categories', 'prefilledCategory'));
     }
 
     /**
@@ -75,23 +77,23 @@ class PortalProgramController extends Controller
             $heroImagePath = $request->file('hero_image_file')->store('portal_programs', 'public');
         }
 
-        // Parse curriculum pillars (only if extra details enabled)
+        // Parse curriculum pillars (tersedia untuk reguler maupun non-reguler)
         $curriculum = null;
-        if ($isReguler && !empty($validated['curriculum_pillars_text'])) {
+        if (!empty($validated['curriculum_pillars_text'])) {
             $lines = preg_split('/\r\n|\r|\n/', $validated['curriculum_pillars_text']);
             $curriculum = array_values(array_filter(array_map('trim', $lines)));
         }
 
-        // Parse objectives (only if extra details enabled)
+        // Parse objectives / benefit (tersedia untuk reguler maupun non-reguler)
         $objectives = null;
-        if ($isReguler && !empty($validated['objectives_text'])) {
+        if (!empty($validated['objectives_text'])) {
             $lines = preg_split('/\r\n|\r|\n/', $validated['objectives_text']);
             $objectives = array_values(array_filter(array_map('trim', $lines)));
         }
 
-        // Learning method
+        // Learning method (hanya aktif untuk program reguler trainee)
         $learningMethod = null;
-        if ($isReguler && (!empty($curriculum) || !empty($objectives))) {
+        if ($isReguler) {
             $learningMethod = [
                 'ratio' => !empty($validated['method_ratio']) ? trim($validated['method_ratio']) : '70 : 20 : 10',
                 'desc' => !empty($validated['method_desc']) ? trim($validated['method_desc']) : '70% experiential learning, 20% social learning, dan 10% formal learning',
@@ -120,7 +122,11 @@ class PortalProgramController extends Controller
             'is_active' => $request->has('is_active') ? true : true,
         ]);
 
-        return redirect()->route('admin.page_settings.index', ['tab' => 'program'])
+        // Sinkronkan ke menu navigasi agar kategori baru otomatis terdaftar di navbar
+        $navMenus = \App\Models\AppSetting::getProgramNavMenus(false);
+        \App\Models\AppSetting::saveProgramNavMenus($navMenus);
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
             ->with('success', 'Program pelatihan "' . $validated['title'] . '" berhasil ditambahkan.');
     }
 
@@ -129,7 +135,8 @@ class PortalProgramController extends Controller
      */
     public function edit(PortalProgram $portal_program)
     {
-        return view('admin.portal_programs.edit', compact('portal_program'));
+        $categories = array_map(fn($m) => $m['name'], \App\Models\AppSetting::getProgramNavMenus());
+        return view('admin.portal_programs.edit', compact('portal_program', 'categories'));
     }
 
     /**
@@ -178,23 +185,23 @@ class PortalProgramController extends Controller
             $heroImagePath = $request->file('hero_image_file')->store('portal_programs', 'public');
         }
 
-        // Parse curriculum pillars (only if extra details enabled)
+        // Parse curriculum pillars (tersedia untuk reguler maupun non-reguler)
         $curriculum = null;
-        if ($isReguler && !empty($validated['curriculum_pillars_text'])) {
+        if (!empty($validated['curriculum_pillars_text'])) {
             $lines = preg_split('/\r\n|\r|\n/', $validated['curriculum_pillars_text']);
             $curriculum = array_values(array_filter(array_map('trim', $lines)));
         }
 
-        // Parse objectives (only if extra details enabled)
+        // Parse objectives / benefit (tersedia untuk reguler maupun non-reguler)
         $objectives = null;
-        if ($isReguler && !empty($validated['objectives_text'])) {
+        if (!empty($validated['objectives_text'])) {
             $lines = preg_split('/\r\n|\r|\n/', $validated['objectives_text']);
             $objectives = array_values(array_filter(array_map('trim', $lines)));
         }
 
-        // Learning method
+        // Learning method (hanya aktif untuk program reguler trainee)
         $learningMethod = null;
-        if ($isReguler && (!empty($curriculum) || !empty($objectives))) {
+        if ($isReguler) {
             $learningMethod = [
                 'ratio' => !empty($validated['method_ratio']) ? trim($validated['method_ratio']) : '70 : 20 : 10',
                 'desc' => !empty($validated['method_desc']) ? trim($validated['method_desc']) : '70% experiential learning, 20% social learning, dan 10% formal learning',
@@ -220,7 +227,11 @@ class PortalProgramController extends Controller
             'is_active' => $request->has('is_active') ? true : ($portal_program->is_active ?? true),
         ]);
 
-        return redirect()->route('admin.page_settings.index', ['tab' => 'program'])
+        // Sinkronkan ke menu navigasi agar perubahan kategori otomatis ter-update
+        $navMenus = \App\Models\AppSetting::getProgramNavMenus(false);
+        \App\Models\AppSetting::saveProgramNavMenus($navMenus);
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
             ->with('success', 'Program pelatihan "' . $portal_program->title . '" berhasil diperbarui.');
     }
 
@@ -240,7 +251,7 @@ class PortalProgramController extends Controller
         $title = $portal_program->title;
         $portal_program->delete();
 
-        return redirect()->route('admin.page_settings.index', ['tab' => 'program'])
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
             ->with('success', 'Program "' . $title . '" berhasil dihapus.');
     }
 
@@ -254,7 +265,51 @@ class PortalProgramController extends Controller
 
         $status = $portal_program->is_active ? 'diaktifkan' : 'dinonaktifkan';
 
-        return redirect()->route('admin.page_settings.index', ['tab' => 'program'])
+        return redirect()->route('admin.page_settings.index', ['tab' => 'menu_program'])
             ->with('success', 'Status program "' . $portal_program->title . '" berhasil ' . $status . '.');
+    }
+
+    /**
+     * Synchronize default catalog programs into DB (update or create).
+     */
+    public function syncDefaultPrograms()
+    {
+        $defaults = \App\Services\ProgramCatalogService::getStaticFallbackPrograms();
+        $count = 0;
+
+        foreach ($defaults as $slug => $data) {
+            $isReguler = in_array($slug, ['fat', 'mat', 'tat', 'aat', 'dmt', 'pmt', 'management-associate']);
+            
+            \App\Models\PortalProgram::updateOrCreate(
+                ['slug' => $slug],
+                [
+                    'code' => $data['code'] ?? strtoupper($slug),
+                    'title' => $data['title'],
+                    'subtitle' => $data['subtitle'] ?? null,
+                    'category_key' => $data['category_key'] ?? ($isReguler ? 'trainee' : 'teknikal'),
+                    'category_name' => $data['category_name'] ?? ($isReguler ? 'Program Trainee' : 'Program Pelatihan'),
+                    'target_role' => $data['target_role'] ?? null,
+                    'duration' => $data['duration'] ?? null,
+                    'format' => $data['format'] ?? null,
+                    'badge' => $data['badge'] ?? null,
+                    'is_reguler' => $isReguler,
+                    'overview' => $data['overview'] ?? 'Deskripsi materi pelatihan First Resources.',
+                    'image' => $data['image'] ?? null,
+                    'hero_image' => $data['hero_image'] ?? null,
+                    'curriculum_pillars' => $data['curriculum_pillars'] ?? null,
+                    'objectives' => $data['objectives'] ?? null,
+                    'learning_method' => $isReguler ? ($data['learning_method'] ?? [
+                        'ratio' => '70 : 20 : 10',
+                        'desc' => '70% experiential learning, 20% social learning, dan 10% formal learning',
+                    ]) : null,
+                    'order' => $count * 10,
+                    'is_active' => true,
+                ]
+            );
+            $count++;
+        }
+
+        return redirect()->route('admin.page_settings.index', ['tab' => 'program'])
+            ->with('success', "Berhasil menyinkronkan {$count} program ke database.");
     }
 }

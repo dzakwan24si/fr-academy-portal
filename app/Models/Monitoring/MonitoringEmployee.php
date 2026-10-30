@@ -51,7 +51,7 @@ class MonitoringEmployee extends Model
     {
         return [
             'ID_MONITORING' => $this->id_monitoring,
-            'NIK' => $this->nik,
+            'NIK' => $this->nik ? preg_replace('/\.0+$/', '', $this->nik) : null,
             'NAMA' => $this->nama,
             'JOIN DATE' => $this->join_date,
             'JABATAN' => $this->jabatan,
@@ -66,9 +66,9 @@ class MonitoringEmployee extends Model
             'STATUS' => $this->status,
             'DATE TERMINATE' => $this->date_terminate,
             'BULAN TERMINATE' => $this->bulan_terminate,
-            'TAHUN TERMINATE' => $this->tahun_terminate,
-            'LAMA BEKERJA (BULAN)' => $this->lama_bekerja_bulan,
-            'LAMA BEKERJA (TAHUN)' => $this->lama_bekerja_tahun,
+            'TAHUN TERMINATE' => $this->tahun_terminate ? preg_replace('/\.0+$/', '', $this->tahun_terminate) : null,
+            'LAMA BEKERJA (BULAN)' => $this->lama_bekerja_bulan ? preg_replace('/\.0+$/', '', $this->lama_bekerja_bulan) : null,
+            'LAMA BEKERJA (TAHUN)' => $this->lama_bekerja_tahun ? preg_replace('/\.0+$/', '', $this->lama_bekerja_tahun) : null,
             'LAMA BEKERJA' => $this->lama_bekerja,
             'Alasan Resign' => $this->alasan_resign,
             'Detail' => $this->detail,
