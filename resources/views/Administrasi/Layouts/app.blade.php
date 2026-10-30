@@ -76,12 +76,8 @@
 </head>
 <body class="bg-[#F8F9FA] text-[#1A1A1A] min-h-screen flex">
 
-    <!-- 1. SIDEBAR (Dynamic based on Role / Session / Query) -->
-    @if(session('user_role') === 'top_management' || request()->query('role') === 'top_management' || request()->is('Top_Management*') || (auth()->check() && auth()->user()?->role === 'top_management'))
-        @include('Administrasi.Layouts.sidebar_top_management')
-    @else
-        @include('Administrasi.Layouts.sidebar')
-    @endif
+    <!-- 1. SIDEBAR (Unified & Role-Based) -->
+    @include('Administrasi.Layouts.sidebar')
 
     <!-- 2. MAIN CONTENT AREA -->
     <div class="flex-1 flex flex-col min-w-0">

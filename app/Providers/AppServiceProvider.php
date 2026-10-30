@@ -21,7 +21,24 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Gate::before(function ($user, $ability) {
-            return $user->hasRole('Superadmin') ? true : null;
+            // Superadmin has universal access
+            if ($user->hasRole('Superadmin')) {
+                return true;
+            }
+
+            // Auto-grant Read access if user already has Edit permission for the module
+            if (str_starts_with($ability, 'view_')) {
+                $editAbility = 'edit_' . substr($ability, 5);
+                try {
+                    if ($user->hasPermissionTo($editAbility)) {
+                        return true;
+                    }
+                } catch (\Throwable $e) {
+                    // Not a registered Spatie permission
+                }
+            }
+
+            return null;
         });
     }
 }

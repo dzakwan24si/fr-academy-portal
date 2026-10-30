@@ -6,6 +6,7 @@
 
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <script>
+        window.canEditAdministrasi = @json(auth()->user()?->can('edit_administrasi') ?? false);
         window.canEditCost = @json(auth()->user()?->can('edit_cost') ?? false);
     </script>
     @viteReactRefresh

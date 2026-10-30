@@ -80,6 +80,7 @@
             <nav class="flex-1 overflow-y-auto py-6 px-4 space-y-2">
                 
 <!-- SECTION: Dashboard -->
+        @canany(['view_dashboard', 'edit_dashboard'])
         <details class="group"
             {{ request()->routeIs('dashboard', 'administrasi.dashboard-realisasi.*', 'administrasi.dashboard-monitoring-tahunan.*') ? 'open' : '' }}>
             <summary
@@ -109,8 +110,10 @@
                 </a>
             </div>
         </details>
+        @endcanany
 
 <!-- SECTION: Program -->
+        @canany(['view_program', 'edit_program'])
         <details class="group"
             {{ request()->routeIs('administrasi.program-batch.*', 'administrasi.schedule.*', 'administrasi.realisasi-vs-batch.*', 'administrasi.training-record.*') ? 'open' : '' }}>
             <summary
@@ -137,8 +140,10 @@
                 </a>
             </div>
         </details>
+        @endcanany
 
 <!-- SECTION: Monitoring -->
+        @canany(['view_monitoring', 'edit_monitoring'])
         <details class="group"
             {{ request()->routeIs('administrasi.monitoring-summarized.*', 'administrasi.monitoring-alumni.*', 'administrasi.monitoring-lulusan.*', 'administrasi.asisten.*', 'administrasi.monitoring.*') ? 'open' : '' }}>
             <summary
@@ -183,8 +188,10 @@
 
             </div>
         </details>
+        @endcanany
 
 <!-- SECTION: Talent -->
+        @canany(['view_talent', 'edit_talent'])
         <details class="group"
             {{ request()->routeIs('administrasi.monitoring-talent.*', 'administrasi.talent-pool.*') ? 'open' : '' }}>
             <summary
@@ -211,8 +218,10 @@
                 </a>
             </div>
         </details>
+        @endcanany
 
 <!-- SECTION: Administration -->
+        @canany(['view_administrasi', 'edit_administrasi', 'access_administrasi'])
         <details class="group"
             {{ request()->routeIs('administrasi.cost.*', 'administrasi.capex.*', 'administrasi.vra.*', 'administrasi.biaya-rekruit.*', 'administrasi.rekrutmen.*', 'administrasi.profil-trainee.*', 'administrasi.asisten.*', 'administrasi.cuti.*', 'administrasi.mpp.*') ? 'open' : '' }}>
             <summary
@@ -222,6 +231,8 @@
             </summary>
             <div class="space-y-0.5">
 
+                <!-- Sub-Modul Cost & Finansial (Hanya tampil jika memiliki permission view_cost / edit_cost) -->
+                @canany(['view_cost', 'edit_cost'])
                 <!-- 1. Cost -->
                 <a href="{{ route('administrasi.cost.index') }}"
                     class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors
@@ -253,6 +264,7 @@
                     <i data-lucide="user-plus" class="w-4 h-4 shrink-0"></i>
                     <span>Biaya Rekrut</span>
                 </a>
+                @endcanany
 
                 <!-- 5. Rekrutmen -->
                 <a href="{{ route('administrasi.rekrutmen.index') }}"
@@ -278,7 +290,7 @@
                     <span>Cuti</span>
                 </a>
 
-                <!-- 7. MPP -->
+                <!-- 8. MPP -->
                 <a href="{{ route('administrasi.mpp.index') }}"
                     class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.mpp.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
@@ -288,8 +300,10 @@
 
             </div>
         </details>
+        @endcanany
 
 <!-- SECTION: Data Aset -->
+        @canany(['view_data_aset', 'edit_data_aset'])
         <details class="group" {{ request()->routeIs('administrasi.inventaris.*') ? 'open' : '' }}>
             <summary
                 class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-widest text-[#A1A1AA] hover:bg-[#F9FAFB] [&::-webkit-details-marker]:hidden">
@@ -314,6 +328,7 @@
                 </a>
             </div>
         </details>
+        @endcanany
 
 
 

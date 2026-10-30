@@ -43,7 +43,7 @@
                 <i data-lucide="file-spreadsheet" class="w-4 h-4 text-[#71717A]"></i> Download Template
             </a>
 
-            @can('edit_cost')
+            @can('edit_administrasi')
             <!-- Import CSV Button -->
             <button onclick="openModal('importModal')"
                     class="bg-white border border-[#E5E7EB] hover:bg-[#F4F4F5] text-[#18181B] font-medium text-sm rounded-lg px-4 py-2 flex items-center gap-2 shadow-2xs transition-colors">
@@ -57,7 +57,7 @@
                 <i data-lucide="download" class="w-4 h-4 text-[#71717A]"></i> Export Excel
             </a>
 
-            @can('edit_cost')
+            @can('edit_administrasi')
             <!-- Add Data Button -->
             <button onclick="openAddModal()"
                     class="bg-[#4B6A34] hover:bg-[#3d562a] text-white font-medium text-sm rounded-lg px-4 py-2 flex items-center gap-2 shadow-sm transition-colors">
@@ -100,7 +100,7 @@
             </div>
 
             {{-- Tambah Tahun Button --}}
-            @can('edit_cost')
+            @can('edit_administrasi')
             <div class="shrink-0">
                 <button type="button" onclick="openTambahTahunModal()"
                         class="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#4B6A34] bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 flex items-center gap-1.5 transition-colors shadow-2xs">
@@ -163,7 +163,7 @@
                         <th class="py-3.5 px-6 text-center font-semibold w-32">PBT</th>
                         <th class="py-3.5 px-6 text-center font-semibold w-32">KHT</th>
                         <th class="py-3.5 px-6 text-center font-semibold w-32">KHL</th>
-                        @can('edit_cost')
+                        @can('edit_administrasi')
                         <th class="py-3.5 px-6 text-center font-semibold w-24">Aksi</th>
                         @endcan
                     </tr>
@@ -197,7 +197,7 @@
                             </td>
 
                             <!-- Actions -->
-                            @can('edit_cost')
+                            @can('edit_administrasi')
                             <td class="py-4 px-6 text-center">
                                 <div class="flex items-center justify-center gap-2">
                                     <!-- Edit Button -->
@@ -228,11 +228,11 @@
                                     </div>
                                     <div>
                                         <p class="font-semibold text-sm text-[#18181B]">Belum ada data MPP untuk periode {{ $monthInfo['full'] }} {{ $selectedYear }}</p>
-                                        @can('edit_cost')
+                                        @can('edit_administrasi')
                                         <p class="text-xs text-[#71717A] mt-0.5">Klik tombol "+ Tambah Data" untuk mulai memasukkan jumlah karyawan per jabatan.</p>
                                         @endcan
                                     </div>
-                                    @can('edit_cost')
+                                    @can('edit_administrasi')
                                     <button onclick="openAddModal()" class="mt-2 bg-[#4B6A34] hover:bg-[#3d562a] text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors">
                                         + Tambah Data MPP
                                     </button>
@@ -269,7 +269,7 @@
         </div>
     </div>
 
-    @can('edit_cost')
+    @can('edit_administrasi')
     <!-- ======================================================== -->
     <!-- 5. MODAL: TAMBAH DATA MPP                                -->
     <!-- ======================================================== -->
