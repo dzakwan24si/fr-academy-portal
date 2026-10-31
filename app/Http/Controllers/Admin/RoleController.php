@@ -33,7 +33,11 @@ class RoleController extends Controller
         $role = Role::create(['name' => $validated['name']]);
 
         if (isset($validated['permissions'])) {
-            $role->syncPermissions($validated['permissions']);
+            $permissions = $validated['permissions'];
+            if (in_array('view_administrasi', $permissions) || in_array('edit_administrasi', $permissions)) {
+                $permissions[] = 'access_administrasi';
+            }
+            $role->syncPermissions(array_unique($permissions));
         }
 
         return redirect()->route('admin.roles.index')->with('success', 'Role berhasil ditambahkan.');
@@ -65,7 +69,11 @@ class RoleController extends Controller
         $role->update(['name' => $validated['name']]);
 
         if (isset($validated['permissions'])) {
-            $role->syncPermissions($validated['permissions']);
+            $permissions = $validated['permissions'];
+            if (in_array('view_administrasi', $permissions) || in_array('edit_administrasi', $permissions)) {
+                $permissions[] = 'access_administrasi';
+            }
+            $role->syncPermissions(array_unique($permissions));
         } else {
             $role->syncPermissions([]);
         }

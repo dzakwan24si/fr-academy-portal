@@ -50,7 +50,7 @@ class AuthController extends Controller
 
             $user = Auth::user();
             if ($user->hasRole('Top Management')) {
-                return redirect('/Top_Management');
+                return redirect()->route('administrasi.dashboard-realisasi.index');
             }
 
             // Trainer without administrasi access goes to Learning Activity dashboard

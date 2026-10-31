@@ -24,6 +24,7 @@ const AdminLayout = () => {
     dashboard: true,
     program: true,
     monitoring: true,
+    talent: true,
     dataAset: true,
   });
 
@@ -64,8 +65,15 @@ const AdminLayout = () => {
         { name: 'Monitoring Summarized', href: '/administrasi/monitoring-summarized', icon: BarChart3, isExternal: true },
         { name: 'Monitoring Alumni', href: '/administrasi/monitoring-alumni', icon: GraduationCap, isExternal: true },
         { name: 'Database Asisten', href: '/administrasi/asisten', icon: Contact, isExternal: true },
+        { name: 'Monitoring Detailed', href: '/administrasi/monitoring', icon: LineChart, isExternal: true },
+      ]
+    },
+    {
+      id: 'talent',
+      title: 'Talent',
+      items: [
         { name: 'Monitoring Talent', href: '/administrasi/monitoring-talent', icon: Sparkles, isExternal: true },
-        { name: 'Monitoring Employee', href: '/administrasi/monitoring', icon: LineChart, isExternal: true },
+        { name: 'Talent Pool', href: '/administrasi/talent-pool', icon: Users, isExternal: true },
       ]
     },
     {

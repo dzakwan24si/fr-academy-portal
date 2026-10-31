@@ -16,6 +16,10 @@ class SpreadsheetReader
         }
         $ext = strtolower($extension);
         if ($ext === 'xlsx') {
+            if (! class_exists('\ZipArchive')) {
+                throw new \RuntimeException('Server web development belum mengaktifkan ekstensi PHP Zip (ZipArchive) untuk membaca file .xlsx. Silakan simpan / ubah file Excel Anda menjadi format .CSV lalu upload kembali.');
+            }
+
             return self::readXlsx($path);
         }
 

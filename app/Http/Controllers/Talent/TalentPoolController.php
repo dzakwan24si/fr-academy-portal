@@ -371,15 +371,15 @@ class TalentPoolController extends Controller
 
         foreach ($rawHeaders as $idx => $h) {
             $clean = SpreadsheetReader::cleanString($h);
-            if (in_array($clean, ['no', 'id', 'nomor'])) {
+            if (in_array($clean, ['no', 'nomor'])) {
                 $headerMap['no'] = $idx;
-            } elseif (in_array($clean, ['employee id', 'nik', 'id karyawan', 'nip', 'badge'])) {
+            } elseif (in_array($clean, ['employee id', 'nik', 'id karyawan', 'nip', 'badge', 'trainee id', 'trainee_id', 'id'])) {
                 $headerMap['employee_id'] = $idx;
-            } elseif (in_array($clean, ['employee name', 'nama', 'nama karyawan', 'nama peserta', 'name'])) {
+            } elseif (in_array($clean, ['employee name', 'nama', 'nama karyawan', 'nama peserta', 'name', 'nama trainee', 'nama_trainee'])) {
                 $headerMap['employee_name'] = $idx;
-            } elseif (in_array($clean, ['posisi asal', 'posisi', 'jabatan', 'jabatan asal'])) {
+            } elseif (in_array($clean, ['posisi asal', 'posisi', 'jabatan', 'jabatan asal', 'nama jabatan', 'nama_jabatan'])) {
                 $headerMap['posisi_asal'] = $idx;
-            } elseif (in_array($clean, ['talent to', 'posisi tujuan', 'target posisi', 'to'])) {
+            } elseif (in_array($clean, ['talent to', 'posisi tujuan', 'target posisi', 'to', 'target posisi talent to', 'proyeksi'])) {
                 $headerMap['talent_to'] = $idx;
             } elseif (in_array($clean, ['unit', 'kebun/pabrik', 'lokasi', 'work location', 'estate'])) {
                 $headerMap['unit'] = $idx;
@@ -673,6 +673,6 @@ class TalentPoolController extends Controller
             ],
         ];
 
-        return ExcelExporter::download('Template_Talent_Pool.xlsx', $headers, $sampleRows, 'Template Talent Pool');
+        return ExcelExporter::download('Template_Import_Talent_Pool.xlsx', $headers, $sampleRows, 'Template Talent Pool');
     }
 }

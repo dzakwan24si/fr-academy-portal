@@ -27,8 +27,8 @@
         {{-- Action Buttons --}}
         <div class="flex flex-wrap items-center gap-2">
             {{-- Template Excel --}}
-            <a href="{{ route('administrasi.talent-pool.template') }}" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-2xs">
-                <i data-lucide="file-down" class="w-3.5 h-3.5 text-slate-500"></i>
+            <a href="{{ route('administrasi.talent-pool.template') }}" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-2xs" title="Unduh Format Template Excel Resmi">
+                <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5 text-[#4B6A34]"></i>
                 <span>Template Excel</span>
             </a>
             
@@ -542,31 +542,167 @@
 </div>
 
 {{-- Modal Import --}}
-<div id="modalImport" class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs hidden p-4">
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-        <div class="flex items-center justify-between p-5 border-b border-slate-100">
-            <h3 class="font-bold text-base text-slate-900 flex items-center gap-2">
-                <i data-lucide="upload" class="w-4 h-4 text-[#4B6A34]"></i>
-                Import Data Talent Pool
-            </h3>
-            <button type="button" onclick="closeImportModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg hover:bg-slate-100">
-                <i data-lucide="x" class="w-4 h-4"></i>
+<div id="modalImport" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs hidden p-4">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+        {{-- Header --}}
+        <div class="flex items-center justify-between p-5 border-b border-slate-100 bg-[#FCFCF9]">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-50 text-[#4B6A34] flex items-center justify-center shrink-0">
+                    <i data-lucide="file-spreadsheet" class="w-5 h-5"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-base text-slate-900">Import Data Talent Pool</h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Unggah berkas Excel (.xlsx) atau CSV untuk memperbarui data kandidat talent pool secara massal</p>
+                </div>
+            </div>
+            <button type="button" onclick="closeImportModal()" class="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
-        <form action="{{ route('administrasi.talent-pool.import') }}" method="POST" enctype="multipart/form-data" class="p-5 space-y-4 text-xs">
+
+        {{-- Form & Content --}}
+        <form action="{{ route('administrasi.talent-pool.import') }}" method="POST" enctype="multipart/form-data" class="flex-1 overflow-y-auto p-6 space-y-5 text-xs">
             @csrf
-            <div>
-                <label class="block font-bold text-slate-700 mb-1">Pilih File Excel / CSV (.xlsx, .csv)</label>
-                <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="w-full border border-slate-200 rounded-xl p-2 font-medium file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-emerald-50 file:text-[#4B6A34] hover:file:bg-emerald-100">
-                <p class="text-[11px] text-slate-400 mt-1">Gunakan template resmi untuk format kolom yang sesuai.</p>
+
+            {{-- 1. Download Template Banner --}}
+            <div class="bg-emerald-50/70 border border-emerald-200 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-emerald-100 text-[#4B6A34] flex items-center justify-center shrink-0 mt-0.5">
+                        <i data-lucide="file-down" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-slate-800">Format Template Excel Resmi</p>
+                        <p class="text-[11px] text-slate-600 mt-0.5">Unduh template siap isi dengan bentuk header tabel hijau standar dan contoh data.</p>
+                    </div>
+                </div>
+                <a href="{{ route('administrasi.talent-pool.template') }}"
+                   class="inline-flex items-center justify-center gap-1.5 px-3.5 py-2 bg-[#4B6A34] hover:bg-[#3d562a] text-white text-xs font-bold rounded-xl shadow-xs transition-colors shrink-0">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>Download Template</span>
+                </a>
             </div>
-            <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-                <button type="button" onclick="closeImportModal()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-colors">
-                    Batal
-                </button>
-                <button type="submit" class="px-4 py-2 bg-[#4B6A34] hover:bg-[#3d562a] text-white rounded-xl font-bold transition-colors">
-                    Upload & Import
-                </button>
+
+            {{-- 2. Preview Header Tabel Excel (Green Excel Style) --}}
+            <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                    <label class="block font-bold text-slate-700 text-xs">Format Header Kolom Excel yang Dibutuhkan:</label>
+                    <span class="text-[11px] text-slate-400">Header Baris 1 Berwarna Hijau (#008000)</span>
+                </div>
+
+                {{-- Excel Table Mockup --}}
+                <div class="border border-slate-300 rounded-xl overflow-hidden shadow-2xs bg-white">
+                    <div class="overflow-x-auto" style="scrollbar-width: thin;">
+                        <table class="w-full text-center border-collapse text-[11px] font-sans min-w-[760px]">
+                            <thead>
+                                {{-- Row A, B, C, D, ... Coordinate Letters --}}
+                                <tr class="bg-[#F3F4F6] text-slate-500 font-mono text-[10px] border-b border-slate-300">
+                                    <th class="py-1 px-2 border-r border-slate-300 w-10 font-medium">A</th>
+                                    <th class="py-1 px-3 border-r border-slate-300 font-medium">B</th>
+                                    <th class="py-1 px-3 border-r border-slate-300 font-medium">C</th>
+                                    <th class="py-1 px-3 border-r border-slate-300 font-medium">D</th>
+                                    <th class="py-1 px-3 border-r border-slate-300 font-medium">E</th>
+                                    <th class="py-1 px-3 border-r border-slate-300 font-medium">F</th>
+                                    <th class="py-1 px-3 border-r border-slate-300 font-medium">G</th>
+                                    <th class="py-1 px-3 border-r border-slate-300 font-medium">H</th>
+                                    <th class="py-1 px-3 border-r border-slate-300 font-medium">I</th>
+                                    <th class="py-1 px-3 border-r border-slate-300 font-medium">J</th>
+                                    <th class="py-1 px-3 border-r border-slate-300 font-medium">K</th>
+                                    <th class="py-1 px-3 border-r border-slate-300 font-medium">L</th>
+                                    <th class="py-1 px-3 border-r border-slate-300 font-medium">M</th>
+                                    <th class="py-1 px-3 border-r border-slate-300 font-medium">N</th>
+                                    <th class="py-1 px-2 font-medium">O</th>
+                                </tr>
+                                {{-- Row 1: Green Header Row (Exact ExcelExporter #008000 styling) --}}
+                                <tr class="bg-[#008000] text-white font-bold border-b border-black/30">
+                                    <th class="py-2 px-2.5 border-r border-black/20 whitespace-nowrap">No</th>
+                                    <th class="py-2 px-3 border-r border-black/20 whitespace-nowrap">NIK</th>
+                                    <th class="py-2 px-3.5 border-r border-black/20 whitespace-nowrap">Nama Karyawan</th>
+                                    <th class="py-2 px-3 border-r border-black/20 whitespace-nowrap">Posisi Asal</th>
+                                    <th class="py-2 px-3 border-r border-black/20 whitespace-nowrap">Target Posisi</th>
+                                    <th class="py-2 px-3 border-r border-black/20 whitespace-nowrap">Unit</th>
+                                    <th class="py-2 px-3 border-r border-black/20 whitespace-nowrap">Region</th>
+                                    <th class="py-2 px-3 border-r border-black/20 whitespace-nowrap">Mentor Lapangan</th>
+                                    <th class="py-2 px-3 border-r border-black/20 whitespace-nowrap">Mentor FRLC</th>
+                                    <th class="py-2 px-3 border-r border-black/20 whitespace-nowrap">Status</th>
+                                    <th class="py-2 px-3 border-r border-black/20 whitespace-nowrap">Lokasi Penempatan</th>
+                                    <th class="py-2 px-3 border-r border-black/20 whitespace-nowrap">Tanggal Penempatan</th>
+                                    <th class="py-2 px-2.5 border-r border-black/20 whitespace-nowrap">Tahun</th>
+                                    <th class="py-2 px-3 border-r border-black/20 whitespace-nowrap">Jenis Kategori</th>
+                                    <th class="py-2 px-3 whitespace-nowrap">Keterangan</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200 text-slate-700 bg-white">
+                                <tr class="hover:bg-slate-50/80">
+                                    <td class="py-1.5 px-2 border-r border-slate-200 font-semibold text-slate-400">1</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200 font-mono text-[10px]">EMP001</td>
+                                    <td class="py-1.5 px-3.5 border-r border-slate-200 font-semibold text-left">Ahmad Fauzi</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200 text-left">Asisten Agronomi</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200 text-left">Askep Agronomi</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200">Kebun Sukamaju</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200">RIAU</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200 text-left">Budi Santoso</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200">FRLC Team</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200"><span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-50 text-amber-700 font-semibold">Belum Penempatan</span></td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200 text-slate-400">-</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200 text-slate-400">-</td>
+                                    <td class="py-1.5 px-2.5 border-r border-slate-200 font-semibold">2026</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200">Estate</td>
+                                    <td class="py-1.5 px-3 text-slate-500 text-left">Kandidat berpotensi</td>
+                                </tr>
+                                <tr class="hover:bg-slate-50/80 bg-slate-50/30">
+                                    <td class="py-1.5 px-2 border-r border-slate-200 font-semibold text-slate-400">2</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200 font-mono text-[10px]">EMP002</td>
+                                    <td class="py-1.5 px-3.5 border-r border-slate-200 font-semibold text-left">Siti Nurhaliza</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200 text-left">KTU Mill</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200 text-left">Mill Manager</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200">PKS Lubuk Dalam</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200">RIAU</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200 text-left">Hendro W.</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200">FRLC Team</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200"><span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-50 text-emerald-700 font-semibold">Sudah penempatan</span></td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200">PKS Riau 2</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200">15/02/2026</td>
+                                    <td class="py-1.5 px-2.5 border-r border-slate-200 font-semibold">2026</td>
+                                    <td class="py-1.5 px-3 border-r border-slate-200">Mill</td>
+                                    <td class="py-1.5 px-3 text-slate-500 text-left">Telah promosi</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <p class="text-[11px] text-slate-400 italic">
+                    *Catatan: Sistem juga otomatis mengenali nama kolom fleksibel seperti <strong>Trainee ID</strong> (NIK), <strong>Nama Trainee</strong>, dan <strong>Nama Jabatan</strong> (Posisi Asal).
+                </p>
+            </div>
+
+            {{-- 3. File Input Dropzone --}}
+            <div>
+                <label class="block font-bold text-slate-700 mb-1.5">Pilih Berkas Excel / CSV <span class="text-rose-500">*</span></label>
+                <div class="border-2 border-dashed border-slate-200 hover:border-[#4B6A34] rounded-2xl p-6 text-center cursor-pointer transition-colors bg-[#F9FAFB]">
+                    <input type="file" id="fileImportTalentPool" name="file" accept=".xlsx,.xls,.csv" required class="hidden" onchange="updateImportFileName(this)">
+                    <label for="fileImportTalentPool" class="cursor-pointer block">
+                        <i data-lucide="cloud-upload" class="w-10 h-10 text-[#4B6A34] mx-auto mb-2"></i>
+                        <span id="importFileLabel" class="text-xs sm:text-sm font-semibold text-slate-800 block">Klik di sini untuk memilih berkas Excel / CSV</span>
+                        <span class="text-[11px] text-slate-400 mt-1 block">Mendukung format .xlsx, .xls, .csv (Maksimal 20MB)</span>
+                    </label>
+                </div>
+            </div>
+
+            {{-- 4. Footer Actions --}}
+            <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+                <a href="{{ route('administrasi.talent-pool.template') }}" class="text-xs text-[#4B6A34] hover:underline font-bold flex items-center gap-1.5">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <span>Unduh File Template</span>
+                </a>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="closeImportModal()" class="px-4 py-2 border border-slate-200 text-slate-600 rounded-xl font-bold hover:bg-slate-50 transition-colors">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-5 py-2 bg-[#4B6A34] hover:bg-[#3d562a] text-white rounded-xl font-bold transition-colors shadow-xs flex items-center gap-1.5">
+                        <i data-lucide="upload" class="w-3.5 h-3.5"></i>
+                        <span>Upload & Import</span>
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -723,6 +859,17 @@
     }
     function closeImportModal() {
         document.getElementById('modalImport').classList.add('hidden');
+    }
+
+    function updateImportFileName(input) {
+        if (input.files && input.files[0]) {
+            const fileName = input.files[0].name;
+            const fileSize = (input.files[0].size / 1024 / 1024).toFixed(2);
+            document.getElementById('importFileLabel').innerHTML = `
+                <span class="text-[#4B6A34] font-bold block">${fileName}</span>
+                <span class="text-[11px] text-slate-500 font-normal">Ukuran: ${fileSize} MB (Klik untuk mengganti berkas)</span>
+            `;
+        }
     }
 
     function openDeleteModal(id, name) {
