@@ -4,7 +4,7 @@
         <!-- Background Image -->
         <div class="absolute inset-0 z-0 overflow-hidden">
             @if($article->featured_image)
-                <img src="{{ Storage::url($article->featured_image) }}" alt="Header Background" class="w-full h-full object-cover opacity-30">
+                <img src="{{ Storage::url($article->featured_image) }}" alt="Header Background" class="w-full h-full object-cover opacity-30" onerror="this.onerror=null; this.src='{{ asset('images/welcomefr.jpg') }}';">
             @else
                 <div class="w-full h-full bg-[#114045] opacity-80"></div>
             @endif
