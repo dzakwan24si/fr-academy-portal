@@ -582,15 +582,16 @@
                         </div>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="block text-xs font-medium text-[#374151] mb-1">
-                            Cuti yang Sudah Diambil <span class="text-rose-500">*</span>
-                        </label>
-                        <div class="flex gap-2">
-                            <input type="number" name="cuti_diambil" id="add_cuti_diambil" value="0" min="0" required oninput="calculateAddSisa()" class="w-full md:w-64 px-3 py-2 text-sm bg-white border border-[#E5E7EB] rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 font-bold text-[#18181B]">
-                            <button type="button" onclick="syncAddMonthlyToTotal()" class="px-3 py-1.5 bg-[#F4F4F5] hover:bg-[#E4E4E7] text-xs font-medium text-[#374151] rounded-lg transition-colors" title="Salin jumlah dari rincian 12 bulan ke Cuti yang Diambil">
-                                Samakan dengan Total Rincian Bulan
-                            </button>
+                    <!-- Cuti yang Diambil (Otomatis dari Rincian Bulan) -->
+                    <input type="hidden" name="cuti_diambil" id="add_cuti_diambil" value="0">
+                    <div class="mb-4 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-3 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-semibold text-[#374151] block">Cuti yang Diambil</span>
+                            <span class="text-[11px] text-[#71717A]">Bertambah otomatis saat menginputkan rincian bulan di bawah</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 bg-white border border-amber-200 px-3 py-1.5 rounded-lg shadow-2xs">
+                            <span id="add_cuti_diambil_display" class="text-base font-extrabold text-amber-600">0</span>
+                            <span class="text-xs font-medium text-[#71717A]">Hari</span>
                         </div>
                     </div>
 
@@ -729,15 +730,16 @@
                         </div>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="block text-xs font-medium text-[#374151] mb-1">
-                            Cuti yang Sudah Diambil <span class="text-rose-500">*</span>
-                        </label>
-                        <div class="flex gap-2">
-                            <input type="number" name="cuti_diambil" id="edit_cuti_diambil" min="0" required oninput="calculateEditSisa()" class="w-full md:w-64 px-3 py-2 text-sm bg-white border border-[#E5E7EB] rounded-lg focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 font-bold text-[#18181B]">
-                            <button type="button" onclick="syncEditMonthlyToTotal()" class="px-3 py-1.5 bg-[#F4F4F5] hover:bg-[#E4E4E7] text-xs font-medium text-[#374151] rounded-lg transition-colors">
-                                Samakan dengan Total Rincian Bulan
-                            </button>
+                    <!-- Cuti yang Diambil (Otomatis dari Rincian Bulan) -->
+                    <input type="hidden" name="cuti_diambil" id="edit_cuti_diambil" value="0">
+                    <div class="mb-4 bg-[#F9FAFB] border border-[#E5E7EB] rounded-xl p-3 flex items-center justify-between">
+                        <div>
+                            <span class="text-xs font-semibold text-[#374151] block">Cuti yang Diambil</span>
+                            <span class="text-[11px] text-[#71717A]">Bertambah otomatis saat menginputkan rincian bulan di bawah</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 bg-white border border-amber-200 px-3 py-1.5 rounded-lg shadow-2xs">
+                            <span id="edit_cuti_diambil_display" class="text-base font-extrabold text-amber-600">0</span>
+                            <span class="text-xs font-medium text-[#71717A]">Hari</span>
                         </div>
                     </div>
 
@@ -986,8 +988,21 @@
 
     function updateMonthlySum(prefix) {
         const total = MONTHS.reduce((sum, m) => sum + (parseInt(document.getElementById(`${prefix}_${m}`)?.value) || 0), 0);
+        
+        // Update total bulan display in header
         const disp = document.getElementById(`${prefix}_total_bulan_display`);
         if (disp) disp.innerText = total;
+
+        // Auto update cuti_diambil hidden input
+        const takenInput = document.getElementById(`${prefix}_cuti_diambil`);
+        if (takenInput) takenInput.value = total;
+
+        // Auto update cuti_diambil display badge
+        const takenDisp = document.getElementById(`${prefix}_cuti_diambil_display`);
+        if (takenDisp) takenDisp.innerText = total;
+
+        // Recalculate sisa cuti live
+        calculateSisa(prefix);
     }
 
     function syncMonthlyToTotal(prefix) {
@@ -1034,8 +1049,15 @@
                         if (input) input.value = data.monthly[m] || 0;
                     });
 
-                    updateMonthlySum('edit');
-                    calculateSisa('edit');
+                    const monthlySum = MONTHS.reduce((sum, m) => sum + (parseInt(data.monthly[m]) || 0), 0);
+                    if (monthlySum === 0 && (parseInt(data.cuti_diambil) || 0) > 0) {
+                        document.getElementById('edit_cuti_diambil').value = data.cuti_diambil;
+                        const takenDisp = document.getElementById('edit_cuti_diambil_display');
+                        if (takenDisp) takenDisp.innerText = data.cuti_diambil;
+                        calculateSisa('edit');
+                    } else {
+                        updateMonthlySum('edit');
+                    }
                     openModal('editModal');
                 }
             })

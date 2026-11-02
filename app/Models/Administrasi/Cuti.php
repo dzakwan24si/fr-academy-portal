@@ -63,6 +63,16 @@ class Cuti extends Model
 
     public const MONTHS = ['jan', 'feb', 'mar', 'apr', 'mei', 'jun', 'jul', 'agu', 'sep', 'okt', 'nov', 'des'];
 
+    protected static function booted()
+    {
+        static::saving(function ($cuti) {
+            $sum = (int) array_sum(array_map(fn ($m) => (int) ($cuti->$m ?? 0), self::MONTHS));
+            if ($sum > 0 || empty($cuti->cuti_diambil)) {
+                $cuti->cuti_diambil = $sum;
+            }
+        });
+    }
+
     /**
      * Scope to order query by employee category and position hierarchy
      */

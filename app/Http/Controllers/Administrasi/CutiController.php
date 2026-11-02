@@ -149,11 +149,8 @@ class CutiController extends Controller
             }
         }
 
-        // Auto-fill cuti_diambil if monthly sum exists and cuti_diambil is 0
-        $monthlySum = array_sum(array_map(fn ($m) => (int) ($validated[$m] ?? 0), Cuti::MONTHS));
-        if ($validated['cuti_diambil'] === 0 && $monthlySum > 0) {
-            $validated['cuti_diambil'] = $monthlySum;
-        }
+        // Cuti diambil dihitung otomatis dari total rincian bulanan
+        $validated['cuti_diambil'] = (int) array_sum(array_map(fn ($m) => (int) ($validated[$m] ?? 0), Cuti::MONTHS));
 
         $cuti = Cuti::updateOrCreate(
             ['nik' => $validated['nik'], 'tahun' => $validated['tahun']],
@@ -408,6 +405,7 @@ class CutiController extends Controller
     {
         $cuti = Cuti::findOrFail($id);
         $validated = $this->validateCuti($request);
+        $validated['cuti_diambil'] = (int) array_sum(array_map(fn ($m) => (int) ($validated[$m] ?? 0), Cuti::MONTHS));
 
         $cuti->update($validated);
 
@@ -601,9 +599,12 @@ class CutiController extends Controller
             'keterangan' => 'nullable|string',
         ]);
 
-        foreach (array_merge(['sisa_hak_cuti_carryover', 'cuti_diambil'], Cuti::MONTHS) as $field) {
+        foreach (array_merge(['sisa_hak_cuti_carryover'], Cuti::MONTHS) as $field) {
             $validated[$field] = isset($validated[$field]) && $validated[$field] !== '' ? (int) $validated[$field] : 0;
         }
+
+        // Cuti diambil dihitung otomatis dari total rincian bulanan
+        $validated['cuti_diambil'] = (int) array_sum(array_map(fn ($m) => (int) ($validated[$m] ?? 0), Cuti::MONTHS));
 
         if (empty($validated['tahun'])) {
             $validated['tahun'] = (int) date('Y');
