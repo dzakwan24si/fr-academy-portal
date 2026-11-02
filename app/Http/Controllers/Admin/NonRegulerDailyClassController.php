@@ -91,6 +91,7 @@ class NonRegulerDailyClassController extends Controller
         $validated = $request->validate([
             'training_program_id' => 'required|exists:training_programs,id',
             'title' => 'required|string|max:255',
+            'region' => 'required|string|max:255',
             'trainer_name' => 'nullable|string|max:255',
             'date' => 'nullable|date',
             'end_date' => 'nullable|date|after_or_equal:date',
@@ -99,10 +100,12 @@ class NonRegulerDailyClassController extends Controller
             'room' => 'nullable|string|max:255',
             'location' => 'nullable|string|max:255',
             'provider' => 'nullable|string|max:255',
-            'region' => 'nullable|string|max:255',
             'material_url' => 'nullable|url|max:255',
             'mess_url' => 'nullable|url|max:255',
             'certificate_link' => 'nullable|url|max:500',
+        ], [
+            'region.required' => 'Region pelatihan wajib dipilih.',
+            'title.required' => 'Nama pelatihan wajib dipilih.',
         ]);
 
         // date and trainer_name will be null initially
