@@ -772,7 +772,7 @@ const DataManagement = () => {
         const jumlahHari = monthlyCounts.reduce((total, count) => total + count, 0);
         const originalData = item.originalData || {};
         return [
-          item.title || '-', item.type || '-', item.region || 'Nasional', originalData.total_batch ?? (item.batchCount || 1),
+          item.title || '-', item.type || '-', item.region || '-', originalData.total_batch ?? (item.batchCount || 1),
           item.participants || 0, item.location || '-', ...monthlyCounts, jumlahHari,
           originalData.Total_training_days || 0, originalData.Promosi_mandor || 0,
           originalData.Fresh_Graduate || 0
@@ -816,7 +816,7 @@ const DataManagement = () => {
         const jumlahHari = monthlyCounts.reduce((total, count) => total + count, 0);
         const originalData = item.originalData || {};
         return [
-          item.title || '-', originalData.kategori_pelatihan || '-', item.subCategory || '-', item.region || 'Nasional',
+          item.title || '-', originalData.kategori_pelatihan || '-', item.subCategory || '-', item.region || '-',
           originalData.total_batch ?? (item.batchCount || 1), item.participants || 0, item.location || '-',
           ...monthlyCounts, jumlahHari, originalData.jam_pelajaran || 0, originalData.hari_pelatihan || 0, originalData.TD_total || 0
         ];
@@ -2309,7 +2309,7 @@ const DataManagement = () => {
                           <td className="px-2 py-3 sticky left-0 bg-white font-bold text-slate-800 break-words border-r border-slate-300 z-10">{item.title}</td>
                           <td className="px-1 py-3 text-center font-medium text-slate-700 break-words border-r border-slate-300">{originalData.Batch ? `Batch ${originalData.Batch}` : '-'}</td>
                           <td className="px-1 py-3 text-center text-slate-600 break-words border-r border-slate-300">{originalData.jenis_program_reguler || '-'}</td>
-                          <td className="px-1 py-3 text-center text-slate-600 break-words border-r border-slate-300">{item.region || 'Nasional'}</td>
+                          <td className="px-1 py-3 text-center text-slate-600 break-words border-r border-slate-300">{item.region || '-'}</td>
                           <td className="px-1 py-3 text-center font-bold text-slate-800 break-words border-r border-slate-300">{originalData.total_batch ?? (item.batchCount || 1)}</td>
                           <td className="px-1 py-3 text-center font-bold text-slate-800 break-words border-r border-slate-300">{item.participants || 0}</td>
                           <td className="px-1 py-3 text-center text-slate-600 break-words border-r border-slate-300">{item.location || '-'}</td>
@@ -2381,7 +2381,7 @@ const DataManagement = () => {
                           <td className="px-2 py-3 sticky left-0 bg-white font-bold text-slate-800 break-words border-r border-slate-300 z-10">{item.title}</td>
                           <td className="px-1 py-3 text-center text-slate-600 break-words border-r border-slate-300">{originalData.kategori_pelatihan || '-'}</td>
                           <td className="px-1 py-3 text-center text-slate-600 break-words border-r border-slate-300">{item.subCategory || '-'}</td>
-                          <td className="px-1 py-3 text-center text-slate-600 break-words border-r border-slate-300">{item.region || 'Nasional'}</td>
+                          <td className="px-1 py-3 text-center text-slate-600 break-words border-r border-slate-300">{item.region || '-'}</td>
                           <td className="px-1 py-3 text-center font-bold text-slate-800 break-words border-r border-slate-300">{originalData.total_batch ?? (item.batchCount || 1)}</td>
                           <td className="px-1 py-3 text-center font-bold text-slate-800 break-words border-r border-slate-300">{item.participants || 0}</td>
                           <td className="px-1 py-3 text-center text-slate-600 break-words border-r border-slate-300">{item.location || '-'}</td>

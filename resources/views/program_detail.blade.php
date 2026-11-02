@@ -81,13 +81,13 @@
                             </div>
                         @endif
 
-                        <!-- 3. Objective -->
+                        <!-- 3. Objective / Manfaat Program -->
                         @if(!empty($program['objectives']) && count($program['objectives']) > 0)
                             <div class="p-6 sm:p-7 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
                                 <div class="flex items-center gap-2 mb-3">
                                     <span class="w-2 h-2 rounded-full bg-green-accent"></span>
                                     <h3 class="text-base sm:text-lg font-bold text-teal-primary dark:text-green-accent">
-                                        OBJECTIVE
+                                        OBJECTIVE / BENEFIT PROGRAM
                                     </h3>
                                 </div>
                                 <ul class="space-y-2.5 text-sm sm:text-base text-gray-800 dark:text-gray-200 pl-1">
@@ -166,31 +166,35 @@
                                 <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-[#114045] dark:bg-teal-900 text-white text-xs font-bold tracking-wide uppercase mb-4 shadow-sm">
                                     Kurikulum
                                 </div>
-                                <ul class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-800 dark:text-gray-200">
-                                    @foreach($program['curriculum_pillars'] as $pillar)
-                                        <li class="flex items-start gap-2.5 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/80">
-                                            <span class="w-2 h-2 rounded-full bg-[#114045] dark:bg-green-accent mt-2 shrink-0"></span>
-                                            <span class="leading-relaxed font-normal">{{ $pillar }}</span>
+                                <ol class="space-y-2.5 text-sm sm:text-base text-gray-800 dark:text-gray-200">
+                                    @foreach($program['curriculum_pillars'] as $cIdx => $pillar)
+                                        <li class="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/80">
+                                            <span class="w-6 h-6 rounded-full bg-[#114045] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                                                {{ $cIdx + 1 }}
+                                            </span>
+                                            <span class="leading-relaxed font-medium">{{ $pillar }}</span>
                                         </li>
                                     @endforeach
-                                </ul>
+                                </ol>
                             </div>
                         @endif
 
                         <!-- 3. Benefit -->
                         @if((!empty($program['objectives']) && count($program['objectives']) > 0) || (!empty($program['benefits']) && count($program['benefits']) > 0))
                             <div class="p-6 sm:p-7 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm">
-                                <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-[#114045] dark:bg-teal-900 text-white text-xs font-bold tracking-wide uppercase mb-4 shadow-sm">
-                                    Benefit
+                                <div class="inline-flex items-center px-4 py-1.5 rounded-full bg-[#509c38] text-white text-xs font-bold tracking-wide uppercase mb-4 shadow-sm">
+                                    Manfaat / Benefit
                                 </div>
-                                <ul class="space-y-2.5 text-sm sm:text-base text-gray-800 dark:text-gray-200">
-                                    @foreach($program['objectives'] ?? $program['benefits'] ?? [] as $benefit)
+                                <ol class="space-y-2.5 text-sm sm:text-base text-gray-800 dark:text-gray-200">
+                                    @foreach($program['objectives'] ?? $program['benefits'] ?? [] as $bIdx => $benefit)
                                         <li class="flex items-start gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/60 border border-gray-100 dark:border-gray-700/80">
-                                            <span class="w-2 h-2 rounded-full bg-green-accent mt-2 shrink-0"></span>
+                                            <span class="w-6 h-6 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-[#114045] dark:text-green-accent text-xs font-bold flex items-center justify-center shrink-0 mt-0.5">
+                                                {{ $bIdx + 1 }}
+                                            </span>
                                             <span class="leading-relaxed font-normal">{{ $benefit }}</span>
                                         </li>
                                     @endforeach
-                                </ul>
+                                </ol>
                             </div>
                         @endif
 

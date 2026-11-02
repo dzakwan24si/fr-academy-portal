@@ -3,9 +3,39 @@
         Tambah Program Baru - CMS
     </x-slot>
 
+    @php
+        $rawCurriculum = old('curriculum_pillars_text') ? array_filter(array_map('trim', explode("\n", old('curriculum_pillars_text')))) : [];
+        $curriculumArray = count($rawCurriculum) > 0 ? array_values($rawCurriculum) : [''];
+
+        $rawObjectives = old('objectives_text') ? array_filter(array_map('trim', explode("\n", old('objectives_text')))) : [];
+        $objectivesArray = count($rawObjectives) > 0 ? array_values($rawObjectives) : [''];
+    @endphp
+
     <div class="py-6 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto" 
          x-data="{ 
-            isReguler: {{ old('is_reguler', '0') == '1' ? 'true' : 'false' }}
+            isReguler: {{ old('is_reguler', '0') == '1' ? 'true' : 'false' }},
+            curriculumList: {{ json_encode($curriculumArray) }},
+            benefitList: {{ json_encode($objectivesArray) }},
+            addCurriculum() {
+                this.curriculumList.push('');
+            },
+            removeCurriculum(idx) {
+                if (this.curriculumList.length > 1) {
+                    this.curriculumList.splice(idx, 1);
+                } else {
+                    this.curriculumList = [''];
+                }
+            },
+            addBenefit() {
+                this.benefitList.push('');
+            },
+            removeBenefit(idx) {
+                if (this.benefitList.length > 1) {
+                    this.benefitList.splice(idx, 1);
+                } else {
+                    this.benefitList = [''];
+                }
+            }
          }">
         
         <!-- Breadcrumb & Top Bar -->
@@ -118,47 +148,105 @@
                     <textarea name="overview" rows="4" required placeholder="Tuliskan latar belakang, urgensi, atau narasi umum mengenai program pelatihan ini..." class="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition leading-relaxed text-gray-800">{{ old('overview') }}</textarea>
                 </div>
 
-                <!-- Upload Foto / Gambar Program -->
-                <div class="pt-2">
-                    <label class="block text-xs font-bold uppercase text-gray-700 mb-1.5">
-                        Foto / Poster / Gambar Program
-                    </label>
-                    <div class="p-4 rounded-xl border border-gray-200 bg-gray-50/60">
-                        <input type="file" name="image_file" accept="image/jpeg,image/png,image/webp" class="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 bg-white file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer">
-                        <p class="text-[11px] text-gray-400 mt-1.5">
-                            Unggah foto poster kegiatan atau flyer program (JPG, PNG, WEBP maks 5MB).
-                        </p>
+                <!-- Upload Foto / Poster & Gambar Background Hero -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                    <!-- 1. Foto / Poster / Gambar Program -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-700 mb-1.5">
+                            Foto / Poster / Gambar Program
+                        </label>
+                        <div class="p-4 rounded-xl border border-gray-200 bg-gray-50/60 h-full">
+                            <input type="file" name="image_file" accept="image/jpeg,image/png,image/webp" class="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 bg-white file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer">
+                            <p class="text-[11px] text-gray-400 mt-1.5">
+                                Unggah foto poster kegiatan atau flyer program (JPG, PNG, WEBP maks 5MB).
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 2. Gambar Background Hero (Banner Atas) -->
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-gray-700 mb-1.5">
+                            Gambar Background Hero (Banner Atas)
+                        </label>
+                        <div class="p-4 rounded-xl border border-gray-200 bg-gray-50/60 h-full">
+                            <input type="file" name="hero_image_file" accept="image/jpeg,image/png,image/webp" class="w-full px-3 py-2 text-xs rounded-xl border border-gray-200 bg-white file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer">
+                            <p class="text-[11px] text-gray-400 mt-1.5">
+                                Unggah gambar latar banner hero di bagian atas halaman program (JPG, PNG, WEBP maks 5MB).
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <!-- 2. KURIKULUM & BENEFIT PROGRAM -->
-            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 sm:p-7 space-y-5">
+            <div class="bg-white rounded-2xl border border-gray-200 shadow-xs p-6 sm:p-7 space-y-6">
                 <div class="border-b border-gray-100 pb-4">
                     <h2 class="text-sm font-bold uppercase tracking-wider text-gray-900 flex items-center gap-2">
                         <i data-lucide="list-checks" class="w-4 h-4 text-[#509c38]"></i>
                         2. Kurikulum & Manfaat Program
                     </h2>
-                    <p class="text-xs text-gray-500 mt-1">Tuliskan 1 baris per materi atau per poin manfaat yang diperoleh peserta.</p>
+                    <p class="text-xs text-gray-500 mt-1">Kelola pembagian poin materi kurikulum dan poin manfaat program secara terstruktur.</p>
                 </div>
 
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                     <!-- Kurikulum -->
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-gray-700 mb-1.5 flex items-center justify-between">
-                            <span>Kurikulum / Materi Pelatihan</span>
-                            <span class="text-[11px] font-normal text-gray-400 lowercase">(1 materi per baris)</span>
-                        </label>
-                        <textarea name="curriculum_pillars_text" rows="6" placeholder="Contoh:&#10;Landasan Hukum & Regulasi&#10;Pengenalan Peralatan Kerja&#10;Teknik Operasional & Simulasi" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition leading-relaxed">{{ old('curriculum_pillars_text') }}</textarea>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold uppercase text-gray-700">
+                                Kurikulum / Materi Pelatihan
+                            </label>
+                            <span class="text-[11px] font-semibold text-[#114045] bg-teal-50 px-2 py-0.5 rounded-md" x-text="curriculumList.filter(i => i.trim() !== '').length + ' Poin'"></span>
+                        </div>
+                        
+                        <div class="space-y-2.5">
+                            <template x-for="(item, idx) in curriculumList" :key="'curr_' + idx">
+                                <div class="flex items-start gap-2 p-2 rounded-xl bg-gray-50/80 border border-gray-200 focus-within:border-[#509c38] focus-within:bg-white transition-all">
+                                    <span class="w-6 h-6 rounded-lg bg-[#114045] text-white text-xs font-bold flex items-center justify-center shrink-0 mt-1" x-text="idx + 1"></span>
+                                    <textarea x-model="curriculumList[idx]" rows="2" placeholder="Tuliskan poin materi kurikulum..." class="flex-1 bg-transparent border-0 p-1 text-xs text-gray-800 focus:ring-0 resize-none leading-relaxed outline-none"></textarea>
+                                    <button type="button" @click="removeCurriculum(idx)" class="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0 mt-1" title="Hapus poin">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            </template>
+                            
+                            <button type="button" @click="addCurriculum()" class="w-full py-2.5 px-3 border border-dashed border-[#509c38]/40 hover:border-[#509c38] bg-green-50/40 hover:bg-green-50 text-[#1d5732] hover:text-[#509c38] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                + Tambah Poin Kurikulum
+                            </button>
+                        </div>
+
+                        <!-- Hidden textarea synced with curriculumList for standard form submission -->
+                        <textarea name="curriculum_pillars_text" :value="curriculumList.filter(i => i.trim() !== '').join('\n')" class="hidden"></textarea>
                     </div>
 
-                    <!-- Benefit -->
-                    <div>
-                        <label class="block text-xs font-bold uppercase text-gray-700 mb-1.5 flex items-center justify-between">
-                            <span>Manfaat / Benefit Program</span>
-                            <span class="text-[11px] font-normal text-gray-400 lowercase">(1 poin per baris)</span>
-                        </label>
-                        <textarea name="objectives_text" rows="6" placeholder="Contoh:&#10;Meningkatkan kompetensi teknis tim&#10;Mencegah risiko insiden operasional&#10;Mendapatkan sertifikat kompetensi" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition leading-relaxed">{{ old('objectives_text') }}</textarea>
+                    <!-- Benefit / Objectives -->
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-xs font-bold uppercase text-gray-700">
+                                Manfaat / Benefit Program
+                            </label>
+                            <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md" x-text="benefitList.filter(i => i.trim() !== '').length + ' Poin'"></span>
+                        </div>
+
+                        <div class="space-y-2.5">
+                            <template x-for="(item, idx) in benefitList" :key="'ben_' + idx">
+                                <div class="flex items-start gap-2 p-2 rounded-xl bg-gray-50/80 border border-gray-200 focus-within:border-[#509c38] focus-within:bg-white transition-all">
+                                    <span class="w-6 h-6 rounded-lg bg-emerald-600 text-white text-xs font-bold flex items-center justify-center shrink-0 mt-1" x-text="idx + 1"></span>
+                                    <textarea x-model="benefitList[idx]" rows="2" placeholder="Tuliskan poin manfaat / benefit..." class="flex-1 bg-transparent border-0 p-1 text-xs text-gray-800 focus:ring-0 resize-none leading-relaxed outline-none"></textarea>
+                                    <button type="button" @click="removeBenefit(idx)" class="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0 mt-1" title="Hapus poin">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </div>
+                            </template>
+                            
+                            <button type="button" @click="addBenefit()" class="w-full py-2.5 px-3 border border-dashed border-[#509c38]/40 hover:border-[#509c38] bg-green-50/40 hover:bg-green-50 text-[#1d5732] hover:text-[#509c38] rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                + Tambah Poin Manfaat
+                            </button>
+                        </div>
+
+                        <!-- Hidden textarea synced with benefitList for standard form submission -->
+                        <textarea name="objectives_text" :value="benefitList.filter(i => i.trim() !== '').join('\n')" class="hidden"></textarea>
                     </div>
                 </div>
             </div>

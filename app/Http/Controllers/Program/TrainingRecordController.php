@@ -93,11 +93,11 @@ class TrainingRecordController extends Controller
 
     private function clearTrCache(): void
     {
-        Cache::increment('tr_cache_version');
+        Cache::forever('tr_cache_version', ((int) Cache::get('tr_cache_version', 1)) + 1);
         Cache::forget('tr_years');
         Cache::forget('tr_non_reg_subcats');
-        Cache::increment('dashboard_cache_version');
-        Cache::increment('rvb_cache_version');
+        Cache::forever('dashboard_cache_version', ((int) Cache::get('dashboard_cache_version', 1)) + 1);
+        Cache::forever('rvb_cache_version', ((int) Cache::get('rvb_cache_version', 1)) + 1);
     }
 
     public function store(Request $request)

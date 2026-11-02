@@ -77,18 +77,18 @@
                 @if($dailyClass->is_completed)
                     <button type="button" @click="document.getElementById('completeModal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg hover:bg-emerald-200 font-bold text-sm transition-all shadow-sm" title="Klik untuk mengubah status selesai">
                         <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
-                        Pelatihan Selesai
+                        Program Selesai
                     </button>
                 @elseif($trainees->count() > 0)
-                    <button type="button" @click="document.getElementById('completeModal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-emerald-700 border border-emerald-400 rounded-lg hover:bg-emerald-50 hover:border-emerald-600 font-bold text-sm transition-all shadow-sm" title="Tandai pelatihan ini telah selesai">
+                    <button type="button" @click="document.getElementById('completeModal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-emerald-700 border border-emerald-400 rounded-lg hover:bg-emerald-50 hover:border-emerald-600 font-bold text-sm transition-all shadow-sm" title="Tandai program ini telah selesai">
                         <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Pelatihan Selesai
+                        Program Selesai
                     </button>
                 @endif
 
                 <button type="button" @click="document.getElementById('editClassModal').classList.remove('hidden')" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 font-medium text-sm transition-all shadow-sm">
                     <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    Edit Detail Pelatihan
+                    Edit Detail Program
                 </button>
 
 
@@ -144,7 +144,7 @@
 
                         <a href="{{ $dailyClass->material_url ?: 'https://e-learning.first-resources.com/' }}" target="_blank" class="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2 whitespace-nowrap">
                             <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-                            Buka Modul/Materi di LMS
+                            Buka Modul di LMS
                         </a>
 
                         {{-- 
@@ -686,24 +686,19 @@
                           @foreach($dates as $d)
                           @php
                               $attendance = $dailyClass->attendances->where('trainee_id', $trainee->id)->where('attendance_date', $d)->first();
-                              $statusRaw = $attendance ? strtolower($attendance->status) : 'belum';
+                              $isHadir = $attendance && strtolower($attendance->status) === 'hadir';
                               $time = $attendance && $attendance->scanned_at ? \Carbon\Carbon::parse($attendance->scanned_at)->format('H:i') : '-';
-                              
-                              if ($statusRaw === 'belum' && \Carbon\Carbon::now()->startOfDay()->gt(\Carbon\Carbon::parse($d)->startOfDay())) {
-                                  $statusRaw = 'alpha';
-                              }
-                              $status = ucfirst($statusRaw);
                           @endphp
                           <td class="px-4 py-4 text-center border-r border-gray-100 relative group" x-show="selectedDay === '{{ $d }}'" x-cloak>
                               <div class="flex flex-col items-center gap-1.5">
-                                  @if($status == 'Hadir')
-                                      <button type="button" onclick="document.getElementById('editStatusModal_{{ $trainee->id }}_{{ $d }}').classList.remove('hidden')" class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-green-100 text-green-700 shadow-sm border border-green-200 hover:opacity-80 transition-opacity tooltip" title="Klik untuk edit">
+                                  @if($isHadir)
+                                      <button type="button" onclick="document.getElementById('editStatusModal_{{ $trainee->id }}_{{ $d }}').classList.remove('hidden')" class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-green-100 text-green-700 shadow-sm border border-green-200 hover:opacity-80 transition-opacity tooltip" title="Klik untuk ubah kehadiran">
                                           Hadir
                                       </button>
                                       <span class="text-[10px] text-gray-500 bg-gray-100 px-1.5 rounded">{{ $time }}</span>
                                   @else
-                                      <button type="button" onclick="document.getElementById('editStatusModal_{{ $trainee->id }}_{{ $d }}').classList.remove('hidden')" class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-amber-100 text-amber-700 shadow-sm border border-amber-200 hover:opacity-80 transition-opacity tooltip" title="Klik untuk edit">
-                                          {{ $status }}
+                                      <button type="button" onclick="document.getElementById('editStatusModal_{{ $trainee->id }}_{{ $d }}').classList.remove('hidden')" class="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold bg-rose-50 text-rose-600 shadow-sm border border-rose-200 hover:opacity-80 transition-opacity tooltip" title="Klik untuk ubah kehadiran">
+                                          Tidak Hadir
                                       </button>
                                   @endif
                               </div>
@@ -713,7 +708,7 @@
                                   <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100 opacity-100">
                                       <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
                                           <div>
-                                              <h3 class="text-lg font-black text-slate-800">Edit Absensi</h3>
+                                              <h3 class="text-lg font-black text-slate-800">Edit Status Kehadiran</h3>
                                               <p class="text-sm font-medium text-slate-500 mt-1">{{ $trainee->name }} ({{ \Carbon\Carbon::parse($d)->format('d M') }})</p>
                                           </div>
                                           <button onclick="document.getElementById('editStatusModal_{{ $trainee->id }}_{{ $d }}').classList.add('hidden')" class="text-slate-400 hover:text-red-500 transition-colors p-2 bg-white rounded-full shadow-sm">
@@ -730,11 +725,8 @@
                                                   <label class="block text-xs font-bold text-slate-700 mb-2">Pilih Status Kehadiran <span class="text-red-500">*</span></label>
                                                   <div class="relative">
                                                       <select name="status" class="w-full pl-4 pr-10 py-3 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-[#28844b] focus:border-[#28844b] font-medium text-slate-700 transition-colors appearance-none cursor-pointer" required>
-                                                          <option value="belum" {{ strtolower($statusRaw) == 'belum' ? 'selected' : '' }}>Belum Absen</option>
-                                                          <option value="hadir" {{ strtolower($statusRaw) == 'hadir' ? 'selected' : '' }}>Hadir</option>
-                                                          <option value="sakit" {{ strtolower($statusRaw) == 'sakit' ? 'selected' : '' }}>Sakit</option>
-                                                          <option value="izin" {{ strtolower($statusRaw) == 'izin' ? 'selected' : '' }}>Izin</option>
-                                                          <option value="alpha" {{ strtolower($statusRaw) == 'alpha' ? 'selected' : '' }}>Alpha</option>
+                                                          <option value="hadir" {{ $isHadir ? 'selected' : '' }}>Hadir</option>
+                                                          <option value="tidak_hadir" {{ ! $isHadir ? 'selected' : '' }}>Tidak Hadir</option>
                                                       </select>
                                                       <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-slate-400">
                                                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -823,7 +815,7 @@
                 <div class="space-y-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Judul Tugas <span class="text-red-500">*</span></label>
-                        <input type="text" name="title" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] focus:border-[#28844b] font-medium transition-all" required placeholder="Contoh: Resume Materi, Unggah Foto Kegiatan, dll">
+                        <input type="text" name="title" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] focus:border-[#28844b] font-medium transition-all" required placeholder="Contoh: Resume Program, Unggah Foto Kegiatan, dll">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tenggat Waktu (Deadline) <span class="text-red-500">*</span></label>
@@ -859,22 +851,22 @@
                     <div class="grid grid-cols-2 gap-5">
                         <div>
                             <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">TGL MULAI <span class="text-red-500">*</span></label>
-                            <input type="date" name="date" required value="{{ $dailyClass->date ? \Carbon\Carbon::parse($dailyClass->date)->format('Y-m-d') : '' }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm font-medium">
+                            <input type="date" name="date" required value="{{ $dailyClass->date ? \Carbon\Carbon::parse($dailyClass->date)->format('Y-m-d') : '' }}" onchange="if(!this.form.end_date.value) this.form.end_date.value = this.value" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm font-medium">
                         </div>
                         <div>
-                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">TGL SELESAI <span class="text-slate-400 font-semibold">(OPSIONAL)</span></label>
-                            <input type="date" name="end_date" value="{{ $dailyClass->end_date ? \Carbon\Carbon::parse($dailyClass->end_date)->format('Y-m-d') : '' }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm font-medium">
+                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">TGL SELESAI <span class="text-red-500">*</span></label>
+                            <input type="date" name="end_date" required value="{{ $dailyClass->end_date ? \Carbon\Carbon::parse($dailyClass->end_date)->format('Y-m-d') : ($dailyClass->date ? \Carbon\Carbon::parse($dailyClass->date)->format('Y-m-d') : '') }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm font-medium">
                         </div>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">WAKTU MULAI <span class="text-slate-400 font-semibold">(OPSIONAL)</span></label>
-                            <input type="time" name="start_time" value="{{ $dailyClass->start_time ? \Carbon\Carbon::parse($dailyClass->start_time)->format('H:i') : '' }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm font-medium">
+                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">WAKTU MULAI <span class="text-red-500">*</span></label>
+                            <input type="time" name="start_time" required value="{{ $dailyClass->start_time ? \Carbon\Carbon::parse($dailyClass->start_time)->format('H:i') : '' }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm font-medium">
                         </div>
                         <div>
-                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">WAKTU SELESAI <span class="text-slate-400 font-semibold">(OPSIONAL)</span></label>
-                            <input type="time" name="end_time" value="{{ $dailyClass->end_time ? \Carbon\Carbon::parse($dailyClass->end_time)->format('H:i') : '' }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm font-medium">
+                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">WAKTU SELESAI <span class="text-red-500">*</span></label>
+                            <input type="time" name="end_time" required value="{{ $dailyClass->end_time ? \Carbon\Carbon::parse($dailyClass->end_time)->format('H:i') : '' }}" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm font-medium">
                         </div>
                     </div>
                     
@@ -884,23 +876,23 @@
                             <input type="text" name="trainer_name" required value="{{ $dailyClass->trainer_name }}" placeholder="Cth: Budi Santoso" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm placeholder:text-slate-400 font-medium">
                         </div>
                         <div>
-                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">LOKASI TRAINING <span class="text-slate-400 font-semibold">(OPSIONAL)</span></label>
-                            <input type="text" name="location" value="{{ $dailyClass->location }}" placeholder="Cth: FRLC / Kandir / Online" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm placeholder:text-slate-400 font-medium">
+                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">LOKASI TRAINING <span class="text-red-500">*</span></label>
+                            <input type="text" name="location" required value="{{ $dailyClass->location }}" placeholder="Cth: FRLC / Kandir / Online" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm placeholder:text-slate-400 font-medium">
                         </div>
                         <div>
-                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">RUANGAN <span class="text-slate-400 font-semibold">(OPSIONAL)</span></label>
-                            <input type="text" name="room" value="{{ $dailyClass->room }}" placeholder="Cth: R.Planters" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm placeholder:text-slate-400 font-medium">
+                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">RUANGAN <span class="text-red-500">*</span></label>
+                            <input type="text" name="room" required value="{{ $dailyClass->room }}" placeholder="Cth: R.Planters" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm placeholder:text-slate-400 font-medium">
                         </div>
                     </div>
                     
                     <div class="grid grid-cols-2 gap-5">
                         <div>
-                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">PROVIDER <span class="text-slate-400 font-semibold">(OPSIONAL)</span></label>
-                            <input type="text" name="provider" value="{{ $dailyClass->provider }}" placeholder="Cth: Internal" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm placeholder:text-slate-400 font-medium">
+                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">PROVIDER <span class="text-red-500">*</span></label>
+                            <input type="text" name="provider" required value="{{ $dailyClass->provider }}" placeholder="Cth: Internal" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm placeholder:text-slate-400 font-medium">
                         </div>
                         <div>
-                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">REGION <span class="text-slate-400 font-semibold">(OPSIONAL)</span></label>
-                            <input type="text" name="region" value="{{ $dailyClass->region }}" placeholder="Cth: Region Riau" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm placeholder:text-slate-400 font-medium">
+                            <label class="block text-xs font-black text-slate-600 tracking-wide uppercase mb-2">REGION <span class="text-red-500">*</span></label>
+                            <input type="text" name="region" list="region_list_options" required value="{{ $dailyClass->region }}" placeholder="Cth: Region Riau / Kalbar / Kaltim FR" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-slate-700 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition-all text-sm placeholder:text-slate-400 font-medium">
                         </div>
                     </div>
                 </div>
@@ -947,29 +939,29 @@
                     <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3 mb-4">
                         <svg class="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <p class="text-xs text-blue-700 font-medium leading-relaxed">
-                            Materi ini adalah wadah. <strong>Silakan tentukan Tanggal Pelatihan dan Trainer untuk batch ini</strong>. Upload file Excel (.xlsx, .csv). Pastikan memiliki baris header dengan nama: No, Employee ID, Employee Name, Jabatan, Unit, Region.
+                            Program ini adalah wadah. <strong>Silakan tentukan Tanggal Pelaksanaan dan Trainer untuk program ini</strong>. Upload file Excel (.xlsx, .csv). Pastikan memiliki baris header dengan nama: No, Employee ID, Employee Name, Jabatan, Unit, Region.
                         </p>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tgl Mulai <span class="text-red-500">*</span></label>
-                            <input type="date" name="date" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required>
+                            <input type="date" name="date" onchange="if(!this.form.end_date.value) this.form.end_date.value = this.value" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tgl Selesai <span class="text-gray-400 font-normal">(Opsional)</span></label>
-                            <input type="date" name="end_date" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Tgl Selesai <span class="text-red-500">*</span></label>
+                            <input type="date" name="end_date" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required>
                         </div>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Waktu Mulai <span class="text-gray-400 font-normal">(Opsional)</span></label>
-                            <input type="time" name="start_time" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Waktu Mulai <span class="text-red-500">*</span></label>
+                            <input type="time" name="start_time" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Waktu Selesai <span class="text-gray-400 font-normal">(Opsional)</span></label>
-                            <input type="time" name="end_time" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Waktu Selesai <span class="text-red-500">*</span></label>
+                            <input type="time" name="end_time" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required>
                         </div>
                     </div>
                     
@@ -979,23 +971,23 @@
                             <input type="text" name="trainer_name" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required placeholder="Cth: Budi Santoso">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Lokasi Training <span class="text-gray-400 font-normal">(Opsional)</span></label>
-                            <input type="text" name="location" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Cth: FRLC / Kandir / Online">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Lokasi Training <span class="text-red-500">*</span></label>
+                            <input type="text" name="location" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required placeholder="Cth: FRLC / Kandir / Online">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Ruangan <span class="text-gray-400 font-normal">(Opsional)</span></label>
-                            <input type="text" name="room" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Cth: R.Planters">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Ruangan <span class="text-red-500">*</span></label>
+                            <input type="text" name="room" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required placeholder="Cth: R.Planters">
                         </div>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Provider <span class="text-gray-400 font-normal">(Opsional)</span></label>
-                            <input type="text" name="provider" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Cth: Internal">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Provider <span class="text-red-500">*</span></label>
+                            <input type="text" name="provider" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required placeholder="Cth: Internal">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Region <span class="text-gray-400 font-normal">(Opsional)</span></label>
-                            <input type="text" name="region" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Cth: Region Riau">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Region <span class="text-red-500">*</span></label>
+                            <input type="text" name="region" list="region_list_options" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required placeholder="Pilih atau ketik region (Cth: Kalbar, Kaltim FR, Riau)">
                         </div>
                     </div>
 
@@ -1012,6 +1004,14 @@
             </form>
         </div>
     </div>
+
+    <!-- Datalist Pilihan Region -->
+    <datalist id="region_list_options">
+        <option value="Kalbar">Kalbar</option>
+        <option value="Kaltim FR">Kaltim FR</option>
+        <option value="Riau">Riau</option>
+        <option value="Nasional">Nasional</option>
+    </datalist>
 
     </div>
     
@@ -1063,7 +1063,7 @@
                             
                             <div>
                                 <label class="block text-sm font-bold text-slate-700 mb-1.5">Isi Pesan</label>
-                                <textarea name="body" required rows="3" placeholder="Contoh: Sesi materi hari ini digeser menjadi jam 10:00 WIB..." class="w-full rounded-xl border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 resize-none"></textarea>
+                                <textarea name="body" required rows="3" placeholder="Contoh: Sesi program hari ini digeser menjadi jam 10:00 WIB..." class="w-full rounded-xl border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 resize-none"></textarea>
                             </div>
                         </div>
                     </div>
@@ -1097,9 +1097,9 @@
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 </div>
 
-                <h3 class="text-xl font-black text-slate-800 mb-2">Kembalikan ke Sesi Aktif?</h3>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Kembalikan ke Program Aktif?</h3>
                 <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                    Materi <strong class="text-slate-800">"{{ $dailyClass->title }}"</strong> akan dikembalikan dari Riwayat Pelatihan ke daftar materi berjalan yang aktif.
+                    Program <strong class="text-slate-800">"{{ $dailyClass->title }}"</strong> akan dikembalikan dari Riwayat Program ke daftar program berjalan yang aktif.
                 </p>
 
                 <form action="{{ route('training-non-reguler.daily-classes.toggle-completed', $dailyClass->id) }}" method="POST" class="flex gap-3">
@@ -1117,15 +1117,10 @@
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                 </div>
 
-                <h3 class="text-xl font-black text-slate-800 mb-2">Selesaikan Pelatihan Ini?</h3>
+                <h3 class="text-xl font-black text-slate-800 mb-2">Selesaikan Program Ini?</h3>
                 <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                    Materi <strong class="text-slate-800">"{{ $dailyClass->title }}"</strong> akan ditandai sebagai <span class="text-emerald-700 font-bold">Pelatihan Selesai</span> dan dipindahkan ke <strong class="text-slate-800">Riwayat Pelatihan</strong>.
+                    Program <strong class="text-slate-800">"{{ $dailyClass->title }}"</strong> akan ditandai sebagai <span class="text-emerald-700 font-bold">Program Selesai</span> dan dipindahkan ke <strong class="text-slate-800">Riwayat Program</strong>.
                 </p>
-
-                <div class="p-3 bg-emerald-50/70 rounded-xl border border-emerald-100 mb-6 text-left flex items-start gap-2.5">
-                    <svg class="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <p class="text-xs text-emerald-800 font-medium">Aplikasi mobile peserta akan otomatis menampilkan ucapan terima kasih telah mengikuti pelatihan ini.</p>
-                </div>
 
                 <form action="{{ route('training-non-reguler.daily-classes.toggle-completed', $dailyClass->id) }}" method="POST" class="flex gap-3">
                     @csrf

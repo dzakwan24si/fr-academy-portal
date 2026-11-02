@@ -53,7 +53,7 @@
             <td>: {{ \Carbon\Carbon::parse($printDate)->translatedFormat('l, d F Y') }}</td>
         </tr>
         <tr>
-            <td class="label">Materi / Kelas</td>
+            <td class="label">Program / Kelas</td>
             <td>: {{ $dailyClass->title }}</td>
             <td class="label">Waktu</td>
             <td>: {{ $dailyClass->start_time ? \Carbon\Carbon::parse($dailyClass->start_time)->format('H:i') : '?' }} - {{ $dailyClass->end_time ? \Carbon\Carbon::parse($dailyClass->end_time)->format('H:i') : 'Selesai' }} WIB</td>

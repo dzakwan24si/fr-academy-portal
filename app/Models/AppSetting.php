@@ -140,7 +140,7 @@ class AppSetting extends Model
             [
                 'id' => 'mess',
                 'name' => 'Mess FR Academy',
-                'url' => 'https://mess-fr-academy.my.id/',
+                'url' => 'https://mess-academy.first-resources.com/',
                 'target' => '_blank',
                 'is_active' => true,
                 'order' => 2,

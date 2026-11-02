@@ -31,7 +31,7 @@
                 </div>
                 <h1 class="text-2xl lg:text-3xl font-extrabold tracking-tight">Dashboard Learning Activity</h1>
                 <p class="text-green-100 text-sm lg:text-base max-w-2xl mt-1">
-                    Pusat monitoring operasional materi pelatihan non-reguler, distribusi kompetensi, dan realisasi pembelajaran.
+                    Pusat monitoring operasional program non-reguler, distribusi kompetensi, dan realisasi pembelajaran.
                 </p>
             </div>
         </div>
@@ -40,17 +40,17 @@
     <!-- Quick Stats Cards (2 KPI Cards) -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
 
-        <!-- Card 1: Total Materi -->
+        <!-- Card 1: Total Program -->
         <div class="group relative overflow-hidden bg-white rounded-2xl p-5 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100 hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
             <div class="flex items-center justify-between mb-3">
-                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Materi</span>
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Program</span>
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-md shadow-orange-200 group-hover:scale-110 transition-transform">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                 </div>
             </div>
             <div class="flex items-baseline gap-2">
                 <span class="text-3xl font-black text-slate-800">{{ number_format($totalSesi) }}</span>
-                <span class="text-xs font-semibold text-slate-400 lowercase">materi</span>
+                <span class="text-xs font-semibold text-slate-400 lowercase">program</span>
             </div>
             <div class="mt-2 text-xs text-amber-600 font-medium flex items-center gap-1">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -77,16 +77,16 @@
         </div>
     </div>
 
-    <!-- Visual Charts Section (Distribusi Materi per Sub Kategori) -->
+    <!-- Visual Charts Section (Distribusi Program per Sub Kategori) -->
     <div class="mb-8">
         <div class="bg-white rounded-2xl p-6 shadow-[0_4px_20px_rgb(0,0,0,0.03)] border border-slate-100">
             <div class="flex items-center justify-between mb-6 pb-3 border-b border-slate-100">
                 <div>
-                    <h3 class="text-base font-black text-slate-800">Distribusi Materi per Sub Kategori</h3>
-                    <p class="text-xs text-slate-400 mt-0.5">Proporsi materi pelatihan non-reguler berdasarkan sub kategori</p>
+                    <h3 class="text-base font-black text-slate-800">Distribusi Program per Sub Kategori</h3>
+                    <p class="text-xs text-slate-400 mt-0.5">Proporsi program non-reguler berdasarkan sub kategori</p>
                 </div>
                 <span class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                    {{ $totalSesi }} Total Materi
+                    {{ $totalSesi }} Total Program
                 </span>
             </div>
 
@@ -109,7 +109,7 @@
                                 <span class="font-bold text-slate-700 truncate" title="{{ $prog['name'] }}">{{ $prog['name'] }}</span>
                             </div>
                             <div class="flex items-center gap-2 shrink-0">
-                                <span class="font-black text-slate-900">{{ $prog['count'] }} materi</span>
+                                <span class="font-black text-slate-900">{{ $prog['count'] }} program</span>
                                 <span class="text-[11px] text-slate-400 font-mono font-semibold">({{ $pct }}%)</span>
                             </div>
                         </div>
@@ -126,28 +126,28 @@
             Akses Cepat & Menu Operasional
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Shortcut 1: Kelola Materi & Sesi -->
+            <!-- Shortcut 1: Kelola Program & Sesi -->
             <a href="{{ route('training-non-reguler.daily-classes.index') }}" class="group relative overflow-hidden bg-gradient-to-br from-[#1d5732] to-[#28844b] rounded-2xl p-6 text-white shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 flex flex-col justify-between">
                 <div>
                     <div class="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     </div>
-                    <h4 class="font-black text-lg mb-1">Kelola Materi & Absensi</h4>
-                    <p class="text-green-100 text-xs leading-relaxed">Atur tanggal kelas, bagikan QR code absensi peserta, dan kelola materi pembelajaran.</p>
+                    <h4 class="font-black text-lg mb-1">Kelola Program & Absensi</h4>
+                    <p class="text-green-100 text-xs leading-relaxed">Atur tanggal kelas, bagikan QR code absensi peserta, dan kelola program pembelajaran.</p>
                 </div>
                 <div class="mt-6 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-200 group-hover:translate-x-1 transition-transform">
-                    Buka Manajemen Materi &rarr;
+                    Buka Manajemen Program &rarr;
                 </div>
             </a>
 
-            <!-- Shortcut 2: Riwayat Pelatihan -->
+            <!-- Shortcut 2: Riwayat Program -->
             <a href="{{ route('training-non-reguler.history.index') }}" class="group relative overflow-hidden bg-white border border-slate-200 rounded-2xl p-6 hover:border-emerald-300 hover:shadow-lg transition-all duration-300 flex flex-col justify-between">
                 <div>
                     <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center mb-4 group-hover:bg-emerald-100 group-hover:text-emerald-700 transition-colors">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
-                    <h4 class="font-black text-slate-800 text-lg mb-1 group-hover:text-emerald-700 transition-colors">Riwayat Pelatihan</h4>
-                    <p class="text-slate-400 text-xs leading-relaxed">Arsip dokumentasi kelas pelatihan dan rekapitulasi yang sudah selesai diselenggarakan.</p>
+                    <h4 class="font-black text-slate-800 text-lg mb-1 group-hover:text-emerald-700 transition-colors">Riwayat Program</h4>
+                    <p class="text-slate-400 text-xs leading-relaxed">Arsip dokumentasi kelas program dan rekapitulasi yang sudah selesai diselenggarakan.</p>
                 </div>
                 <div class="mt-6 inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 group-hover:translate-x-1 transition-transform">
                     Buka Arsip Riwayat &rarr;
@@ -193,7 +193,7 @@
                                         const val = ctx.raw || 0;
                                         const sum = ctx.dataset.data.reduce((a, b) => a + b, 0);
                                         const pct = sum > 0 ? Math.round((val / sum) * 100) : 0;
-                                        return ` ${val} Materi (${pct}%)`;
+                                        return ` ${val} Program (${pct}%)`;
                                     }
                                 }
                             }
