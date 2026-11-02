@@ -98,6 +98,12 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                     Import Peserta
                 </button>
+
+                <!-- Download Template CSV -->
+                <a href="{{ route('training-non-reguler.daily-classes.template') }}" class="inline-flex items-center gap-1.5 px-3 py-2 bg-white text-emerald-700 border border-emerald-300 rounded-lg hover:bg-emerald-50 hover:border-emerald-500 font-medium text-sm transition-all shadow-sm" title="Download template CSV untuk import peserta">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Template CSV
+                </a>
                 
                 <!-- DROPDOWN FOR MORE ACTIONS -->
                 <div x-data="{ open: false }" class="relative">
@@ -106,6 +112,10 @@
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </button>
                     <div x-show="open" @click.away="open = false" x-transition class="absolute right-0 mt-2 min-w-[240px] bg-white rounded-lg shadow-lg border border-slate-200 py-1 z-50 hidden" :class="{'hidden': !open}">
+                        <a href="{{ route('training-non-reguler.daily-classes.template') }}" class="w-full text-left px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-50 flex items-center gap-2">
+                            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Download Template CSV
+                        </a>
                         <!-- <form action="{{ route('training-non-reguler.daily-classes.notify', $dailyClass->id) }}" method="POST" class="w-full" onsubmit="return confirm('Kirim notifikasi jadwal ke seluruh peserta di kelas ini?');">
                             @csrf
                             <button type="submit" class="w-full text-left px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 flex items-center gap-2">
@@ -936,11 +946,20 @@
                 @endif
                 
                 <div class="space-y-4">
-                    <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 flex gap-3 mb-4">
-                        <svg class="w-5 h-5 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        <p class="text-xs text-blue-700 font-medium leading-relaxed">
-                            Program ini adalah wadah. <strong>Silakan tentukan Tanggal Pelaksanaan dan Trainer untuk program ini</strong>. Upload file Excel (.xlsx, .csv). Pastikan memiliki baris header dengan nama: No, Employee ID, Employee Name, Jabatan, Unit, Region.
-                        </p>
+                    <div class="bg-emerald-50/80 border border-emerald-200 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                        <div class="flex items-start gap-3">
+                            <svg class="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div>
+                                <p class="text-xs text-slate-700 font-medium leading-relaxed">
+                                    Silakan tentukan Jadwal & Trainer di bawah ini. Pastikan file Excel/CSV memiliki baris header: <br>
+                                    <span class="inline-block font-mono text-[11px] font-bold text-emerald-800 bg-white px-2 py-0.5 rounded border border-emerald-200 mt-1">No, Employee ID, Employee Name, Jabatan, Unit, Region</span>
+                                </p>
+                            </div>
+                        </div>
+                        <a href="{{ route('training-non-reguler.daily-classes.template') }}" class="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-xs shrink-0 whitespace-nowrap">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Download Template CSV
+                        </a>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -992,7 +1011,13 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Pilih File Excel <span class="text-red-500">*</span></label>
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider">Pilih File Excel / CSV <span class="text-red-500">*</span></label>
+                            <a href="{{ route('training-non-reguler.daily-classes.template') }}" class="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline flex items-center gap-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                Download Template CSV
+                            </a>
+                        </div>
                         <input type="file" name="file" accept=".xlsx,.xls,.csv" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required>
                     </div>
                 </div>

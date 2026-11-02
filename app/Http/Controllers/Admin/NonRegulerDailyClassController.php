@@ -207,6 +207,28 @@ class NonRegulerDailyClassController extends Controller
         return view('admin.non-reguler.daily_classes.show', compact('dailyClass', 'trainees', 'dates'));
     }
 
+    /**
+     * Download CSV template for import peserta
+     */
+    public function downloadTemplate()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="template_import_peserta.csv"',
+        ];
+
+        $callback = function () {
+            $file = fopen('php://output', 'w');
+            // BOM for UTF-8 compatibility with Excel
+            fwrite($file, "\xEF\xBB\xBF");
+            // Header row only
+            fputcsv($file, ['No', 'Employee ID', 'Employee Name', 'Jabatan', 'Unit', 'Region']);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function importTrainees(Request $request, DailyClass $dailyClass)
     {
         $request->validate([

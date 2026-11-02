@@ -906,6 +906,7 @@ Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
         return view('admin.print_dummy.tasks');
     })->name('training-non-reguler.print.tasks.dummy');
 
+    Route::get('daily-classes/template', [NonRegulerDailyClassController::class, 'downloadTemplate'])->name('training-non-reguler.daily-classes.template');
     Route::post('daily-classes/{daily_class}/import', [NonRegulerDailyClassController::class, 'importTrainees'])->name('training-non-reguler.daily-classes.import');
     Route::post('daily-classes/{daily_class}/add-manual', [NonRegulerDailyClassController::class, 'addManualTrainee'])->name('training-non-reguler.daily-classes.add-manual');
     Route::post('daily-classes/{daily_class}/attendance', [NonRegulerDailyClassController::class, 'updateAttendance'])->name('training-non-reguler.daily-classes.attendance.update');
