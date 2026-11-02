@@ -106,17 +106,26 @@ Route::get('/career-qr', function (Request $request) {
 })->name('career.qr');
 
 Route::get('/download-app', function () {
-    $path = public_path('downloads/LearningActivity.apk');
-    if (! file_exists($path)) {
-        $rootPath = base_path('LearningActivity.apk');
-        if (file_exists($rootPath)) {
-            copy($rootPath, $path);
-        } else {
-            abort(404, 'File APK belum tersedia.');
+    $rootPath = base_path('LearningActivity.apk');
+    $publicPath = public_path('downloads/LearningActivity.apk');
+
+    $targetFile = null;
+
+    if (file_exists($rootPath)) {
+        if (! file_exists(public_path('downloads'))) {
+            @mkdir(public_path('downloads'), 0755, true);
         }
+        if (! file_exists($publicPath) || filemtime($rootPath) > filemtime($publicPath)) {
+            @copy($rootPath, $publicPath);
+        }
+        $targetFile = $rootPath;
+    } elseif (file_exists($publicPath)) {
+        $targetFile = $publicPath;
+    } else {
+        abort(404, 'File APK belum tersedia.');
     }
 
-    return response()->download($path, 'FR_Learning_Activity.apk', [
+    return response()->download($targetFile, 'FR_Learning_Activity.apk', [
         'Content-Type' => 'application/vnd.android.package-archive',
     ]);
 })->name('download.app');
@@ -897,6 +906,7 @@ Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
         return view('admin.print_dummy.tasks');
     })->name('training-non-reguler.print.tasks.dummy');
 
+    Route::get('daily-classes/template', [NonRegulerDailyClassController::class, 'downloadTemplate'])->name('training-non-reguler.daily-classes.template');
     Route::post('daily-classes/{daily_class}/import', [NonRegulerDailyClassController::class, 'importTrainees'])->name('training-non-reguler.daily-classes.import');
     Route::post('daily-classes/{daily_class}/add-manual', [NonRegulerDailyClassController::class, 'addManualTrainee'])->name('training-non-reguler.daily-classes.add-manual');
     Route::post('daily-classes/{daily_class}/attendance', [NonRegulerDailyClassController::class, 'updateAttendance'])->name('training-non-reguler.daily-classes.attendance.update');

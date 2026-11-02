@@ -98,7 +98,7 @@ class PortalProgram extends Model
     public function getResolvedHeroImageUrl(): string
     {
         if (empty($this->hero_image)) {
-            return $this->getResolvedImageUrl();
+            return '';
         }
 
         if (str_starts_with($this->hero_image, 'http://') || str_starts_with($this->hero_image, 'https://')) {

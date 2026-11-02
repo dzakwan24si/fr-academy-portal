@@ -383,11 +383,11 @@
                         </a>
                         <a href="{{ route('training-non-reguler.daily-classes.index') }}" class="{{ request()->routeIs('training-non-reguler.daily-classes.*') || request()->routeIs('training-non-reguler.tasks.*') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">
                             <i data-lucide="book-open" class="w-5 h-5 mr-3 {{ request()->routeIs('training-non-reguler.daily-classes.*') || request()->routeIs('training-non-reguler.tasks.*') ? 'text-white' : 'text-gray-400' }}"></i>
-                            Materi Pelatihan
+                            Program Pelatihan
                         </a>
                         <a href="{{ route('training-non-reguler.history.index') }}" class="{{ request()->routeIs('training-non-reguler.history.*') ? 'bg-[#509c38] text-white shadow-md' : 'text-gray-600 hover:bg-gray-100' }} flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200">
                             <i data-lucide="history" class="w-5 h-5 mr-3 {{ request()->routeIs('training-non-reguler.history.*') ? 'text-white' : 'text-gray-400' }}"></i>
-                            Riwayat Pelatihan
+                            Riwayat Program
                         </a>
                     </div>
                 </details>

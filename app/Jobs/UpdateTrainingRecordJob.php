@@ -53,66 +53,73 @@ class UpdateTrainingRecordJob implements ShouldQueue
             ->where('jenis_pelatihan', $dailyClass->title)
             ->first();
 
-        // Jika materi kelas harian belum terdaftar di program_non_reguler, auto-register agar memiliki ID referensi yang valid
-        if (! $parentProgramNonReg) {
+        // Learning Activity tidak boleh menambah data ke program_non_reguler (Program Training).
+        // Jika belum terdaftar di master program_non_reguler, program_id dibiarkan null.
+        $catName = 'Non Reguler';
+        $subCatName = 'Softskill';
+        if ($parentProgramNonReg) {
+            $catName = $parentProgramNonReg->kategori_pelatihan ?: 'Non Reguler';
+            $subCatName = $parentProgramNonReg->sub_kategori ?: 'Softskill';
+        } else {
             $parentProgram = $dailyClass->trainingProgram;
-            $startDateObj = $dailyClass->date ? Carbon::parse($dailyClass->date) : $dateObj;
-            $endDateObj = $dailyClass->end_date ? Carbon::parse($dailyClass->end_date) : $startDateObj;
-            $totalHari = ($startDateObj && $endDateObj) ? ($startDateObj->diffInDays($endDateObj) + 1) : 1;
-            $tglPelaksanaan = $startDateObj ? json_encode([$startDateObj->translatedFormat('d M Y')]) : null;
-
-            $totalJam = 0;
-            if ($dailyClass->start_time && $dailyClass->end_time) {
-                $st = Carbon::parse($dailyClass->start_time);
-                $et = Carbon::parse($dailyClass->end_time);
-                $totalJam = round($st->diffInRealHours($et)) * $totalHari;
-            }
-
-            $catName = $parentProgram ? $parentProgram->name : 'Non Reguler';
-            $subCatName = 'Softskill';
-            if (str_contains(strtolower($catName), 'managerial') || str_contains(strtolower($catName), 'leadership')) {
+            $rawCat = $parentProgram ? $parentProgram->name : 'Non Reguler';
+            if (str_contains(strtolower($rawCat), 'managerial') || str_contains(strtolower($rawCat), 'leadership')) {
                 $catName = 'Managerial and Leadership';
                 $subCatName = 'Softskill';
-            } elseif (str_contains(strtolower($catName), 'estate')) {
+            } elseif (str_contains(strtolower($rawCat), 'estate')) {
                 $catName = 'Technical';
                 $subCatName = 'Estate';
-            } elseif (str_contains(strtolower($catName), 'mill')) {
+            } elseif (str_contains(strtolower($rawCat), 'mill')) {
                 $catName = 'Technical';
                 $subCatName = 'Mill';
-            } elseif (str_contains(strtolower($catName), 'traksi')) {
+            } elseif (str_contains(strtolower($rawCat), 'traksi')) {
                 $catName = 'Technical';
                 $subCatName = 'Traksi';
-            } elseif (str_contains(strtolower($catName), 'downstream')) {
+            } elseif (str_contains(strtolower($rawCat), 'downstream')) {
                 $catName = 'Technical';
                 $subCatName = 'Downstream';
-            } elseif (str_contains(strtolower($catName), 'administrasi')) {
+            } elseif (str_contains(strtolower($rawCat), 'administrasi')) {
                 $catName = 'Technical';
                 $subCatName = 'Administrasi';
             }
-
-            $newId = DB::table('program_non_reguler')->insertGetId([
-                'jenis_pelatihan' => $dailyClass->title,
-                'kategori_pelatihan' => $catName,
-                'sub_kategori' => $subCatName,
-                'region' => $dailyClass->region ?: ($trainee->origin ?: 'Riau'),
-                'trainer' => $dailyClass->trainer_name,
-                'lokasi_training' => $dailyClass->location,
-                'start_date' => $dailyClass->date,
-                'end_date' => $dailyClass->end_date,
-                'tanggal_pelaksanaan' => $tglPelaksanaan,
-                'total_hari' => $totalHari,
-                'total_jam' => $totalJam,
-                'tahun' => $startDateObj ? (int) $startDateObj->format('Y') : $tahunAbsen,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            $parentProgramNonReg = DB::table('program_non_reguler')->where('id_nonreguler', $newId)->first();
         }
 
         $idNonReguler = $parentProgramNonReg ? $parentProgramNonReg->id_nonreguler : null;
-        $subKategori = $parentProgramNonReg ? $parentProgramNonReg->sub_kategori : 'Softskill';
+        $subKategori = $subCatName;
         $trainer = $dailyClass->trainer_name ?: ($parentProgramNonReg ? $parentProgramNonReg->trainer : '-');
+
+        // Hitung jam per hari dari waktu riil pelaksanaan sesi (jika ada start_time & end_time)
+        $jamPerHari = 0;
+        if ($dailyClass->start_time && $dailyClass->end_time) {
+            $st = Carbon::parse($dailyClass->start_time);
+            $et = Carbon::parse($dailyClass->end_time);
+            $diffHours = round($st->diffInMinutes($et) / 60);
+            if ($diffHours > 0) {
+                $jamPerHari = (int) $diffHours;
+            }
+        } elseif ($parentProgramNonReg && $parentProgramNonReg->total_jam && (int) $parentProgramNonReg->total_jam > 0) {
+            $parentTotalHari = (int) ($parentProgramNonReg->total_hari ?: 1);
+            $jamPerHari = (int) round(((int) $parentProgramNonReg->total_jam) / ($parentTotalHari > 0 ? $parentTotalHari : 1));
+        }
+
+        // Hitung Jumlah Hari & Rentang Tanggal Program
+        $jmlHari = 1;
+        $tanggalFormatted = $hariAbsen;
+        if ($dailyClass->date && $dailyClass->end_date) {
+            $startDateObj = Carbon::parse($dailyClass->date);
+            $endDateObj = Carbon::parse($dailyClass->end_date);
+            $jmlHari = $startDateObj->diffInDays($endDateObj) + 1;
+            if ($jmlHari > 1) {
+                $tanggalFormatted = $startDateObj->format('d') . '-' . $endDateObj->format('d');
+            } else {
+                $tanggalFormatted = $startDateObj->format('d');
+            }
+        } elseif ($parentProgramNonReg && $parentProgramNonReg->total_hari && (int) $parentProgramNonReg->total_hari > 0) {
+            $jmlHari = (int) $parentProgramNonReg->total_hari;
+        }
+
+        // Total jam adalah durasi jam per hari dikalikan jumlah hari pelatihan
+        $totalJam = $jamPerHari * ($jmlHari > 0 ? $jmlHari : 1);
 
         // Cari record yang sudah ada
         $existingQuery = DB::table('training_records')
@@ -130,24 +137,23 @@ class UpdateTrainingRecordJob implements ShouldQueue
         $existingRecord = $existingQuery->first();
 
         if ($existingRecord) {
-            // Update record: Tambahkan tanggal baru jika belum ada dan pastikan program_type & program_id terisi
-            $tanggalArray = array_filter(array_map('trim', explode(',', str_replace(' ', '', (string) $existingRecord->tanggal))));
-            if (! in_array($hariAbsen, $tanggalArray, true)) {
-                $tanggalArray[] = $hariAbsen;
-                sort($tanggalArray);
-            }
-            $newTanggal = implode(', ', $tanggalArray);
+            $updatePayload = [
+                'program_type' => 'non_reguler',
+                'program_id' => $idNonReguler ?: $existingRecord->program_id,
+                'reg_non_reg' => 'Non Reguler',
+                'tanggal' => $tanggalFormatted,
+                'total_jam' => $totalJam,
+                'jml_hari' => $jmlHari,
+                'instructor' => $trainer,
+                'tempat_pelatihan' => $dailyClass->location ?: ($existingRecord->tempat_pelatihan ?: '-'),
+                'notes' => $existingRecord->notes && $existingRecord->notes !== '-' ? $existingRecord->notes : $subKategori,
+                'status' => 'valid',
+                'updated_at' => now(),
+            ];
 
             DB::table('training_records')
                 ->where('id', $existingRecord->id)
-                ->update([
-                    'program_type' => 'non_reguler',
-                    'program_id' => $idNonReguler ?: $existingRecord->program_id,
-                    'reg_non_reg' => 'Non Reguler',
-                    'tanggal' => $newTanggal,
-                    'notes' => $existingRecord->notes && $existingRecord->notes !== '-' ? $existingRecord->notes : $subKategori,
-                    'updated_at' => now(),
-                ]);
+                ->update($updatePayload);
         } else {
             // Coba cari Golongan dari riwayat pelatihan sebelumnya
             $gol = DB::table('training_records')
@@ -182,24 +188,6 @@ class UpdateTrainingRecordJob implements ShouldQueue
             $region = ($pastRecord && $pastRecord->region && $pastRecord->region !== '-') ? $pastRecord->region : ($trainee->origin ?: '-');
             $level = ($pastRecord && $pastRecord->level && $pastRecord->level !== '-') ? $pastRecord->level : '-';
             $department = ($pastRecord && $pastRecord->department && $pastRecord->department !== '-') ? $pastRecord->department : '-';
-
-            // Menghitung Jumlah Hari
-            $jmlHari = 1;
-            if ($parentProgramNonReg && $parentProgramNonReg->total_hari) {
-                $jmlHari = $parentProgramNonReg->total_hari;
-            } elseif ($dailyClass->end_date && $dailyClass->date) {
-                $jmlHari = Carbon::parse($dailyClass->date)->diffInDays(Carbon::parse($dailyClass->end_date)) + 1;
-            }
-
-            // Menghitung Jam Pelatihan
-            $jamPelatihan = 0;
-            if ($parentProgramNonReg && $parentProgramNonReg->total_jam) {
-                $jamPelatihan = $parentProgramNonReg->total_jam;
-            } elseif ($dailyClass->start_time && $dailyClass->end_time) {
-                $st = Carbon::parse($dailyClass->start_time);
-                $et = Carbon::parse($dailyClass->end_time);
-                $jamPelatihan = round($st->diffInRealHours($et));
-            }
 
             // Menentukan Keterangan (Notes) berdasarkan Nama Program
             $judul = strtolower($dailyClass->title . ' ' . ($dailyClass->trainingProgram->name ?? ''));
@@ -237,11 +225,11 @@ class UpdateTrainingRecordJob implements ShouldQueue
                 'periode' => $periode,
                 'bulan' => $bulanAbsen,
                 'tahun' => $tahunAbsen,
-                'tanggal' => $hariAbsen,
+                'tanggal' => $tanggalFormatted,
                 'jml_hari' => $jmlHari,
-                'total_jam' => $jamPelatihan,
+                'total_jam' => $totalJam,
                 'training_date' => $this->attendanceDate,
-                'status' => 'hadir',
+                'status' => 'valid',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
@@ -249,5 +237,10 @@ class UpdateTrainingRecordJob implements ShouldQueue
 
         // Invalidate all dashboard & program caches
         TrainingMetricService::clearAllDashboardCaches();
+        Cache::forever('tr_cache_version', ((int) Cache::get('tr_cache_version', 1)) + 1);
+        Cache::forget('tr_years');
+        Cache::forget('tr_non_reg_subcats');
+        Cache::forever('dashboard_cache_version', ((int) Cache::get('dashboard_cache_version', 1)) + 1);
+        Cache::forever('rvb_cache_version', ((int) Cache::get('rvb_cache_version', 1)) + 1);
     }
 }

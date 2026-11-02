@@ -100,7 +100,7 @@
                                   <div class="flex items-center gap-4">
                                       <div class="text-center">
                                           <p class="text-xs font-bold text-slate-700">{{ $item->daily_classes_count ?? 0 }}</p>
-                                          <p class="text-[10px] uppercase text-slate-400 font-semibold tracking-wider">Materi</p>
+                                          <p class="text-[10px] uppercase text-slate-400 font-semibold tracking-wider">Program</p>
                                       </div>
                                       <div class="w-px h-6 bg-slate-200"></div>
                                       <div class="text-center">

@@ -441,7 +441,7 @@
                 <div class="bg-white dark:bg-gray-700 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition duration-300 flex flex-col border border-transparent dark:border-gray-600">
                     <div class="relative h-48 overflow-hidden">
                         @if($article->featured_image)
-                            <img src="{{ Storage::url($article->featured_image) }}" alt="Cover" class="w-full h-full object-cover">
+                            <img src="{{ Storage::url($article->featured_image) }}" alt="Cover" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='{{ asset('images/welcomefr.jpg') }}';">
                         @else
                             <div class="w-full h-full bg-[#114045] flex items-center justify-center opacity-90">
                                 <img src="{{ asset('images/logofr.png') }}" class="w-32 opacity-30">

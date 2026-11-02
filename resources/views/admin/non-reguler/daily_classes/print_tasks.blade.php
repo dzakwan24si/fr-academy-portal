@@ -34,7 +34,7 @@
             <div class="text-right text-sm">
                 <table class="text-left ml-auto">
                     <tr><td class="font-bold pr-3 text-gray-700">Tanggal</td><td>: {{ \Carbon\Carbon::parse($dailyClass->date)->format('d M Y') }}</td></tr>
-                    <tr><td class="font-bold pr-3 text-gray-700">Materi</td><td>: {{ $dailyClass->title }}</td></tr>
+                    <tr><td class="font-bold pr-3 text-gray-700">Program</td><td>: {{ $dailyClass->title }}</td></tr>
                     <tr><td class="font-bold pr-3 text-gray-700">Trainer</td><td>: {{ $dailyClass->trainer_name }}</td></tr>
                 </table>
             </div>

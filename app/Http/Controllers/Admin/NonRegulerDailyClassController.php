@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Jobs\UpdateTrainingRecordJob;
 use App\Models\Attendance;
 use App\Models\DailyClass;
+use App\Models\PortalProgram;
+use App\Models\Program\ProgramNonReguler;
 use App\Models\Task;
 use App\Models\TaskSubmission;
 use App\Models\Trainee;
@@ -16,6 +18,7 @@ use App\Services\ExcelExporter;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -64,7 +67,23 @@ class NonRegulerDailyClassController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('admin.non-reguler.daily_classes.index', compact('programs', 'dailyClasses'));
+        $pnrQuery = ProgramNonReguler::select('id_nonreguler', 'jenis_pelatihan', 'tahun', 'region', 'kategori_pelatihan', 'sub_kategori')->get();
+
+        $trainingProgramCatalog = $pnrQuery->map(function ($item) {
+            return [
+                'id' => $item->id_nonreguler,
+                'title' => trim((string) $item->jenis_pelatihan),
+                'year' => (string) ($item->tahun ?: '2026'),
+                'region' => trim((string) ($item->region ?: '-')),
+                'kategori' => trim((string) ($item->kategori_pelatihan ?? '')),
+                'sub_kategori' => trim((string) ($item->sub_kategori ?? '')),
+            ];
+        })->filter(fn ($item) => !empty($item['title']))->values();
+
+        $availableYears = $trainingProgramCatalog->pluck('year')->filter()->unique()->sort()->values();
+        $availableRegions = $trainingProgramCatalog->pluck('region')->filter(fn ($r) => $r !== '-' && !empty($r))->unique()->sort()->values();
+
+        return view('admin.non-reguler.daily_classes.index', compact('programs', 'dailyClasses', 'trainingProgramCatalog', 'availableYears', 'availableRegions'));
     }
 
     public function store(Request $request)
@@ -89,68 +108,55 @@ class NonRegulerDailyClassController extends Controller
         // date and trainer_name will be null initially
         $dailyClass = DailyClass::create($validated);
 
-        $parentProgram = TrainingProgram::find($dailyClass->training_program_id);
-
-        $startDateObj = Carbon::parse($dailyClass->date);
-        $endDateObj = $dailyClass->end_date ? Carbon::parse($dailyClass->end_date) : $startDateObj;
-        $totalHari = $startDateObj->diffInDays($endDateObj) + 1;
-
-        $tanggalPelaksanaan = null;
-        if ($dailyClass->date) {
-            $tgl = $startDateObj->translatedFormat('d M Y');
-            if ($dailyClass->end_date && $startDateObj->format('Y-m-d') !== $endDateObj->format('Y-m-d')) {
-                $tgl .= ' - '.$endDateObj->translatedFormat('d M Y');
-            }
-            $tanggalPelaksanaan = json_encode([$tgl]);
-        }
-
-        $totalJam = 0;
-        if ($dailyClass->start_time && $dailyClass->end_time) {
-            $startT = Carbon::parse($dailyClass->start_time);
-            $endT = Carbon::parse($dailyClass->end_time);
-            $totalJam = $startT->diffInHours($endT) * $totalHari;
-        }
-
-        DB::table('program_non_reguler')->updateOrInsert(
-            ['jenis_pelatihan' => $dailyClass->title], // Group by title!
-            [
-                'kategori_pelatihan' => $parentProgram ? $parentProgram->name : 'Non Reguler',
-                'sub_kategori' => $parentProgram ? $parentProgram->name : 'Softskill',
-                'region' => $dailyClass->region ?: 'Nasional',
-                'trainer' => $dailyClass->trainer_name,
-                'lokasi_training' => $dailyClass->location, // Mapped to location!
-                'start_date' => $dailyClass->date,
-                'end_date' => $dailyClass->end_date,
-                'tanggal_pelaksanaan' => $tanggalPelaksanaan,
-                'total_hari' => $totalHari,
-                'total_jam' => $totalJam,
-                'tahun' => $startDateObj ? (int) $startDateObj->format('Y') : (int) date('Y'),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]
-        );
-
-        return redirect()->route('training-non-reguler.daily-classes.index')->with('success', 'Wadah Materi Sesi berhasil ditambahkan.');
+        return redirect()->route('training-non-reguler.daily-classes.index')->with('success', 'Program pelatihan berhasil ditambahkan.');
     }
 
     public function update(Request $request, DailyClass $dailyClass)
     {
-        $validated = $request->validate([
+        $rules = [
             'training_program_id' => 'required|exists:training_programs,id',
             'title' => 'required|string|max:255',
-            'trainer_name' => 'nullable|string|max:255',
-            'date' => 'nullable|date',
-            'end_date' => 'nullable|date|after_or_equal:date',
-            'start_time' => 'nullable|string',
-            'end_time' => 'nullable|string',
-            'room' => 'nullable|string|max:255',
-            'location' => 'nullable|string|max:255',
-            'provider' => 'nullable|string|max:255',
-            'region' => 'nullable|string|max:255',
             'material_url' => 'nullable|url|max:255',
             'mess_url' => 'nullable|url|max:255',
             'certificate_link' => 'nullable|url|max:500',
-        ]);
+        ];
+
+        // Jika request dari form Edit Detail Pelatihan (memiliki field jadwal)
+        if ($request->has('trainer_name') || $request->has('date')) {
+            $rules['trainer_name'] = 'required|string|max:255';
+            $rules['date'] = 'required|date';
+            $rules['end_date'] = 'required|date|after_or_equal:date';
+            $rules['start_time'] = 'required|string';
+            $rules['end_time'] = 'required|string';
+            $rules['room'] = 'required|string|max:255';
+            $rules['location'] = 'required|string|max:255';
+            $rules['provider'] = 'required|string|max:255';
+            $rules['region'] = 'required|string|max:255';
+        } else {
+            $rules['trainer_name'] = 'nullable|string|max:255';
+            $rules['date'] = 'nullable|date';
+            $rules['end_date'] = 'nullable|date|after_or_equal:date';
+            $rules['start_time'] = 'nullable|string';
+            $rules['end_time'] = 'nullable|string';
+            $rules['room'] = 'nullable|string|max:255';
+            $rules['location'] = 'nullable|string|max:255';
+            $rules['provider'] = 'nullable|string|max:255';
+            $rules['region'] = 'nullable|string|max:255';
+        }
+
+        $messages = [
+            'date.required' => 'Tanggal mulai wajib diisi.',
+            'end_date.required' => 'Tanggal selesai wajib diisi.',
+            'trainer_name.required' => 'Nama instruktur wajib diisi.',
+            'start_time.required' => 'Waktu mulai wajib diisi.',
+            'end_time.required' => 'Waktu selesai wajib diisi.',
+            'location.required' => 'Lokasi training wajib diisi.',
+            'room.required' => 'Ruangan wajib diisi.',
+            'provider.required' => 'Provider wajib diisi.',
+            'region.required' => 'Region wajib diisi.',
+        ];
+
+        $validated = $request->validate($rules, $messages);
 
         $validated['location'] = $request->input('location') ?: null;
         $validated['room'] = $request->input('room') ?: null;
@@ -165,44 +171,18 @@ class NonRegulerDailyClassController extends Controller
         $validated['mess_url'] = $request->input('mess_url') ?: null;
         $validated['certificate_link'] = $request->input('certificate_link') ?: null;
 
-
-        $originalTitle = $dailyClass->title;
         $dailyClass->update($validated);
 
-        $startDateObj = Carbon::parse($dailyClass->date);
-        $endDateObj = $dailyClass->end_date ? Carbon::parse($dailyClass->end_date) : $startDateObj;
-        $totalHari = $startDateObj->diffInDays($endDateObj) + 1;
-
-        $tanggalPelaksanaan = null;
+        // Sinkronkan ke training records untuk peserta yang hadir jika ada perubahan jadwal
         if ($dailyClass->date) {
-            $tgl = $startDateObj->translatedFormat('d M Y');
-            if ($dailyClass->end_date && $startDateObj->format('Y-m-d') !== $endDateObj->format('Y-m-d')) {
-                $tgl .= ' - '.$endDateObj->translatedFormat('d M Y');
+            $hadirTrainees = Attendance::where('daily_class_id', $dailyClass->id)
+                ->where('status', 'hadir')
+                ->get();
+
+            foreach ($hadirTrainees as $att) {
+                UpdateTrainingRecordJob::dispatchSync($att->trainee_id, $dailyClass->id, $att->attendance_date ?: $dailyClass->date);
             }
-            $tanggalPelaksanaan = json_encode([$tgl]);
         }
-
-        $totalJam = 0;
-        if ($dailyClass->start_time && $dailyClass->end_time) {
-            $startT = Carbon::parse($dailyClass->start_time);
-            $endT = Carbon::parse($dailyClass->end_time);
-            $totalJam = $startT->diffInHours($endT) * $totalHari;
-        }
-
-        DB::table('program_non_reguler')
-            ->where('jenis_pelatihan', $originalTitle ?: $dailyClass->title)
-            ->update([
-                'jenis_pelatihan' => $dailyClass->title,
-                'region' => $dailyClass->region ?: 'Nasional',
-                'trainer' => $dailyClass->trainer_name,
-                'lokasi_training' => $dailyClass->location,
-                'start_date' => $dailyClass->date,
-                'end_date' => $dailyClass->end_date,
-                'tanggal_pelaksanaan' => $tanggalPelaksanaan,
-                'total_hari' => $totalHari,
-                'total_jam' => $totalJam,
-                'updated_at' => now(),
-            ]);
 
         return back()->with('success', 'Detail kelas berhasil diperbarui.');
     }
@@ -227,22 +207,53 @@ class NonRegulerDailyClassController extends Controller
         return view('admin.non-reguler.daily_classes.show', compact('dailyClass', 'trainees', 'dates'));
     }
 
+    /**
+     * Download CSV template for import peserta
+     */
+    public function downloadTemplate()
+    {
+        $headers = [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="template_import_peserta.csv"',
+        ];
+
+        $callback = function () {
+            $file = fopen('php://output', 'w');
+            // BOM for UTF-8 compatibility with Excel
+            fwrite($file, "\xEF\xBB\xBF");
+            // Header row only
+            fputcsv($file, ['No', 'Employee ID', 'Employee Name', 'Jabatan', 'Unit', 'Region']);
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function importTrainees(Request $request, DailyClass $dailyClass)
     {
         $request->validate([
             'file' => 'required|file|max:5120',
             'date' => 'required|date',
-            'end_date' => 'nullable|date|after_or_equal:date',
+            'end_date' => 'required|date|after_or_equal:date',
             'trainer_name' => 'required|string|max:255',
-            'room' => 'nullable|string|max:255',
-            'location' => 'nullable|string|max:255',
-            'start_time' => 'nullable|string',
-            'end_time' => 'nullable|string',
-            'provider' => 'nullable|string|max:255',
-            'region' => 'nullable|string|max:255',
+            'start_time' => 'required|string',
+            'end_time' => 'required|string',
+            'location' => 'required|string|max:255',
+            'room' => 'required|string|max:255',
+            'provider' => 'required|string|max:255',
+            'region' => 'required|string|max:255',
         ], [
             'file.required' => 'File Excel wajib diunggah.',
             'file.max' => 'Ukuran file maksimal 5MB.',
+            'date.required' => 'Tanggal mulai wajib diisi.',
+            'end_date.required' => 'Tanggal selesai wajib diisi.',
+            'trainer_name.required' => 'Nama instruktur wajib diisi.',
+            'start_time.required' => 'Waktu mulai wajib diisi.',
+            'end_time.required' => 'Waktu selesai wajib diisi.',
+            'location.required' => 'Lokasi training wajib diisi.',
+            'room.required' => 'Ruangan wajib diisi.',
+            'provider.required' => 'Provider wajib diisi.',
+            'region.required' => 'Region wajib diisi.',
         ]);
 
         try {
@@ -258,40 +269,6 @@ class NonRegulerDailyClassController extends Controller
                 'provider' => $request->provider,
                 'region' => $request->region,
             ]);
-
-            $startDateObj = Carbon::parse($request->date);
-            $endDateObj = $request->end_date ? Carbon::parse($request->end_date) : $startDateObj;
-            $totalHari = $startDateObj->diffInDays($endDateObj) + 1;
-
-            $tanggalPelaksanaan = null;
-            if ($request->date) {
-                $tgl = $startDateObj->translatedFormat('d M Y');
-                if ($request->end_date && $startDateObj->format('Y-m-d') !== $endDateObj->format('Y-m-d')) {
-                    $tgl .= ' - '.$endDateObj->translatedFormat('d M Y');
-                }
-                $tanggalPelaksanaan = json_encode([$tgl]);
-            }
-
-            $totalJam = 0;
-            if ($request->start_time && $request->end_time) {
-                $startT = Carbon::parse($request->start_time);
-                $endT = Carbon::parse($request->end_time);
-                $totalJam = $startT->diffInHours($endT) * $totalHari;
-            }
-
-            DB::table('program_non_reguler')
-                ->where('jenis_pelatihan', $dailyClass->title)
-                ->update([
-                    'region' => $request->region ?: 'Nasional',
-                    'trainer' => $request->trainer_name,
-                    'lokasi_training' => $request->location,
-                    'start_date' => $request->date,
-                    'end_date' => $request->end_date,
-                    'tanggal_pelaksanaan' => $tanggalPelaksanaan,
-                    'total_hari' => $totalHari,
-                    'total_jam' => $totalJam,
-                    'updated_at' => now(),
-                ]);
 
             $path = $request->file('file')->getRealPath();
             $spreadsheet = IOFactory::load($path);
@@ -408,7 +385,7 @@ class NonRegulerDailyClassController extends Controller
                         'trainee_id' => $trainee->id,
                         'attendance_date' => $d,
                     ], [
-                        'status' => 'belum',
+                        'status' => 'tidak_hadir',
                     ]);
                 }
 
@@ -479,7 +456,7 @@ class NonRegulerDailyClassController extends Controller
                     'trainee_id' => $trainee->id,
                     'attendance_date' => $d->format('Y-m-d'),
                 ], [
-                    'status' => 'belum',
+                    'status' => 'tidak_hadir',
                 ]);
             }
 
@@ -499,16 +476,52 @@ class NonRegulerDailyClassController extends Controller
         $request->validate([
             'trainee_id' => 'required|exists:trainees,id',
             'attendance_date' => 'required|date',
-            'status' => 'required|in:hadir,sakit,izin,alpha',
+            'status' => 'required|in:hadir,tidak_hadir',
         ]);
+
+        $updateData = ['status' => $request->status];
+        if ($request->status === 'tidak_hadir') {
+            $updateData['scanned_at'] = null;
+        }
 
         Attendance::updateOrCreate(
             ['daily_class_id' => $dailyClass->id, 'trainee_id' => $request->trainee_id, 'attendance_date' => $request->attendance_date],
-            ['status' => $request->status]
+            $updateData
         );
+
+        $trainee = Trainee::find($request->trainee_id);
 
         if ($request->status === 'hadir') {
             UpdateTrainingRecordJob::dispatchSync($request->trainee_id, $dailyClass->id, $request->attendance_date);
+        } else {
+            // Jika status diubah menjadi Tidak Hadir:
+            if ($trainee) {
+                $hasOtherHadir = Attendance::where('daily_class_id', $dailyClass->id)
+                    ->where('trainee_id', $request->trainee_id)
+                    ->where('status', 'hadir')
+                    ->where('attendance_date', '!=', $request->attendance_date)
+                    ->exists();
+
+                if (! $hasOtherHadir) {
+                    // Jika sama sekali tidak ada hari hadir di kelas ini, hapus dari training_records
+                    DB::table('training_records')
+                        ->where('participant_identifier', $trainee->nik)
+                        ->where('nama_pelatihan', $dailyClass->title)
+                        ->delete();
+                } else {
+                    // Masih ada hari lain yang berstatus hadir, sinkronkan ulang
+                    $otherDate = Attendance::where('daily_class_id', $dailyClass->id)
+                        ->where('trainee_id', $request->trainee_id)
+                        ->where('status', 'hadir')
+                        ->value('attendance_date');
+                    UpdateTrainingRecordJob::dispatchSync($request->trainee_id, $dailyClass->id, $otherDate);
+                }
+
+                Cache::forever('tr_cache_version', ((int) Cache::get('tr_cache_version', 1)) + 1);
+                Cache::forget('tr_years');
+                Cache::forever('dashboard_cache_version', ((int) Cache::get('dashboard_cache_version', 1)) + 1);
+                Cache::forever('rvb_cache_version', ((int) Cache::get('rvb_cache_version', 1)) + 1);
+            }
         }
 
         return back()->with('success', 'Status absensi berhasil diperbarui.');
@@ -639,16 +652,6 @@ class NonRegulerDailyClassController extends Controller
             'region' => null,
         ]);
 
-        DB::table('program_non_reguler')
-            ->where('jenis_pelatihan', $dailyClass->title)
-            ->update([
-                'start_date' => null,
-                'end_date' => null,
-                'trainer' => null,
-                'lokasi_training' => null,
-                'region' => 'Nasional',
-            ]);
-
         return back()->with('success', 'Semua peserta berhasil dihapus. Kelas kembali kosong.');
     }
 
@@ -713,7 +716,7 @@ class NonRegulerDailyClassController extends Controller
                 ]);
             }
 
-            $message = 'Pelatihan "' . $dailyClass->title . '" telah selesai dan diarsipkan ke Riwayat Pelatihan. Materi tetap tersedia di Daftar Materi dalam kondisi kosong untuk sesi berikutnya.';
+            $message = 'Program "' . $dailyClass->title . '" telah selesai dan dipindahkan ke Riwayat Program.';
         } else {
             // Aktifkan kembali dari riwayat:
             // Jika ada card placeholder kosong yang belum terpakai untuk materi ini, hapus dulu agar tidak double
@@ -736,7 +739,7 @@ class NonRegulerDailyClassController extends Controller
                 'completed_at' => null,
             ]);
 
-            $message = 'Materi "' . $dailyClass->title . '" berhasil dikembalikan ke Daftar Materi Aktif.';
+            $message = 'Program "' . $dailyClass->title . '" berhasil dikembalikan ke Daftar Program Aktif.';
         }
 
         if (request()->headers->get('referer') && str_contains(request()->headers->get('referer'), 'daily-classes/' . $dailyClass->id)) {
@@ -748,8 +751,20 @@ class NonRegulerDailyClassController extends Controller
 
     public function destroy(DailyClass $dailyClass)
     {
-        // Get all trainee IDs from this class before we delete their attendances
-        $traineeIds = Attendance::where('daily_class_id', $dailyClass->id)->pluck('trainee_id')->unique();
+        // Get all trainee IDs and clean up training_records created for this class if any
+        $trainees = Trainee::whereIn('id', Attendance::where('daily_class_id', $dailyClass->id)->pluck('trainee_id'))->get();
+        foreach ($trainees as $t) {
+            DB::table('training_records')
+                ->where('participant_identifier', $t->nik)
+                ->where('nama_pelatihan', $dailyClass->title)
+                ->delete();
+        }
+        Cache::forever('tr_cache_version', ((int) Cache::get('tr_cache_version', 1)) + 1);
+        Cache::forget('tr_years');
+        Cache::forever('dashboard_cache_version', ((int) Cache::get('dashboard_cache_version', 1)) + 1);
+        Cache::forever('rvb_cache_version', ((int) Cache::get('rvb_cache_version', 1)) + 1);
+
+        $traineeIds = $trainees->pluck('id')->unique();
 
         // Delete all attendances for this class
         Attendance::where('daily_class_id', $dailyClass->id)->delete();
@@ -768,12 +783,9 @@ class NonRegulerDailyClassController extends Controller
         }
 
         // Finally, delete the class
-        $classTitle = $dailyClass->title;
         $dailyClass->delete();
 
-        DB::table('program_non_reguler')->where('jenis_pelatihan', $classTitle)->delete();
-
-        return back()->with('success', 'Materi beserta pesertanya berhasil dihapus permanen.');
+        return back()->with('success', 'Program beserta pesertanya berhasil dihapus permanen.');
     }
 
     public function previewCertificate(Request $request, DailyClass $dailyClass)

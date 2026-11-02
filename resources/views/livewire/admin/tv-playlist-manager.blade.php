@@ -1,67 +1,3 @@
-<?php
-
-use Livewire\Component;
-use App\Models\TvPlaylist;
-use App\Models\Article;
-
-new class extends Component
-{
-    public $playlists = [];
-    public $articles = [];
-    
-    public $selectedArticle = '';
-    public $duration = 15;
-
-    public function mount()
-    {
-        $this->loadPlaylists();
-        $this->articles = Article::where('status', 'published')->latest()->get();
-    }
-
-    public function loadPlaylists()
-    {
-        $this->playlists = TvPlaylist::with('article')->orderBy('order')->get();
-    }
-
-    public function addPlaylist()
-    {
-        $this->validate([
-            'selectedArticle' => 'required|exists:articles,id',
-            'duration' => 'required|integer|min:5'
-        ]);
-
-        $maxOrder = TvPlaylist::max('order') ?? 0;
-
-        TvPlaylist::create([
-            'article_id' => $this->selectedArticle,
-            'duration_seconds' => $this->duration,
-            'order' => $maxOrder + 1
-        ]);
-
-        $this->selectedArticle = '';
-        $this->duration = 15;
-        $this->loadPlaylists();
-        
-        session()->flash('success', 'Artikel berhasil ditambahkan ke Playlist.');
-    }
-
-    public function removePlaylist($id)
-    {
-        TvPlaylist::findOrFail($id)->delete();
-        $this->loadPlaylists();
-        session()->flash('success', 'Item berhasil dihapus dari Playlist.');
-    }
-
-    public function updateOrder($orderedIds)
-    {
-        foreach ($orderedIds as $index => $id) {
-            TvPlaylist::where('id', $id)->update(['order' => $index + 1]);
-        }
-        $this->loadPlaylists();
-    }
-};
-?>
-
 <div>
     <x-slot name="title">Manajemen Playlist TV</x-slot>
     <x-slot name="header">Playlist TV Display</x-slot>
@@ -113,7 +49,7 @@ new class extends Component
                                     </div>
                                     
                                     @if($item->article && $item->article->featured_image)
-                                        <img src="{{ Storage::url($item->article->featured_image) }}" class="w-16 h-16 rounded-lg object-cover mr-4 border border-gray-200">
+                                        <img src="{{ Storage::url($item->article->featured_image) }}" class="w-16 h-16 rounded-lg object-cover mr-4 border border-gray-200" onerror="this.onerror=null; this.src='{{ asset('images/logofr.png') }}';">
                                     @else
                                         <div class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center mr-4 border border-gray-200 text-gray-400">
                                             <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>

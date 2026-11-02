@@ -35,7 +35,7 @@
             <a href="{{ route('artikel.show', $article->slug) }}" class="group bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition duration-300 border border-gray-100 dark:border-gray-700 flex flex-col">
                 <div class="relative h-56 overflow-hidden">
                     @if($article->featured_image)
-                        <img src="{{ Storage::url($article->featured_image) }}" alt="Cover" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <img src="{{ Storage::url($article->featured_image) }}" alt="Cover" class="w-full h-full object-cover group-hover:scale-105 transition duration-500" onerror="this.onerror=null; this.src='{{ asset('images/welcomefr.jpg') }}';">
                     @else
                         <div class="w-full h-full bg-[#114045] flex items-center justify-center opacity-90 group-hover:scale-105 transition duration-500">
                             <img src="{{ asset('images/logofr.png') }}" class="w-32 opacity-30">
