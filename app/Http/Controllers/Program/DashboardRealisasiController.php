@@ -138,16 +138,7 @@ class DashboardRealisasiController extends Controller
                 ->merge(ProgramNonReguler::whereNotNull('start_date')->pluck('start_date')->map(fn ($d) => (int) date('Y', strtotime($d))))
                 ->map(fn ($y) => (int) $y)->filter()->all();
 
-            $years = collect([2024, 2025, 2026, 2027])
-                ->merge($trYears)
-                ->merge($trDateYears)
-                ->merge($regYears)
-                ->merge($nonRegYears)
-                ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
-                ->unique()
-                ->sort()
-                ->values()
-                ->all();
+            $years = ProgramFilterHelper::getAvailableYears();
 
             $regulerRegions = ProgramReguler::distinct()->pluck('Region')->filter()->map(fn ($r) => trim((string) $r));
             $nonRegulerRegions = ProgramNonReguler::distinct()->pluck('region')->filter()->map(fn ($r) => trim((string) $r));
@@ -927,7 +918,7 @@ class DashboardRealisasiController extends Controller
 
         $monthlyPesertaMap = array_fill(1, 12, 0);
         $monthlyProgramSets = array_fill(1, 12, []);
-        $monthlyParticipantSeen = array_fill(1, 12, []);
+        $regulerParticipantSeen = [];
 
         foreach ($chartYearRecords as $r) {
             $mCode = strtoupper(substr(trim((string) $r->bulan), 0, 3));
@@ -935,62 +926,41 @@ class DashboardRealisasiController extends Controller
             if (! $mNum && $r->training_date) {
                 $mNum = (int) date('n', strtotime($r->training_date));
             }
-
-            $parentMonths = [];
-            if ($r->program_type === 'reguler' && $r->program_id && isset($chartRegulerMap[$r->program_id])) {
-                $p = $chartRegulerMap[$r->program_id];
-                $dates = is_array($p->tanggal_pelaksanaan) ? $p->tanggal_pelaksanaan : json_decode($p->tanggal_pelaksanaan ?? '[]', true);
-                if (is_array($dates)) {
-                    foreach ($dates as $d) {
-                        if ($d && (int) date('Y', strtotime($d)) === (int) $year) $parentMonths[] = (int) date('n', strtotime($d));
-                    }
-                }
-                if (empty($parentMonths) && $p->Mulai_program && (int) date('Y', strtotime($p->Mulai_program)) === (int) $year) {
-                    $parentMonths[] = (int) date('n', strtotime($p->Mulai_program));
-                }
-            } elseif ($r->program_type === 'non_reguler' && $r->program_id && isset($chartNonRegulerMap[$r->program_id])) {
-                $p = $chartNonRegulerMap[$r->program_id];
-                $dates = is_array($p->tanggal_pelaksanaan) ? $p->tanggal_pelaksanaan : json_decode($p->tanggal_pelaksanaan ?? '[]', true);
-                if (is_array($dates)) {
-                    foreach ($dates as $d) {
-                        if ($d && (int) date('Y', strtotime($d)) === (int) $year) $parentMonths[] = (int) date('n', strtotime($d));
-                    }
-                }
-                if (empty($parentMonths) && $p->start_date && (int) date('Y', strtotime($p->start_date)) === (int) $year) {
-                    $parentMonths[] = (int) date('n', strtotime($p->start_date));
-                }
-            }
-            $parentMonths = array_values(array_unique(array_filter($parentMonths)));
-            if (! empty($parentMonths) && (! $mNum || ! in_array($mNum, $parentMonths, true))) {
-                $mNum = $parentMonths[0];
+            if (! $mNum || $mNum > 12) {
+                continue;
             }
 
-            if ($mNum && isset($monthlyPesertaMap[$mNum])) {
-                $progKey = $r->program_id ? ($r->program_type.':'.$r->program_id) : ($r->nama_pelatihan ?: $r->notes);
-                if ($r->program_type === 'reguler') {
-                    $pKey = $r->participant_name ? trim(strtolower($r->participant_name)) : ($r->participant_identifier ?: $r->id);
-                    if (! isset($monthlyParticipantSeen[$mNum][$progKey][$pKey])) {
-                        $monthlyParticipantSeen[$mNum][$progKey][$pKey] = true;
-                        $monthlyPesertaMap[$mNum]++;
-                    }
-                } else {
+            $cleanName = strtolower(trim((string) ($r->nama_pelatihan ?: $r->notes)));
+            if ($cleanName === '') {
+                continue;
+            }
+
+            $cleanRegion = strtolower(trim((string) ($r->region ?: 'nasional')));
+            if (strcasecmp($cleanRegion, 'kaltim fr') === 0 || strcasecmp($cleanRegion, 'kulbar') === 0) {
+                $cleanRegion = 'kaltim';
+            }
+
+            // Keunikan program per bulan: Nama Pelatihan + Region
+            $progRegionKey = $cleanName . '|' . $cleanRegion;
+            $monthlyProgramSets[$mNum][$progRegionKey] = true;
+
+            if ($r->program_type === 'reguler') {
+                $pKey = $r->participant_name ? trim(strtolower($r->participant_name)) : ($r->participant_identifier ?: $r->id);
+                $fullKey = $cleanName . '|' . $pKey;
+                if (! isset($regulerParticipantSeen[$fullKey])) {
+                    $regulerParticipantSeen[$fullKey] = true;
                     $monthlyPesertaMap[$mNum]++;
                 }
-                $monthlyProgramSets[$mNum][$progKey] = true;
+            } else {
+                $monthlyPesertaMap[$mNum]++;
             }
         }
-
-        $isDefaultView = ($year === 2026 && $region === 'all' && $programType === 'all' && $category === 'all' && ($selectedProgram === 'all' || $selectedProgram === ''));
-        $mentorBatchCounts2026 = [
-            1 => 11, 2 => 15, 3 => 16, 4 => 18, 5 => 31, 6 => 21,
-            7 => 17, 8 => 27, 9 => 36, 10 => 0, 11 => 0, 12 => 0,
-        ];
 
         $monthlyPeserta = [];
         $monthlyProgram = [];
         for ($m = 1; $m <= 12; $m++) {
             $monthlyPeserta[] = $monthlyPesertaMap[$m];
-            $monthlyProgram[] = ($isDefaultView && isset($mentorBatchCounts2026[$m])) ? $mentorBatchCounts2026[$m] : count($monthlyProgramSets[$m]);
+            $monthlyProgram[] = count($monthlyProgramSets[$m]);
         }
 
         return [

@@ -16,18 +16,20 @@ class ProgramFilterHelper
     {
         $years = collect();
 
-        // 1. Extract from ProgramReguler
+        // 1. Extract from ProgramReguler using standard resolver
         $regulers = ProgramReguler::all();
         foreach ($regulers as $p) {
-            foreach (self::extractYearsFromModel($p, true) as $y) {
+            $y = TrainingMetricService::resolveProgramRegulerYear($p);
+            if ($y >= 2000 && $y <= 2100) {
                 $years->push($y);
             }
         }
 
-        // 2. Extract from ProgramNonReguler
+        // 2. Extract from ProgramNonReguler using standard resolver
         $nonRegulers = ProgramNonReguler::all();
         foreach ($nonRegulers as $p) {
-            foreach (self::extractYearsFromModel($p, false) as $y) {
+            $y = TrainingMetricService::resolveProgramNonRegulerYear($p);
+            if ($y >= 2000 && $y <= 2100) {
                 $years->push($y);
             }
         }
@@ -41,16 +43,9 @@ class ProgramFilterHelper
             ->filter();
         $years = $years->concat($trYears);
 
-        $trDateYears = TrainingRecord::whereNotNull('training_date')
-            ->get()
-            ->map(fn ($r) => (int) date('Y', strtotime($r->training_date)))
-            ->filter();
-        $years = $years->concat($trDateYears);
-
-        // 4. Default baseline years (ensure standard system years are present)
-        $currentYear = (int) date('Y');
-        $years->push($currentYear);
-        $years = $years->concat([2024, 2025, 2026, 2027]);
+        if ($years->isEmpty()) {
+            $years->push((int) date('Y'));
+        }
 
         return $years->filter(fn ($y) => $y >= 2000 && $y <= 2100)
             ->unique()

@@ -41,6 +41,7 @@
         </a>
 
         @can('edit_cost')
+        @if($selectedMonth !== 'all')
         {{-- Hapus Semua Data Button --}}
         <button onclick="openDeleteAllModal()"
                 class="flex items-center gap-2 px-3.5 py-2 bg-red-50 border border-red-200 text-red-700 text-xs sm:text-sm font-semibold rounded-lg hover:bg-red-100 hover:border-red-300 transition-all shadow-sm"
@@ -55,6 +56,7 @@
             <i data-lucide="plus" class="w-4 h-4"></i>
             <span>Tambah Cost</span>
         </button>
+        @endif
         @endcan
     </div>
 </div>
@@ -382,6 +384,15 @@
         </div>
     </div>
 
+    @if($selectedMonth === 'all')
+    <div class="mx-5 mb-3 px-4 py-3 bg-amber-50/80 border border-amber-200/80 rounded-xl flex items-center gap-3 text-xs text-amber-900">
+        <i data-lucide="info" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+        <span>
+            <strong>Mode Akumulasi Tahunan:</strong> Data di bawah merupakan agregasi/akumulasi dari bulan ke bulan. Kolom aksi CRUD dinonaktifkan pada tampilan ini. Untuk mengedit atau menghapus data, silakan pilih bulan spesifik (Januari - Desember).
+        </span>
+    </div>
+    @endif
+
     <div class="overflow-x-auto">
         <table class="w-full text-sm text-left">
             <thead>
@@ -395,9 +406,11 @@
                     <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider text-right">Budget Tahunan (Rp)</th>
                     <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider text-center">% Realisasi</th>
                     @endif
-                    @can('edit_cost')
-                    <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider text-center w-24">Aksi</th>
-                    @endcan
+                    @if($selectedMonth !== 'all')
+                        @can('edit_cost')
+                        <th class="px-4 py-3 text-xs font-bold uppercase tracking-wider text-center w-24">Aksi</th>
+                        @endcan
+                    @endif
                 </tr>
             </thead>
             <tbody class="divide-y divide-[#F4F4F5]">
@@ -408,7 +421,7 @@
 
                 {{-- ================= CATEGORY HEADER ================= --}}
                 <tr class="bg-[#F9FAFB] border-t-2 border-[#E5E7EB]">
-                    <td colspan="{{ $selectedMonth === 'all' ? (auth()->user()?->can('edit_cost') ? 8 : 7) : (auth()->user()?->can('edit_cost') ? 6 : 5) }}" class="px-4 py-2.5">
+                    <td colspan="{{ $selectedMonth === 'all' ? 7 : (auth()->user()?->can('edit_cost') ? 6 : 5) }}" class="px-4 py-2.5">
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
                                 <span class="w-2.5 h-2.5 rounded-sm bg-[#4B6A34]"></span>
@@ -499,23 +512,25 @@
                     </td>
                     @endif
 
-                    @can('edit_cost')
-                    {{-- Aksi --}}
-                    <td class="px-4 py-3 text-center">
-                        <div class="flex items-center justify-center gap-1">
-                            <button onclick="openEditModal({{ $row->cost_id }})"
-                                    class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
-                                    title="Edit Cost">
-                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                            </button>
-                            <button onclick="openDeleteModal({{ $row->cost_id }}, '{{ addslashes($row->account_name) }}')"
-                                    class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                                    title="Hapus Cost">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            </button>
-                        </div>
-                    </td>
-                    @endcan
+                    @if($selectedMonth !== 'all')
+                        @can('edit_cost')
+                        {{-- Aksi --}}
+                        <td class="px-4 py-3 text-center">
+                            <div class="flex items-center justify-center gap-1">
+                                <button onclick="openEditModal({{ $row->cost_id }})"
+                                        class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors"
+                                        title="Edit Cost">
+                                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button onclick="openDeleteModal({{ $row->cost_id }}, '{{ addslashes($row->account_name) }}')"
+                                        class="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
+                                        title="Hapus Cost">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </td>
+                        @endcan
+                    @endif
                 </tr>
                 @endforeach
 
@@ -543,12 +558,16 @@
                         {{ $subTarget > 0 ? number_format($subPct, 1) . '%' : '-' }}
                     </td>
                     @endif
-                    <td></td>
+                    @if($selectedMonth !== 'all')
+                        @can('edit_cost')
+                        <td></td>
+                        @endcan
+                    @endif
                 </tr>
 
                 @empty
                 <tr>
-                    <td colspan="{{ $selectedMonth === 'all' ? 8 : 6 }}" class="px-5 py-16 text-center text-[#A1A1AA]">
+                    <td colspan="{{ $selectedMonth === 'all' ? 7 : (auth()->user()?->can('edit_cost') ? 6 : 5) }}" class="px-5 py-16 text-center text-[#A1A1AA]">
                         <div class="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-3 text-gray-400">
                             <i data-lucide="inbox" class="w-6 h-6"></i>
                         </div>
@@ -583,7 +602,11 @@
                         </span>
                     </td>
                     @endif
-                    <td></td>
+                    @if($selectedMonth !== 'all')
+                        @can('edit_cost')
+                        <td></td>
+                        @endcan
+                    @endif
                 </tr>
             </tfoot>
             @endif

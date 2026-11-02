@@ -2,6 +2,7 @@
 
 namespace App\Models\Program;
 
+use App\Services\TrainingMetricService;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
@@ -26,6 +27,16 @@ class ProgramReguler extends Model
         'staff' => 'integer',
         'lulus' => 'integer',
     ];
+
+    protected static function booted()
+    {
+        static::saved(function () {
+            TrainingMetricService::clearAllDashboardCaches();
+        });
+        static::deleted(function () {
+            TrainingMetricService::clearAllDashboardCaches();
+        });
+    }
 
     public function setStaffAttribute($value): void
     {

@@ -2,8 +2,10 @@
 
 namespace App\Models\Program;
 
+use App\Services\TrainingMetricService;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class TrainingRecord extends Model
 {
@@ -16,6 +18,21 @@ class TrainingRecord extends Model
     protected $guarded = [];
 
     protected $casts = ['training_date' => 'date:Y-m-d'];
+
+    protected static function booted()
+    {
+        static::saved(function () {
+            self::invalidateDashboardCaches();
+        });
+        static::deleted(function () {
+            self::invalidateDashboardCaches();
+        });
+    }
+
+    public static function invalidateDashboardCaches(): void
+    {
+        TrainingMetricService::clearAllDashboardCaches();
+    }
 
     public function displayNik(): ?string
     {

@@ -9,6 +9,7 @@ use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
 use App\Services\ExcelExporter;
 use App\Services\SpreadsheetReader;
+use App\Services\TrainingMetricService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -310,15 +311,19 @@ class ProgramBatchController extends Controller
             return null;
         });
 
-        return collect($regYears->all())
+        $years = collect($regYears->all())
             ->merge($nonRegYears->all())
-            ->merge([(int) date('Y')])
-            ->filter()
+            ->filter(fn ($v) => $v && $v >= 2000 && $v <= 2100)
             ->map(fn ($v) => (int) $v)
             ->unique()
             ->sortDesc()
-            ->values()
-            ->all();
+            ->values();
+
+        if ($years->isEmpty()) {
+            $years->push((int) date('Y'));
+        }
+
+        return $years->all();
     }
 
     private function percent(int $value, int $total): float
@@ -333,11 +338,7 @@ class ProgramBatchController extends Controller
 
     private function clearDashboardCache(): void
     {
-        Cache::put('dreal_cache_version', time());
-        Cache::put('dashboard_cache_version', time());
-        Cache::put('rvb_cache_version', time());
-        Cache::forget('dreal_filter_options');
-        Cache::forget('portal_dashboard_years');
+        TrainingMetricService::clearAllDashboardCaches();
     }
 
     public function store(Request $request, string $type)

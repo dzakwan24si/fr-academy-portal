@@ -10,6 +10,7 @@ use App\Models\Monitoring\MonitoringEmployee;
 use App\Models\Program\ProgramNonReguler;
 use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
+use App\Services\ProgramFilterHelper;
 use App\Services\SpreadsheetReader;
 use App\Services\TrainingMetricService;
 use Illuminate\Http\Request;
@@ -66,19 +67,7 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $years = Cache::remember('portal_dashboard_years', 300, function () {
-            $trYears = TrainingRecord::whereNotNull('tahun')->distinct()->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
-            $regYears = ProgramReguler::whereNotNull('Mulai_program')->pluck('Mulai_program')->map(fn ($d) => (int) date('Y', strtotime($d)))->filter()->all();
-            $nonRegYears = ProgramNonReguler::whereNotNull('start_date')->pluck('start_date')->map(fn ($d) => (int) date('Y', strtotime($d)))->filter()->all();
-
-            return collect([2024, 2025, 2026, 2027])
-                ->merge($trYears)
-                ->merge($regYears)
-                ->merge($nonRegYears)
-                ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
-                ->unique()
-                ->sort()
-                ->values()
-                ->all();
+            return ProgramFilterHelper::getAvailableYears();
         });
 
         $yearDefault = in_array(2026, $years, true) ? 2026 : ($years[count($years) - 1] ?? (int) date('Y'));

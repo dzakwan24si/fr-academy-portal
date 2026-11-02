@@ -7,6 +7,7 @@ use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
 use Carbon\Carbon;
 use DateTimeInterface;
+use Illuminate\Support\Facades\Cache;
 
 class TrainingMetricService
 {
@@ -351,5 +352,27 @@ class TrainingMetricService
         }
 
         return count($names);
+    }
+
+    /**
+     * Clear / invalidate all cached metrics and versions across dashboards,
+     * realisasi vs batch, training record, and dropdown options.
+     */
+    public static function clearAllDashboardCaches(): void
+    {
+        $now = time();
+        Cache::put('dashboard_cache_version', $now);
+        Cache::put('dreal_cache_version', $now);
+        Cache::put('rvb_cache_version', $now);
+        Cache::put('tr_cache_version', $now);
+
+        Cache::forget('portal_dashboard_years');
+        Cache::forget('dreal_filter_options');
+        Cache::forget('rvb_available_years');
+        Cache::forget('rvb_regions');
+        Cache::forget('rvb_sub_categories');
+        Cache::forget('rvb_activities');
+        Cache::forget('tr_years');
+        Cache::forget('tr_non_reg_subcats');
     }
 }

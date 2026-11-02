@@ -2,6 +2,7 @@
 
 namespace App\Models\Program;
 
+use App\Services\TrainingMetricService;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
@@ -16,4 +17,14 @@ class RealisasiVsBatch extends Model
     protected $primaryKey = 'realisasi_id';
 
     protected $guarded = [];
+
+    protected static function booted()
+    {
+        static::saved(function () {
+            TrainingMetricService::clearAllDashboardCaches();
+        });
+        static::deleted(function () {
+            TrainingMetricService::clearAllDashboardCaches();
+        });
+    }
 }

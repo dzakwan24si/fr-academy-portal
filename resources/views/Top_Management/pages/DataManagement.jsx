@@ -613,10 +613,11 @@ const DataManagement = () => {
       .filter(sub => sub && sub !== '-')
   )];
 
-  const uniqueYears = [...new Set([
-    ...data.map(item => resolveItemYear(item)),
-    2024, 2025, 2026, 2027
-  ].filter(y => y && y >= 2000 && y <= 2100))].sort((a, b) => b - a);
+  const uniqueYears = [...new Set(
+    data.map(item => resolveItemYear(item))
+      .filter(y => y && Number.isInteger(Number(y)) && Number(y) >= 2000 && Number(y) <= 2100)
+      .map(y => Number(y))
+  )].sort((a, b) => b - a);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -1713,7 +1714,7 @@ const DataManagement = () => {
                           <option value="">Pilih Region</option>
                           <option value="Riau">Riau</option>
                           <option value="Kalbar">Kalbar</option>
-                          <option value="Kaltim FR">Kaltim FR</option>
+                          <option value="Kaltim">Kaltim</option>
                           <option value="Corporate">Corporate</option>
                         </select>
                       </div>
@@ -1872,7 +1873,7 @@ const DataManagement = () => {
                           <option value="">Pilih Region</option>
                           <option value="Riau">Riau</option>
                           <option value="Kalbar">Kalbar</option>
-                          <option value="Kaltim FR">Kaltim FR</option>
+                          <option value="Kaltim">Kaltim</option>
                           <option value="Corporate">Corporate</option>
                         </select>
                       </div>

@@ -8,6 +8,7 @@ use App\Models\Program\ProgramNonReguler;
 use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
 use App\Services\ExcelExporter;
+use App\Services\ProgramFilterHelper;
 use App\Services\SpreadsheetReader;
 use App\Services\TrainingMetricService;
 use Illuminate\Http\Request;
@@ -46,19 +47,7 @@ class TrainingRecordController extends Controller
         $activities = $this->activities();
 
         $years = Cache::remember('tr_years', 300, function () {
-            $trYears = TrainingRecord::whereNotNull('tahun')->distinct()->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
-            $regYears = ProgramReguler::whereNotNull('Mulai_program')->pluck('Mulai_program')->map(fn ($d) => (int) date('Y', strtotime($d)))->filter()->all();
-            $nonRegYears = ProgramNonReguler::whereNotNull('start_date')->pluck('start_date')->map(fn ($d) => (int) date('Y', strtotime($d)))->filter()->all();
-
-            return collect([2024, 2025, 2026, 2027])
-                ->merge($trYears)
-                ->merge($regYears)
-                ->merge($nonRegYears)
-                ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
-                ->unique()
-                ->sort()
-                ->values()
-                ->all();
+            return ProgramFilterHelper::getAvailableYears();
         });
 
         $nonRegulerSubCategories = Cache::remember('tr_non_reg_subcats', 300, function () {
@@ -93,11 +82,7 @@ class TrainingRecordController extends Controller
 
     private function clearTrCache(): void
     {
-        Cache::increment('tr_cache_version');
-        Cache::forget('tr_years');
-        Cache::forget('tr_non_reg_subcats');
-        Cache::increment('dashboard_cache_version');
-        Cache::increment('rvb_cache_version');
+        TrainingRecord::invalidateDashboardCaches();
     }
 
     public function store(Request $request)
@@ -338,9 +323,13 @@ class TrainingRecordController extends Controller
     public function template(): StreamedResponse
     {
         $headers = ['No', 'NIK', 'Nama', 'Jenis Kelamin', 'Nama PT', 'Department', 'lokasi Kerja', 'Group', 'REGION', 'GOL', 'Jabatan', 'Tgl', 'Bln', 'Thn', 'Jml Hari', 'Jam Pelatihan', 'Nama Pelatihan', 'Instruktur', 'Tempat Pelatihan', 'Reg / Non Reg', 'Keterangan', 'Internal/Eksternal', 'Level', 'Periode'];
-        $exampleRow = ['1', '12345678', 'Contoh Peserta', 'Male', 'PT FR', 'Agronomy', 'Estate A', 'Group 1', 'Kalbar', 'Staf', 'Asisten', '15', 'JAN', 2026, '2', '16', 'Training Leadership', 'Budi Santoso', 'Training Center Riau', 'Reguler', 'Contoh Catatan', 'Internal', 'Staff', '2026-1'];
+        $exampleRows = [
+            ['1', '10001001', 'Contoh Peserta 1', 'Male', 'PT FR', 'Agronomy', 'Estate A', 'Group 1', 'Riau', 'Staf', 'Asisten', '15', 'JAN', 2026, '2', '16', 'Training Leadership', 'Budi Santoso', 'Training Center Riau', 'Non Reguler', 'Contoh Catatan', 'Internal', 'Staff', 'Q1'],
+            ['2', '10001002', 'Contoh Peserta 2', 'Male', 'PT FR', 'Mill', 'PKS 1', 'Group 2', 'Kaltim', 'Staf', 'Mandor', '20', 'APR', 2026, '3', '24', 'Teknik Pemeliharaan Mill', 'Agus Wijaya', 'Training Center Kaltim', 'Non Reguler', 'Contoh Catatan', 'Internal', 'Non Staff', 'Q2'],
+            ['3', '10001003', 'Contoh Peserta 3', 'Female', 'PT FR', 'Finance', 'HO Pekanbaru', 'Group 1', 'Kalbar', 'Staf', 'Officer', '10', 'AGU', 2026, '1', '8', 'Financial Management', 'Dewi Lestari', 'Training Center Kalbar', 'Non Reguler', 'Contoh Catatan', 'Internal', 'Staff', 'Q3'],
+        ];
 
-        return ExcelExporter::download('training_record_template.xlsx', $headers, [$exampleRow], 'Template TR');
+        return ExcelExporter::download('training_record_template.xlsx', $headers, $exampleRows, 'Template TR');
     }
 
     private function validated(Request $request, ?TrainingRecord $record = null): array

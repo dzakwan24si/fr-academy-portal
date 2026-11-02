@@ -9,6 +9,8 @@ use App\Models\Program\ProgramReguler;
 use App\Models\Program\RealisasiVsBatch;
 use App\Models\Program\TrainingRecord;
 use App\Services\ExcelExporter;
+use App\Services\ProgramFilterHelper;
+use App\Services\RegionHelper;
 use App\Services\SpreadsheetReader;
 use App\Services\TrainingMetricService;
 use Illuminate\Http\Request;
@@ -78,8 +80,7 @@ class RealisasiVsBatchController extends Controller
             ['program_type' => $data['program_type'], 'program_id' => $data['program_id'], 'tahun' => $data['tahun'], 'bulan' => $month],
             ['legacy_realized_batch' => $data['legacy_realized_batch'] ?? 0, 'legacy_realized_participants' => $data['legacy_realized_participants'] ?? 0]
         );
-        Cache::increment('rvb_cache_version');
-        Cache::forget('rvb_available_years');
+        $this->clearRvbCache();
 
         return back()->with('success', 'Realisasi berhasil dibuat tanpa mengubah nilai hasil perhitungan.');
     }
@@ -87,8 +88,7 @@ class RealisasiVsBatchController extends Controller
     public function destroy($id)
     {
         RealisasiVsBatch::findOrFail($id)->delete();
-        Cache::increment('rvb_cache_version');
-        Cache::forget('rvb_available_years');
+        $this->clearRvbCache();
 
         return back()->with('success', 'Data realisasi dihapus.');
     }
@@ -104,8 +104,7 @@ class RealisasiVsBatchController extends Controller
             "Menghapus semua data realisasi vs batch ({$count} data)",
             ['count' => $count]
         );
-        Cache::increment('rvb_cache_version');
-        Cache::forget('rvb_available_years');
+        $this->clearRvbCache();
 
         return back()->with('success', "Semua data realisasi vs batch ({$count} data) berhasil dihapus.");
     }
@@ -158,8 +157,7 @@ class RealisasiVsBatchController extends Controller
             "Mengimport {$imported} data realisasi vs target dari file ".$request->file('file')->getClientOriginalName(),
             ['filename' => $request->file('file')->getClientOriginalName(), 'count' => $imported, 'skipped' => $skipped]
         );
-        Cache::increment('rvb_cache_version');
-        Cache::forget('rvb_available_years');
+        $this->clearRvbCache();
 
         return back()->with('success', "{$imported} data realisasi berhasil disimpan".($skipped ? ". {$skipped} baris dilewati karena ID atau bulan tidak valid" : '').'. Nilai akan digantikan otomatis saat Training Record tersedia.');
     }
@@ -208,147 +206,165 @@ class RealisasiVsBatchController extends Controller
         $cachedData = Cache::remember($cacheKey, 180, function () use ($year, $month, $type, $region, $subKategori) {
             $programs = collect();
             if ($type !== 'reguler') {
-                $programs = $programs->concat(ProgramNonReguler::all()->map(fn ($program) => $this->programData($program, 'non_reguler', $year, $month)));
+                $programs = $programs->concat(
+                    ProgramNonReguler::all()->map(fn ($program) => $this->programData($program, 'non_reguler', $year, $month))
+                );
             }
-        if ($type !== 'non_reguler') {
-            $programs = $programs->concat(ProgramReguler::all()->map(fn ($program) => $this->programData($program, 'reguler', $year, $month)));
-        }
-        $programs = $programs->filter(fn ($program) => $program !== null);
-        if ($region !== '') {
-            $programs = $programs->filter(fn ($program) => strtolower(trim((string) $program['region'])) === strtolower($region));
-        }
-        if ($type === 'non_reguler' && $subKategori !== '') {
-            $programs = $programs->filter(fn ($program) => strtolower(trim((string) ($program['sub_kategori'] ?? ''))) === strtolower($subKategori));
-        }
-
-        // Pre-filter TrainingRecords: fetch only records from the target window ($year-1 to $year, or null/0)
-        $rawRecords = TrainingRecord::where('status', 'valid')
-            ->where(function ($q) use ($year) {
-                $q->whereBetween('tahun', [$year - 1, $year])
-                    ->orWhereNull('tahun')
-                    ->orWhere('tahun', 0);
-            })
-            ->get();
-
-        // Pre-process relevant records: cache recordName, cleanWords, monthNum, region once
-        $processedRecords = [];
-        foreach ($rawRecords as $r) {
-            $rMonth = $r->bulan ? $this->monthNumber($r->bulan) : null;
-            if ($month !== null && $rMonth !== null && $rMonth > $month) {
-                continue;
+            if ($type !== 'non_reguler') {
+                $programs = $programs->concat(
+                    ProgramReguler::all()
+                        ->filter(fn ($p) => ! $p->isMandor())
+                        ->map(fn ($program) => $this->programData($program, 'reguler', $year, $month))
+                );
+            }
+            $programs = $programs->filter(fn ($program) => $program !== null);
+            if ($region !== '') {
+                $programs = $programs->filter(fn ($program) => strtolower(trim((string) $program['region'])) === strtolower($region));
+            }
+            if ($type === 'non_reguler' && $subKategori !== '') {
+                $programs = $programs->filter(fn ($program) => strtolower(trim((string) ($program['sub_kategori'] ?? ''))) === strtolower($subKategori));
             }
 
-            $name = strtolower(trim((string) $r->activityName()));
-            $clean = preg_replace('/[^\w\s]/u', ' ', $name);
-            $words = array_values(array_filter(explode(' ', $clean)));
-
-            $processedRecords[] = (object) [
-                'id' => $r->id,
-                'program_type' => $r->program_type,
-                'program_id' => (int) $r->program_id,
-                'region' => strtolower(trim((string) ($r->region ?? ''))),
-                'tahun' => (int) $r->tahun,
-                'bulan' => $r->bulan,
-                'monthNum' => $rMonth,
-                'name' => $name,
-                'clean' => $clean,
-                'words' => $words,
-                'firstTwoWords' => count($words) >= 2 ? $words[0].' '.$words[1] : ($words[0] ?? ''),
-                'activityDates' => $r->activityDates(),
-                'activity' => $r->activity(),
-            ];
-        }
-
-        return $programs->map(function ($program) use ($year, $month, $processedRecords) {
-            $progType = $program['program_type'];
-            $progId = (int) $program['program_id'];
-            $progName = strtolower(trim((string) ($program['program_name'] ?? '')));
-            $cleanProg = preg_replace('/[^\w\s]/u', ' ', $progName);
-            $progWords = array_values(array_filter(explode(' ', $cleanProg)));
-            $firstTwoProg = implode(' ', array_slice($progWords, 0, 2));
-            $isCarryOver = str_contains($progName, 'carry over');
-            $progRegion = strtolower(trim((string) ($program['region'] ?? '')));
-            $normProgRegion = $this->normalizeRegion($progRegion);
-
-            $matchingCount = 0;
-
-            foreach ($processedRecords as $r) {
-                // 1. Check Region for non_reguler
-                if ($progType === 'non_reguler' && $progRegion !== '') {
-                    $recordRegion = $r->region;
-                    if ($recordRegion === '') {
-                        $act = $r->activity;
-                        $recordRegion = strtolower(trim((string) ($act?->Region ?? $act?->region ?? '')));
-                    }
-                    if ($recordRegion !== '') {
-                        if ($recordRegion !== $progRegion
-                            && ! str_contains($recordRegion, $progRegion)
-                            && ! str_contains($progRegion, $recordRegion)
-                            && $this->normalizeRegion($recordRegion) !== $normProgRegion) {
-                            continue;
-                        }
-                    }
-                }
-
-                // 2. Check Year & Month
-                if ($r->tahun > 0 || $r->bulan) {
-                    if ($r->tahun > 0 && $r->tahun !== $year) {
-                        if (! ($isCarryOver && ($r->tahun === $year - 1 || $r->tahun === $year))) {
-                            continue;
-                        }
-                    }
-                    if ($r->bulan) {
-                        if ($month !== null && ($r->monthNum === null || $r->monthNum > $month)) {
-                            continue;
-                        }
-                    }
+            // Training records filtered by year and cumulative month
+            $allTrainingRecords = TrainingRecord::where('status', 'valid')->get();
+            $filteredRecords = $allTrainingRecords->filter(function ($r) use ($year, $month) {
+                $rYear = null;
+                if (! empty($r->tahun) && is_numeric($r->tahun)) {
+                    $rYear = (int) $r->tahun;
+                } elseif (! empty($r->training_date)) {
+                    $rYear = (int) date('Y', strtotime($r->training_date));
+                } elseif (! empty($r->created_at)) {
+                    $rYear = (int) date('Y', strtotime($r->created_at));
                 } else {
-                    $hasDate = false;
-                    foreach ($r->activityDates as $d) {
-                        if ($d && (int) date('Y', strtotime($d)) === $year && ($month === null || (int) date('n', strtotime($d)) <= $month)) {
-                            $hasDate = true;
-                            break;
-                        }
+                    $rYear = 2026;
+                }
+
+                if ($rYear !== $year) {
+                    return false;
+                }
+
+                if ($month !== null) {
+                    $mNum = null;
+                    if ($r->bulan) {
+                        $mNum = $this->monthNumber($r->bulan);
                     }
-                    if (! $hasDate) {
-                        continue;
+                    if (! $mNum && $r->training_date) {
+                        $mNum = (int) date('n', strtotime($r->training_date));
+                    }
+                    if ($mNum !== null && $mNum > $month) {
+                        return false;
                     }
                 }
 
-                // 3. Match Activity
-                $isMatch = false;
-                if ($r->program_type === $progType && $r->program_id === $progId) {
-                    $isMatch = true;
-                } elseif ($r->name !== '' && $progName !== '') {
-                    if ($r->name === $progName || str_starts_with($r->name, $progName) || str_starts_with($progName, $r->name)) {
-                        $isMatch = true;
-                    } elseif (! empty($r->words) && ! empty($progWords)) {
-                        if (count($progWords) === 1) {
-                            $isMatch = in_array($progWords[0], $r->words, true) || str_contains($r->clean, $progWords[0]);
-                        } else {
-                            if (count($r->words) >= 2 && $r->firstTwoWords === $firstTwoProg) {
-                                $isMatch = true;
-                            } elseif ($firstTwoProg !== '' && str_contains($r->clean, $firstTwoProg)) {
-                                $isMatch = true;
-                            }
-                        }
-                    }
-                }
+                return true;
+            });
 
-                if ($isMatch) {
-                    $matchingCount++;
+            $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
+            $normName = function ($str) {
+                $str = strtolower(trim((string) $str));
+                $str = preg_replace('/\s*\(.*?\)\s*/', '', $str);
+
+                return preg_replace('/[^a-z0-9]/', '', $str);
+            };
+
+            $matchesProg = function ($rNorm, $bNorm, $rRaw, $bRaw) {
+                if ($rNorm === $bNorm) return true;
+                if (str_starts_with($rNorm, 'frmengajar') && (str_starts_with($bNorm, 'frmengajar') || str_contains($bRaw, 'fr mengajar'))) return true;
+                $isRTot = (preg_match('/\b(tot)\b/i', $rRaw) || str_contains(strtolower($rRaw), 'training of trainers')) && ! str_contains(strtolower($rRaw), 'total productive maintenance');
+                $isBTot = (preg_match('/\b(tot)\b/i', $bRaw) || str_contains(strtolower($bRaw), 'training of trainers')) && ! str_contains(strtolower($bRaw), 'total productive maintenance');
+                if ($isRTot && $isBTot) return true;
+                if (str_contains($rNorm, 'bearing') && str_contains($bNorm, 'bearing')) return true;
+                if (str_contains($rNorm, 'mentoringasistantadmin') && str_contains($bNorm, 'mentoringasistantadmin')) return true;
+                if ((str_contains($rNorm, 'klinikkerjamandor') || str_contains($rNorm, 'klinikkinerjamandor')) && str_contains($bNorm, 'klinikkerjamandor')) return true;
+                if (str_contains($rNorm, 'pamongtpa') && str_contains($bNorm, 'pamongtpa')) return true;
+                if (str_contains($rNorm, 'dumptruckmitsubi') && str_contains($bNorm, 'dumptruckmitsubi')) return true;
+                if (str_contains($rNorm, 'analisapekerjaan') && str_contains($bNorm, 'analisapekerjaan')) return true;
+                if (str_contains($rNorm, 'yieldmaking') && str_contains($bNorm, 'yieldmaking')) return true;
+                return false;
+            };
+
+            // Reguler records
+            $regRecords = $filteredRecords->where('program_type', 'reguler');
+
+            // Non-reguler matching
+            $nonRegRecords = $filteredRecords->where('program_type', 'non_reguler');
+            $nonRegMasterIds = array_flip($programs->where('program_type', 'non_reguler')->pluck('program_id')->all());
+
+            $nonRegRecordsByProgId = [];
+            $unassignedNonReg = [];
+            foreach ($nonRegRecords as $r) {
+                $pId = $r->program_id ? (int) $r->program_id : null;
+                if ($pId && isset($nonRegMasterIds[$pId])) {
+                    $nonRegRecordsByProgId[$pId][] = $r;
+                } else {
+                    $unassignedNonReg[] = $r;
                 }
             }
 
-            $realizedParticipants = $matchingCount;
-            if ($program['program_type'] === 'reguler') {
-                $realizedBatch = $realizedParticipants > 0 ? 1 : 0;
-            } else {
-                $explicitBatch = (int) ($program['realisasi_batch'] ?? $program['total_batch'] ?? 0);
-                $realizedBatch = $explicitBatch > 0 ? $explicitBatch : ($realizedParticipants > 0 ? 1 : 0);
+            $matchedUnassignedNonReg = [];
+            $nonRegRecordsMap = [];
+            foreach ($programs->where('program_type', 'non_reguler') as $p) {
+                $bId = (int) $p['program_id'];
+                $bName = trim((string) $p['program_name']);
+                $bNorm = $normName($bName);
+                $bRaw = strtolower($bName);
+                $bRegion = trim((string) $p['region']);
+
+                $list = $nonRegRecordsByProgId[$bId] ?? [];
+                foreach ($unassignedNonReg as $r) {
+                    if (isset($matchedUnassignedNonReg[$r->id])) continue;
+                    if ($bRegion !== '' && ! RegionHelper::matches($r->region, $bRegion)) continue;
+                    $rNorm = $normName($r->nama_pelatihan);
+                    $rRaw = (string) $r->nama_pelatihan;
+
+                    if ($matchesProg($rNorm, $bNorm, $rRaw, $bRaw)) {
+                        $list[] = $r;
+                        $matchedUnassignedNonReg[$r->id] = true;
+                    }
+                }
+                $nonRegRecordsMap[$bId] = $list;
             }
 
-                $row = array_merge($program, ['realisasi_id' => null, 'realized_batch' => $realizedBatch, 'realized_participants' => $realizedParticipants]);
+            return $programs->map(function ($program) use ($regRecords, $nonRegRecordsMap, $cleanStr) {
+                $progType = $program['program_type'];
+                $progId = (int) $program['program_id'];
+
+                if ($progType === 'reguler') {
+                    $pNameNorm = strtolower($cleanStr(preg_replace('/\s*\(.*?\)\s*/', '', $program['program_name'])));
+                    $pRecs = $regRecords->filter(function ($r) use ($progId, $pNameNorm, $cleanStr) {
+                        if ((int) $r->program_id === $progId) return true;
+                        if (! $r->program_id) {
+                            $notes = strtolower($cleanStr($r->notes ?? ''));
+                            $nama = strtolower($cleanStr($r->nama_pelatihan ?? ''));
+                            return str_contains($notes, $pNameNorm) || str_contains($nama, $pNameNorm);
+                        }
+                        return false;
+                    });
+
+                    $seen = [];
+                    $uniqueCount = 0;
+                    foreach ($pRecs as $r) {
+                        $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
+                        if (! isset($seen[$ident])) {
+                            $seen[$ident] = true;
+                            $uniqueCount++;
+                        }
+                    }
+                    $realizedParticipants = $uniqueCount;
+                    $explicitBatch = (int) ($program['realisasi_batch'] ?? 0);
+                    $realizedBatch = $explicitBatch > 0 ? $explicitBatch : ($realizedParticipants > 0 ? 1 : 0);
+                } else {
+                    $records = $nonRegRecordsMap[$progId] ?? [];
+                    $realizedParticipants = count($records);
+                    $explicitBatch = (int) ($program['realisasi_batch'] ?? 0);
+                    $realizedBatch = $explicitBatch > 0 ? $explicitBatch : ($realizedParticipants > 0 ? 1 : 0);
+                }
+
+                $row = array_merge($program, [
+                    'realisasi_id' => null,
+                    'realized_batch' => $realizedBatch,
+                    'realized_participants' => $realizedParticipants,
+                ]);
                 $row['batch_percent'] = $this->percent($row['realized_batch'], $row['planned_batch']);
                 $row['participant_percent'] = $this->percent($row['realized_participants'], $row['planned_participants']);
 
@@ -359,21 +375,34 @@ class RealisasiVsBatchController extends Controller
         return collect($cachedData)->map(fn ($item) => (object) $item);
     }
 
+    private function clearRvbCache(): void
+    {
+        TrainingMetricService::clearAllDashboardCaches();
+    }
+
     public function updateBatch(Request $request)
     {
         $request->validate([
-            'program_type' => 'required|in:non_reguler',
+            'program_type' => 'required|in:reguler,non_reguler',
             'program_id' => 'required|integer',
             'realisasi_batch' => 'required|integer|min:0',
         ]);
 
+        $type = $request->input('program_type');
         $id = $request->input('program_id');
         $val = (int) $request->input('realisasi_batch');
 
-        $program = ProgramNonReguler::findOrFail($id);
-        $program->update(['realisasi_batch' => $val]);
-        ActivityLog::log('Edit', 'Realisasi Vs Target', "Mengubah realisasi batch program non-reguler '{$program->jenis_pelatihan}' menjadi {$val}");
-        Cache::increment('rvb_cache_version');
+        if ($type === 'non_reguler') {
+            $program = ProgramNonReguler::findOrFail($id);
+            $program->update(['realisasi_batch' => $val]);
+            ActivityLog::log('Edit', 'Realisasi Vs Target', "Mengubah realisasi batch program non-reguler '{$program->jenis_pelatihan}' menjadi {$val}");
+        } else {
+            $program = ProgramReguler::findOrFail($id);
+            $program->update(['Batch' => $val]);
+            ActivityLog::log('Edit', 'Realisasi Vs Target', "Mengubah realisasi batch program reguler '{$program->Training_Program}' menjadi {$val}");
+        }
+
+        $this->clearRvbCache();
 
         return response()->json(['message' => 'Realisasi batch berhasil diperbarui.', 'realisasi_batch' => $val]);
     }
@@ -382,21 +411,9 @@ class RealisasiVsBatchController extends Controller
     {
         $programYear = null;
         if ($type === 'reguler') {
-            if ($program->Mulai_program) {
-                $programYear = (int) date('Y', strtotime($program->Mulai_program));
-            } elseif ($program->tahun) {
-                $programYear = (int) $program->tahun;
-            } elseif ($program->Selesai_program) {
-                $programYear = (int) date('Y', strtotime($program->Selesai_program));
-            }
+            $programYear = (! empty($program->tahun) && is_numeric($program->tahun)) ? (int) $program->tahun : TrainingMetricService::resolveProgramRegulerYear($program);
         } else {
-            if ($program->tahun) {
-                $programYear = (int) $program->tahun;
-            } elseif ($program->start_date) {
-                $programYear = (int) date('Y', strtotime($program->start_date));
-            } elseif ($program->end_date) {
-                $programYear = (int) date('Y', strtotime($program->end_date));
-            }
+            $programYear = (! empty($program->tahun) && is_numeric($program->tahun)) ? (int) $program->tahun : TrainingMetricService::resolveProgramNonRegulerYear($program);
         }
 
         if ($programYear !== null && $programYear !== $year) {
@@ -423,8 +440,8 @@ class RealisasiVsBatchController extends Controller
             'program_name' => $type === 'reguler' ? $program->Training_Program : $program->jenis_pelatihan,
             'region' => $type === 'reguler' ? $program->Region : $program->region,
             'sub_kategori' => $type === 'non_reguler' ? ($program->sub_kategori ?? '') : null,
-            'planned_batch' => $type === 'reguler' ? 1 : (int) ($program->TARGET_BATCH ?? $program->realisasi_batch ?? $program->total_batch ?? 0),
-            'realisasi_batch' => $type === 'reguler' ? (int) ($program->Batch ?? 1) : (int) ($program->realisasi_batch ?? $program->total_batch ?? 0),
+            'planned_batch' => $type === 'reguler' ? 1 : (int) ($program->TARGET_BATCH ?? $program->total_batch ?? 0),
+            'realisasi_batch' => $type === 'reguler' ? (int) ($program->Batch ?? 0) : (int) ($program->realisasi_batch ?? 0),
             'planned_participants' => $type === 'reguler' ? (int) $program->target_peserta : (int) ($program->TARGET_PESERTA ?? $program->target_total ?? 0),
         ];
     }
@@ -432,43 +449,7 @@ class RealisasiVsBatchController extends Controller
     public function availableYears(): array
     {
         return Cache::remember('rvb_available_years', 300, function () {
-            $regYears = ProgramReguler::all()->map(function ($item) {
-                if ($item->Mulai_program) {
-                    return (int) $item->Mulai_program->format('Y');
-                }
-                if ($item->tahun) {
-                    return (int) $item->tahun;
-                }
-                if ($item->Selesai_program) {
-                    return (int) $item->Selesai_program->format('Y');
-                }
-
-                return null;
-            });
-
-            $nonRegYears = ProgramNonReguler::all()->map(function ($item) {
-                if ($item->tahun) {
-                    return (int) $item->tahun;
-                }
-                if ($item->start_date) {
-                    return (int) $item->start_date->format('Y');
-                }
-                if ($item->end_date) {
-                    return (int) $item->end_date->format('Y');
-                }
-
-                return null;
-            });
-
-            $rvbYears = RealisasiVsBatch::whereNotNull('tahun')->where('tahun', '>', 0)->distinct()->pluck('tahun')->map(fn ($v) => (int) $v);
-            $trYears = TrainingRecord::whereNotNull('tahun')->where('tahun', '>', 0)->distinct()->pluck('tahun')->map(fn ($v) => (int) $v);
-
-            return collect($regYears->all())
-                ->merge($nonRegYears->all())
-                ->merge($rvbYears->all())
-                ->merge($trYears->all())
-                ->merge([(int) date('Y')])
-                ->filter()->map(fn ($v) => (int) $v)->unique()->sortDesc()->values()->all();
+            return ProgramFilterHelper::getAvailableYears();
         });
     }
 

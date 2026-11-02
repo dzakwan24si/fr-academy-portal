@@ -10,6 +10,7 @@ use App\Services\ExcelExporter;
 use App\Services\RegionHelper;
 use App\Services\SpreadsheetReader;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
 class MonitoringTalentController extends Controller
@@ -126,6 +127,15 @@ class MonitoringTalentController extends Controller
     }
 
     /**
+     * Invalidate dashboard metrics cache so changes reflect immediately.
+     */
+    protected function clearDashboardCache(): void
+    {
+        Cache::put('dreal_cache_version', time());
+        Cache::put('dashboard_cache_version', time());
+    }
+
+    /**
      * Update manual Progress Materi for Talent Program.
      */
     public function updateProgressMateri(Request $request)
@@ -135,6 +145,7 @@ class MonitoringTalentController extends Controller
         ]);
 
         AppSetting::set('talent_program_progress_materi', $request->input('progress_materi'));
+        $this->clearDashboardCache();
 
         return redirect()->back()->with('success', 'Progres Materi Talent Program berhasil diperbarui.');
     }
@@ -176,6 +187,7 @@ class MonitoringTalentController extends Controller
         }
 
         MonitoringTalent::create($data);
+        $this->clearDashboardCache();
 
         return back()->with('success', 'Data peserta talent berhasil ditambahkan.');
     }
@@ -189,6 +201,7 @@ class MonitoringTalentController extends Controller
         $data = $request->validate($this->validationRules());
 
         $talent->update($data);
+        $this->clearDashboardCache();
 
         return back()->with('success', 'Data peserta talent berhasil diperbarui.');
     }
@@ -200,6 +213,7 @@ class MonitoringTalentController extends Controller
     {
         $talent = MonitoringTalent::findOrFail($id);
         $talent->delete();
+        $this->clearDashboardCache();
 
         return back()->with('success', 'Data peserta talent berhasil dihapus.');
     }
@@ -211,6 +225,7 @@ class MonitoringTalentController extends Controller
     {
         $count = MonitoringTalent::count();
         MonitoringTalent::truncate();
+        $this->clearDashboardCache();
 
         ActivityLog::log(
             'Hapus',
@@ -395,6 +410,8 @@ class MonitoringTalentController extends Controller
                 "Mengimport {$imported} data peserta talent dari file ".$file->getClientOriginalName(),
                 ['filename' => $file->getClientOriginalName(), 'count' => $imported]
             );
+
+            $this->clearDashboardCache();
 
             return back()->with('success', "{$imported} data peserta talent berhasil diimpor.");
         } catch (\Exception $e) {

@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Program\ProgramNonReguler;
 use App\Models\Program\ProgramReguler;
 use App\Models\Program\TrainingRecord;
+use App\Services\ProgramFilterHelper;
 use App\Services\RegionHelper;
 use App\Services\SpreadsheetReader;
 use App\Services\TrainingMetricService;
@@ -43,21 +44,7 @@ class DashboardMonitoringTahunanController extends Controller
 
     public function index(Request $request)
     {
-        $trYears = TrainingRecord::whereNotNull('tahun')->pluck('tahun')->map(fn ($y) => (int) $y)->filter()->all();
-        $trDateYears = TrainingRecord::whereNotNull('training_date')->get()->map(fn ($r) => (int) date('Y', strtotime($r->training_date)))->filter()->all();
-        $regYears = ProgramReguler::all()->map(fn ($p) => $this->resolveProgramRegulerYear($p))->filter()->all();
-        $nonRegYears = ProgramNonReguler::all()->map(fn ($p) => $this->resolveProgramNonRegulerYear($p))->filter()->all();
-
-        $years = collect([2024, 2025, 2026, 2027])
-            ->merge($trYears)
-            ->merge($trDateYears)
-            ->merge($regYears)
-            ->merge($nonRegYears)
-            ->filter(fn ($y) => $y >= 2000 && $y <= 2100)
-            ->unique()
-            ->sort()
-            ->values()
-            ->all();
+        $years = ProgramFilterHelper::getAvailableYears();
 
         $yearDefault = in_array(2026, $years, true) ? 2026 : ($years[count($years) - 1] ?? (int) date('Y'));
         $year = (int) $request->input('year', $yearDefault);
@@ -195,16 +182,6 @@ class DashboardMonitoringTahunanController extends Controller
         });
 
         // 3. Build Master Batches & Virtual Batches for Unbudgeted Programs
-        $recordsByProgId = [];
-        $unassignedRecords = [];
-        foreach ($filteredRecords as $r) {
-            if ($r->program_id) {
-                $recordsByProgId[(int) $r->program_id][] = $r;
-            } else {
-                $unassignedRecords[] = $r;
-            }
-        }
-
         $masterBatches = collect();
         if ($tab === 'reguler') {
             $masterBatches = $regulerAll->map(fn ($item) => [
@@ -238,6 +215,18 @@ class DashboardMonitoringTahunanController extends Controller
                 'kategori_pelatihan' => $item->kategori_pelatihan ?: 'Technical',
                 'model' => $item,
             ]);
+        }
+
+        $masterBatchIds = array_flip($masterBatches->pluck('id')->map(fn ($id) => (int) $id)->all());
+        $recordsByProgId = [];
+        $unassignedRecords = [];
+        foreach ($filteredRecords as $r) {
+            $pId = $r->program_id ? (int) $r->program_id : null;
+            if ($pId && isset($masterBatchIds[$pId])) {
+                $recordsByProgId[$pId][] = $r;
+            } else {
+                $unassignedRecords[] = $r;
+            }
         }
 
         // Match records to master batches

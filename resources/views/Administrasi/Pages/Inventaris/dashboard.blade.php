@@ -13,11 +13,19 @@
 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
     <div>
         <h1 class="text-2xl font-bold text-[#18181B] tracking-tight">Dashboard Aset & Inventaris</h1>
-        <p class="text-xs text-[#71717A] mt-0.5">Visualisasi kesehatan aset, sebaran ruangan, serta tren pengadaan inventaris academy.</p>
+        <div class="flex flex-wrap items-center gap-2 mt-1 text-xs text-[#71717A]">
+            <span>Visualisasi kesehatan aset, sebaran ruangan, serta tren pengadaan inventaris academy.</span>
+            @if($latestSessionDateFormatted)
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-[#1b4332] border border-emerald-200">
+                    <i data-lucide="calendar-check" class="w-3.5 h-3.5"></i>
+                    Audit Sesi Terakhir: {{ $latestSessionDateFormatted }}
+                </span>
+            @endif
+        </div>
     </div>
 
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
-        {{-- Year Filter Pills --}}
+        {{-- Year Filter Pills (Hanya tahun dengan Stock Opname riil) --}}
         <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm shrink-0">
             @foreach($years as $yr)
             <a href="{{ route('administrasi.inventaris.dashboard', ['year' => $yr]) }}"
@@ -26,6 +34,21 @@
             </a>
             @endforeach
         </div>
+
+        {{-- Month Filter Pills (Berdasarkan bulan Stock Opname pada tahun terpilih) --}}
+        @if(count($availableMonths) > 0)
+        <div class="inline-flex bg-white border border-[#E5E7EB] rounded-xl p-1 shadow-sm shrink-0 overflow-x-auto">
+            @foreach($availableMonths as $m)
+            <a href="{{ route('administrasi.inventaris.dashboard', ['year' => $selectedYear, 'month' => $m['num']]) }}"
+               class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all whitespace-nowrap {{ $selectedMonth === $m['num'] ? 'bg-[#1b4332] text-white shadow-xs' : 'text-[#52525B] hover:text-[#18181B] hover:bg-[#F4F4F5]' }}">
+                {{ $m['name'] }}
+                @if($m['is_latest'])
+                    <span class="ml-1 text-[10px] opacity-75 font-normal">(Terakhir)</span>
+                @endif
+            </a>
+            @endforeach
+        </div>
+        @endif
     </div>
 </div>
 

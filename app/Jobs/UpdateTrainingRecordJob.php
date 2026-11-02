@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\DailyClass;
 use App\Models\Trainee;
+use App\Services\TrainingMetricService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -246,11 +247,7 @@ class UpdateTrainingRecordJob implements ShouldQueue
             ]);
         }
 
-        // Invalidate caches
-        Cache::increment('tr_cache_version');
-        Cache::forget('tr_years');
-        Cache::forget('tr_non_reg_subcats');
-        Cache::increment('dashboard_cache_version');
-        Cache::increment('rvb_cache_version');
+        // Invalidate all dashboard & program caches
+        TrainingMetricService::clearAllDashboardCaches();
     }
 }

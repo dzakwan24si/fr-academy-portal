@@ -66,6 +66,7 @@
         </a>
 
         @can('edit_cost')
+        @if($selectedPeriod !== 'overall')
         <!-- Delete All Button -->
         <button onclick="openModal('modalDeleteAll')"
                 class="flex items-center gap-2 px-3.5 py-2 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-lg hover:bg-red-100 hover:border-red-300 transition-colors shadow-2xs"
@@ -80,6 +81,7 @@
             <i data-lucide="plus" class="w-4 h-4"></i>
             Tambah Data
         </button>
+        @endif
         @endcan
     </div>
 </div>
@@ -282,6 +284,15 @@
         </form>
     </div>
 
+    @if($selectedPeriod === 'overall')
+    <div class="mb-4 px-4 py-3 bg-amber-50/80 border border-amber-200/80 rounded-xl flex items-center gap-3 text-xs text-amber-900">
+        <i data-lucide="info" class="w-4 h-4 text-amber-600 flex-shrink-0"></i>
+        <span>
+            <strong>Mode Akumulasi Tahunan (Overall):</strong> Data di bawah merupakan hasil rekonsiliasi dan akumulasi dari bulan ke bulan. Kolom aksi CRUD dinonaktifkan pada tampilan ini. Untuk mengedit atau menghapus data, silakan pilih bulan operasional spesifik (Januari - Desember).
+        </span>
+    </div>
+    @endif
+
     <!-- Table Responsive Wrapper -->
     <div class="overflow-x-auto relative">
         <table class="w-full text-xs text-left border-collapse min-w-[1300px]">
@@ -294,7 +305,6 @@
                         <th class="py-3 px-3 text-center">Bulan Tercatat</th>
                         <th class="py-3 px-3.5 text-right">Upah Thn (Rp)</th>
                         <th class="py-3 px-3.5 text-right">BBM Thn (Rp)</th>
-                        <th class="py-3 px-3.5 text-right">BBM Thn Ref (Rp)</th>
                         <th class="py-3 px-3.5 text-right">Prev. Maint Thn (Rp)</th>
                         <th class="py-3 px-3.5 text-right">Biaya Lain Thn (Rp)</th>
                         <th class="py-3 px-3.5 text-right font-bold text-[#18181B] bg-emerald-50/50">Total Biaya Thn (Rp)</th>
@@ -304,12 +314,11 @@
                         <th class="py-3 px-3.5 text-right">BBM (L)</th>
                         <th class="py-3 px-3.5 text-center">KM / Liter (Avg)</th>
                         <th class="py-3 px-3.5 text-center font-bold text-[#4B6A34] bg-[#F0F5EB]/60" title="VRA = Total Biaya (s/d Desember) ÷ Total KM (s/d Desember)">VRA Thn (Rp/KM)</th>
-                        <th class="py-3 px-3 text-right">Budget Thn</th>
+                        <th class="py-3 px-3 text-right" title="Budget VRA per KM">Budget VRA (Rp/KM)</th>
                     @else
                         <th class="py-3 px-3 text-center">Bln</th>
                         <th class="py-3 px-3.5 text-right">Upah (Rp)</th>
                         <th class="py-3 px-3.5 text-right">BBM (Rp)</th>
-                        <th class="py-3 px-3.5 text-right">BBM Thn (Rp)</th>
                         <th class="py-3 px-3.5 text-right">Prev. Maint (Rp)</th>
                         <th class="py-3 px-3.5 text-right">Biaya Lain (Rp)</th>
                         <th class="py-3 px-3.5 text-right font-bold text-[#18181B] bg-emerald-50/50">Total Biaya (Rp)</th>
@@ -319,9 +328,11 @@
                         <th class="py-3 px-3.5 text-right">BBM (L)</th>
                         <th class="py-3 px-3.5 text-center">KM / Liter</th>
                         <th class="py-3 px-3.5 text-center font-bold text-[#4B6A34] bg-[#F0F5EB]/60" title="VRA = Total Biaya Bulan ÷ KM">VRA (Rp/KM)</th>
-                        <th class="py-3 px-3 text-right">Budget Thn</th>
+                        <th class="py-3 px-3 text-right" title="Budget VRA per KM">Budget VRA (Rp/KM)</th>
                     @endif
+                    @if($selectedPeriod !== 'overall')
                     <th class="py-3 px-3 text-center w-24">Aksi</th>
+                    @endif
                 </tr>
             </thead>
             <tbody class="divide-y divide-[#F4F4F5] text-[#18181B]">
@@ -363,11 +374,6 @@
                         <!-- BBM -->
                         <td class="py-3 px-3.5 text-right font-mono text-[#52525B]">
                             {{ number_format($item->BBM, 0, ',', '.') }}
-                        </td>
-
-                        <!-- BBM Tahun -->
-                        <td class="py-3 px-3.5 text-right font-mono text-[#71717A]">
-                            {{ number_format($item->BBM_tahun, 0, ',', '.') }}
                         </td>
 
                         <!-- Preventif Maintenance -->
@@ -425,6 +431,7 @@
                             {{ number_format($item->budget_tahun, 0, ',', '.') }}
                         </td>
 
+                        @if($selectedPeriod !== 'overall')
                         <!-- Aksi -->
                         <td class="py-3 px-3.5 text-center whitespace-nowrap">
                             <div class="flex items-center justify-center gap-1.5">
@@ -444,10 +451,11 @@
                                 @endcan
                             </div>
                         </td>
+                        @endif
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="18" class="py-16 text-center text-[#A1A1AA]">
+                        <td colspan="{{ $selectedPeriod === 'overall' ? 16 : 17 }}" class="py-16 text-center text-[#A1A1AA]">
                             <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
                             <p class="text-sm font-semibold text-[#18181B]">Belum ada data VRA untuk periode ini</p>
                             @can('edit_cost')
@@ -470,9 +478,6 @@
                         </td>
                         <td class="py-3.5 px-3.5 text-right font-mono text-[#18181B]">
                             {{ number_format($totals['bbm'], 0, ',', '.') }}
-                        </td>
-                        <td class="py-3.5 px-3.5 text-right font-mono text-[#71717A]">
-                            {{ number_format($totals['bbm_tahun'], 0, ',', '.') }}
                         </td>
                         <td class="py-3.5 px-3.5 text-right font-mono text-[#18181B]">
                             {{ number_format($totals['maintenance'], 0, ',', '.') }}
@@ -500,7 +505,9 @@
                         <td class="py-3.5 px-3 text-right font-mono text-[#71717A]">
                             {{ number_format($totals['budget_tahun'], 0, ',', '.') }}
                         </td>
+                        @if($selectedPeriod !== 'overall')
                         <td></td>
+                        @endif
                     </tr>
                 </tfoot>
             @endif
@@ -561,7 +568,7 @@
                                class="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-xs focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34] outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-[#374151] mb-1">Budget Tahun (KM)</label>
+                        <label class="block text-xs font-semibold text-[#374151] mb-1">Budget VRA (Rp/KM)</label>
                         <input type="number" step="0.01" min="0" name="budget_tahun" placeholder="0"
                                class="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-xs focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34] outline-none font-mono">
                     </div>
@@ -701,7 +708,7 @@
                                class="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-xs focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34] outline-none">
                     </div>
                     <div>
-                        <label class="block text-xs font-semibold text-[#374151] mb-1">Budget Tahun (KM)</label>
+                        <label class="block text-xs font-semibold text-[#374151] mb-1">Budget VRA (Rp/KM)</label>
                         <input type="number" step="0.01" min="0" name="budget_tahun" id="edit_budget_tahun"
                                class="w-full px-3 py-2 border border-[#E5E7EB] rounded-lg text-xs focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34] outline-none font-mono">
                     </div>
@@ -829,8 +836,8 @@
                     <p class="text-xs font-bold text-[#4B6A34]" id="detail_periode">-</p>
                 </div>
                 <div>
-                    <span class="text-[10px] font-bold uppercase text-[#71717A]">Budget Tahun (KM)</span>
-                    <p class="text-xs font-bold text-[#18181B] text-right font-mono" id="detail_budget_tahun">0 KM</p>
+                    <span class="text-[10px] font-bold uppercase text-[#71717A]">Budget VRA (Rp/KM)</span>
+                    <p class="text-xs font-bold text-[#18181B] text-right font-mono" id="detail_budget_tahun">Rp 0 / KM</p>
                 </div>
             </div>
 
@@ -984,7 +991,7 @@
                     </a>
                 </div>
                 <p class="text-[#64748B] font-mono text-[10px] break-all leading-relaxed">
-                    vra_id, nomor_polisi, kendaraan, bulan, upah, BBM, BBM_tahun, preventif_maintenance, biaya_lainnya, total_biaya_bulan, KM_awal, KM_akhir, KM, BBM_liter, BBM_KM_liter, VRA, budget_tahun
+                    vra_id, nomor_polisi, kendaraan, bulan, upah, BBM, preventif_maintenance, biaya_lainnya, KM_awal, KM_akhir, KM, BBM_liter, budget_tahun
                 </p>
             </div>
 
@@ -1233,7 +1240,7 @@ function showDetailModal(id) {
                 document.getElementById('detail_nopol').innerText = d.nomor_polisi || '-';
                 document.getElementById('detail_kendaraan').innerText = d.kendaraan || '-';
                 document.getElementById('detail_periode').innerText = (monthNames[d.bulan] || d.bulan) + ' ' + d.tahun;
-                document.getElementById('detail_budget_tahun').innerText = Number(d.budget_tahun || 0).toLocaleString('id-ID') + ' KM';
+                document.getElementById('detail_budget_tahun').innerText = 'Rp ' + Number(d.budget_tahun || 0).toLocaleString('id-ID') + ' / KM';
 
                 document.getElementById('detail_km_liter').innerText = Number(d.BBM_KM_liter || 0).toFixed(2) + ' KM/L';
                 document.getElementById('detail_vra').innerText = 'Rp ' + Number(d.VRA || 0).toLocaleString('id-ID') + ' / KM';

@@ -2,6 +2,7 @@
 
 namespace App\Models\Program;
 
+use App\Services\TrainingMetricService;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
 
@@ -22,6 +23,16 @@ class ProgramNonReguler extends Model
         'start_date' => 'date:Y-m-d',
         'end_date' => 'date:Y-m-d',
     ];
+
+    protected static function booted()
+    {
+        static::saved(function () {
+            TrainingMetricService::clearAllDashboardCaches();
+        });
+        static::deleted(function () {
+            TrainingMetricService::clearAllDashboardCaches();
+        });
+    }
 
     public function getTotalBatchAttribute()
     {
