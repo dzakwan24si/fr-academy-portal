@@ -217,10 +217,10 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
 
         $request->validate([
             'task_files' => 'required|array',
-            'task_files.*' => 'required|file|max:2048', // max 2mb per file
+            'task_files.*' => 'required|file|max:10240', // max 10MB per file
         ], [
             'task_files.required' => 'File tugas wajib diunggah.',
-            'task_files.*.max' => 'Ukuran file maksimal adalah 2MB, silakan kompres file Anda.',
+            'task_files.*.max' => 'Ukuran file maksimal adalah 10MB, silakan periksa kembali file Anda.',
         ]);
 
         $paths = [];
