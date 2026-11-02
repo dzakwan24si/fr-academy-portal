@@ -221,8 +221,10 @@ class NonRegulerDailyClassController extends Controller
             $file = fopen('php://output', 'w');
             // BOM for UTF-8 compatibility with Excel
             fwrite($file, "\xEF\xBB\xBF");
-            // Header row only
+            // Header row
             fputcsv($file, ['No', 'Employee ID', 'Employee Name', 'Jabatan', 'Unit', 'Region']);
+            // Sample row
+            fputcsv($file, ['1', '123456789', 'Test', 'Group Manager Kebun', 'ATS1', 'Riau']);
             fclose($file);
         };
 
