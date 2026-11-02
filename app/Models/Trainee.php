@@ -21,11 +21,9 @@ class Trainee extends Model
         return [
             'name' => $this->name,
             'program' => $this->trainingProgram->name ?? 'Program belum diset',
-            'region' => $this->origin ?? $this->ojt_region,
+            'region' => $this->origin,
             'unit' => $this->unit,
             'talent_to' => $this->talent_to,
-            'university' => $this->university,
-            'major' => $this->major,
             'status' => ucfirst($this->status),
             'initials' => strtoupper(substr($this->name, 0, 2)),
         ];

@@ -35,14 +35,8 @@ class TraineeController extends Controller
             'nik' => 'required|string|max:255|unique:trainees,nik',
             'name' => 'required|string|max:255',
             'origin' => 'nullable|string|max:255',
-            'university' => 'nullable|string|max:255',
-            'major' => 'nullable|string|max:255',
             'status' => 'required|string',
             'training_program_id' => 'required|exists:training_programs,id',
-            // OJT fields
-            'ojt_company_name' => 'nullable|string|max:255',
-            'ojt_region' => 'nullable|string|max:255',
-            'ojt_location_code' => 'nullable|string|max:255',
             // Resignation fields
             'birth_place' => 'nullable|string|max:255',
             'birth_date' => 'nullable|date',
@@ -55,8 +49,7 @@ class TraineeController extends Controller
         ]);
 
         $traineeData = collect($validated)->only([
-            'nik', 'name', 'origin', 'university', 'major', 'status', 'training_program_id',
-            'ojt_company_name', 'ojt_region', 'ojt_location_code',
+            'nik', 'name', 'origin', 'status', 'training_program_id',
         ])->toArray();
         $trainee = Trainee::create($traineeData);
 
@@ -92,14 +85,8 @@ class TraineeController extends Controller
             'nik' => 'required|string|max:255|unique:trainees,nik,'.$trainee->id,
             'name' => 'required|string|max:255',
             'origin' => 'nullable|string|max:255',
-            'university' => 'nullable|string|max:255',
-            'major' => 'nullable|string|max:255',
             'status' => 'required|string',
             'training_program_id' => 'required|exists:training_programs,id',
-            // OJT fields
-            'ojt_company_name' => 'nullable|string|max:255',
-            'ojt_region' => 'nullable|string|max:255',
-            'ojt_location_code' => 'nullable|string|max:255',
             // Resignation fields
             'birth_place' => 'nullable|string|max:255',
             'birth_date' => 'nullable|date',
@@ -112,8 +99,7 @@ class TraineeController extends Controller
         ]);
 
         $traineeData = collect($validated)->only([
-            'nik', 'name', 'origin', 'university', 'major', 'status', 'training_program_id',
-            'ojt_company_name', 'ojt_region', 'ojt_location_code',
+            'nik', 'name', 'origin', 'status', 'training_program_id',
         ])->toArray();
         $trainee->update($traineeData);
 

@@ -83,7 +83,7 @@ class WeeklyReportController extends Controller
         $programId = $request->get('program_id');
         $trainees = Trainee::where('training_program_id', $programId)
             ->where('status', '!=', 'resign')
-            ->get(['id', 'name', 'origin', 'university']);
+            ->get(['id', 'name', 'origin']);
 
         return response()->json($trainees);
     }
