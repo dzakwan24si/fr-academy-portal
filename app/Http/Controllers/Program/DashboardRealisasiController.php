@@ -930,18 +930,18 @@ class DashboardRealisasiController extends Controller
                 continue;
             }
 
-            $cleanName = strtolower(trim((string) ($r->nama_pelatihan ?: $r->notes)));
-            if ($cleanName === '') {
+            $rawName = trim((string) ($r->nama_pelatihan ?: $r->notes));
+            if ($rawName === '') {
                 continue;
             }
+            $cleanName = strtolower($rawName);
 
-            $cleanRegion = strtolower(trim((string) ($r->region ?: 'nasional')));
-            if (strcasecmp($cleanRegion, 'kaltim fr') === 0 || strcasecmp($cleanRegion, 'kulbar') === 0) {
-                $cleanRegion = 'kaltim';
-            }
+            $rawRegion = trim((string) ($r->region ?: 'Nasional'));
+            $rawNotes = trim((string) ($r->notes ?: ''));
+            $rawPeriode = trim((string) ($r->periode ?: ''));
 
-            // Keunikan program per bulan: Nama Pelatihan + Region
-            $progRegionKey = $cleanName . '|' . $cleanRegion;
+            // Keunikan program per bulan: Nama Pelatihan + Region + Notes + Periode (192 program sesuai rekap Excel)
+            $progRegionKey = $rawName . '|' . $rawRegion . '|' . $rawNotes . '|' . $rawPeriode;
             $monthlyProgramSets[$mNum][$progRegionKey] = true;
 
             if ($r->program_type === 'reguler') {
