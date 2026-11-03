@@ -544,9 +544,12 @@ Route::middleware('auth')->group(function () {
             Route::get('/api/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.data');
             Route::get('/api/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.drilldown');
             Route::get('/api/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.export');
+            Route::get('/api/template', [AsistenController::class, 'downloadMonitoringProgramTemplate'])->name('api.template');
+            Route::get('/template', [AsistenController::class, 'downloadMonitoringProgramTemplate'])->name('template');
 
             Route::middleware('can:edit_monitoring')->group(function () {
                 Route::post('/api/store', [AsistenController::class, 'storeMonitoringProgram'])->name('api.store');
+                Route::post('/api/import', [AsistenController::class, 'importMonitoringProgramCsv'])->name('api.import');
                 Route::put('/api/{id}', [AsistenController::class, 'updateMonitoringProgram'])->name('api.update')->whereNumber('id');
                 Route::delete('/api/{id}', [AsistenController::class, 'destroyMonitoringProgram'])->name('api.destroy')->whereNumber('id');
             });
@@ -558,6 +561,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/api/data', [AsistenController::class, 'getMonitoringProgramData'])->name('api.data');
             Route::get('/api/drilldown', [AsistenController::class, 'getDrilldownAsisten'])->name('api.drilldown');
             Route::get('/api/export', [AsistenController::class, 'exportMonitoringProgramCsv'])->name('api.export');
+            Route::get('/api/template', [AsistenController::class, 'downloadMonitoringProgramTemplate'])->name('api.template');
+            Route::get('/template', [AsistenController::class, 'downloadMonitoringProgramTemplate'])->name('template');
 
             Route::middleware('can:edit_monitoring')->group(function () {
                 Route::post('/api/store', [AsistenController::class, 'storeMonitoringProgram'])->name('api.store');

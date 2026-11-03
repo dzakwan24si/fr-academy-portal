@@ -993,6 +993,7 @@ const DataManagement = () => {
           'Kategori Pelatihan': orig.kategori_pelatihan || '',
           'Sub Kategori': orig.sub_kategori || item.subCategory || '',
           'Target Batch': Number(orig.total_batch ?? item.batchCount ?? 1),
+          'Realisasi Batch': Number(orig.realisasi_batch ?? 0),
           'Type Training': orig.type_training || '',
           'Region': orig.region || item.region || '',
           'Lokasi Training': orig.lokasi_training || item.location || '',
@@ -1764,6 +1765,10 @@ const DataManagement = () => {
                         <input type="number" name="TARGET_BATCH" value={formData.TARGET_BATCH !== undefined ? formData.TARGET_BATCH : ''} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
                       </div>
                       <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Realisasi Batch</label>
+                        <input type="number" name="realisasi_batch" value={formData.realisasi_batch !== undefined ? formData.realisasi_batch : ''} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
+                      </div>
+                      <div>
                         <label className="block text-sm font-medium text-slate-700 mb-1">Total Hari</label>
                         <input type="number" name="total_hari" value={formData.total_hari || ''} onChange={handleInputChange} className="w-full p-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-green-500 outline-none" />
                       </div>
@@ -2140,7 +2145,8 @@ const DataManagement = () => {
                         <div className="flex items-center"><span className="text-slate-500 w-36">Tipe Training:</span><span className="font-bold text-slate-800">{selectedProgram.originalData?.type_training || '-'}</span></div>
                         <div className="flex items-center"><span className="text-slate-500 w-36">Total Jam / Hari:</span><span className="font-bold text-slate-800">{selectedProgram.originalData?.total_jam || 0} Jam / {selectedProgram.originalData?.total_hari || 0} Hari</span></div>
                         <div className="flex items-center"><span className="text-slate-500 w-36">Total Training Days:</span><span className="font-bold text-slate-800">{selectedProgram.originalData?.td_total || 0}</span></div>
-                        <div className="flex items-center"><span className="text-slate-500 w-36">Target Batch:</span><span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">{selectedProgram.originalData?.total_batch ?? 0} Batch</span></div>
+                        <div className="flex items-center"><span className="text-slate-500 w-36">Target Batch:</span><span className="font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">{selectedProgram.originalData?.TARGET_BATCH ?? selectedProgram.originalData?.total_batch ?? 0} Batch</span></div>
+                        <div className="flex items-center"><span className="text-slate-500 w-36">Realisasi Batch:</span><span className="font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">{selectedProgram.originalData?.realisasi_batch ?? 0} Batch</span></div>
                       </>
                     )}
                   </div>

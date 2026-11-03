@@ -99,12 +99,40 @@ class ExcelExporter
             $sheet->getCell("{$colLetter}1")->setValue($header);
 
             $cleanH = strtolower(trim((string) $header));
-            if (in_array($cleanH, ['budget', 'realisasi', 'budget_tahunan', 'total_biaya', 'biaya', 'harga', 'total_rp', 'upah', 'bbm', 'preventif_maintenance', 'biaya_lainnya', 'total_biaya_bulan', 'debit', 'kredit', 'nominal', 'amount', 'total_budget', 'total_realisasi'])
-                || str_contains($cleanH, 'biaya')
-                || str_contains($cleanH, 'budget')
-                || str_contains($cleanH, 'realisasi')
-                || str_contains($cleanH, 'harga')) {
-                $currencyCols[] = $colLetter;
+
+            // Kolom kuantitas / jumlah fisik tidak boleh diformat sebagai mata uang (Rp)
+            $isQuantity = str_contains($cleanH, 'batch')
+                || str_contains($cleanH, 'peserta')
+                || str_contains($cleanH, 'orang')
+                || str_contains($cleanH, 'jam')
+                || str_contains($cleanH, 'hari')
+                || str_contains($cleanH, 'bulan')
+                || str_contains($cleanH, 'mandor')
+                || str_contains($cleanH, 'staf')
+                || str_contains($cleanH, 'head')
+                || str_contains($cleanH, 'mgr')
+                || str_contains($cleanH, 'gm')
+                || str_contains($cleanH, 'ast')
+                || str_contains($cleanH, 'askep')
+                || str_contains($cleanH, 'kelas')
+                || str_contains($cleanH, 'program')
+                || str_contains($cleanH, 'lulus')
+                || str_contains($cleanH, 'resign')
+                || str_contains($cleanH, 'tahun')
+                || str_contains($cleanH, 'persen')
+                || str_contains($cleanH, '%');
+
+            if (! $isQuantity) {
+                if (in_array($cleanH, ['budget', 'realisasi', 'budget_tahunan', 'total_biaya', 'biaya', 'harga', 'total_rp', 'upah', 'bbm', 'preventif_maintenance', 'biaya_lainnya', 'total_biaya_bulan', 'debit', 'kredit', 'nominal', 'amount', 'total_budget', 'total_realisasi', 'uang_saku'])
+                    || str_contains($cleanH, 'biaya')
+                    || str_contains($cleanH, 'budget')
+                    || str_contains($cleanH, 'harga')
+                    || str_contains($cleanH, 'uang')
+                    || str_contains($cleanH, 'nominal')
+                    || str_contains($cleanH, 'amount')
+                    || ($cleanH === 'realisasi' || str_contains($cleanH, 'realisasi_biaya') || str_contains($cleanH, 'realisasi_rp') || str_contains($cleanH, 'realisasi rp') || str_contains($cleanH, 'total_realisasi'))) {
+                    $currencyCols[] = $colLetter;
+                }
             }
             $colIndex++;
         }

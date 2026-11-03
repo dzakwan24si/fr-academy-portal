@@ -1469,6 +1469,10 @@ class AsistenController extends Controller
             $data['tahun_rekrut'] = $data['tahun_rekrut'] ?? (int) $data['tahun'];
         }
 
+        if (empty($data['kode_kategori'])) {
+            $data['kode_kategori'] = self::deriveCategoryCode($data['kategori_program'] ?? '', $data['nama_program'] ?? '');
+        }
+
         if (empty($data['kategori_program']) && ! empty($data['kode_kategori'])) {
             $data['kategori_program'] = match ($data['kode_kategori']) {
                 'A' => 'Field Assistant Training',
@@ -1478,6 +1482,8 @@ class AsistenController extends Controller
                 'E' => 'Downstream Management Training',
                 default => 'Program Training'
             };
+        } else {
+            $data['kategori_program'] = self::normalizeCategoryName($data['kategori_program'] ?? '', $data['kode_kategori']);
         }
 
         $data['jumlah_trainee'] = (int) ($data['jumlah_trainee'] ?? 0);
@@ -1527,6 +1533,10 @@ class AsistenController extends Controller
             $data['tahun_rekrut'] = $data['tahun_rekrut'] ?? (int) $data['tahun'];
         }
 
+        if (empty($data['kode_kategori'])) {
+            $data['kode_kategori'] = self::deriveCategoryCode($data['kategori_program'] ?? $record->kategori_program, $data['nama_program'] ?? $record->nama_program);
+        }
+
         if (empty($data['kategori_program']) && ! empty($data['kode_kategori'])) {
             $data['kategori_program'] = match ($data['kode_kategori']) {
                 'A' => 'Field Assistant Training',
@@ -1536,6 +1546,8 @@ class AsistenController extends Controller
                 'E' => 'Downstream Management Training',
                 default => $record->kategori_program ?? 'Program Training'
             };
+        } else {
+            $data['kategori_program'] = self::normalizeCategoryName($data['kategori_program'] ?? '', $data['kode_kategori']);
         }
 
         $record->update($data);
@@ -1646,7 +1658,52 @@ class AsistenController extends Controller
     }
 
     /**
-     * Import / Update Master Monitoring Program CSV via SpreadsheetReader.
+     * Derive category code (A, B, C, D, E, F) from category name or program name.
+     */
+    public static function deriveCategoryCode(?string $kategori, ?string $namaProgram = ''): string
+    {
+        $text = strtoupper(trim(($kategori ?? '').' '.($namaProgram ?? '')));
+        if (str_contains($text, 'FAT') || str_contains($text, 'FIELD ASSISTANT') || str_contains($text, 'ESTATE CADET') || str_contains($text, 'ECT')) {
+            return 'A';
+        }
+        if (str_contains($text, 'MAT') || str_contains($text, 'MILL ASSISTANT') || str_contains($text, 'MILL CADET') || str_contains($text, 'MCT')) {
+            return 'B';
+        }
+        if (str_contains($text, 'AAT') || str_contains($text, 'ADMIN') || str_contains($text, 'ADMINISTRATION')) {
+            return 'C';
+        }
+        if (str_contains($text, 'TAT') || str_contains($text, 'TRACTION') || str_contains($text, 'TRAKSI')) {
+            return 'D';
+        }
+        if (str_contains($text, 'DMT') || str_contains($text, 'DOWNSTREAM')) {
+            return 'E';
+        }
+
+        return 'F';
+    }
+
+    /**
+     * Normalize category name to full readable title.
+     */
+    public static function normalizeCategoryName(?string $kategori, string $kodeKategori): string
+    {
+        $kat = trim((string) $kategori);
+        if (! empty($kat) && strlen($kat) > 4) {
+            return $kat;
+        }
+
+        return match ($kodeKategori) {
+            'A' => 'Field Assistant Training',
+            'B' => 'Mill Assistant Training',
+            'C' => 'Admin Assistant Training',
+            'D' => 'Traction Assistant Training',
+            'E' => 'Downstream Management Training',
+            default => ! empty($kat) ? $kat : 'Program Training',
+        };
+    }
+
+    /**
+     * Import / Update Master Monitoring Program CSV/Excel via SpreadsheetReader.
      */
     public function importMonitoringProgramCsv(Request $request)
     {
@@ -1668,8 +1725,35 @@ class AsistenController extends Controller
             return response()->json(['status' => 'error', 'message' => 'File kosong atau tidak memiliki baris data.'], 400);
         }
 
-        // Shift header row
-        array_shift($rawRows);
+        // Header detection
+        $firstRow = array_shift($rawRows);
+        $headerMap = [];
+        foreach ($firstRow as $idx => $cell) {
+            $c = strtolower(trim((string) $cell));
+            $clean = str_replace(['_', '-', '%', ' ', '(', ')'], '', $c);
+            if ($clean === 'no') {
+                $headerMap['no'] = $idx;
+            } elseif (str_contains($clean, 'kodekategori') || $clean === 'kode') {
+                $headerMap['kode_kategori'] = $idx;
+            } elseif (str_contains($clean, 'kategoriprogram') || str_contains($clean, 'kategori')) {
+                $headerMap['kategori_program'] = $idx;
+            } elseif (str_contains($clean, 'namaprogram') || str_contains($clean, 'batch') || str_contains($clean, 'program')) {
+                $headerMap['nama_program'] = $idx;
+            } elseif (str_contains($clean, 'rekrut')) {
+                $headerMap['tahun_rekrut'] = $idx;
+            } elseif (str_contains($clean, 'training')) {
+                $headerMap['tahun_training'] = $idx;
+            } elseif (str_contains($clean, 'lulus')) {
+                $headerMap['tahun_lulus'] = $idx;
+            } elseif (str_contains($clean, 'trainee')) {
+                $headerMap['jumlah_trainee'] = $idx;
+            } elseif (str_contains($clean, 'culled') || str_contains($clean, 'gagal')) {
+                $headerMap['jumlah_culled'] = $idx;
+            }
+        }
+
+        $useHeaderMap = isset($headerMap['nama_program']);
+        $totalCols = count($firstRow);
 
         $rows = [];
         $rowNum = 1;
@@ -1680,21 +1764,62 @@ class AsistenController extends Controller
                 continue;
             }
 
-            $namaProg = trim((string) ($row[3] ?? ''));
+            if ($useHeaderMap) {
+                $namaProg = trim((string) ($row[$headerMap['nama_program']] ?? ''));
+                $katProg = isset($headerMap['kategori_program']) ? trim((string) ($row[$headerMap['kategori_program']] ?? '')) : null;
+                $kodeKat = isset($headerMap['kode_kategori']) ? trim((string) ($row[$headerMap['kode_kategori']] ?? '')) : null;
+                $noVal = isset($headerMap['no']) ? $row[$headerMap['no']] : null;
+                $thnRekrut = isset($headerMap['tahun_rekrut']) ? $row[$headerMap['tahun_rekrut']] : null;
+                $thnTraining = isset($headerMap['tahun_training']) ? $row[$headerMap['tahun_training']] : null;
+                $thnLulus = isset($headerMap['tahun_lulus']) ? $row[$headerMap['tahun_lulus']] : null;
+                $jmlTrainee = isset($headerMap['jumlah_trainee']) ? $row[$headerMap['jumlah_trainee']] : 0;
+                $jmlCulled = isset($headerMap['jumlah_culled']) ? $row[$headerMap['jumlah_culled']] : 0;
+            } else {
+                // Positional fallback
+                if ($totalCols >= 15) {
+                    // Legacy 21 columns format
+                    $noVal = $row[0] ?? null;
+                    $kodeKat = trim((string) ($row[1] ?? '')) ?: null;
+                    $katProg = trim((string) ($row[2] ?? '')) ?: null;
+                    $namaProg = trim((string) ($row[3] ?? ''));
+                    $thnRekrut = $row[4] ?? null;
+                    $thnTraining = $row[5] ?? null;
+                    $thnLulus = $row[6] ?? null;
+                    $jmlTrainee = $row[7] ?? 0;
+                    $jmlCulled = $row[8] ?? 0;
+                } else {
+                    // Clean 8-column format
+                    $noVal = $row[0] ?? null;
+                    $kodeKat = null;
+                    $katProg = trim((string) ($row[1] ?? '')) ?: null;
+                    $namaProg = trim((string) ($row[2] ?? ''));
+                    $thnRekrut = $row[3] ?? null;
+                    $thnTraining = $row[4] ?? null;
+                    $thnLulus = $row[5] ?? null;
+                    $jmlTrainee = $row[6] ?? 0;
+                    $jmlCulled = $row[7] ?? 0;
+                }
+            }
+
             if (empty($namaProg)) {
                 continue;
             }
 
+            if (empty($kodeKat)) {
+                $kodeKat = self::deriveCategoryCode($katProg, $namaProg);
+            }
+            $katProg = self::normalizeCategoryName($katProg, $kodeKat);
+
             $rows[] = [
-                'no' => ! empty($row[0]) && is_numeric($row[0]) ? (int) $row[0] : $rowNum - 1,
-                'kode_kategori' => trim((string) ($row[1] ?? '')) ?: null,
-                'kategori_program' => trim((string) ($row[2] ?? '')) ?: null,
+                'no' => ! empty($noVal) && is_numeric($noVal) ? (int) $noVal : $rowNum - 1,
+                'kode_kategori' => $kodeKat,
+                'kategori_program' => $katProg,
                 'nama_program' => $namaProg,
-                'tahun_rekrut' => ! empty($row[4]) && is_numeric($row[4]) ? (int) $row[4] : null,
-                'tahun_training' => ! empty($row[5]) && is_numeric($row[5]) ? (int) $row[5] : null,
-                'tahun_lulus' => ! empty($row[6]) && is_numeric($row[6]) ? (int) $row[6] : null,
-                'jumlah_trainee' => ! empty($row[7]) && is_numeric($row[7]) ? (int) $row[7] : 0,
-                'jumlah_culled' => ! empty($row[8]) && is_numeric($row[8]) ? (int) $row[8] : 0,
+                'tahun_rekrut' => ! empty($thnRekrut) && is_numeric($thnRekrut) ? (int) $thnRekrut : null,
+                'tahun_training' => ! empty($thnTraining) && is_numeric($thnTraining) ? (int) $thnTraining : null,
+                'tahun_lulus' => ! empty($thnLulus) && is_numeric($thnLulus) ? (int) $thnLulus : null,
+                'jumlah_trainee' => ! empty($jmlTrainee) && is_numeric($jmlTrainee) ? (int) $jmlTrainee : 0,
+                'jumlah_culled' => ! empty($jmlCulled) && is_numeric($jmlCulled) ? (int) $jmlCulled : 0,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
@@ -1719,6 +1844,79 @@ class AsistenController extends Controller
             'status' => 'success',
             'message' => 'Berhasil mengimpor '.count($rows).' data batch program!',
         ]);
+    }
+
+    /**
+     * Download template for Monitoring Alumni / Batch Program import.
+     * Contains only the 8 master columns without calculated/position columns.
+     */
+    public function downloadMonitoringProgramTemplate(): StreamedResponse
+    {
+        $headers = [
+            'No',
+            'Kategori Program',
+            'Nama Program',
+            'Tahun Rekrut',
+            'Tahun Training',
+            'Tahun Lulus',
+            'Jumlah Trainee',
+            'Jumlah Culled',
+        ];
+
+        $sampleRows = [
+            [
+                1,
+                'Field Assistant Training',
+                'Field Assistant Training (FAT) Batch 1',
+                2022,
+                2022,
+                2022,
+                30,
+                2,
+            ],
+            [
+                2,
+                'Field Assistant Training',
+                'Field Assistant Training (FAT) Batch 2',
+                2023,
+                2023,
+                2023,
+                25,
+                1,
+            ],
+            [
+                3,
+                'Mill Assistant Training',
+                'Mill Assistant Training (MAT) Batch 1',
+                2022,
+                2022,
+                2022,
+                20,
+                1,
+            ],
+            [
+                4,
+                'Admin Assistant Training',
+                'Admin Assistant Training (AAT) Batch 1',
+                2023,
+                2023,
+                2023,
+                15,
+                0,
+            ],
+            [
+                5,
+                'Traction Assistant Training',
+                'Traction Assistant Training (TAT) Batch 1',
+                2024,
+                2024,
+                2024,
+                12,
+                1,
+            ],
+        ];
+
+        return ExcelExporter::download('Template_Import_Monitoring_Alumni.xlsx', $headers, $sampleRows, 'Template Monitoring Alumni');
     }
 
     /**
