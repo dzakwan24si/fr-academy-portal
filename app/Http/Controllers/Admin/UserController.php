@@ -39,17 +39,22 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'nik' => ['nullable', 'string', 'max:255', 'unique:users'],
+            'email' => ['nullable', 'required_without:nik', 'string', 'email', 'max:255', 'unique:users,email'],
+            'nik' => ['nullable', 'required_without:email', 'string', 'max:255', 'unique:users,nik'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'roles' => ['nullable', 'array'],
             'permissions' => ['nullable', 'array'],
+        ], [
+            'email.required_without' => 'Alamat Email wajib diisi jika NIK tidak diisi.',
+            'nik.required_without' => 'NIK wajib diisi jika Alamat Email tidak diisi.',
+            'email.unique' => 'Alamat Email sudah terdaftar.',
+            'nik.unique' => 'NIK sudah terdaftar.',
         ]);
 
         $user = User::create([
             'name' => $validated['name'],
-            'email' => $validated['email'],
-            'nik' => $validated['nik'],
+            'email' => $validated['email'] ?? null,
+            'nik' => $validated['nik'] ?? null,
             'password' => Hash::make($validated['password']),
         ]);
 
@@ -78,17 +83,22 @@ class UserController extends Controller
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'nik' => ['nullable', 'string', 'max:255', 'unique:users,nik,'.$user->id],
+            'email' => ['nullable', 'required_without:nik', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'nik' => ['nullable', 'required_without:email', 'string', 'max:255', 'unique:users,nik,'.$user->id],
             'password' => ['nullable', 'confirmed', Password::defaults()],
             'roles' => ['nullable', 'array'],
             'permissions' => ['nullable', 'array'],
+        ], [
+            'email.required_without' => 'Alamat Email wajib diisi jika NIK tidak diisi.',
+            'nik.required_without' => 'NIK wajib diisi jika Alamat Email tidak diisi.',
+            'email.unique' => 'Alamat Email sudah terdaftar.',
+            'nik.unique' => 'NIK sudah terdaftar.',
         ]);
 
         $user->update([
             'name' => $validated['name'],
-            'email' => $validated['email'],
-            'nik' => $validated['nik'],
+            'email' => $validated['email'] ?? null,
+            'nik' => $validated['nik'] ?? null,
         ]);
 
         if ($request->filled('password')) {

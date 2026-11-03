@@ -20,16 +20,21 @@ class ProfileController extends Controller
 
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
-            'nik' => ['nullable', 'string', 'max:255', 'unique:users,nik,'.$user->id],
+            'email' => ['nullable', 'required_without:nik', 'string', 'email', 'max:255', 'unique:users,email,'.$user->id],
+            'nik' => ['nullable', 'required_without:email', 'string', 'max:255', 'unique:users,nik,'.$user->id],
             'current_password' => ['nullable', 'required_with:password', 'current_password'],
             'password' => ['nullable', 'confirmed', Password::defaults()],
+        ], [
+            'email.required_without' => 'Alamat Email wajib diisi jika NIK tidak diisi.',
+            'nik.required_without' => 'NIK wajib diisi jika Alamat Email tidak diisi.',
+            'email.unique' => 'Alamat Email sudah terdaftar.',
+            'nik.unique' => 'NIK sudah terdaftar.',
         ]);
 
         $user->update([
             'name' => $validated['name'],
-            'email' => $validated['email'],
-            'nik' => $validated['nik'],
+            'email' => $validated['email'] ?? null,
+            'nik' => $validated['nik'] ?? null,
         ]);
 
         if ($request->filled('password')) {
