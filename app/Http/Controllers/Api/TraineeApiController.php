@@ -49,21 +49,29 @@ class TraineeApiController extends Controller
 
         private function getRelevantAttendanceRecord($trainee, string $today)
     {
-        // 1. Cek presensi untuk kelas yang aktif hari ini / sedang berlangsung
+        // 1. Cek presensi untuk kelas yang aktif hari ini / sedang berlangsung (belum masuk riwayat)
         $record = Attendance::where('trainee_id', $trainee->id)
             ->whereHas('dailyClass', function ($q) use ($today) {
-                $q->where(function ($query) use ($today) {
-                    $query->whereDate('date', '<=', $today)
-                        ->whereDate('end_date', '>=', $today);
-                })->orWhere(function ($query) use ($today) {
-                    $query->whereDate('date', $today)
-                        ->whereNull('end_date');
+                $q->where(function ($sq) {
+                    $sq->whereNull('is_completed')->orWhere('is_completed', false);
+                })
+                ->where(function ($sub) use ($today) {
+                    $sub->where(function ($query) use ($today) {
+                        $query->whereDate('date', '<=', $today)
+                            ->whereDate('end_date', '>=', $today);
+                    })->orWhere(function ($query) use ($today) {
+                        $query->whereDate('date', $today)
+                            ->whereNull('end_date');
+                    });
                 });
             })->first();
 
-        // 2. Jika belum ada presensi, cek apakah ada kelas aktif hari ini di program pelatihan peserta
+        // 2. Jika belum ada presensi, cek apakah ada kelas aktif hari ini di program pelatihan peserta (belum masuk riwayat)
         if (! $record && $trainee->training_program_id) {
             $class = DailyClass::where('training_program_id', $trainee->training_program_id)
+                ->where(function ($sq) {
+                    $sq->whereNull('is_completed')->orWhere('is_completed', false);
+                })
                 ->where(function ($q) use ($today) {
                     $q->where(function ($query) use ($today) {
                         $query->whereDate('date', '<=', $today)
@@ -126,6 +134,12 @@ class TraineeApiController extends Controller
 
         $isClassCompleted = (bool) ($todayAttendanceRecord && $todayAttendanceRecord->dailyClass && $todayAttendanceRecord->dailyClass->is_completed);
 
+        $hasActiveClassToday = $todayAttendanceRecord && $todayAttendanceRecord->dailyClass && ! $isClassCompleted && (
+            $todayAttendanceRecord->dailyClass->date &&
+            $todayAttendanceRecord->dailyClass->date <= $today &&
+            ($todayAttendanceRecord->dailyClass->end_date >= $today || is_null($todayAttendanceRecord->dailyClass->end_date))
+        );
+
         $todayAttendance = $todayAttendanceRecord && ! $isClassCompleted && in_array(strtolower($todayAttendanceRecord->status), ['hadir', 'izin', 'sakit']);
 
         // Cek tugas pending
@@ -153,7 +167,7 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
                 'pendingEvaluations' => $pendingEvaluationsCount,
                 'pendingEvaluation' => $pendingEvaluationsCount > 0,
                 'trainee' => $trainee->ui_data,
-                'todayClass' => $todayAttendanceRecord && $todayAttendanceRecord->dailyClass ? $todayAttendanceRecord->dailyClass->title : null,
+                'todayClass' => $hasActiveClassToday ? $todayAttendanceRecord->dailyClass->title : null,
                 'classInfo' => $todayAttendanceRecord && $todayAttendanceRecord->dailyClass ? [
                     'id' => $todayAttendanceRecord->dailyClass->id,
                     'title' => $todayAttendanceRecord->dailyClass->title,
@@ -217,10 +231,11 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
 
         $request->validate([
             'task_files' => 'required|array',
-            'task_files.*' => 'required|file|max:10240', // max 10MB per file
+            'task_files.*' => 'required|file|mimes:jpg,jpeg,png,pdf,doc,docx,ppt,pptx|max:10240', // max 10MB per file
         ], [
             'task_files.required' => 'File tugas wajib diunggah.',
-            'task_files.*.max' => 'Ukuran file maksimal adalah 10MB, silakan periksa kembali file Anda.',
+            'task_files.*.mimes' => 'Format file tugas harus berupa foto (JPG, PNG), PDF, Word (DOC, DOCX), atau PowerPoint (PPT, PPTX).',
+            'task_files.*.max' => 'Ukuran file maksimal adalah 10MB per file.',
         ]);
 
         $paths = [];
@@ -257,9 +272,14 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
                     }
                 }
 
-                // Fallback for non-images or if GD fails
-                $originalName = $file->getClientOriginalName();
-                $safeName = time().'_'.rand(1000, 9999).'_'.preg_replace('/[^a-zA-Z0-9_\.-]/', '', $originalName);
+                // Fallback for non-images (PDF, Word, PPT) with strict extension whitelist and randomized safe filename
+                $extension = strtolower($file->getClientOriginalExtension());
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'ppt', 'pptx'];
+                if (! in_array($extension, $allowedExtensions)) {
+                    continue;
+                }
+
+                $safeName = time().'_'.Str::random(20).'.'.$extension;
                 $paths[] = $file->storeAs('task_submissions', $safeName, 'public');
             }
         }
@@ -293,15 +313,20 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
         if (empty($rawToken) || strtolower($rawToken) === 'manual') {
             $today = now()->format('Y-m-d');
 
-            // Cari kelas aktif hari ini seperti di dashboard
+            // Cari kelas aktif hari ini (yang belum selesai / masuk riwayat)
             $todayAttendanceRecord = Attendance::where('trainee_id', $trainee->id)
                 ->whereHas('dailyClass', function ($q) use ($today) {
-                    $q->where(function ($query) use ($today) {
-                        $query->whereDate('date', '<=', $today)
-                            ->whereDate('end_date', '>=', $today);
-                    })->orWhere(function ($query) use ($today) {
-                        $query->whereDate('date', $today)
-                            ->whereNull('end_date');
+                    $q->where(function ($sq) {
+                        $sq->whereNull('is_completed')->orWhere('is_completed', false);
+                    })
+                    ->where(function ($sub) use ($today) {
+                        $sub->where(function ($query) use ($today) {
+                            $query->whereDate('date', '<=', $today)
+                                ->whereDate('end_date', '>=', $today);
+                        })->orWhere(function ($query) use ($today) {
+                            $query->whereDate('date', $today)
+                                ->whereNull('end_date');
+                        });
                     });
                 })->first();
 
@@ -330,6 +355,13 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
                     'message' => 'QR Code tidak valid atau sudah kadaluarsa.',
                 ], 404);
             }
+        }
+
+        if ($dailyClass->is_completed) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Kelas pelatihan ini sudah selesai dan dipindahkan ke riwayat.',
+            ], 400);
         }
 
         // Cek apakah trainee memiliki record absensi di kelas ini (menandakan dia terdaftar di kelas)
@@ -450,6 +482,10 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
         $trainee = auth()->user();
 
         $dailyClass = DailyClass::findOrFail($dailyClassId);
+
+        if (! $dailyClass->is_evaluation_open) {
+            return response()->json(['message' => 'Sesi evaluasi untuk kelas ini belum dibuka atau sudah ditutup.'], 403);
+        }
 
         $exists = TraineeEvaluation::where('trainee_id', $trainee->id)
             ->where('daily_class_id', $dailyClass->id)

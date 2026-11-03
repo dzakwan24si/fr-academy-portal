@@ -41,17 +41,17 @@
                             </div>
 
                             <div>
-                                <label for="email" class="block text-sm font-medium text-gray-700">Alamat Email</label>
-                                <input type="email" name="email" id="email" value="{{ old('email', auth()->user()->email) }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-[#509c38] focus:ring-[#509c38] px-4 py-3 text-gray-700" required>
+                                <label for="email" class="block text-sm font-medium text-gray-700">Alamat Email <span class="text-xs text-gray-500 font-normal">(Opsional jika NIK diisi)</span></label>
+                                <input type="email" name="email" id="email" value="{{ old('email', auth()->user()->email) }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-[#509c38] focus:ring-[#509c38] px-4 py-3 text-gray-700">
                                 @error('email')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
                             </div>
 
                             <div class="md:col-span-2">
-                                <label for="nik" class="block text-sm font-medium text-gray-700">NIK (Nomor Induk Karyawan)</label>
+                                <label for="nik" class="block text-sm font-medium text-gray-700">NIK (Nomor Induk Karyawan) <span class="text-xs text-gray-500 font-normal">(Opsional jika Email diisi)</span></label>
                                 <input type="text" name="nik" id="nik" value="{{ old('nik', auth()->user()->nik) }}" class="mt-1 block w-full rounded-xl border-gray-300 shadow-sm focus:border-[#509c38] focus:ring-[#509c38] px-4 py-3 text-gray-700">
-                                <p class="mt-1 text-xs text-gray-500">Opsional, khusus untuk karyawan internal.</p>
+                                <p class="mt-1 text-xs text-gray-500">Dapat digunakan untuk login jika email tidak diisi.</p>
                                 @error('nik')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror

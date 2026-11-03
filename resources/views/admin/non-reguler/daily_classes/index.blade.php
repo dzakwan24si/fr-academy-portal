@@ -121,6 +121,10 @@
                                 <span class="w-1 h-1 rounded-full bg-slate-300 mx-1"></span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                                 <span>{{ $class->attendances->pluck('trainee_id')->unique()->count() }} Terdaftar</span>
+                                @if($class->region)
+                                    <span class="w-1 h-1 rounded-full bg-slate-300 mx-1"></span>
+                                    <span class="px-2 py-0.5 rounded-md bg-emerald-50 text-[#1d5732] border border-emerald-200/80 text-[11px] font-bold">{{ $class->region }}</span>
+                                @endif
                             </div>
                             @if($class->is_completed)
                                 <div class="mt-2.5">
@@ -188,6 +192,15 @@
                                     <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Nama Pelatihan <span class="text-red-500">*</span></label>
                                     <input type="text" id="editTitle_{{ $class->id }}" name="title" value="{{ $class->title }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] focus:border-[#28844b] font-medium transition-all" required>
                                 </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Region <span class="text-red-500">*</span></label>
+                                    <select name="region" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] focus:border-[#28844b] font-medium transition-all text-sm" required>
+                                        @foreach($availableRegions as $regOption)
+                                            <option value="{{ $regOption }}" {{ $class->region == $regOption ? 'selected' : '' }}>{{ $regOption }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
                             </div>
                             <div class="mt-8 flex justify-end gap-3 pt-6 border-t border-slate-100">
                                 <button type="button" onclick="document.getElementById('editModal_{{ $class->id }}').classList.add('hidden')" class="px-6 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition-colors">Batal</button>
@@ -245,18 +258,15 @@
 
                         <!-- Filter Buttons: Tahun & Region -->
                         <div class="space-y-3.5 p-4 bg-slate-50/80 rounded-2xl border border-slate-200/80">
-                            <!-- Filter Tahun -->
+                            <!-- Pilih Tahun Pelatihan (Wajib Spesifik, Tanpa 'Semua Tahun') -->
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Filter Tahun Pelatihan</label>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                    Pilih Tahun Pelatihan <span class="text-red-500">*</span>
+                                </label>
                                 <div class="flex flex-wrap gap-2">
-                                    <button type="button" @click="filterYear = 'all'"
-                                        :class="filterYear === 'all' ? 'bg-[#28844b] text-white shadow-sm font-bold' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 font-semibold'"
-                                        class="px-3.5 py-1.5 rounded-lg text-xs transition-all">
-                                        Semua Tahun
-                                    </button>
                                     <template x-for="yr in availableYears" :key="yr">
-                                        <button type="button" @click="filterYear = yr"
-                                            :class="filterYear === yr ? 'bg-[#28844b] text-white shadow-sm font-bold' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 font-semibold'"
+                                        <button type="button" @click="filterYear = yr; selectedTitle = ''"
+                                            :class="filterYear == yr ? 'bg-[#28844b] text-white shadow-sm font-bold ring-2 ring-[#28844b]/30' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 font-semibold'"
                                             class="px-3.5 py-1.5 rounded-lg text-xs transition-all"
                                             x-text="yr">
                                         </button>
@@ -264,23 +274,21 @@
                                 </div>
                             </div>
 
-                            <!-- Filter Region -->
+                            <!-- Pilih Region Pelatihan (Wajib Spesifik, Tanpa 'Semua Region') -->
                             <div>
-                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">Filter Region Pelatihan</label>
+                                <label class="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
+                                    Pilih Region Pelatihan <span class="text-red-500">*</span>
+                                </label>
                                 <div class="flex flex-wrap gap-2">
-                                    <button type="button" @click="filterRegion = 'all'"
-                                        :class="filterRegion === 'all' ? 'bg-[#28844b] text-white shadow-sm font-bold' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 font-semibold'"
-                                        class="px-3.5 py-1.5 rounded-lg text-xs transition-all">
-                                        Semua Region
-                                    </button>
                                     <template x-for="reg in availableRegions" :key="reg">
-                                        <button type="button" @click="filterRegion = reg"
-                                            :class="filterRegion === reg ? 'bg-[#28844b] text-white shadow-sm font-bold' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 font-semibold'"
+                                        <button type="button" @click="filterRegion = reg; selectedTitle = ''"
+                                            :class="filterRegion === reg ? 'bg-[#28844b] text-white shadow-sm font-bold ring-2 ring-[#28844b]/30' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200 font-semibold'"
                                             class="px-3.5 py-1.5 rounded-lg text-xs transition-all"
                                             x-text="reg">
                                         </button>
                                     </template>
                                 </div>
+                                <input type="hidden" name="region" :value="filterRegion" required>
                             </div>
                         </div>
 
@@ -302,18 +310,18 @@
                             </select>
 
                             <p class="text-[11px] text-slate-400 mt-1.5" x-show="filteredCatalogTitles.length > 0">
-                                Pilihan nama pelatihan otomatis disinkronkan dari data Program Training.
+                                Pilihan nama pelatihan otomatis disinkronkan dari data Program Training region <strong class="text-slate-600" x-text="filterRegion"></strong>.
                             </p>
 
                             <div x-show="filteredCatalogTitles.length === 0" class="mt-2.5 p-3.5 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-xs text-slate-500 text-center">
-                                Tidak ada program pelatihan yang cocok dengan filter Tahun & Region ini. Silakan klik tombol <strong>"Semua Tahun"</strong> atau <strong>"Semua Region"</strong> di atas.
+                                Tidak ada program pelatihan yang cocok untuk Region <strong x-text="filterRegion"></strong> pada Tahun ini.
                             </div>
                         </div>
                     </div>
 
                     <div class="mt-8 flex justify-end gap-3 pt-6 border-t border-slate-100">
                         <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" class="px-6 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition-colors text-sm">Batal</button>
-                        <button type="submit" :disabled="!selectedTitle" :class="!selectedTitle ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#1d6b3a] active:scale-95 shadow-md'" class="px-6 py-2.5 rounded-xl bg-[#28844b] text-white font-bold transition-all text-sm">Simpan Program</button>
+                        <button type="submit" :disabled="!selectedTitle || !filterRegion" :class="(!selectedTitle || !filterRegion) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[#1d6b3a] active:scale-95 shadow-md'" class="px-6 py-2.5 rounded-xl bg-[#28844b] text-white font-bold transition-all text-sm">Simpan Program</button>
                     </div>
                 </form>
             </div>
@@ -344,10 +352,17 @@
                 trainingCatalog: @json($trainingProgramCatalog ?? []),
                 availableYears: @json($availableYears ?? []),
                 availableRegions: @json($availableRegions ?? []),
-                filterYear: '2026',
-                filterRegion: 'all',
+                filterYear: '{{ date("Y") }}',
+                filterRegion: 'Kalbar',
                 selectedTitle: '',
                 init() {
+                    if (this.availableYears && this.availableYears.length > 0) {
+                        const currentYr = String(new Date().getFullYear());
+                        this.filterYear = this.availableYears.map(String).includes(currentYr) ? currentYr : String(this.availableYears[this.availableYears.length - 1]);
+                    }
+                    if (this.availableRegions && this.availableRegions.length > 0) {
+                        this.filterRegion = this.availableRegions[0];
+                    }
                     if (this.filteredPrograms.length === 1) {
                         this.activeProgram = this.filteredPrograms[0].id;
                     }
@@ -363,7 +378,7 @@
                     return this.programsData.filter(p => p.type === this.activeType);
                 },
                 get filteredCatalogTitles() {
-                    if (!this.activeProgram) return [];
+                    if (!this.activeProgram || !this.filterRegion) return [];
                     const activeProg = this.programsData.find(p => p.id == this.activeProgram);
                     const activeName = (activeProg?.name || '').toLowerCase().trim();
                     
@@ -379,11 +394,11 @@
                         }
                         if (!matchCategory) return false;
 
-                        if (this.filterYear !== 'all' && item.year !== this.filterYear) {
+                        if (String(item.year) !== String(this.filterYear)) {
                             return false;
                         }
 
-                        if (this.filterRegion !== 'all' && item.region.toLowerCase() !== this.filterRegion.toLowerCase()) {
+                        if (item.region.toLowerCase() !== this.filterRegion.toLowerCase()) {
                             return false;
                         }
 

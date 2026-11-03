@@ -74,15 +74,15 @@
         <!-- Card 3 -->
         <div class="group relative overflow-hidden bg-white rounded-3xl p-4 lg:p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 hover:shadow-[0_8px_30px_rgb(0,0,0,0.1)] transition-all duration-300 transform hover:-translate-y-1">
             <div class="absolute -bottom-4 -right-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                <svg class="w-24 h-24 lg:w-32 lg:h-32 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                <svg class="w-24 h-24 lg:w-32 lg:h-32 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
             </div>
             <div class="flex items-center gap-3 lg:gap-5">
-                <div class="w-12 h-12 lg:w-16 lg:h-16 shrink-0 rounded-2xl bg-gradient-to-br from-amber-300 to-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-200 group-hover:-rotate-6 transition-transform">
-                    <svg class="w-6 h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <div class="w-12 h-12 lg:w-16 lg:h-16 shrink-0 rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-lg shadow-orange-200 group-hover:-rotate-6 transition-transform">
+                    <svg class="w-6 h-6 lg:w-8 lg:h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                 </div>
                 <div class="min-w-0">
-                    <p class="text-xs lg:text-sm text-gray-500 font-semibold mb-1 uppercase tracking-wider truncate" title="Laporan Draft">Laporan Draft</p>
-                    <p class="text-2xl lg:text-3xl font-black text-gray-800">{{ $draftReports }} <span class="text-xs lg:text-sm text-gray-400 font-medium lowercase">menunggu</span></p>
+                    <p class="text-xs lg:text-sm text-gray-500 font-semibold mb-1 uppercase tracking-wider truncate" title="Total Sesi / Kelas">Total Sesi / Kelas</p>
+                    <p class="text-2xl lg:text-3xl font-black text-gray-800">{{ $totalClasses }} <span class="text-xs lg:text-sm text-gray-400 font-medium lowercase">sesi</span></p>
                 </div>
             </div>
         </div>
@@ -94,10 +94,10 @@
         <div class="lg:col-span-2 bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden flex flex-col">
             <div class="p-6 md:p-8 border-b border-gray-100 flex justify-between items-center bg-white">
                 <div>
-                    <h3 class="font-black text-gray-800 text-xl">Laporan Mingguan Terbaru</h3>
-                    <p class="text-sm text-gray-500 mt-1">Laporan yang baru saja diubah atau dibuat.</p>
+                    <h3 class="font-black text-gray-800 text-xl">Sesi Kelas Terbaru</h3>
+                    <p class="text-sm text-gray-500 mt-1">Daftar sesi materi atau kelas harian terbaru.</p>
                 </div>
-                <a href="{{ route('training-reguler.weekly-reports.index') }}" class="hidden sm:inline-flex items-center justify-center px-4 py-2 bg-gray-50 text-gray-600 rounded-full text-sm font-bold hover:bg-gray-100 transition-colors">
+                <a href="{{ route('training-reguler.daily-classes.index') }}" class="hidden sm:inline-flex items-center justify-center px-4 py-2 bg-gray-50 text-gray-600 rounded-full text-sm font-bold hover:bg-gray-100 transition-colors">
                     Lihat Semua
                 </a>
             </div>
@@ -106,46 +106,35 @@
                 <table class="w-full text-left border-collapse">
                     <thead class="bg-gray-50/50">
                         <tr>
-                            <th class="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest text-left">Program & Trainer</th>
-                            <th class="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest text-left">Periode</th>
-                            <th class="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest text-right">Status</th>
+                            <th class="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest text-left">Materi & Program</th>
+                            <th class="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest text-left">Trainer</th>
+                            <th class="px-8 py-5 text-xs font-bold text-gray-500 uppercase tracking-widest text-right">Tanggal</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        @forelse($recentReports as $report)
+                        @forelse($recentClasses as $class)
                             <tr class="hover:bg-green-50/30 transition-colors group">
                                 <td class="px-8 py-5">
                                     <div class="flex items-center">
                                         <div class="w-10 h-10 rounded-full bg-green-100 text-[#28844b] flex items-center justify-center font-bold mr-4 shrink-0">
-                                            {{ substr($report->trainingProgram->name ?? 'P', 0, 1) }}
+                                            {{ substr($class->trainingProgram->name ?? 'P', 0, 1) }}
                                         </div>
                                         <div>
-                                            <p class="font-bold text-gray-800 text-base group-hover:text-[#28844b] transition-colors">{{ $report->trainingProgram->name ?? 'N/A' }}</p>
-                                            <p class="hidden text-xs text-gray-500 items-center mt-1">
-                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                                                {{ $report->trainer->name ?? 'N/A' }}
+                                            <p class="font-bold text-gray-800 text-base group-hover:text-[#28844b] transition-colors">{{ $class->title }}</p>
+                                            <p class="text-xs text-gray-500 items-center mt-1">
+                                                {{ $class->trainingProgram->name ?? 'Program Reguler' }}
                                             </p>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-8 py-5">
-                                    <div class="inline-flex items-center px-3 py-1.5 rounded-lg bg-gray-50 text-sm font-semibold text-gray-700 border border-gray-100">
-                                        <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                        {{ \Carbon\Carbon::parse($report->week_start_date)->format('d M') }} - {{ \Carbon\Carbon::parse($report->week_end_date)->format('d M Y') }}
-                                    </div>
+                                    <p class="text-sm font-medium text-gray-700">{{ $class->trainer_name ?? '-' }}</p>
                                 </td>
                                 <td class="px-8 py-5 text-right">
-                                    @if($report->status === 'draft')
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-700 border border-amber-200">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5 animate-pulse"></span>
-                                            DRAFT
-                                        </span>
-                                    @else
-                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700 border border-green-200">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 mr-1.5"></span>
-                                            SUBMITTED
-                                        </span>
-                                    @endif
+                                    <div class="inline-flex items-center px-3 py-1.5 rounded-lg bg-gray-50 text-sm font-semibold text-gray-700 border border-gray-100">
+                                        <svg class="w-4 h-4 mr-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        {{ \Carbon\Carbon::parse($class->date)->format('d M Y') }}
+                                    </div>
                                 </td>
                             </tr>
                         @empty
@@ -153,8 +142,8 @@
                                 <td colspan="3" class="px-8 py-12 text-center">
                                     <div class="flex flex-col items-center justify-center text-gray-400">
                                         <svg class="w-12 h-12 mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                        <p class="font-medium text-gray-500">Belum ada data laporan mingguan.</p>
-                                        <p class="text-sm mt-1">Laporan yang Anda buat akan muncul di sini.</p>
+                                        <p class="font-medium text-gray-500">Belum ada data sesi kelas.</p>
+                                        <p class="text-sm mt-1">Sesi kelas yang dibuat akan muncul di sini.</p>
                                     </div>
                                 </td>
                             </tr>
@@ -162,32 +151,26 @@
                     </tbody>
                 </table>
             </div>
-            
-            <!-- <div class="p-4 border-t border-gray-100 bg-gray-50 text-center sm:hidden">
-                <a href="{{ route('training-reguler.weekly-reports.index') }}" class="text-[#28844b] text-sm font-bold">
-                    Lihat Semua Laporan
-                </a>
-            </div> -->
         </div>
 
         <!-- Quick Actions Sidebar -->
         <div class="flex flex-col gap-6 h-full">
             <!-- Action 1 -->
-            <!-- <a href="{{ route('training-reguler.weekly-reports.index') }}" class="group block relative overflow-hidden bg-gradient-to-br from-[#28844b] to-[#1a4f2b] rounded-3xl p-8 shadow-lg shadow-green-900/20 hover:-translate-y-1 transition-all duration-300">
+            <a href="{{ route('training-reguler.daily-classes.index') }}" class="group block relative overflow-hidden bg-gradient-to-br from-[#28844b] to-[#1a4f2b] rounded-3xl p-8 shadow-lg shadow-green-900/20 hover:-translate-y-1 transition-all duration-300">
                 <div class="absolute top-0 right-0 -mr-6 -mt-6 w-32 h-32 rounded-full bg-white opacity-10 group-hover:scale-150 transition-transform duration-500 ease-out"></div>
                 
                 <div class="relative z-10">
                     <div class="w-14 h-14 rounded-2xl bg-white/20 backdrop-blur-md text-white flex items-center justify-center mb-6 shadow-sm">
-                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                        <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                     </div>
-                    <h4 class="font-black text-white text-xl mb-2 leading-tight">Buat Laporan<br>Mingguan</h4>
-                    <p class="text-green-100 text-sm font-medium">Isi form evaluasi trainee dan catat perkembangan mereka.</p>
+                    <h4 class="font-black text-white text-xl mb-2 leading-tight">Materi & Kelas<br>Harian</h4>
+                    <p class="text-green-100 text-sm font-medium">Kelola absensi, materi pelatihan, dan tugas harian trainee.</p>
                 </div>
                 
                 <div class="absolute bottom-8 right-8 text-white opacity-0 transform translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                 </div>
-            </a> -->
+            </a>
 
             <!-- Action 2 -->
             <a href="{{ route('training-reguler.trainees.index') }}" class="group block relative overflow-hidden bg-slate-50 rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 hover:shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:-translate-y-1 transition-all duration-300">
@@ -214,7 +197,7 @@
                     </div>
                     <div>
                         <h4 class="font-bold text-gray-800 mb-1">Tips</h4>
-                        <p class="text-sm text-gray-600 leading-snug">Pastikan untuk memeriksa draft laporan setiap akhir minggu.</p>
+                        <p class="text-sm text-gray-600 leading-snug">Pastikan untuk memeriksa absensi peserta dan materi setiap sesi kelas.</p>
                     </div>
                 </div>
             </div>
