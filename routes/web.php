@@ -814,8 +814,14 @@ Route::middleware('auth')->prefix('training-reguler')->group(function () {
     Route::get('/', function () {
         $totalTrainees = Trainee::where('status', 'aktif')->count();
         $totalPrograms = TrainingProgram::count();
-        $totalClasses = DailyClass::count();
-        $recentClasses = DailyClass::with('trainingProgram')->latest('date')->take(5)->get();
+        $totalClasses = DailyClass::where(function ($q) {
+            $q->whereNull('is_completed')->orWhere('is_completed', false);
+        })->count();
+        $recentClasses = DailyClass::with('trainingProgram')
+            ->where(function ($q) {
+                $q->whereNull('is_completed')->orWhere('is_completed', false);
+            })
+            ->latest('date')->take(5)->get();
 
         return view('admin.training-dashboard', compact('totalTrainees', 'totalPrograms', 'totalClasses', 'recentClasses'));
     })->name('training-reguler.dashboard');
@@ -853,16 +859,31 @@ Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
     Route::get('/', function () {
         $today = now()->format('Y-m-d');
 
-        $totalSesi = DailyClass::count();
+        // Total program aktif (tidak termasuk materi yang sudah masuk riwayat / selesai)
+        $totalSesi = DailyClass::where(function ($q) {
+            $q->whereNull('is_completed')->orWhere('is_completed', false);
+        })->count();
 
-        // 1. Distribusi Materi per Sub Kategori (untuk Donut Chart)
-        $programStats = TrainingProgram::withCount('dailyClasses')->get()->map(fn ($p) => [
-            'name' => $p->name,
-            'count' => (int) $p->daily_classes_count,
-        ])->filter(fn ($p) => $p['count'] > 0)->values();
+        // 1. Distribusi Materi per Sub Kategori (untuk Donut Chart) - hanya menghitung materi aktif
+        $programStats = TrainingProgram::where('type', 'non-reguler')
+            ->withCount(['dailyClasses' => function ($q) {
+                $q->where(function ($sq) {
+                    $sq->whereNull('is_completed')->orWhere('is_completed', false);
+                });
+            }])
+            ->get()
+            ->map(fn ($p) => [
+                'name' => $p->name,
+                'count' => (int) $p->daily_classes_count,
+            ])
+            ->filter(fn ($p) => $p['count'] > 0)
+            ->values();
 
-        // 2. Hitung Sesi Berjalan Hari Ini (Cepat & Ringan)
-        $todaySesiCount = DailyClass::whereNotNull('date')
+        // 2. Hitung Sesi Berjalan Hari Ini (hanya sesi aktif yang belum selesai / tidak di riwayat)
+        $todaySesiCount = DailyClass::where(function ($q) {
+                $q->whereNull('is_completed')->orWhere('is_completed', false);
+            })
+            ->whereNotNull('date')
             ->whereDate('date', '<=', $today)
             ->where(function ($q) use ($today) {
                 $q->whereDate('end_date', '>=', $today)
