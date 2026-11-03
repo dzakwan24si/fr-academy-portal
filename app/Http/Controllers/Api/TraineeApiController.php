@@ -217,10 +217,11 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
 
         $request->validate([
             'task_files' => 'required|array',
-            'task_files.*' => 'required|file|max:10240', // max 10MB per file
+            'task_files.*' => 'required|file|mimes:jpg,jpeg,png,pdf,doc,docx,ppt,pptx|max:10240', // max 10MB per file
         ], [
             'task_files.required' => 'File tugas wajib diunggah.',
-            'task_files.*.max' => 'Ukuran file maksimal adalah 10MB, silakan periksa kembali file Anda.',
+            'task_files.*.mimes' => 'Format file tugas harus berupa foto (JPG, PNG), PDF, Word (DOC, DOCX), atau PowerPoint (PPT, PPTX).',
+            'task_files.*.max' => 'Ukuran file maksimal adalah 10MB per file.',
         ]);
 
         $paths = [];
@@ -257,9 +258,14 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
                     }
                 }
 
-                // Fallback for non-images or if GD fails
-                $originalName = $file->getClientOriginalName();
-                $safeName = time().'_'.rand(1000, 9999).'_'.preg_replace('/[^a-zA-Z0-9_\.-]/', '', $originalName);
+                // Fallback for non-images (PDF, Word, PPT) with strict extension whitelist and randomized safe filename
+                $extension = strtolower($file->getClientOriginalExtension());
+                $allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'ppt', 'pptx'];
+                if (! in_array($extension, $allowedExtensions)) {
+                    continue;
+                }
+
+                $safeName = time().'_'.Str::random(20).'.'.$extension;
                 $paths[] = $file->storeAs('task_submissions', $safeName, 'public');
             }
         }
@@ -450,6 +456,10 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
         $trainee = auth()->user();
 
         $dailyClass = DailyClass::findOrFail($dailyClassId);
+
+        if (! $dailyClass->is_evaluation_open) {
+            return response()->json(['message' => 'Sesi evaluasi untuk kelas ini belum dibuka atau sudah ditutup.'], 403);
+        }
 
         $exists = TraineeEvaluation::where('trainee_id', $trainee->id)
             ->where('daily_class_id', $dailyClass->id)

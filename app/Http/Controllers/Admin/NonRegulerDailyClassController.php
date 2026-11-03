@@ -237,7 +237,7 @@ class NonRegulerDailyClassController extends Controller
     public function importTrainees(Request $request, DailyClass $dailyClass)
     {
         $request->validate([
-            'file' => 'required|file|max:5120',
+            'file' => 'required|file|mimes:csv,txt|max:5120',
             'date' => 'required|date',
             'end_date' => 'required|date|after_or_equal:date',
             'trainer_name' => 'required|string|max:255',
@@ -248,7 +248,8 @@ class NonRegulerDailyClassController extends Controller
             'provider' => 'required|string|max:255',
             'region' => 'required|string|max:255',
         ], [
-            'file.required' => 'File Excel wajib diunggah.',
+            'file.required' => 'File CSV wajib diunggah.',
+            'file.mimes' => 'Format file yang diunggah harus berupa file .csv.',
             'file.max' => 'Ukuran file maksimal 5MB.',
             'date.required' => 'Tanggal mulai wajib diisi.',
             'end_date.required' => 'Tanggal selesai wajib diisi.',

@@ -915,7 +915,7 @@
     <div id="importModal" class="fixed inset-0 z-[100] flex items-center justify-center hidden bg-slate-900/50 backdrop-blur-sm transition-opacity text-left p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all scale-100 opacity-100">
             <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50 shrink-0">
-                <h3 class="text-lg font-black text-slate-800">Import Peserta (Excel)</h3>
+                <h3 class="text-lg font-black text-slate-800">Import Peserta (CSV)</h3>
                 <button type="button" onclick="document.getElementById('importModal').classList.add('hidden')" class="text-slate-400 hover:text-red-500 transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
@@ -991,8 +991,8 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Pilih File Excel / CSV <span class="text-red-500">*</span></label>
-                        <input type="file" name="file" accept=".xlsx,.xls,.csv" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Pilih File CSV <span class="text-red-500">*</span></label>
+                        <input type="file" name="file" accept=".csv" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required>
                     </div>
                 </div>
                 
@@ -1009,7 +1009,6 @@
         <option value="Kalbar">Kalbar</option>
         <option value="Kaltim FR">Kaltim FR</option>
         <option value="Riau">Riau</option>
-        <option value="Nasional">Nasional</option>
     </datalist>
 
     </div>

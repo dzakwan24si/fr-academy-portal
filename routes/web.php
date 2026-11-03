@@ -11,7 +11,6 @@ use App\Http\Controllers\Admin\NonRegulerMoaController;
 use App\Http\Controllers\Admin\NonRegulerTraineeController;
 use App\Http\Controllers\Admin\NonRegulerTrainerController;
 use App\Http\Controllers\Admin\NonRegulerTrainingProgramController;
-use App\Http\Controllers\Admin\NonRegulerWeeklyReportController;
 use App\Http\Controllers\Admin\PageSettingController;
 use App\Http\Controllers\Admin\PortalProgramController;
 use App\Http\Controllers\Admin\ProfileController;
@@ -20,7 +19,6 @@ use App\Http\Controllers\Admin\TraineeController;
 use App\Http\Controllers\Admin\TrainerController;
 use App\Http\Controllers\Admin\TrainingProgramController;
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\WeeklyReportController;
 use App\Http\Controllers\Administrasi\ActivityLogController;
 use App\Http\Controllers\Administrasi\CutiController;
 use App\Http\Controllers\Administrasi\MppController;
@@ -59,7 +57,6 @@ use App\Models\Trainee;
 use App\Models\TrainingProgram;
 use App\Models\TvPlaylist;
 use App\Models\User;
-use App\Models\WeeklyReport;
 use App\Notifications\WebPushBlastNotification;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -817,10 +814,10 @@ Route::middleware('auth')->prefix('training-reguler')->group(function () {
     Route::get('/', function () {
         $totalTrainees = Trainee::where('status', 'aktif')->count();
         $totalPrograms = TrainingProgram::count();
-        $draftReports = WeeklyReport::where('status', 'draft')->count();
-        $recentReports = WeeklyReport::with('trainingProgram', 'trainer')->latest()->take(5)->get();
+        $totalClasses = DailyClass::count();
+        $recentClasses = DailyClass::with('trainingProgram')->latest('date')->take(5)->get();
 
-        return view('admin.training-dashboard', compact('totalTrainees', 'totalPrograms', 'draftReports', 'recentReports'));
+        return view('admin.training-dashboard', compact('totalTrainees', 'totalPrograms', 'totalClasses', 'recentClasses'));
     })->name('training-reguler.dashboard');
 
     Route::resource('training-programs', TrainingProgramController::class)->except(['show'])->names('training-reguler.training-programs');
@@ -828,10 +825,6 @@ Route::middleware('auth')->prefix('training-reguler')->group(function () {
     Route::post('trainees/import', [TraineeController::class, 'import'])->name('training-reguler.trainees.import');
     Route::get('trainees/template', [TraineeController::class, 'downloadTemplate'])->name('training-reguler.trainees.template');
     Route::resource('trainers', TrainerController::class)->except(['show'])->names('training-reguler.trainers');
-    Route::post('weekly-reports/merge', [WeeklyReportController::class, 'merge'])->name('training-reguler.weekly-reports.merge');
-    Route::post('weekly-reports/{weekly_report}/unmerge', [WeeklyReportController::class, 'unmerge'])->name('training-reguler.weekly-reports.unmerge');
-    Route::resource('weekly-reports', WeeklyReportController::class)->names('training-reguler.weekly-reports');
-    Route::get('weekly-reports/{weekly_report}/export-pdf', [WeeklyReportController::class, 'exportPdf'])->name('training-reguler.weekly-reports.export-pdf');
     Route::resource('moas', MoaController::class)->except(['show'])->names('training-reguler.moas');
 
     // Dummy Print Routes
@@ -891,10 +884,6 @@ Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
     Route::post('trainees/import', [NonRegulerTraineeController::class, 'import'])->name('training-non-reguler.trainees.import');
     Route::get('trainees/template', [NonRegulerTraineeController::class, 'downloadTemplate'])->name('training-non-reguler.trainees.template');
     Route::resource('trainers', NonRegulerTrainerController::class)->except(['show'])->names('training-non-reguler.trainers');
-    Route::post('weekly-reports/merge', [NonRegulerWeeklyReportController::class, 'merge'])->name('training-non-reguler.weekly-reports.merge');
-    Route::post('weekly-reports/{weekly_report}/unmerge', [NonRegulerWeeklyReportController::class, 'unmerge'])->name('training-non-reguler.weekly-reports.unmerge');
-    Route::resource('weekly-reports', NonRegulerWeeklyReportController::class)->names('training-non-reguler.weekly-reports');
-    Route::get('weekly-reports/{weekly_report}/export-pdf', [NonRegulerWeeklyReportController::class, 'exportPdf'])->name('training-non-reguler.weekly-reports.export-pdf');
     Route::resource('moas', NonRegulerMoaController::class)->except(['show'])->names('training-non-reguler.moas');
 
     // Dummy Print Routes

@@ -15,6 +15,13 @@ class TrainingRecordExportController extends Controller
      */
     public function export(Request $request): JsonResponse
     {
+        // Proteksi Broken Access Control: Cegah akses dari akun peserta (Trainee)
+        if ($request->user() instanceof \App\Models\Trainee) {
+            return response()->json([
+                'message' => 'Akses ditolak: Akun peserta tidak memiliki izin mengakses data ekspor perusahaan.',
+            ], 403);
+        }
+
         $perPage = (int) $request->input('per_page', 100);
         if ($perPage < 1) {
             $perPage = 100;
