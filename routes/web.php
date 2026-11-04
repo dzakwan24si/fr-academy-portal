@@ -202,6 +202,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
     Route::resource('artikel', AdminArticleController::class)->except(['show'])->names('admin.artikel')->middleware('can:manage_articles');
 
     // User Management Routes
+    Route::patch('users/{user}/toggle-status', [UserController::class, 'toggleStatus'])->name('admin.users.toggle-status')->middleware('can:manage_users');
     Route::resource('users', UserController::class)->except(['show'])->names('admin.users')->middleware('can:manage_users');
     Route::resource('roles', RoleController::class)->except(['show'])->names('admin.roles')->middleware('can:manage_roles');
 
@@ -888,8 +889,8 @@ Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
 
         // 2. Hitung Sesi Berjalan Hari Ini (hanya sesi aktif yang belum selesai / tidak di riwayat)
         $todaySesiCount = DailyClass::where(function ($q) {
-                $q->whereNull('is_completed')->orWhere('is_completed', false);
-            })
+            $q->whereNull('is_completed')->orWhere('is_completed', false);
+        })
             ->whereNotNull('date')
             ->whereDate('date', '<=', $today)
             ->where(function ($q) use ($today) {

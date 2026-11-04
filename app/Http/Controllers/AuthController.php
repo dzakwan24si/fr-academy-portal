@@ -46,9 +46,19 @@ class AuthController extends Controller
         $fieldType = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'nik';
 
         if (Auth::attempt([$fieldType => $identifier, 'password' => $request->input('password')], $request->boolean('remember'))) {
-            $request->session()->regenerate();
-
             $user = Auth::user();
+
+            if (! ($user->is_active ?? true)) {
+                Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
+
+                return back()->withErrors([
+                    'identifier' => 'Akun Anda sedang dinonaktifkan. Silakan hubungi administrator sistem.',
+                ])->onlyInput('identifier');
+            }
+
+            $request->session()->regenerate();
             $user->update(['last_login_at' => now()]);
 
             if ($user->hasRole('Top Management')) {
