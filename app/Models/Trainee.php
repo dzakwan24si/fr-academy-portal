@@ -3,18 +3,23 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use NotificationChannels\WebPush\HasPushSubscriptions;
 
-class Trainee extends Model
+class Trainee extends Authenticatable
 {
     use HasApiTokens, HasFactory, HasPushSubscriptions, Notifiable;
 
     protected $guarded = ['id'];
 
     protected $appends = ['ui_data'];
+
+    public function getRoleNames()
+    {
+        return collect(['Trainee']);
+    }
 
     public function getUiDataAttribute()
     {

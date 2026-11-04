@@ -76,7 +76,7 @@ class ActivityLog extends Model
 
         $roleName = '-';
         if ($user) {
-            $roleName = $user->getRoleNames()->first() ?? $user->role ?? 'User';
+            $roleName = (method_exists($user, 'getRoleNames') ? $user->getRoleNames()->first() : null) ?? $user->role ?? 'User';
         }
 
         return static::create([

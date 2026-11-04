@@ -49,38 +49,22 @@ class TraineeApiController extends Controller
 
         private function getRelevantAttendanceRecord($trainee, string $today)
     {
-        // 1. Cek presensi untuk kelas yang aktif hari ini / sedang berlangsung (belum masuk riwayat)
+        // 1. Cek kelas yang aktif (belum ditandai selesai) tempat trainee terdaftar
         $record = Attendance::where('trainee_id', $trainee->id)
-            ->whereHas('dailyClass', function ($q) use ($today) {
-                $q->where(function ($sq) {
-                    $sq->whereNull('is_completed')->orWhere('is_completed', false);
-                })
-                ->where(function ($sub) use ($today) {
-                    $sub->where(function ($query) use ($today) {
-                        $query->whereDate('date', '<=', $today)
-                            ->whereDate('end_date', '>=', $today);
-                    })->orWhere(function ($query) use ($today) {
-                        $query->whereDate('date', $today)
-                            ->whereNull('end_date');
-                    });
-                });
-            })->first();
+            ->whereHas('dailyClass', function ($q) {
+                $q->whereNull('is_completed')->orWhere('is_completed', false);
+            })
+            ->latest('id')
+            ->first();
 
-        // 2. Jika belum ada presensi, cek apakah ada kelas aktif hari ini di program pelatihan peserta (belum masuk riwayat)
+        // 2. Jika belum ada di attendance, cek apakah ada kelas aktif di program pelatihan peserta
         if (! $record && $trainee->training_program_id) {
             $class = DailyClass::where('training_program_id', $trainee->training_program_id)
                 ->where(function ($sq) {
                     $sq->whereNull('is_completed')->orWhere('is_completed', false);
                 })
-                ->where(function ($q) use ($today) {
-                    $q->where(function ($query) use ($today) {
-                        $query->whereDate('date', '<=', $today)
-                            ->whereDate('end_date', '>=', $today);
-                    })->orWhere(function ($query) use ($today) {
-                        $query->whereDate('date', $today)
-                            ->whereNull('end_date');
-                    });
-                })->first();
+                ->latest('id')
+                ->first();
 
             if ($class) {
                 $record = Attendance::firstOrCreate([
@@ -93,7 +77,7 @@ class TraineeApiController extends Controller
             }
         }
 
-        // 3. Jika tidak ada jadwal kelas aktif hari ini, ambil riwayat sesi terakhir yang diikuti trainee
+        // 3. Jika tidak ada jadwal kelas aktif, ambil riwayat sesi terakhir yang diikuti trainee
         if (! $record) {
             $record = Attendance::where('trainee_id', $trainee->id)
                 ->whereHas('dailyClass')
@@ -134,11 +118,7 @@ class TraineeApiController extends Controller
 
         $isClassCompleted = (bool) ($todayAttendanceRecord && $todayAttendanceRecord->dailyClass && $todayAttendanceRecord->dailyClass->is_completed);
 
-        $hasActiveClassToday = $todayAttendanceRecord && $todayAttendanceRecord->dailyClass && ! $isClassCompleted && (
-            $todayAttendanceRecord->dailyClass->date &&
-            $todayAttendanceRecord->dailyClass->date <= $today &&
-            ($todayAttendanceRecord->dailyClass->end_date >= $today || is_null($todayAttendanceRecord->dailyClass->end_date))
-        );
+        $hasActiveClassToday = $todayAttendanceRecord && $todayAttendanceRecord->dailyClass && ! $isClassCompleted;
 
         $todayAttendance = $todayAttendanceRecord && ! $isClassCompleted && in_array(strtolower($todayAttendanceRecord->status), ['hadir', 'izin', 'sakit']);
 
@@ -313,22 +293,13 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
         if (empty($rawToken) || strtolower($rawToken) === 'manual') {
             $today = now()->format('Y-m-d');
 
-            // Cari kelas aktif hari ini (yang belum selesai / masuk riwayat)
+            // Cari kelas aktif tempat trainee terdaftar (yang belum selesai)
             $todayAttendanceRecord = Attendance::where('trainee_id', $trainee->id)
-                ->whereHas('dailyClass', function ($q) use ($today) {
-                    $q->where(function ($sq) {
-                        $sq->whereNull('is_completed')->orWhere('is_completed', false);
-                    })
-                    ->where(function ($sub) use ($today) {
-                        $sub->where(function ($query) use ($today) {
-                            $query->whereDate('date', '<=', $today)
-                                ->whereDate('end_date', '>=', $today);
-                        })->orWhere(function ($query) use ($today) {
-                            $query->whereDate('date', $today)
-                                ->whereNull('end_date');
-                        });
-                    });
-                })->first();
+                ->whereHas('dailyClass', function ($q) {
+                    $q->whereNull('is_completed')->orWhere('is_completed', false);
+                })
+                ->latest('id')
+                ->first();
 
             if (! $todayAttendanceRecord) {
                 return response()->json([

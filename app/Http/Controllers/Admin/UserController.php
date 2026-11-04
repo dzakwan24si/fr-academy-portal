@@ -14,6 +14,10 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
+        if (auth()->check() && auth()->user()->last_login_at === null) {
+            auth()->user()->update(['last_login_at' => now()]);
+        }
+
         $search = $request->query('search');
         $users = User::with('roles')
             ->when($search, function ($q) use ($search) {
