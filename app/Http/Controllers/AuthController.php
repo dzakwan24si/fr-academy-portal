@@ -21,7 +21,7 @@ class AuthController extends Controller
             'password' => ['required', 'string'],
             'cf-turnstile-response' => ['required', 'string'],
         ], [
-            'cf-turnstile-response.required' => 'Harap selesaikan verifikasi keamanan Cloudflare.'
+            'cf-turnstile-response.required' => 'Harap selesaikan verifikasi keamanan Cloudflare.',
         ]);
 
         // 2. Kirim token ke API Cloudflare untuk divalidasi keasliannya
@@ -49,6 +49,8 @@ class AuthController extends Controller
             $request->session()->regenerate();
 
             $user = Auth::user();
+            $user->update(['last_login_at' => now()]);
+
             if ($user->hasRole('Top Management')) {
                 return redirect()->route('administrasi.dashboard-realisasi.index');
             }
