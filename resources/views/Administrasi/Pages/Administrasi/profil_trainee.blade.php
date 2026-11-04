@@ -1057,7 +1057,7 @@
                     <p class="font-semibold flex items-center gap-1.5">
                         <i data-lucide="info" class="w-4 h-4"></i> Petunjuk Import:
                     </p>
-                    <p>Pastikan nama kolom pada berkas sesuai template. Jika kolom Trainee ID kosong, sistem akan otomatis menghasilkan kode TRN.</p>
+                    <p>Pastikan nama kolom pada berkas sesuai template. Sistem akan otomatis menghasilkan Trainee ID secara berurutan.</p>
                 </div>
 
                 <div class="flex items-center justify-between pt-2">

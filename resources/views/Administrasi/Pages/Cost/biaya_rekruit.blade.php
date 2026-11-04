@@ -407,7 +407,7 @@
                     </a>
                 </div>
                 <p class="text-[#64748B] font-mono text-[10px] break-all leading-relaxed">
-                    cost_rekruit_id, tanggal, nama, pic_rekruiter, total_biaya
+                    tanggal, nama, pic_rekruiter, total_biaya
                 </p>
             </div>
 

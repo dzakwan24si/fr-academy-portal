@@ -537,6 +537,7 @@ class RekrutmenController extends Controller
         $rowsToInsert = [];
         $errors = [];
         $rowNumber = 1; // 1 is header
+        $currentMaxNo = (int) Rekrutmen::max('no');
 
         foreach ($rawRows as $row) {
             $rowNumber++;
@@ -619,8 +620,10 @@ class RekrutmenController extends Controller
 
             $persenLulus = $hadir > 0 ? round($join / $hadir, 6) : 0;
 
+            $noVal = (! empty($noStr) && is_numeric($noStr)) ? (int) $noStr : ++$currentMaxNo;
+
             $rowsToInsert[] = [
-                'no' => ! empty($noStr) ? (int) $noStr : $rowNumber - 1,
+                'no' => $noVal,
                 'lokasi_rekrut' => $lokasi,
                 'metode_rekrutmen' => $metode,
                 'program' => $program,
@@ -685,6 +688,32 @@ class RekrutmenController extends Controller
                 'message' => 'Gagal menyimpan data import: '.$e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Download Excel template for Rekrutmen Import.
+     */
+    public function downloadTemplate()
+    {
+        $headers = [
+            'LOKASI REKRUT', 'METODE REKRUTMEN', 'PROGRAM', 'TANGGAL', 'TAHUN',
+            'JUMLAH PESERTA HADIR', 'JUMLAH LOLOS PSIKOTEST', 'JUMLAH HADIR INTERVIEW AWAL',
+            'JUMLAH LOLOS INTERVIEW AWAL', 'JUMLAH LOLOS INTERVIEW USER', 'JUMLAH IKUT MCU',
+            'JUMLAH LOLOS MCU', 'JOIN FR',
+        ];
+
+        $sampleRows = [
+            [
+                'Pekanbaru', 'Offline', 'FAT Batch 2', '2026-05-15', 2026,
+                150, 80, 75, 40, 25, 20, 18, 18,
+            ],
+            [
+                'Yogyakarta', 'Online', 'TAT Batch 1', '2026-06-10', 2026,
+                200, 100, 95, 50, 30, 25, 22, 22,
+            ],
+        ];
+
+        return ExcelExporter::download('Template_Import_Rekrutmen.xlsx', $headers, $sampleRows, 'Template Rekrutmen');
     }
 
     /**

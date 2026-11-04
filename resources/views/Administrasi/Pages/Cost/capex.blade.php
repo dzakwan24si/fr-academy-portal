@@ -35,7 +35,7 @@
                         <i data-lucide="clipboard-list" class="w-4 h-4 text-blue-500"></i>
                         <div>
                             <p class="font-semibold">Template RAB</p>
-                            <p class="text-[10px] text-[#A1A1AA]">Kolom: rab_id, lokasi, qty, harga...</p>
+                            <p class="text-[10px] text-[#A1A1AA]">Kolom: Lokasi, Kelompok Barang, Qty, Harga...</p>
                         </div>
                     </a>
                     <a href="{{ route('administrasi.capex.template', ['type' => 'realisasi']) }}"
@@ -43,7 +43,7 @@
                         <i data-lucide="receipt" class="w-4 h-4 text-amber-500"></i>
                         <div>
                             <p class="font-semibold">Template Realisasi</p>
-                            <p class="text-[10px] text-[#A1A1AA]">Kolom: realisasi_id, debit, kredit...</p>
+                            <p class="text-[10px] text-[#A1A1AA]">Kolom: Lokasi, Kelompok Barang, Debit, Kredit...</p>
                         </div>
                     </a>
                 </div>

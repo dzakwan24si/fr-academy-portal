@@ -745,17 +745,17 @@ class CostController extends Controller
      */
     public function downloadTemplate()
     {
-        $headers = ['cost_id', 'GL_ACCOUNT', 'jenis_cost', 'account_name', 'bulan', 'budget', 'realisasi', 'budget_tahunan'];
+        $headers = ['GL_ACCOUNT', 'jenis_cost', 'account_name', 'bulan', 'budget', 'realisasi', 'budget_tahunan'];
         $sampleRows = [
-            [1, '135.80.00001/850.91.01000', 'BIAYA KARYAWAN', 'STAFF', '', 543966400.56, 374442898, 6527596806.71],
-            [2, '135.80.00001/850.91.01000', 'BIAYA KARYAWAN', 'NON STAFF', '', 59114246.53, 108583636, 709370958.31],
-            [7, '135.80.00007/850.91.07000', 'BIAYA PEMELIHARAAN', 'LISTRIK', '', 18702799.26, 18503477.51, 224433591.10],
-            [16, '135.80.00005/850.91.05000', 'BIAYA PERJALANAN DINAS', '1. Alokasi Bus', '', 3619434.29, 8191473.50, 43433211.46],
-            [17, '135.80.00005/850.91.05000', 'BIAYA PERJALANAN DINAS', '2. Alokasi Hilux', '', 6752197.52, 5912410.00, 81026370.21],
-            [18, '135.80.00005/850.91.05000', 'BIAYA PERJALANAN DINAS', '3. Alokasi Fortuner', '', 5264783.63, 3771820.25, 63177403.57],
-            [32, '135.80.00008', 'REKRUT', 'REKRUT', '', 24844277.67, 300000, 298131332],
-            [38, '135.80.00010', 'CAPEX', 'Capex Kantor', '', 0, 0, 0],
-            [39, '135.80.00010', 'CAPEX', 'Capex Mess', '', 0, 0, 0],
+            ['135.80.00001/850.91.01000', 'BIAYA KARYAWAN', 'STAFF', '', 543966400.56, 374442898, 6527596806.71],
+            ['135.80.00001/850.91.01000', 'BIAYA KARYAWAN', 'NON STAFF', '', 59114246.53, 108583636, 709370958.31],
+            ['135.80.00007/850.91.07000', 'BIAYA PEMELIHARAAN', 'LISTRIK', '', 18702799.26, 18503477.51, 224433591.10],
+            ['135.80.00005/850.91.05000', 'BIAYA PERJALANAN DINAS', '1. Alokasi Bus', '', 3619434.29, 8191473.50, 43433211.46],
+            ['135.80.00005/850.91.05000', 'BIAYA PERJALANAN DINAS', '2. Alokasi Hilux', '', 6752197.52, 5912410.00, 81026370.21],
+            ['135.80.00005/850.91.05000', 'BIAYA PERJALANAN DINAS', '3. Alokasi Fortuner', '', 5264783.63, 3771820.25, 63177403.57],
+            ['135.80.00008', 'REKRUT', 'REKRUT', '', 24844277.67, 300000, 298131332],
+            ['135.80.00010', 'CAPEX', 'Capex Kantor', '', 0, 0, 0],
+            ['135.80.00010', 'CAPEX', 'Capex Mess', '', 0, 0, 0],
         ];
 
         return ExcelExporter::download('Template_Import_Cost.xlsx', $headers, $sampleRows, 'Template Cost');

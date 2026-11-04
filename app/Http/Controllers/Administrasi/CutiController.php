@@ -217,8 +217,13 @@ class CutiController extends Controller
 
                     $nik = trim((string) ($data['nik'] ?? ''));
                     if (empty($nik)) {
-                        $sanitized = preg_replace('/[^A-Za-z0-9]/', '', strtoupper($nama));
-                        $nik = 'FRA-'.substr($sanitized, 0, 12);
+                        $existingEmp = Cuti::where('nama', $nama)->first();
+                        if ($existingEmp && ! empty($existingEmp->nik)) {
+                            $nik = $existingEmp->nik;
+                        } else {
+                            $sanitized = preg_replace('/[^A-Za-z0-9]/', '', strtoupper($nama));
+                            $nik = 'FRA-'.substr($sanitized, 0, 12);
+                        }
                     }
 
                     $tahun = ! empty($data['tahun_cuti']) ? (int) $data['tahun_cuti'] : (! empty($data['tahun']) ? (int) $data['tahun'] : 2026);
@@ -305,8 +310,13 @@ class CutiController extends Controller
 
                     $nik = trim((string) ($record['nik'] ?? ''));
                     if (empty($nik)) {
-                        $sanitized = preg_replace('/[^A-Za-z0-9]/', '', strtoupper($nama));
-                        $nik = 'FRA-'.substr($sanitized, 0, 12);
+                        $existingEmp = Cuti::where('nama', $nama)->first();
+                        if ($existingEmp && ! empty($existingEmp->nik)) {
+                            $nik = $existingEmp->nik;
+                        } else {
+                            $sanitized = preg_replace('/[^A-Za-z0-9]/', '', strtoupper($nama));
+                            $nik = 'FRA-'.substr($sanitized, 0, 12);
+                        }
                     }
                     $record['nik'] = $nik;
 
@@ -545,7 +555,7 @@ class CutiController extends Controller
     public function downloadTemplate()
     {
         $headers = [
-            'nik', 'nama', 'jabatan', 'jenis_jabatan', 'tmk', 'hak_cuti',
+            'nama', 'jabatan', 'jenis_jabatan', 'tmk', 'hak_cuti',
             'sisa_hak_cuti_carryover', 'cuti_diambil',
             'jan', 'feb', 'mar', 'apr', 'mei', 'jun', 'jul', 'agu', 'sep', 'okt', 'nov', 'des',
             'tahun',
@@ -553,13 +563,13 @@ class CutiController extends Controller
 
         $sampleRows = [
             [
-                'FRA-001', 'Budi Santoso', 'Manager Ops', 'Staff', '2020-01-15', 12,
+                'Budi Santoso', 'Manager Ops', 'Staff', '2020-01-15', 12,
                 0, 2,
                 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 2026,
             ],
             [
-                'FRA-002', 'Siti Aminah', 'Asisten Agronomi', 'Staff', '2021-03-20', 12,
+                'Siti Aminah', 'Asisten Agronomi', 'Staff', '2021-03-20', 12,
                 2, 1,
                 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 2026,

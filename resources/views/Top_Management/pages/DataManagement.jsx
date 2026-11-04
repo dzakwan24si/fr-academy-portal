@@ -513,15 +513,15 @@ const DataManagement = () => {
   ).length;
 
   const regulerCategories = [
-    { id: 'all', title: 'Semua Reguler', icon: Layers, count: regulerTotalCount },
-    { id: 'staf', title: 'Training Reguler - Staf', icon: GraduationCap, count: regulerStafCount },
-    { id: 'mandor', title: 'Training Reguler - Mandor', icon: Users, count: regulerMandorCount },
+    { id: 'all', title: 'Semua Reguler', desc: 'Semua Level', icon: Layers, count: regulerTotalCount },
+    { id: 'staf', title: 'Training Reguler - Staf', desc: 'Level Staf', icon: GraduationCap, count: regulerStafCount },
+    { id: 'mandor', title: 'Training Reguler - Mandor', desc: 'Level Mandor', icon: Users, count: regulerMandorCount },
   ];
 
   const nonRegulerCategories = [
-    { id: 'all', title: 'Semua Non Reguler', icon: Layers, count: nonRegulerTotalCount },
-    { id: 'managerial', title: 'Managerial and Leadership', icon: Award, count: nonRegulerManagerialCount },
-    { id: 'technical', title: 'Technical', icon: Wrench, count: nonRegulerTechnicalCount },
+    { id: 'all', title: 'Semua Non Reguler', desc: 'Semua Kategori', icon: Layers, count: nonRegulerTotalCount },
+    { id: 'managerial', title: 'Managerial and Leadership', desc: 'Soft Skill', icon: Award, count: nonRegulerManagerialCount },
+    { id: 'technical', title: 'Technical', desc: 'Teknikal', icon: Wrench, count: nonRegulerTechnicalCount },
   ];
 
   const currentCategories = activeMainTab === 'reguler' ? regulerCategories : nonRegulerCategories;
@@ -1156,7 +1156,7 @@ const DataManagement = () => {
         </div>
       </div>
 
-      {/* Primary Tab Switcher (Reguler, Non Reguler Soft Skill, Non Reguler Teknikal, Semua Non Reguler) */}
+      {/* Primary Tab Switcher (Program Reguler vs Program Non Reguler) */}
       <div className="flex flex-wrap items-center gap-2 p-1.5 bg-slate-200/70 rounded-xl w-fit border border-slate-300/60 shadow-inner">
         <button
           type="button"
@@ -1174,59 +1174,11 @@ const DataManagement = () => {
           }`}
         >
           <GraduationCap size={17} />
-          <span>Reguler</span>
+          <span>Program Reguler</span>
           <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
             activeMainTab === 'reguler' ? 'bg-green-100 text-green-800' : 'bg-slate-300 text-slate-700'
           }`}>
             {regulerTotalCount}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveMainTab('non_reguler');
-            setActiveCategory('managerial');
-            setFilterRegion('Semua Region');
-            setFilterSubKategori('Semua Sub Kategori');
-            setCurrentPage(1);
-          }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-            activeMainTab === 'non_reguler' && activeCategory === 'managerial'
-              ? 'bg-white text-amber-700 shadow-sm ring-1 ring-slate-200'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Award size={17} />
-          <span>Non Reguler - Soft Skill</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-            activeMainTab === 'non_reguler' && activeCategory === 'managerial' ? 'bg-amber-100 text-amber-800' : 'bg-slate-300 text-slate-700'
-          }`}>
-            {nonRegulerManagerialCount}
-          </span>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setActiveMainTab('non_reguler');
-            setActiveCategory('technical');
-            setFilterRegion('Semua Region');
-            setFilterSubKategori('Semua Sub Kategori');
-            setCurrentPage(1);
-          }}
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-            activeMainTab === 'non_reguler' && activeCategory === 'technical'
-              ? 'bg-white text-blue-700 shadow-sm ring-1 ring-slate-200'
-              : 'text-slate-600 hover:text-slate-900'
-          }`}
-        >
-          <Wrench size={17} />
-          <span>Non Reguler - Teknikal</span>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-            activeMainTab === 'non_reguler' && activeCategory === 'technical' ? 'bg-blue-100 text-blue-800' : 'bg-slate-300 text-slate-700'
-          }`}>
-            {nonRegulerTechnicalCount}
           </span>
         </button>
 
@@ -1240,15 +1192,15 @@ const DataManagement = () => {
             setCurrentPage(1);
           }}
           className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-            activeMainTab === 'non_reguler' && activeCategory === 'all'
+            activeMainTab === 'non_reguler'
               ? 'bg-white text-green-700 shadow-sm ring-1 ring-slate-200'
               : 'text-slate-600 hover:text-slate-900'
           }`}
         >
-          <Layers size={17} />
-          <span>Semua Non Reguler</span>
+          <Award size={17} />
+          <span>Program Non Reguler</span>
           <span className={`text-xs px-2 py-0.5 rounded-full font-bold ${
-            activeMainTab === 'non_reguler' && activeCategory === 'all' ? 'bg-green-100 text-green-800' : 'bg-slate-300 text-slate-700'
+            activeMainTab === 'non_reguler' ? 'bg-green-100 text-green-800' : 'bg-slate-300 text-slate-700'
           }`}>
             {nonRegulerTotalCount}
           </span>
@@ -1285,7 +1237,7 @@ const DataManagement = () => {
                 {cat.title}
               </h3>
               <div className="flex justify-between items-center mt-1.5">
-                <p className="text-xs text-slate-400 font-normal">Kategori Program</p>
+                <p className="text-xs text-slate-400 font-normal">{cat.desc || 'Kategori Program'}</p>
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                   isActive ? 'bg-green-100 text-green-800 font-bold' : 'bg-slate-100 text-slate-600'
                 }`}>

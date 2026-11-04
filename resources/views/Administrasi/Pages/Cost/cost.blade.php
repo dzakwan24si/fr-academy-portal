@@ -693,7 +693,7 @@
                 <i data-lucide="info" class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5"></i>
                 <div class="text-[11px] text-blue-800 space-y-1">
                     <p class="font-semibold">Format Header CSV yang Didukung:</p>
-                    <p class="font-mono text-[10px] bg-blue-100/70 p-1 rounded">cost_id, GL_ACCOUNT, jenis_cost, account_name, bulan, budget, realisasi, budget_tahunan</p>
+                    <p class="font-mono text-[10px] bg-blue-100/70 p-1 rounded">GL_ACCOUNT, jenis_cost, account_name, bulan, budget, realisasi, budget_tahunan</p>
                     <a href="{{ route('administrasi.cost.template') }}" class="inline-flex items-center gap-1 font-bold text-blue-700 hover:underline pt-1">
                         <i data-lucide="download" class="w-3 h-3"></i> Unduh File Template CSV
                     </a>

@@ -145,4 +145,34 @@ class ProfilTraineeTest extends TestCase
         $this->assertContains('Jawa', $chartSuku['labels']);
         $this->assertContains('Batak', $chartSuku['labels']);
     }
+
+    public function test_can_download_template_without_id()
+    {
+        $response = $this->get(route('administrasi.profil-trainee.template'));
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    public function test_can_import_csv_without_id_auto_generates_trainee_id()
+    {
+        $csv = implode("\n", [
+            'Nama Trainee,Nama Jabatan,Asal Universitas,Jurusan,Jenis Kelamin,Usia',
+            'Trainee Auto,Asisten Tanaman,Universitas Andalas,Agro,Laki-laki,23',
+        ]);
+
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('trainees.csv', $csv);
+
+        $response = $this->post(route('administrasi.profil-trainee.import'), [
+            'file' => $file,
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('profil_trainees', [
+            'nama_trainee' => 'Trainee Auto',
+        ]);
+
+        $t = ProfilTrainee::where('nama_trainee', 'Trainee Auto')->first();
+        $this->assertNotNull($t->trainee_id);
+        $this->assertStringStartsWith('TRN-', $t->trainee_id);
+    }
 }

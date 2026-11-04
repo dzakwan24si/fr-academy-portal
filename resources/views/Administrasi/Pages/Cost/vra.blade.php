@@ -991,7 +991,7 @@
                     </a>
                 </div>
                 <p class="text-[#64748B] font-mono text-[10px] break-all leading-relaxed">
-                    vra_id, nomor_polisi, kendaraan, bulan, upah, BBM, preventif_maintenance, biaya_lainnya, KM_awal, KM_akhir, KM, BBM_liter, budget_tahun
+                    nomor_polisi, kendaraan, bulan, upah, BBM, preventif_maintenance, biaya_lainnya, KM_awal, KM_akhir, KM, BBM_liter, budget_tahun
                 </p>
             </div>
 

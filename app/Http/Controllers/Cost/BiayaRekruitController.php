@@ -221,10 +221,10 @@ class BiayaRekruitController extends Controller
      */
     public function downloadTemplate()
     {
-        $headers = ['cost_rekruit_id', 'tanggal', 'nama', 'pic_rekruiter', 'total_biaya'];
+        $headers = ['tanggal', 'nama', 'pic_rekruiter', 'total_biaya'];
         $sampleRows = [
-            [1, '2026-05-31', 'REKRUT FAT II 2026 : REALISASI LPJ AN JOSEFHINE E DINAS REKRUT (Sewa Ruangan Meeting Betaive Coworking)', 'Josefhine E', 709091],
-            [3, '2026-01-31', 'MAT I 2026 : KLAIM BY PERJDIN AN.BENYAMIN BY DLM RANGKA REKRUT MAT I 2026 & TAT I 2026 KE MEDAN DAN YOGYA', 'Benyamin Basuki Yulianto & Pinondang Lindarto Simanungkalit', 2460660],
+            ['2026-05-31', 'REKRUT FAT II 2026 : REALISASI LPJ AN JOSEFHINE E DINAS REKRUT (Sewa Ruangan Meeting Betaive Coworking)', 'Josefhine E', 709091],
+            ['2026-01-31', 'MAT I 2026 : KLAIM BY PERJDIN AN.BENYAMIN BY DLM RANGKA REKRUT MAT I 2026 & TAT I 2026 KE MEDAN DAN YOGYA', 'Benyamin Basuki Yulianto & Pinondang Lindarto Simanungkalit', 2460660],
         ];
 
         return ExcelExporter::download('Template_Import_Biaya_Rekruit.xlsx', $headers, $sampleRows, 'Biaya Rekruit');

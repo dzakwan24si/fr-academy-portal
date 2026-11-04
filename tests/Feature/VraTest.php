@@ -189,4 +189,30 @@ class VraTest extends TestCase
             'KM' => 1526,
         ]);
     }
+
+    public function test_can_import_csv_without_id_auto_increment()
+    {
+        $csvContent = "nomor_polisi,kendaraan,bulan,upah,BBM,preventif_maintenance,biaya_lainnya,KM_awal,KM_akhir,KM,BBM_liter,budget_tahun\n"
+                    ."BM 9999 AUTO,Avanza Auto,6,2000000,500000,300000,100000,10000,10500,500,50,1500\n";
+
+        $file = UploadedFile::fake()->createWithContent('import_vra_noid.csv', $csvContent);
+
+        $response = $this->post('/administrasi/vra/import', [
+            'csv_file' => $file,
+            'import_mode' => 'append',
+            'year' => 2026,
+            'period' => 6,
+        ]);
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('vra', [
+            'nomor_polisi' => 'BM 9999 AUTO',
+            'tahun' => 2026,
+            'bulan' => 6,
+        ]);
+
+        $record = Vra::where('nomor_polisi', 'BM 9999 AUTO')->first();
+        $this->assertNotNull($record->vra_id);
+        $this->assertGreaterThan(0, $record->vra_id);
+    }
 }

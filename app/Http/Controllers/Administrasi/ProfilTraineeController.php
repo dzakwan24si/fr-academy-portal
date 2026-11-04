@@ -355,7 +355,6 @@ class ProfilTraineeController extends Controller
     public function downloadTemplate()
     {
         $headers = [
-            'Trainee ID',
             'Nama Trainee',
             'Nama Jabatan',
             'Asal Universitas',
@@ -383,7 +382,6 @@ class ProfilTraineeController extends Controller
 
         $sampleRows = [
             [
-                'TRN-0001',
                 'Ahmad Fauzi',
                 'Asisten Agronomi',
                 'Universitas Gadjah Mada',
@@ -409,7 +407,6 @@ class ProfilTraineeController extends Controller
                 'Wiraswasta',
             ],
             [
-                'TRN-0002',
                 'Siti Nurhaliza',
                 'Asisten Proteksi Tanaman',
                 'Institut Pertanian Bogor',
@@ -511,10 +508,14 @@ class ProfilTraineeController extends Controller
                     continue;
                 }
 
-                // If trainee_id is empty, auto generate
-                if (empty($record['trainee_id'])) {
-                    $nextMaxId++;
-                    $record['trainee_id'] = 'TRN-' . str_pad($nextMaxId, 4, '0', STR_PAD_LEFT);
+                // If trainee_id is empty, check if exists by nama_trainee and asal_universitas to avoid duplicate
+                $existing = null;
+                if (! empty($record['trainee_id'])) {
+                    $existing = ProfilTrainee::where('trainee_id', $record['trainee_id'])->first();
+                } else {
+                    $existing = ProfilTrainee::where('nama_trainee', $record['nama_trainee'])
+                        ->where('asal_universitas', $record['asal_universitas'] ?? null)
+                        ->first();
                 }
 
                 // Numeric sanitation
@@ -534,10 +535,15 @@ class ProfilTraineeController extends Controller
                     $record['ipk'] = (float) str_replace(',', '.', (string) $record['ipk']);
                 }
 
-                ProfilTrainee::updateOrCreate(
-                    ['trainee_id' => $record['trainee_id']],
-                    $record
-                );
+                if ($existing) {
+                    $existing->update($record);
+                } else {
+                    if (empty($record['trainee_id'])) {
+                        $nextMaxId++;
+                        $record['trainee_id'] = 'TRN-' . str_pad($nextMaxId, 4, '0', STR_PAD_LEFT);
+                    }
+                    ProfilTrainee::create($record);
+                }
 
                 $imported++;
             }

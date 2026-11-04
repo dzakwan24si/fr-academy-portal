@@ -394,6 +394,7 @@ Route::middleware('auth')->group(function () {
         // Administrasi - Rekrutmen Karyawan Routes
         Route::prefix('administrasi/rekrutmen')->name('administrasi.rekrutmen.')->group(function () {
             Route::get('/', [RekrutmenController::class, 'index'])->name('index');
+            Route::get('/template/download', [RekrutmenController::class, 'downloadTemplate'])->name('template');
             Route::get('/api/data', [RekrutmenController::class, 'getData'])->name('api.data');
             Route::get('/api/export', [RekrutmenController::class, 'exportCsv'])->name('api.export');
 

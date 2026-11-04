@@ -294,4 +294,55 @@ class CapexTest extends TestCase
             'total_rp' => 10000000,
         ]);
     }
+
+    public function test_can_import_rab_csv_without_id_auto_increment()
+    {
+        $csvContent = "Lokasi,Kel_barang_kapital,Foto_barang,type,satuan,jumlah_unit,harga_satuan,total_rp\n";
+        $csvContent .= "kantor,Barang Tanpa ID Auto Increment,,Type Auto,Unit,2,3000000,6000000\n";
+
+        $file = UploadedFile::fake()->createWithContent('import_rab_noid.csv', $csvContent);
+
+        $response = $this->post('/administrasi/capex/import', [
+            'csv_file' => $file,
+            'import_type' => 'rab',
+            'import_mode' => 'append',
+            'tahun' => 2026,
+        ]);
+
+        $response->assertRedirect('/administrasi/capex?year=2026');
+        $this->assertDatabaseHas('capex_rab', [
+            'kel_barang_kapital' => 'Barang Tanpa ID Auto Increment',
+            'type' => 'Type Auto',
+            'total_rp' => 6000000,
+        ]);
+
+        $item = CapexRab::where('kel_barang_kapital', 'Barang Tanpa ID Auto Increment')->first();
+        $this->assertNotNull($item->rab_id);
+        $this->assertGreaterThan(0, $item->rab_id);
+    }
+
+    public function test_can_import_realisasi_csv_without_id_auto_increment()
+    {
+        $csvContent = "Lokasi,Kel_barang_kapital,Foto_barang,nama_barang,type,tanggal,debit,kredit,total_rp\n";
+        $csvContent .= "mess,Rel Tanpa ID Auto,,Barang Auto Increment,Type Z,2026-07-01,5000000,0,5000000\n";
+
+        $file = UploadedFile::fake()->createWithContent('import_realisasi_noid.csv', $csvContent);
+
+        $response = $this->post('/administrasi/capex/import', [
+            'csv_file' => $file,
+            'import_type' => 'realisasi',
+            'import_mode' => 'append',
+            'tahun' => 2026,
+        ]);
+
+        $response->assertRedirect('/administrasi/capex?year=2026');
+        $this->assertDatabaseHas('capex_realisasi', [
+            'nama_barang' => 'Barang Auto Increment',
+            'total_rp' => 5000000,
+        ]);
+
+        $item = CapexRealisasi::where('nama_barang', 'Barang Auto Increment')->first();
+        $this->assertNotNull($item->realisasi_id);
+        $this->assertGreaterThan(0, $item->realisasi_id);
+    }
 }

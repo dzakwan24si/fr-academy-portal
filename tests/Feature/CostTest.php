@@ -163,6 +163,29 @@ class CostTest extends TestCase
         ]);
     }
 
+    public function test_can_import_cost_csv_without_id_auto_increment()
+    {
+        $csvContent = "GL_ACCOUNT,jenis_cost,account_name,bulan,budget,realisasi,budget_tahunan\n135.80.00099,BIAYA ATK,PENGHAPUS WHITEBOARD,8,500000,450000,6000000\n";
+        $file = UploadedFile::fake()->createWithContent('import_cost_noid.csv', $csvContent);
+
+        $response = $this->post('/administrasi/cost/import', [
+            'csv_file' => $file,
+            'import_mode' => 'append',
+            'tahun' => 2026,
+        ]);
+
+        $response->assertRedirect('/administrasi/cost?year=2026&month=all');
+        $this->assertDatabaseHas('costs', [
+            'account_name' => 'PENGHAPUS WHITEBOARD',
+            'bulan' => 8,
+            'realisasi' => 450000,
+        ]);
+
+        $item = Cost::where('account_name', 'PENGHAPUS WHITEBOARD')->first();
+        $this->assertNotNull($item->cost_id);
+        $this->assertGreaterThan(0, $item->cost_id);
+    }
+
     public function test_can_sync_auto_aggregation_from_sources()
     {
         // 1. Seed VRA

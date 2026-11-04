@@ -26,11 +26,46 @@ class CutiImportTest extends TestCase
             'nik' => $nik,
             'tahun' => 2026,
             'sisa_hak_cuti_carryover' => 0,
-            'cuti_diambil' => 0,
+            'cuti_diambil' => 1,
             'jan' => 1,
             'mar' => 0,
         ]);
 
         Cuti::where('nik', $nik)->delete();
+    }
+
+    public function test_can_download_cuti_template()
+    {
+        $this->authenticateUser();
+        $response = $this->get('/administrasi/cuti/template/download');
+        $response->assertStatus(200);
+        $response->assertHeader('content-type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    }
+
+    public function test_can_import_cuti_without_nik_auto_generates_nik()
+    {
+        $this->authenticateUser();
+        $csv = implode("\n", [
+            'nama,jabatan,jenis_jabatan,tmk,hak_cuti,tahun,jan,feb,mar,apr,mei,jun,jul,agu,sep,okt,nov,des',
+            'Karyawan Tanpa NIK,Staff Kebun,Staff,2022-01-01,12,2026,0,0,0,0,0,0,0,0,0,0,0,0',
+        ]);
+
+        $response = $this->post('/administrasi/cuti/import', [
+            'file' => UploadedFile::fake()->createWithContent('cuti_noid.csv', $csv),
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('cuti', [
+            'nama' => 'Karyawan Tanpa NIK',
+            'tahun' => 2026,
+        ]);
+
+        $item = Cuti::where('nama', 'Karyawan Tanpa NIK')->first();
+        $this->assertNotNull($item->nik);
+        $this->assertStringStartsWith('FRA-', $item->nik);
+        $this->assertNotNull($item->cuti_id);
+        $this->assertGreaterThan(0, $item->cuti_id);
+
+        Cuti::where('nama', 'Karyawan Tanpa NIK')->delete();
     }
 }

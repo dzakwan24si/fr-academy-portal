@@ -424,14 +424,14 @@ class VraController extends Controller
     public function downloadTemplate()
     {
         $headers = [
-            'vra_id', 'nomor_polisi', 'kendaraan', 'bulan', 'upah', 'BBM',
+            'nomor_polisi', 'kendaraan', 'bulan', 'upah', 'BBM',
             'preventif_maintenance', 'biaya_lainnya', 'KM_awal',
             'KM_akhir', 'KM', 'BBM_liter', 'budget_tahun',
         ];
         $sampleRows = [
-            [1, 'Hilux BM 8177 QG', 'Mobil Pool/Hilux', 5, 4723210, 1122000, 2504820, 6419500, 58135, 59661, 1526, 165, 3120],
-            [2, 'Mobil BM 7835 AZ', 'Bus Training', 5, 2577604, 849900, 0, 2443982, 138907, 139658, 751, 125, 6816],
-            [3, 'Mobil BM 1428 AS', 'Fortuner', 5, 3500000, 950000, 500000, 1200000, 45000, 46200, 1200, 150, 3995],
+            ['Hilux BM 8177 QG', 'Mobil Pool/Hilux', 5, 4723210, 1122000, 2504820, 6419500, 58135, 59661, 1526, 165, 3120],
+            ['Mobil BM 7835 AZ', 'Bus Training', 5, 2577604, 849900, 0, 2443982, 138907, 139658, 751, 125, 6816],
+            ['Mobil BM 1428 AS', 'Fortuner', 5, 3500000, 950000, 500000, 1200000, 45000, 46200, 1200, 150, 3995],
         ];
 
         return ExcelExporter::download('Template_Import_VRA.xlsx', $headers, $sampleRows, 'Template VRA');

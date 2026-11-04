@@ -16,6 +16,7 @@ class BiayaRekruitTest extends TestCase
         parent::setUp();
         $this->authenticateUser();
         BiayaRekruit::query()->delete();
+        \App\Models\ActivityLog::query()->delete();
 
         BiayaRekruit::create([
             'tahun' => 2026,
@@ -25,6 +26,7 @@ class BiayaRekruitTest extends TestCase
             'jenis_rekruit' => 'REKRUT FAT II 2026',
             'penanggung_jawab' => 'HR Recruiter Lead',
         ]);
+        \App\Models\ActivityLog::query()->delete();
     }
 
     public function test_can_view_biaya_rekruit_page()
@@ -124,5 +126,28 @@ class BiayaRekruitTest extends TestCase
             'total_biaya' => 850000,
             'jenis_rekruit' => 'Medical Check Up (MCU) Calon Karyawan',
         ]);
+    }
+
+    public function test_can_import_csv_without_id_auto_increment()
+    {
+        $csvContent = "tanggal,nama,pic_rekruiter,total_biaya\n"
+                    ."2026-09-15,BIAYA TRANSPORT CANDIDATE AUTO,HR Team,1250000\n";
+
+        $file = UploadedFile::fake()->createWithContent('biaya_rekruit_noid.csv', $csvContent);
+
+        $response = $this->post('/administrasi/biaya-rekruit/import', [
+            'csv_file' => $file,
+            'import_mode' => 'append',
+        ]);
+
+        $response->assertSessionHas('success');
+        $this->assertDatabaseHas('biaya_rekruit', [
+            'nama' => 'BIAYA TRANSPORT CANDIDATE AUTO',
+            'total_biaya' => 1250000,
+        ]);
+
+        $record = BiayaRekruit::where('nama', 'BIAYA TRANSPORT CANDIDATE AUTO')->first();
+        $this->assertNotNull($record->id_biaya_rekruit);
+        $this->assertGreaterThan(0, $record->id_biaya_rekruit);
     }
 }

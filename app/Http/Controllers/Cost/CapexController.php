@@ -534,17 +534,31 @@ class CapexController extends Controller
                         'total_rp' => $totalRp,
                     ];
 
+                    $existing = null;
                     if ($rabId && is_numeric($rabId)) {
                         $existing = CapexRab::find((int) $rabId);
-                        if ($existing) {
-                            $existing->update($data);
-                            $updatedCount++;
-                        } else {
-                            $data['rab_id'] = (int) $rabId;
-                            CapexRab::create($data);
-                            $importedCount++;
-                        }
+                    }
+                    if (! $existing) {
+                        $existing = CapexRab::where('tahun', $tahun)
+                            ->where('lokasi', $lokasi)
+                            ->where('kel_barang_kapital', $kelBarang)
+                            ->where(function ($q) use ($type) {
+                                if ($type) {
+                                    $q->where('type', $type);
+                                } else {
+                                    $q->whereNull('type')->orWhere('type', '');
+                                }
+                            })
+                            ->first();
+                    }
+
+                    if ($existing) {
+                        $existing->update($data);
+                        $updatedCount++;
                     } else {
+                        if ($rabId && is_numeric($rabId)) {
+                            $data['rab_id'] = (int) $rabId;
+                        }
                         CapexRab::create($data);
                         $importedCount++;
                     }
@@ -594,6 +608,17 @@ class CapexController extends Controller
                         }
                     }
 
+                    // Auto-resolve rab_id if not explicitly provided
+                    if (! $rabId) {
+                        $matchedRab = CapexRab::where('tahun', $tahun)
+                            ->where('lokasi', $lokasi)
+                            ->where('kel_barang_kapital', $kelBarang)
+                            ->first();
+                        if ($matchedRab) {
+                            $rabId = $matchedRab->rab_id;
+                        }
+                    }
+
                     $data = [
                         'rab_id' => ($rabId && is_numeric($rabId)) ? (int) $rabId : null,
                         'tahun' => $tahun,
@@ -608,17 +633,31 @@ class CapexController extends Controller
                         'total_rp' => $totalRp,
                     ];
 
+                    $existing = null;
                     if ($realisasiId && is_numeric($realisasiId)) {
                         $existing = CapexRealisasi::find((int) $realisasiId);
-                        if ($existing) {
-                            $existing->update($data);
-                            $updatedCount++;
-                        } else {
-                            $data['realisasi_id'] = (int) $realisasiId;
-                            CapexRealisasi::create($data);
-                            $importedCount++;
-                        }
+                    }
+                    if (! $existing) {
+                        $existing = CapexRealisasi::where('tahun', $tahun)
+                            ->where('lokasi', $lokasi)
+                            ->where('nama_barang', $namaBarang)
+                            ->where(function ($q) use ($tanggal) {
+                                if ($tanggal) {
+                                    $q->where('tanggal', $tanggal);
+                                } else {
+                                    $q->whereNull('tanggal');
+                                }
+                            })
+                            ->first();
+                    }
+
+                    if ($existing) {
+                        $existing->update($data);
+                        $updatedCount++;
                     } else {
+                        if ($realisasiId && is_numeric($realisasiId)) {
+                            $data['realisasi_id'] = (int) $realisasiId;
+                        }
                         CapexRealisasi::create($data);
                         $importedCount++;
                     }
@@ -657,22 +696,22 @@ class CapexController extends Controller
         $type = $request->get('type', 'rab'); // 'rab' or 'realisasi'
 
         if ($type === 'realisasi') {
-            $headers = ['realisasi_id', 'rab_id', 'Lokasi', 'Kel_barang_kapital', 'Foto_barang', 'nama_barang', 'type', 'tanggal', 'debit', 'kredit', 'total_rp'];
+            $headers = ['Lokasi', 'Kel_barang_kapital', 'Foto_barang', 'nama_barang', 'type', 'tanggal', 'debit', 'kredit', 'total_rp'];
             $sampleRows = [
-                [1, 1, 'kantor', 'Kendaraan Operasional', '', 'Hilux Single Cabin', 'Toyota', '2026-01-15', 350000000, 0, 350000000],
-                [2, 2, 'kantor', 'Komputer & Laptop', '', 'MacBook Air M2', 'Apple', '2026-02-10', 18500000, 0, 18500000],
-                [3, 11, 'mess', 'AC & Pendingin Ruangan', '', 'AC Inverter 1 PK', 'Daikin', '2026-03-05', 5500000, 0, 5500000],
+                ['kantor', 'Kendaraan Operasional', '', 'Hilux Single Cabin', 'Toyota', '2026-01-15', 350000000, 0, 350000000],
+                ['kantor', 'Komputer & Laptop', '', 'MacBook Air M2', 'Apple', '2026-02-10', 18500000, 0, 18500000],
+                ['mess', 'AC & Pendingin Ruangan', '', 'AC Inverter 1 PK', 'Daikin', '2026-03-05', 5500000, 0, 5500000],
             ];
 
             return ExcelExporter::download('Template_Import_Capex_Realisasi.xlsx', $headers, $sampleRows, 'Realisasi Capex');
         }
 
         // Default: RAB Template
-        $headers = ['rab_id', 'Lokasi', 'Kel_barang_kapital', 'Foto_barang', 'type', 'satuan', 'jumlah_unit', 'harga_satuan', 'total_rp'];
+        $headers = ['Lokasi', 'Kel_barang_kapital', 'Foto_barang', 'type', 'satuan', 'jumlah_unit', 'harga_satuan', 'total_rp'];
         $sampleRows = [
-            [1, 'kantor', 'Kendaraan Operasional', '', 'Toyota Hilux SC', 'Unit', 1, 350000000, 350000000],
-            [2, 'kantor', 'Komputer & Laptop', '', 'MacBook Air M2 16GB', 'Unit', 2, 19000000, 38000000],
-            [3, 'mess', 'AC & Pendingin Ruangan', '', 'Daikin 1 PK Inverter', 'Unit', 4, 5500000, 22000000],
+            ['kantor', 'Kendaraan Operasional', '', 'Toyota Hilux SC', 'Unit', 1, 350000000, 350000000],
+            ['kantor', 'Komputer & Laptop', '', 'MacBook Air M2 16GB', 'Unit', 2, 19000000, 38000000],
+            ['mess', 'AC & Pendingin Ruangan', '', 'Daikin 1 PK Inverter', 'Unit', 4, 5500000, 22000000],
         ];
 
         return ExcelExporter::download('Template_Import_Capex_RAB.xlsx', $headers, $sampleRows, 'RAB Capex');

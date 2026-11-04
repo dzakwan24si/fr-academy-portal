@@ -551,6 +551,14 @@ export default function RekrutmenApp() {
                                     <Upload className="w-4 h-4 text-slate-500" />
                                     <span>Import CSV</span>
                                 </button>
+                                <a
+                                    href="/administrasi/rekrutmen/template/download"
+                                    className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-300 text-slate-700 text-sm font-semibold hover:bg-slate-50 shadow-xs transition-all cursor-pointer"
+                                    title="Download Format Template Excel"
+                                >
+                                    <Download className="w-4 h-4 text-slate-500" />
+                                    <span>Template Excel</span>
+                                </a>
                             </>
                         )}
                         <button
@@ -1882,6 +1890,21 @@ export default function RekrutmenApp() {
                         </div>
 
                         <form onSubmit={handleImportSubmit} className="space-y-4">
+                            {/* Template Download Banner */}
+                            <div className="flex items-center justify-between p-3 bg-emerald-50/60 border border-emerald-100 rounded-xl text-xs">
+                                <div>
+                                    <p className="font-bold text-emerald-950">Format Template Excel</p>
+                                    <p className="text-[11px] text-emerald-700">Unduh format template tanpa kolom primary key / no.</p>
+                                </div>
+                                <a
+                                    href="/administrasi/rekrutmen/template/download"
+                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#4B6A34] hover:bg-[#3d562a] text-white rounded-lg text-xs font-semibold shadow-xs transition-colors cursor-pointer"
+                                >
+                                    <Download className="w-3.5 h-3.5" />
+                                    <span>Download Template</span>
+                                </a>
+                            </div>
+
                             {/* File Input */}
                             <div>
                                 <label className="block text-xs font-bold text-slate-700 mb-1">
