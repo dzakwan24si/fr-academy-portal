@@ -96,7 +96,7 @@
             <div class="w-full lg:w-2/3 order-1 lg:order-2">
                 <article class="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors duration-300">
                     <!-- Article Body -->
-                    <div class="prose prose-teal dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-6">
+                    <div class="prose prose-teal dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-6 article-body">
                         {!! $article->content !!}
                     </div>
 
