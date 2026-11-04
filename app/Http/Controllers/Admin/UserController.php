@@ -126,6 +126,21 @@ class UserController extends Controller
         return redirect()->route('admin.users.index')->with('success', 'User berhasil diperbarui.');
     }
 
+    public function toggleStatus(User $user)
+    {
+        if ($user->id === auth()->id()) {
+            return redirect()->route('admin.users.index')->with('error', 'Anda tidak dapat menonaktifkan akun Anda sendiri.');
+        }
+
+        $user->update([
+            'is_active' => ! ($user->is_active ?? true),
+        ]);
+
+        $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
+        return redirect()->route('admin.users.index')->with('success', "Akun {$user->name} berhasil {$statusText}.");
+    }
+
     public function destroy(User $user)
     {
         if ($user->id === auth()->id()) {
