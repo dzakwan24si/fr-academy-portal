@@ -1,0 +1,1 @@
+import{o as e,t}from"./jsx-runtime-DMP3NWeA.js";import{t as n}from"./Schedule-BtNhxcH3.js";var r=e(),i=t();(0,r.createRoot)(document.getElementById(`schedule-root`)).render((0,i.jsx)(()=>(0,i.jsx)(`div`,{className:`min-h-screen bg-slate-50 p-6`,children:(0,i.jsx)(n,{})}),{}));
