@@ -27,7 +27,6 @@ use App\Http\Controllers\Administrasi\RekrutmenController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CompetencyPublicController;
 use App\Http\Controllers\Cost\BiayaRekruitController;
-use App\Http\Controllers\ProgramPublicController;
 use App\Http\Controllers\Cost\CapexController;
 use App\Http\Controllers\Cost\CostController;
 use App\Http\Controllers\Cost\VraController;
@@ -41,12 +40,13 @@ use App\Http\Controllers\Inventaris\InventarisSummaryController;
 use App\Http\Controllers\Monitoring\AsistenController;
 use App\Http\Controllers\Monitoring\MonitoringDashboardController;
 use App\Http\Controllers\Monitoring\MonitoringTalentController;
-use App\Http\Controllers\Talent\TalentPoolController;
 use App\Http\Controllers\Program\DashboardMonitoringTahunanController;
 use App\Http\Controllers\Program\DashboardRealisasiController;
 use App\Http\Controllers\Program\ProgramBatchController;
 use App\Http\Controllers\Program\RealisasiVsBatchController;
 use App\Http\Controllers\Program\TrainingRecordController;
+use App\Http\Controllers\ProgramPublicController;
+use App\Http\Controllers\Talent\TalentPoolController;
 use App\Models\Article;
 use App\Models\CareerProgram;
 use App\Models\Category;
@@ -198,6 +198,7 @@ Route::middleware('auth')->prefix('admin')->group(function () {
         return redirect()->route('administrasi.dashboard-realisasi.index');
     })->name('admin.dashboard');
 
+    Route::post('artikel/upload-image', [AdminArticleController::class, 'uploadImage'])->name('admin.artikel.upload-image')->middleware('can:manage_articles');
     Route::resource('artikel', AdminArticleController::class)->except(['show'])->names('admin.artikel')->middleware('can:manage_articles');
 
     // User Management Routes

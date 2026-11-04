@@ -10,20 +10,8 @@
         </a>
     </x-slot>
 
-    <!-- Trix Editor Assets -->
-    <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2.0.8/dist/trix.css">
-    <script type="text/javascript" src="https://unpkg.com/trix@2.0.8/dist/trix.umd.min.js"></script>
-    <style>
-        /* Custom Trix Styling to match modern theme */
-        trix-toolbar [data-trix-button] { background-color: white; }
-        trix-toolbar [data-trix-button]:hover { background-color: #f9fafb; }
-        trix-toolbar [data-trix-button].trix-active { background-color: #e5e7eb; }
-        trix-editor { min-height: 400px; background-color: white; border-radius: 0.5rem; border-color: #e5e7eb !important; }
-        trix-editor:focus { border-color: #509c38 !important; box-shadow: 0 0 0 1px #509c38 !important; outline: none; }
-        .trix-button-group { border-color: #e5e7eb !important; border-radius: 0.375rem !important; overflow: hidden; }
-        .trix-button { border-bottom: none !important; border-color: #e5e7eb !important; }
-        trix-toolbar { margin-bottom: 0.5rem; }
-    </style>
+    <!-- TinyMCE Rich Text Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tinymce/6.8.3/tinymce.min.js" referrerpolicy="origin"></script>
 
     <div class="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
         <form action="{{ isset($article) ? route('admin.artikel.update', $article) : route('admin.artikel.store') }}" method="POST" enctype="multipart/form-data" class="p-8">
@@ -61,9 +49,8 @@
                     </div>
 
                     <div>
-                        <label for="content" class="block text-sm font-semibold text-gray-700 mb-2">Konten (Trix Editor)</label>
-                        <input id="x_content" type="hidden" name="content" value="{{ old('content', $article->content ?? '') }}">
-                        <trix-editor input="x_content" class="trix-content prose max-w-none text-gray-800"></trix-editor>
+                        <label for="content" class="block text-sm font-semibold text-gray-700 mb-2">Konten Artikel</label>
+                        <textarea id="content" name="content" class="w-full">{{ old('content', isset($article) ? preg_replace('/(?<=src=["\'])\/storage\//', url('/storage') . '/', $article->content) : '') }}</textarea>
                     </div>
                 </div>
 
@@ -143,11 +130,84 @@
         </form>
     </div>
 
-    <!-- Trix Attachment Handling (Optional for later) -->
+    <!-- TinyMCE Initialization & Automatic Image Upload -->
     <script>
-        document.addEventListener("trix-file-accept", function(event) {
-            // Uncomment to prevent file attachments inside Trix
-            // event.preventDefault();
+        document.addEventListener('DOMContentLoaded', function () {
+            tinymce.init({
+                selector: '#content',
+                height: 520,
+                menubar: 'file edit view insert format tools table',
+                plugins: [
+                    'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'preview',
+                    'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen',
+                    'insertdatetime', 'media', 'table', 'help', 'wordcount'
+                ],
+                toolbar: 'undo redo | blocks fontfamily fontsize | ' +
+                    'bold italic underline strikethrough forecolor backcolor | alignleft aligncenter ' +
+                    'alignright alignjustify | bullist numlist outdent indent | ' +
+                    'removeformat | link image media table | fullscreen code',
+                image_title: true,
+                automatic_uploads: true,
+                image_caption: true,
+                image_advtab: true,
+                image_dimensions: true,
+                paste_data_images: true,
+                relative_urls: false,
+                remove_script_host: false,
+                convert_urls: false,
+                // Handle image upload via AJAX to server storage
+                images_upload_handler: function (blobInfo, progress) {
+                    return new Promise(function (resolve, reject) {
+                        const xhr = new XMLHttpRequest();
+                        xhr.withCredentials = false;
+                        xhr.open('POST', '{{ route('admin.artikel.upload-image') }}');
+                        xhr.setRequestHeader('X-CSRF-TOKEN', '{{ csrf_token() }}');
+
+                        xhr.upload.onprogress = function (e) {
+                            progress(e.loaded / e.total * 100);
+                        };
+
+                        xhr.onload = function () {
+                            if (xhr.status === 403 || xhr.status === 419) {
+                                reject({ message: 'HTTP Error: ' + xhr.status + ' (Sesi berakhir, silakan login ulang)', remove: true });
+                                return;
+                            }
+                            if (xhr.status < 200 || xhr.status >= 300) {
+                                reject('HTTP Error: ' + xhr.status);
+                                return;
+                            }
+
+                            try {
+                                const json = JSON.parse(xhr.responseText);
+                                if (!json || typeof json.location !== 'string') {
+                                    reject('Invalid JSON: ' + xhr.responseText);
+                                    return;
+                                }
+                                resolve(json.location);
+                            } catch (err) {
+                                reject('Gagal memproses respon server: ' + err.message);
+                            }
+                        };
+
+                        xhr.onerror = function () {
+                            reject('Gagal mengunggah gambar. Periksa koneksi jaringan.');
+                        };
+
+                        const formData = new FormData();
+                        formData.append('file', blobInfo.blob(), blobInfo.filename());
+
+                        xhr.send(formData);
+                    });
+                },
+                content_style: 'body { font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; font-size: 15px; color: #1f2937; line-height: 1.7; padding: 12px; } img { max-width: 100%; height: auto; }',
+                promotion: false,
+                branding: false,
+                setup: function (editor) {
+                    editor.on('change', function () {
+                        editor.save();
+                    });
+                }
+            });
         });
     </script>
 </x-admin-layout>

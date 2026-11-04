@@ -71,6 +71,9 @@ class ArticleController extends Controller
             $validated['featured_image'] = $request->file('featured_image')->store('articles', 'public');
         }
 
+        $validated['content'] = preg_replace('/https?:\/\/[^\/]+\/storage\//', '/storage/', $validated['content']);
+        $validated['content'] = preg_replace('/(\.\.\/)+storage\//', '/storage/', $validated['content']);
+
         Article::create($validated);
 
         return redirect()->route('admin.artikel.index')->with('success', 'Artikel berhasil ditambahkan.');
@@ -115,9 +118,29 @@ class ArticleController extends Controller
             $validated['featured_image'] = $request->file('featured_image')->store('articles', 'public');
         }
 
+        $validated['content'] = preg_replace('/https?:\/\/[^\/]+\/storage\//', '/storage/', $validated['content']);
+        $validated['content'] = preg_replace('/(\.\.\/)+storage\//', '/storage/', $validated['content']);
+
         $artikel->update($validated);
 
         return redirect()->route('admin.artikel.index')->with('success', 'Artikel berhasil diperbarui.');
+    }
+
+    public function uploadImage(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|image|mimes:jpeg,png,jpg,gif,webp|max:5120',
+        ]);
+
+        if ($request->hasFile('file')) {
+            $path = $request->file('file')->store('articles/content', 'public');
+
+            return response()->json([
+                'location' => url('/storage/'.$path),
+            ]);
+        }
+
+        return response()->json(['error' => 'Gagal mengunggah gambar.'], 400);
     }
 
     public function destroy(Article $artikel)
