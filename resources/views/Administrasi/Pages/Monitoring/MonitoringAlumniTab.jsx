@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
     GraduationCap, Users, UserCheck, UserX, Search, Download, Upload,
     RefreshCw, ChevronUp, ChevronDown, Filter, AlertCircle, X, FileSpreadsheet,
-    Plus, Pencil, Trash2, Save, CheckCircle2
+    Plus, Pencil, Trash2, Save, CheckCircle2, Info
 } from 'lucide-react';
 
 const CATEGORY_TABS = [
@@ -15,11 +15,11 @@ const CATEGORY_TABS = [
 ];
 
 const CATEGORY_OPTIONS = [
-    { code: 'A', name: 'Field Assistant Training' },
-    { code: 'B', name: 'Mill Assistant Training' },
-    { code: 'C', name: 'Admin Assistant Training' },
-    { code: 'D', name: 'Traction Assistant Training' },
-    { code: 'E', name: 'Downstream Management Training' },
+    { code: 'A', name: 'Field Assistant Training', label: 'Field Assistant Training (FAT)' },
+    { code: 'B', name: 'Mill Assistant Training', label: 'Mill Assistant Training (MAT)' },
+    { code: 'C', name: 'Admin Assistant Training', label: 'Admin Assistant Training (AAT)' },
+    { code: 'D', name: 'Traction Assistant Training', label: 'Traction Assistant Training (TAT)' },
+    { code: 'E', name: 'Downstream Management Training', label: 'Downstream Management Training (DMT)' },
 ];
 
 export default function MonitoringAlumniTab() {
@@ -57,7 +57,11 @@ export default function MonitoringAlumniTab() {
         kode_kategori: 'A',
         kategori_program: 'Field Assistant Training',
         nama_program: '',
-        tahun: new Date().getFullYear(),
+        tahun_rekrut: new Date().getFullYear(),
+        tahun_training: new Date().getFullYear(),
+        tahun_lulus: new Date().getFullYear(),
+        jumlah_trainee: 0,
+        jumlah_culled: 0,
         catatan: '',
     });
     const [saving, setSaving] = useState(false);
@@ -76,11 +80,16 @@ export default function MonitoringAlumniTab() {
     const handleOpenAddModal = () => {
         setIsEditMode(false);
         setSelectedId(null);
+        const curYear = new Date().getFullYear();
         setFormData({
             kode_kategori: 'A',
             kategori_program: 'Field Assistant Training',
             nama_program: '',
-            tahun: new Date().getFullYear(),
+            tahun_rekrut: curYear,
+            tahun_training: curYear,
+            tahun_lulus: curYear,
+            jumlah_trainee: 0,
+            jumlah_culled: 0,
             catatan: '',
         });
         setFormModalOpen(true);
@@ -90,11 +99,16 @@ export default function MonitoringAlumniTab() {
     const handleOpenEditModal = (row) => {
         setIsEditMode(true);
         setSelectedId(row.id);
+        const curYear = new Date().getFullYear();
         setFormData({
             kode_kategori: row.kode_kategori || 'A',
             kategori_program: row.kategori_program || 'Field Assistant Training',
             nama_program: row.nama_program || '',
-            tahun: row.tahun_training || row.tahun_lulus || row.tahun_rekrut || new Date().getFullYear(),
+            tahun_rekrut: row.tahun_rekrut || row.tahun_training || curYear,
+            tahun_training: row.tahun_training || row.tahun_rekrut || curYear,
+            tahun_lulus: row.tahun_lulus || row.tahun_training || curYear,
+            jumlah_trainee: row.jumlah_trainee ?? 0,
+            jumlah_culled: row.jumlah_culled ?? 0,
             catatan: row.catatan || '',
         });
         setFormModalOpen(true);
@@ -337,6 +351,15 @@ export default function MonitoringAlumniTab() {
                 </div>
 
                 <div className="flex items-center gap-2.5 flex-wrap">
+                    <a
+                        href="/administrasi/monitoring-alumni/api/template"
+                        className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition shadow-xs"
+                        title="Unduh template Excel untuk import data batch"
+                    >
+                        <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                        <span>Download Template</span>
+                    </a>
+
                     <button
                         type="button"
                         onClick={handleExport}
@@ -356,7 +379,7 @@ export default function MonitoringAlumniTab() {
                         className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 transition shadow-xs"
                     >
                         <Upload className="w-4 h-4 text-gray-500" />
-                        <span>Import CSV</span>
+                        <span>Import CSV / Excel</span>
                     </button>
 
                     <button
@@ -500,6 +523,59 @@ export default function MonitoringAlumniTab() {
                             Reset Filter
                         </button>
                     )}
+                </div>
+            </div>
+
+            {/* Informational Banner on Auto-Calculation */}
+            <div className="bg-gradient-to-r from-emerald-50 via-teal-50 to-blue-50 border border-emerald-200/80 rounded-2xl p-4 shadow-xs">
+                <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-xl bg-emerald-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                        <Info className="w-4 h-4" />
+                    </div>
+                    <div className="flex-1 text-xs">
+                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <h4 className="font-bold text-gray-900 text-sm">
+                                Informasi Otomatisasi Kolom Monitoring
+                            </h4>
+                            <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
+                                Auto-Calculated
+                            </span>
+                        </div>
+                        <p className="text-[11px] text-gray-600 mb-2.5">
+                            Dalam template import dan form manual, Anda hanya perlu mengisi <strong>data dasar batch program (8 kolom)</strong>. Kolom-kolom berikut terhitung secara otomatis:
+                        </p>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2.5 text-[11px]">
+                            <div className="bg-white/85 rounded-xl p-3 border border-emerald-100 shadow-2xs">
+                                <div className="flex items-center gap-1.5 font-bold text-emerald-800 mb-1">
+                                    <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                    <span>Jumlah Passed</span>
+                                </div>
+                                <p className="text-gray-600 leading-relaxed">
+                                    Dihitung otomatis melalui formula: <strong className="text-gray-800">Trainee − Culled</strong>.
+                                </p>
+                            </div>
+
+                            <div className="bg-white/85 rounded-xl p-3 border border-emerald-100 shadow-2xs">
+                                <div className="flex items-center gap-1.5 font-bold text-rose-800 mb-1">
+                                    <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+                                    <span>Resign &amp; Eksis</span>
+                                </div>
+                                <p className="text-gray-600 leading-relaxed">
+                                    Dihitung real-time dari data peserta di tab <strong className="text-gray-800">Monitoring Asisten</strong> (status Aktif vs Resign/PHK).
+                                </p>
+                            </div>
+
+                            <div className="bg-white/85 rounded-xl p-3 border border-emerald-100 shadow-2xs">
+                                <div className="flex items-center gap-1.5 font-bold text-purple-800 mb-1">
+                                    <span className="w-2 h-2 rounded-full bg-purple-500"></span>
+                                    <span>5 Kolom Posisi Jabatan</span>
+                                </div>
+                                <p className="text-gray-600 leading-relaxed">
+                                    Kolom <strong className="text-gray-800">PC, GM, MGR, Askep, Asisten</strong> dipetakan otomatis dari level jabatan alumni yang berstatus Eksis.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -939,18 +1015,27 @@ export default function MonitoringAlumniTab() {
 
                         <form onSubmit={handleImportSubmit} className="space-y-4">
                             <div>
-                                <label className="block text-xs font-bold text-gray-700 mb-1.5">
-                                    Pilih File CSV Monitoring Batch (21 Kolom):
-                                </label>
+                                <div className="flex items-center justify-between mb-1.5">
+                                    <label className="block text-xs font-bold text-gray-700">
+                                        Pilih File CSV / Excel Monitoring Batch:
+                                    </label>
+                                    <a
+                                        href="/administrasi/monitoring-alumni/api/template"
+                                        className="text-xs text-[#4B6A34] hover:underline font-semibold inline-flex items-center gap-1"
+                                    >
+                                        <FileSpreadsheet className="w-3.5 h-3.5" />
+                                        <span>Unduh Format Template</span>
+                                    </a>
+                                </div>
                                 <input
                                     type="file"
-                                    accept=".csv,.txt"
+                                    accept=".xlsx,.csv,.txt"
                                     onChange={(e) => setImportFile(e.target.files[0])}
                                     className="w-full text-xs text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-[#4B6A34] hover:file:bg-emerald-100 cursor-pointer border border-gray-300 rounded-xl p-1"
                                     required
                                 />
                                 <p className="text-[11px] text-gray-400 mt-1.5">
-                                    Format: CSV dengan delimiter koma (,) atau titik koma (;). Mendukung 21 kolom standar.
+                                    Format: File Excel (.xlsx) atau CSV (.csv) 8 kolom master program (No, Kategori Program, Nama Program, Tahun Rekrut, Tahun Training, Tahun Lulus, Jumlah Trainee, Jumlah Culled). Kolom posisi &amp; kalkulasi dihitung otomatis oleh sistem.
                                 </p>
                             </div>
 
@@ -968,7 +1053,7 @@ export default function MonitoringAlumniTab() {
                                     className="px-4 py-2 bg-[#4B6A34] hover:bg-[#3D562A] text-white text-xs font-bold rounded-xl shadow-xs transition disabled:opacity-50 inline-flex items-center gap-2 cursor-pointer"
                                 >
                                     {importing && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                                    <span>{importing ? 'Mengimpor...' : 'Mulai Impor CSV'}</span>
+                                    <span>{importing ? 'Mengimpor...' : 'Mulai Impor File'}</span>
                                 </button>
                             </div>
                         </form>
@@ -979,7 +1064,7 @@ export default function MonitoringAlumniTab() {
             {/* Modal Tambah / Edit Data Batch Program */}
             {formModalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-                    <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200 relative">
+                    <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-gray-200 relative">
                         <div className="flex items-center justify-between pb-4 border-b border-gray-100">
                             <div className="flex items-center gap-2.5">
                                 <div className="w-9 h-9 rounded-xl bg-emerald-100 text-[#4B6A34] flex items-center justify-center shrink-0">
@@ -990,7 +1075,7 @@ export default function MonitoringAlumniTab() {
                                         {isEditMode ? 'Edit Data Batch Program' : 'Tambah Data Batch Program'}
                                     </h3>
                                     <p className="text-xs text-gray-500">
-                                        {isEditMode ? 'Perbarui nama program & tahun angkatan' : 'Input nama program dan tahun angkatan secara manual'}
+                                        {isEditMode ? 'Perbarui data batch program & tahun angkatan' : 'Input data batch program sesuai format template'}
                                     </p>
                                 </div>
                             </div>
@@ -1007,17 +1092,17 @@ export default function MonitoringAlumniTab() {
                             {/* Kategori Program */}
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                                    Kategori Program
+                                    Kategori Program <span className="text-rose-600">*</span>
                                 </label>
                                 <select
                                     value={formData.kode_kategori}
                                     onChange={handleCategoryChange}
-                                    className="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-[#4B6A34] bg-white transition"
+                                    className="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-[#4B6A34] bg-white transition cursor-pointer"
                                     required
                                 >
                                     {CATEGORY_OPTIONS.map(c => (
                                         <option key={c.code} value={c.code}>
-                                            [{c.code}] {c.name}
+                                            {c.label || c.name}
                                         </option>
                                     ))}
                                 </select>
@@ -1032,25 +1117,106 @@ export default function MonitoringAlumniTab() {
                                     type="text"
                                     value={formData.nama_program}
                                     onChange={(e) => setFormData(prev => ({ ...prev, nama_program: e.target.value }))}
-                                    placeholder="Contoh: Field Assistant - I/2026 atau FAT II 2026"
+                                    placeholder="Contoh: Field Assistant Training (FAT) Batch 1"
                                     className="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-[#4B6A34] transition"
                                     required
                                 />
                             </div>
 
-                            {/* Tahun */}
+                            {/* Tahun: Rekrut, Training, Lulus (3 Kolom Grid) */}
+                            <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                        Tahun Rekrut <span className="text-rose-600">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1990"
+                                        max="2100"
+                                        value={formData.tahun_rekrut}
+                                        onChange={(e) => {
+                                            const val = e.target.value ? parseInt(e.target.value) : '';
+                                            setFormData(prev => ({
+                                                ...prev,
+                                                tahun_rekrut: val,
+                                                tahun_training: prev.tahun_training === prev.tahun_rekrut ? val : prev.tahun_training,
+                                                tahun_lulus: prev.tahun_lulus === prev.tahun_rekrut ? val : prev.tahun_lulus,
+                                            }));
+                                        }}
+                                        className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-[#4B6A34]"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                        Tahun Training <span className="text-rose-600">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1990"
+                                        max="2100"
+                                        value={formData.tahun_training}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, tahun_training: e.target.value ? parseInt(e.target.value) : '' }))}
+                                        className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-[#4B6A34]"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                        Tahun Lulus <span className="text-rose-600">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="1990"
+                                        max="2100"
+                                        value={formData.tahun_lulus}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, tahun_lulus: e.target.value ? parseInt(e.target.value) : '' }))}
+                                        className="w-full rounded-xl border border-gray-300 px-3 py-2 text-xs font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-[#4B6A34]"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Jumlah Peserta: Trainee & Culled (2 Kolom Grid) */}
+                            <div className="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                        Jumlah Trainee <span className="text-rose-600">*</span>
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={formData.jumlah_trainee}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, jumlah_trainee: e.target.value ? parseInt(e.target.value) : 0 }))}
+                                        className="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-[#4B6A34]"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[11px] font-bold text-gray-700 uppercase tracking-wider mb-1">
+                                        Jumlah Culled
+                                    </label>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        value={formData.jumlah_culled}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, jumlah_culled: e.target.value ? parseInt(e.target.value) : 0 }))}
+                                        className="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-[#4B6A34]"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Catatan Opsional */}
                             <div>
                                 <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1">
-                                    Tahun Angkatan / Training <span className="text-rose-600">*</span>
+                                    Catatan (Opsional)
                                 </label>
-                                <input
-                                    type="number"
-                                    min="1990"
-                                    max="2100"
-                                    value={formData.tahun}
-                                    onChange={(e) => setFormData(prev => ({ ...prev, tahun: e.target.value ? parseInt(e.target.value) : '' }))}
-                                    className="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-semibold text-gray-900 outline-none focus:ring-2 focus:ring-[#4B6A34]"
-                                    required
+                                <textarea
+                                    rows="2"
+                                    value={formData.catatan}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, catatan: e.target.value }))}
+                                    placeholder="Catatan tambahan untuk batch program ini..."
+                                    className="w-full rounded-xl border border-gray-300 px-3.5 py-2 text-xs font-medium text-gray-900 outline-none focus:ring-2 focus:ring-[#4B6A34] resize-none"
                                 />
                             </div>
 
@@ -1058,9 +1224,9 @@ export default function MonitoringAlumniTab() {
                             <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-3 text-[11px] text-emerald-900 flex items-start gap-2">
                                 <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                                 <div>
-                                    <p className="font-bold mb-0.5">Otomatisasi Data Peserta</p>
+                                    <p className="font-bold mb-0.5">Kalkulasi Otomatis Sistem</p>
                                     <p className="text-emerald-800 leading-snug">
-                                        Jumlah peserta (Trainee, Culled, Passed, Resign, Eksis) dan distribusi jabatan alumni akan terhitung secara otomatis dari data peserta di tab <strong>Monitoring Asisten</strong>.
+                                        Distribusi 5 posisi alumni (<strong>PC, GM, MGR, Askep, Asisten</strong>) dan status lulusan (Passed, Resign, Eksis) tidak perlu diisi manual karena akan otomatis terhitung dari data di tab <strong>Monitoring Asisten</strong>.
                                     </p>
                                 </div>
                             </div>
