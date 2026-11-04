@@ -68,4 +68,27 @@ class CutiImportTest extends TestCase
 
         Cuti::where('nama', 'Karyawan Tanpa NIK')->delete();
     }
+
+    public function test_can_import_cuti_with_custom_nik()
+    {
+        $this->authenticateUser();
+        $customNik = '20150207900005';
+        $csv = implode("\n", [
+            'nik,nama,jabatan,jenis_jabatan,tmk,hak_cuti,tahun,jan,feb,mar,apr,mei,jun,jul,agu,sep,okt,nov,des',
+            "{$customNik},Karyawan NIK Custom,Staff Kebun,Staff,2022-01-01,12,2026,0,0,0,0,0,0,0,0,0,0,0,0",
+        ]);
+
+        $response = $this->post('/administrasi/cuti/import', [
+            'file' => UploadedFile::fake()->createWithContent('cuti_custom_nik.csv', $csv),
+        ]);
+
+        $response->assertRedirect();
+        $this->assertDatabaseHas('cuti', [
+            'nik' => $customNik,
+            'nama' => 'Karyawan NIK Custom',
+            'tahun' => 2026,
+        ]);
+
+        Cuti::where('nik', $customNik)->delete();
+    }
 }

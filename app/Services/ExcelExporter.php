@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use PhpOffice\PhpSpreadsheet\Cell\Coordinate;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
@@ -147,7 +148,11 @@ class ExcelExporter
             $colIndex = 1;
             foreach ((array) $row as $val) {
                 $colLetter = Coordinate::stringFromColumnIndex($colIndex);
-                $sheet->getCell("{$colLetter}{$rowIndex}")->setValue($val);
+                if (is_string($val)) {
+                    $sheet->getCell("{$colLetter}{$rowIndex}")->setValueExplicit($val, DataType::TYPE_STRING);
+                } else {
+                    $sheet->getCell("{$colLetter}{$rowIndex}")->setValue($val);
+                }
                 $colIndex++;
             }
             $sheet->getRowDimension($rowIndex)->setRowHeight(22);

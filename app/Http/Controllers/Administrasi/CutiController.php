@@ -555,7 +555,7 @@ class CutiController extends Controller
     public function downloadTemplate()
     {
         $headers = [
-            'nama', 'jabatan', 'jenis_jabatan', 'tmk', 'hak_cuti',
+            'nik', 'nama', 'jabatan', 'jenis_jabatan', 'tmk', 'hak_cuti',
             'sisa_hak_cuti_carryover', 'cuti_diambil',
             'jan', 'feb', 'mar', 'apr', 'mei', 'jun', 'jul', 'agu', 'sep', 'okt', 'nov', 'des',
             'tahun',
@@ -563,15 +563,21 @@ class CutiController extends Controller
 
         $sampleRows = [
             [
-                'Budi Santoso', 'Manager Ops', 'Staff', '2020-01-15', 12,
+                '2012040237', 'Budi Santoso', 'Manager Ops', 'Staff', '2020-01-15', 12,
                 0, 2,
                 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 2026,
             ],
             [
-                'Siti Aminah', 'Asisten Agronomi', 'Staff', '2021-03-20', 12,
+                '20150207900005', 'Siti Aminah', 'Asisten Agronomi', 'Staff', '2021-03-20', 12,
                 2, 1,
                 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                2026,
+            ],
+            [
+                '2012040264', 'Ahmad Fauzi', 'Mandor', 'PBT', '2019-06-10', 12,
+                1, 0,
+                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                 2026,
             ],
         ];
