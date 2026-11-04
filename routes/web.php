@@ -941,6 +941,7 @@ Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
     Route::delete('tasks/{task}', [NonRegulerDailyClassController::class, 'destroyTask'])->name('training-non-reguler.daily-classes.tasks.destroy');
     Route::delete('daily-classes/{daily_class}/trainees', [NonRegulerDailyClassController::class, 'removeAllTrainees'])->name('training-non-reguler.daily-classes.trainees.destroy-all');
     Route::delete('daily-classes/{daily_class}/trainees/{trainee}', [NonRegulerDailyClassController::class, 'removeTrainee'])->name('training-non-reguler.daily-classes.trainees.destroy');
+    Route::put('daily-classes/{daily_class}/trainees/{trainee}', [NonRegulerDailyClassController::class, 'updateTrainee'])->name('training-non-reguler.daily-classes.trainees.update');
 
     Route::post('daily-classes/{daily_class}/notify', [NonRegulerDailyClassController::class, 'notifyTrainees'])->name('training-non-reguler.daily-classes.notify');
 

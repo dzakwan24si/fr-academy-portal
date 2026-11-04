@@ -672,7 +672,7 @@
                                                       @foreach($dates as $d)
                             <th class="px-6 py-3 font-semibold text-gray-600 text-center min-w-[120px]" x-show="selectedDay === '{{ $d }}'" x-cloak>Absensi</th>
                             @endforeach
-                          <th class="px-6 py-3 font-semibold text-gray-600 text-center w-20">Aksi</th>
+                          <th class="px-6 py-3 font-semibold text-gray-600 text-center w-28">Aksi</th>
                       </tr>
                   </thead>
                   <tbody class="divide-y divide-gray-100">
@@ -749,14 +749,69 @@
                               </div>
                           </td>
                           @endforeach
-                          <td class="px-6 py-4 text-center">
-                              <form action="{{ route('training-non-reguler.daily-classes.trainees.destroy', ['daily_class' => $dailyClass->id, 'trainee' => $trainee->id]) }}" method="POST" class="inline-block" onsubmit="return confirm('Yakin ingin menghapus {{ $trainee->name }} dari sesi ini? Data absensi untuk sesi ini juga akan dihapus.');">
-                                  @csrf
-                                  @method('DELETE')
-                                  <button type="submit" class="p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors tooltip" title="Hapus Peserta">
-                                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                          <td class="px-6 py-4 text-center whitespace-nowrap">
+                              <div class="flex items-center justify-center gap-1">
+                                  <!-- Tombol Edit Peserta -->
+                                  <button type="button" onclick="document.getElementById('editTraineeModal_{{ $trainee->id }}').classList.remove('hidden')" class="p-2 text-slate-400 hover:bg-amber-50 hover:text-amber-600 rounded-xl transition-colors tooltip" title="Edit Data Peserta">
+                                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                                   </button>
-                              </form>
+
+                                  <!-- Tombol Hapus Peserta -->
+                                  <form action="{{ route('training-non-reguler.daily-classes.trainees.destroy', ['daily_class' => $dailyClass->id, 'trainee' => $trainee->id]) }}" method="POST" class="inline-block" onsubmit="return confirm('Yakin ingin menghapus {{ $trainee->name }} dari sesi ini? Data absensi untuk sesi ini juga akan dihapus.');">
+                                      @csrf
+                                      @method('DELETE')
+                                      <button type="submit" class="p-2 text-slate-400 hover:bg-red-50 hover:text-red-600 rounded-xl transition-colors tooltip" title="Hapus Peserta">
+                                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                      </button>
+                                  </form>
+                              </div>
+
+                              <!-- Modal Edit Data Peserta -->
+                              <div id="editTraineeModal_{{ $trainee->id }}" class="fixed inset-0 z-[100] flex items-center justify-center hidden bg-slate-900/50 backdrop-blur-sm transition-opacity text-left p-4">
+                                  <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all scale-100 opacity-100">
+                                      <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
+                                          <div>
+                                              <h3 class="text-lg font-black text-slate-800">Edit Data Peserta</h3>
+                                              <p class="text-xs text-slate-500 mt-0.5">Ubah informasi profil peserta di kelas ini</p>
+                                          </div>
+                                          <button type="button" onclick="document.getElementById('editTraineeModal_{{ $trainee->id }}').classList.add('hidden')" class="text-slate-400 hover:text-red-500 transition-colors p-2 bg-white rounded-full shadow-sm">
+                                              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                          </button>
+                                      </div>
+                                      
+                                      <form action="{{ route('training-non-reguler.daily-classes.trainees.update', ['daily_class' => $dailyClass->id, 'trainee' => $trainee->id]) }}" method="POST" class="p-6">
+                                          @csrf
+                                          @method('PUT')
+                                          <div class="space-y-4">
+                                              <div>
+                                                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">NIK / Employee ID <span class="text-red-500">*</span></label>
+                                                  <input type="text" name="nik" value="{{ $trainee->nik }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] font-medium transition-all" required placeholder="Contoh: 2023030337">
+                                              </div>
+                                              <div>
+                                                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Employee Name <span class="text-red-500">*</span></label>
+                                                  <input type="text" name="name" value="{{ $trainee->name }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] font-medium transition-all" required placeholder="Contoh: Ahmad Pajar">
+                                              </div>
+                                              <div>
+                                                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Jabatan <span class="text-red-500">*</span></label>
+                                                  <input type="text" name="talent_to" value="{{ $trainee->talent_to }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] font-medium transition-all" required placeholder="Contoh: Askep">
+                                              </div>
+                                              <div>
+                                                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Unit / PT <span class="text-red-500">*</span></label>
+                                                  <input type="text" name="unit" value="{{ $trainee->unit }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] font-medium transition-all" required placeholder="Contoh: ANJAS">
+                                              </div>
+                                              <div>
+                                                  <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Region <span class="text-red-500">*</span></label>
+                                                  <input type="text" name="region" value="{{ $trainee->origin }}" list="region_list_options" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] font-medium transition-all" required placeholder="Contoh: Kalbar / Kaltim FR / Riau">
+                                              </div>
+                                          </div>
+
+                                          <div class="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
+                                              <button type="button" onclick="document.getElementById('editTraineeModal_{{ $trainee->id }}').classList.add('hidden')" class="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-colors">Batal</button>
+                                              <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#28844b] text-white font-bold hover:bg-[#1d6b3a] active:scale-95 transition-all shadow-md">Simpan Perubahan</button>
+                                          </div>
+                                      </form>
+                                  </div>
+                              </div>
                           </td>
                       </tr>
                       @endforeach
@@ -786,16 +841,16 @@
                         <input type="text" name="name" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required placeholder="Contoh: Ahmad Pajar">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Jabatan <span class="text-gray-400 font-normal">(Opsional)</span></label>
-                        <input type="text" name="talent_to" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Contoh: Askep">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Jabatan <span class="text-red-500">*</span></label>
+                        <input type="text" name="talent_to" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required placeholder="Contoh: Askep">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Unit/PT <span class="text-gray-400 font-normal">(Opsional)</span></label>
-                        <input type="text" name="unit" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Contoh: ANJAS">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Unit/PT <span class="text-red-500">*</span></label>
+                        <input type="text" name="unit" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required placeholder="Contoh: ANJAS">
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Region <span class="text-gray-400 font-normal">(Opsional)</span></label>
-                        <input type="text" name="region" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" placeholder="Contoh: Riau">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Region <span class="text-red-500">*</span></label>
+                        <input type="text" name="region" list="region_list_options" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required placeholder="Contoh: Kalbar / Kaltim FR / Riau">
                     </div>
                 </div>
                 <div class="mt-8 flex justify-end gap-3 pt-6 border-t border-slate-100">

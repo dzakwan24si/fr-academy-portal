@@ -414,9 +414,15 @@ class NonRegulerDailyClassController extends Controller
         $request->validate([
             'nik' => 'required|string|max:255',
             'name' => 'required|string|max:255',
-            'talent_to' => 'nullable|string|max:255',
-            'unit' => 'nullable|string|max:255',
-            'region' => 'nullable|string|max:255',
+            'talent_to' => 'required|string|max:255',
+            'unit' => 'required|string|max:255',
+            'region' => 'required|string|max:255',
+        ], [
+            'nik.required' => 'NIK / Employee ID wajib diisi.',
+            'name.required' => 'Nama peserta wajib diisi.',
+            'talent_to.required' => 'Jabatan wajib diisi.',
+            'unit.required' => 'Unit/PT wajib diisi.',
+            'region.required' => 'Region wajib diisi.',
         ]);
 
         try {
@@ -425,12 +431,11 @@ class NonRegulerDailyClassController extends Controller
             $trainee = Trainee::where('nik', $request->nik)->first();
 
             if ($trainee) {
-                // Update jika ada field yang kosong
                 $trainee->update([
                     'name' => $request->name,
-                    'unit' => empty(trim($trainee->unit)) ? $request->unit : $trainee->unit,
-                    'origin' => empty(trim($trainee->origin)) ? $request->region : $trainee->origin,
-                    'talent_to' => empty(trim($trainee->talent_to)) ? $request->talent_to : $trainee->talent_to,
+                    'unit' => $request->unit,
+                    'origin' => $request->region,
+                    'talent_to' => $request->talent_to,
                 ]);
             } else {
                 $trainee = Trainee::create([
@@ -637,6 +642,34 @@ class NonRegulerDailyClassController extends Controller
             ->delete();
 
         return back()->with('success', "Trainee {$trainee->name} berhasil dihapus dari sesi ini.");
+    }
+
+    public function updateTrainee(Request $request, DailyClass $dailyClass, Trainee $trainee)
+    {
+        $validated = $request->validate([
+            'nik' => 'required|string|max:255|unique:trainees,nik,'.$trainee->id,
+            'name' => 'required|string|max:255',
+            'talent_to' => 'required|string|max:255',
+            'unit' => 'required|string|max:255',
+            'region' => 'required|string|max:255',
+        ], [
+            'nik.required' => 'NIK / Employee ID wajib diisi.',
+            'nik.unique' => 'NIK / Employee ID ini sudah digunakan oleh peserta lain.',
+            'name.required' => 'Nama peserta wajib diisi.',
+            'talent_to.required' => 'Jabatan wajib diisi.',
+            'unit.required' => 'Unit/PT wajib diisi.',
+            'region.required' => 'Region wajib diisi.',
+        ]);
+
+        $trainee->update([
+            'nik' => $validated['nik'],
+            'name' => $validated['name'],
+            'talent_to' => $validated['talent_to'],
+            'unit' => $validated['unit'],
+            'origin' => $validated['region'],
+        ]);
+
+        return back()->with('success', "Data peserta {$trainee->name} berhasil diperbarui.");
     }
 
     public function removeAllTrainees(DailyClass $dailyClass)
