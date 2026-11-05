@@ -95,6 +95,14 @@ class TrainingRecordController extends Controller
         $data = $this->validated($request);
         $this->ensureActivity($data['program_type'], $data['program_id']);
         $this->ensureUnique($data['program_type'], $data['program_id'], $data['participant_identifier']);
+
+        if (empty($data['region'])) {
+            $act = $this->activities()->get($data['program_type'].':'.$data['program_id']);
+            if (! empty($act['region'])) {
+                $data['region'] = $act['region'];
+            }
+        }
+
         TrainingRecord::create($data + ['status' => 'valid']);
         $this->clearTrCache();
 
@@ -111,6 +119,14 @@ class TrainingRecordController extends Controller
         $data = $this->validated($request, $trainingRecord);
         $this->ensureActivity($data['program_type'], $data['program_id']);
         $this->ensureUnique($data['program_type'], $data['program_id'], $data['participant_identifier'], null, null, null, $trainingRecord->id);
+
+        if (empty($data['region'])) {
+            $act = $this->activities()->get($data['program_type'].':'.$data['program_id']);
+            if (! empty($act['region'])) {
+                $data['region'] = $act['region'];
+            }
+        }
+
         $trainingRecord->update($data);
         $this->clearTrCache();
 
@@ -399,13 +415,14 @@ class TrainingRecordController extends Controller
 
         $cleanStr = fn ($str) => strtolower(trim(preg_replace('/[^a-zA-Z0-9]/', '', (string) $str)));
 
-        $reguler = ProgramReguler::select(['Program_reguler_id', 'Training_Program', 'jenis_program_reguler', 'Mulai_program', 'Selesai_program'])->get()->mapWithKeys(fn ($item) => [
+        $reguler = ProgramReguler::select(['Program_reguler_id', 'Training_Program', 'jenis_program_reguler', 'Mulai_program', 'Selesai_program', 'Region', 'Batch'])->get()->mapWithKeys(fn ($item) => [
             'reguler:'.$item->getKey() => [
                 'type' => 'reguler',
                 'sub_type' => 'reguler',
                 'type_label' => 'Reguler',
                 'id' => $item->getKey(),
                 'name' => $this->activityLabel($item, 'reguler'),
+                'region' => $item->Region,
                 'model' => $item,
             ],
         ]);
@@ -421,6 +438,7 @@ class TrainingRecordController extends Controller
                     'type_label' => $isSoft ? 'Non Reguler - Soft Skill' : 'Non Reguler - Teknikal',
                     'id' => $item->getKey(),
                     'name' => $item->jenis_pelatihan,
+                    'region' => $item->region,
                     'model' => $item,
                 ],
             ];

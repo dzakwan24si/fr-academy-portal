@@ -142,8 +142,8 @@
 
     <details class="rounded-xl border border-[#E5E7EB] bg-white p-4"><summary class="cursor-pointer text-sm font-bold text-[#18181B]">+ Tambah Training Record</summary><form method="POST" action="{{ route('administrasi.training-record.store') }}" class="mt-4 grid gap-3 md:grid-cols-4">@csrf
         <select name="program_type" id="training-record-program-type" required class="rounded-lg border px-3 py-2 text-sm"><option value="">Tipe activity</option><option value="reguler">Reguler</option><option value="non_reguler">Non Reguler</option></select>
-        <select name="program_id" id="training-record-program-id" required class="rounded-lg border px-3 py-2 text-sm"><option value="">Pilih tipe activity terlebih dahulu</option>@foreach($activities as $activity)<option value="{{ $activity['id'] }}" data-type="{{ $activity['type'] }}">{{ ucfirst($activity['type']) }} #{{ $activity['id'] }} - {{ $activity['name'] }}</option>@endforeach</select>
-        <input name="participant_identifier" required placeholder="NIK" class="rounded-lg border px-3 py-2 text-sm"><input name="participant_name" required placeholder="Nama" class="rounded-lg border px-3 py-2 text-sm"><input name="gender" placeholder="Jenis Kelamin" class="rounded-lg border px-3 py-2 text-sm"><input name="company" placeholder="Nama PT" class="rounded-lg border px-3 py-2 text-sm"><input name="department" placeholder="Department" class="rounded-lg border px-3 py-2 text-sm"><input name="work_location" placeholder="Lokasi Kerja" class="rounded-lg border px-3 py-2 text-sm"><input name="group_name" placeholder="Group" class="rounded-lg border px-3 py-2 text-sm"><input name="region" placeholder="REGION" class="rounded-lg border px-3 py-2 text-sm"><input name="gol" placeholder="GOL" class="rounded-lg border px-3 py-2 text-sm"><input name="position" placeholder="Jabatan" class="rounded-lg border px-3 py-2 text-sm"><input name="instructor" placeholder="Nama Instruktur" class="rounded-lg border px-3 py-2 text-sm"><input name="internal_external" placeholder="Internal/Eksternal" class="rounded-lg border px-3 py-2 text-sm"><input name="level" placeholder="Level" class="rounded-lg border px-3 py-2 text-sm"><input name="periode" placeholder="Periode" class="rounded-lg border px-3 py-2 text-sm"><input name="tanggal" placeholder="Tanggal (contoh: 01-31 atau 15)" class="rounded-lg border px-3 py-2 text-sm">
+        <select name="program_id" id="training-record-program-id" required class="rounded-lg border px-3 py-2 text-sm"><option value="">Pilih tipe activity terlebih dahulu</option>@foreach($activities as $activity)<option value="{{ $activity['id'] }}" data-type="{{ $activity['type'] }}" data-region="{{ $activity['region'] ?? '' }}">{{ $activity['name'] }}{{ !empty($activity['region']) ? ' (Region: ' . $activity['region'] . ')' : '' }}</option>@endforeach</select>
+        <input name="participant_identifier" required placeholder="NIK" class="rounded-lg border px-3 py-2 text-sm"><input name="participant_name" required placeholder="Nama" class="rounded-lg border px-3 py-2 text-sm"><input name="gender" placeholder="Jenis Kelamin" class="rounded-lg border px-3 py-2 text-sm"><input name="company" placeholder="Nama PT" class="rounded-lg border px-3 py-2 text-sm"><input name="department" placeholder="Department" class="rounded-lg border px-3 py-2 text-sm"><input name="work_location" placeholder="Lokasi Kerja" class="rounded-lg border px-3 py-2 text-sm"><input name="group_name" placeholder="Group" class="rounded-lg border px-3 py-2 text-sm"><input name="region" id="training-record-region" placeholder="REGION" class="rounded-lg border px-3 py-2 text-sm"><input name="gol" placeholder="GOL" class="rounded-lg border px-3 py-2 text-sm"><input name="position" placeholder="Jabatan" class="rounded-lg border px-3 py-2 text-sm"><input name="instructor" placeholder="Nama Instruktur" class="rounded-lg border px-3 py-2 text-sm"><input name="internal_external" placeholder="Internal/Eksternal" class="rounded-lg border px-3 py-2 text-sm"><input name="level" placeholder="Level" class="rounded-lg border px-3 py-2 text-sm"><input name="periode" placeholder="Periode" class="rounded-lg border px-3 py-2 text-sm"><input name="tanggal" placeholder="Tanggal (contoh: 01-31 atau 15)" class="rounded-lg border px-3 py-2 text-sm">
         <select name="bulan" class="rounded-lg border px-3 py-2 text-sm bg-white">
             <option value="">Pilih Bulan</option>
             <option value="JAN">Januari (JAN)</option>
@@ -179,7 +179,7 @@
             @csrf @method('PUT')
             <div class="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
                 <div><label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Tipe Activity <span class="text-red-500">*</span></label><select name="program_type" id="edit-program-type" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs bg-white focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none"><option value="reguler">Reguler</option><option value="non_reguler">Non Reguler</option></select></div>
-                <div class="sm:col-span-3"><label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Nama Training Activity <span class="text-red-500">*</span></label><select name="program_id" id="edit-program-id" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs bg-white focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none"><option value="">Pilih activity</option>@foreach($activities as $activity)<option value="{{ $activity['id'] }}" data-type="{{ $activity['type'] }}">{{ ucfirst($activity['type']) }} #{{ $activity['id'] }} - {{ $activity['name'] }}</option>@endforeach</select></div>
+                <div class="sm:col-span-3"><label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Nama Training Activity <span class="text-red-500">*</span></label><select name="program_id" id="edit-program-id" required class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs bg-white focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none"><option value="">Pilih activity</option>@foreach($activities as $activity)<option value="{{ $activity['id'] }}" data-type="{{ $activity['type'] }}" data-region="{{ $activity['region'] ?? '' }}">{{ $activity['name'] }}{{ !empty($activity['region']) ? ' (Region: ' . $activity['region'] . ')' : '' }}</option>@endforeach</select></div>
                 <div><label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">NIK <span class="text-red-500">*</span></label><input name="participant_identifier" id="edit-participant_identifier" required placeholder="NIK" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none"></div>
                 <div><label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Nama Lengkap <span class="text-red-500">*</span></label><input name="participant_name" id="edit-participant_name" required placeholder="Nama" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none"></div>
                 <div><label class="block text-[11px] font-bold uppercase text-slate-600 mb-1">Jenis Kelamin</label><input name="gender" id="edit-gender" placeholder="Jenis Kelamin" class="w-full rounded-lg border border-slate-300 px-3 py-2 text-xs focus:border-green-600 focus:ring-1 focus:ring-green-600 outline-none"></div>
@@ -332,20 +332,39 @@
 document.addEventListener('DOMContentLoaded', () => {
     const type = document.getElementById('training-record-program-type');
     const activity = document.getElementById('training-record-program-id');
+    const regionInput = document.getElementById('training-record-region');
+
     if (type && activity) {
         const options = [...activity.options].slice(1).map((option) => option.cloneNode(true));
         type.addEventListener('change', () => {
             activity.innerHTML = '<option value="">Pilih activity</option>';
             options.filter((option) => option.dataset.type === type.value).forEach((option) => activity.appendChild(option.cloneNode(true)));
+            if (regionInput) regionInput.value = '';
+        });
+
+        activity.addEventListener('change', () => {
+            const selected = activity.options[activity.selectedIndex];
+            if (selected && selected.dataset.region && regionInput) {
+                regionInput.value = selected.dataset.region;
+            }
         });
     }
 
     const editType = document.getElementById('edit-program-type');
     const editActivity = document.getElementById('edit-program-id');
+    const editRegionInput = document.getElementById('edit-region');
+
     if (editType && editActivity) {
         window.allEditActivityOptions = [...editActivity.options].slice(1).map((opt) => opt.cloneNode(true));
         editType.addEventListener('change', () => {
             filterEditActivityOptions(editType.value, '');
+        });
+
+        editActivity.addEventListener('change', () => {
+            const selected = editActivity.options[editActivity.selectedIndex];
+            if (selected && selected.dataset.region && editRegionInput && !editRegionInput.value) {
+                editRegionInput.value = selected.dataset.region;
+            }
         });
     }
 
