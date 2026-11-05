@@ -137,7 +137,10 @@
 
             <h3 class="text-xl font-black text-slate-800 mb-2">Hapus Riwayat Program?</h3>
             <p class="text-sm text-slate-500 leading-relaxed mb-6">
-                Data riwayat untuk program <strong id="deleteClassTitle" class="text-slate-800"></strong> beserta seluruh catatan absensi dan evaluasi di dalamnya akan dihapus secara permanen.
+                Data operasional untuk program <strong id="deleteClassTitle" class="text-slate-800"></strong> beserta seluruh catatan absensi dan evaluasi di dalamnya akan dihapus dari Learning Activity.
+                <span class="block mt-3 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3 py-2 rounded-xl border border-emerald-200 text-left">
+                    &#10003; Data rekam jejak jam pelatihan di <strong>Training Record</strong> tetap aman tersimpan.
+                </span>
             </p>
 
             <form id="deleteForm" action="" method="POST" class="flex gap-3">
