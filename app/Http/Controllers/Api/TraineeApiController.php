@@ -133,7 +133,7 @@ class TraineeApiController extends Controller
 
 $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
             ->whereHas('attendances', function ($query) use ($trainee) {
-                $query->where('trainee_id', $trainee->id);
+                $query->where('trainee_id', $trainee->id)->where('status', 'hadir');
             })
             ->whereDoesntHave('traineeEvaluations', function ($query) use ($trainee) {
                 $query->where('trainee_id', $trainee->id);
@@ -151,10 +151,10 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
                 'classInfo' => $todayAttendanceRecord && $todayAttendanceRecord->dailyClass ? [
                     'id' => $todayAttendanceRecord->dailyClass->id,
                     'title' => $todayAttendanceRecord->dailyClass->title,
-                    'date' => $todayAttendanceRecord->dailyClass->date,
-                    'end_date' => $todayAttendanceRecord->dailyClass->end_date,
-                    'start_time' => $todayAttendanceRecord->dailyClass->start_time,
-                    'end_time' => $todayAttendanceRecord->dailyClass->end_time,
+                    'date' => $todayAttendanceRecord->dailyClass->date ? Carbon::parse($todayAttendanceRecord->dailyClass->date)->translatedFormat('d M Y') : 'Hari Ini',
+                    'end_date' => $todayAttendanceRecord->dailyClass->end_date ? Carbon::parse($todayAttendanceRecord->dailyClass->end_date)->translatedFormat('d M Y') : null,
+                    'start_time' => $todayAttendanceRecord->dailyClass->start_time ? substr($todayAttendanceRecord->dailyClass->start_time, 0, 5) : '08:00',
+                    'end_time' => $todayAttendanceRecord->dailyClass->end_time ? substr($todayAttendanceRecord->dailyClass->end_time, 0, 5) : '17:00',
                     'room' => $todayAttendanceRecord->dailyClass->room,
                     'region' => $todayAttendanceRecord->dailyClass->region,
                     'mess_url' => $todayAttendanceRecord->dailyClass->mess_url,
@@ -172,6 +172,19 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
     public function tasks(Request $request)
     {
         $trainee = $request->user();
+
+        // Cek apakah trainee sudah melakukan absensi (hadir)
+        $hasAttended = Attendance::where('trainee_id', $trainee->id)
+            ->where('status', 'hadir')
+            ->exists();
+
+        if (! $hasAttended) {
+            return response()->json([
+                'status' => 'success',
+                'data' => [],
+                'message' => 'Silakan lakukan absensi terlebih dahulu untuk melihat dan mengerjakan tugas.',
+            ]);
+        }
 
         // Ambil daftar tugas untuk program training trainee ini
         $dbTasks = Task::with(['dailyClass', 'submissions' => function ($q) use ($trainee) {
@@ -209,6 +222,19 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
     {
         $trainee = $request->user();
 
+        // Cek apakah trainee sudah melakukan absensi hadir di kelas
+        $hasAttended = Attendance::where('trainee_id', $trainee->id)
+            ->where('daily_class_id', $task->daily_class_id)
+            ->where('status', 'hadir')
+            ->exists();
+
+        if (! $hasAttended) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda harus melakukan absensi terlebih dahulu sebelum dapat mengumpulkan tugas.',
+            ], 403);
+        }
+
         $request->validate([
             'task_files' => 'required|array',
             'task_files.*' => 'required|file|mimes:jpg,jpeg,png,pdf,doc,docx,ppt,pptx|max:10240', // max 10MB per file
@@ -220,41 +246,9 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
 
         $paths = [];
         if ($request->hasFile('task_files')) {
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'ppt', 'pptx'];
             foreach ($request->file('task_files') as $file) {
-                // Check if file is an image
-                if (str_starts_with($file->getMimeType(), 'image/')) {
-                    $imagePath = $file->getRealPath();
-                    $mime = $file->getMimeType();
-
-                    // Create image resource based on type
-                    $image = null;
-                    if ($mime == 'image/jpeg' || $mime == 'image/jpg') {
-                        $image = @imagecreatefromjpeg($imagePath);
-                    } elseif ($mime == 'image/png') {
-                        $image = @imagecreatefrompng($imagePath);
-                    }
-
-                    if ($image) {
-                        // Create target directory if not exists
-                        $targetDir = storage_path('app/public/task_submissions');
-                        if (! file_exists($targetDir)) {
-                            mkdir($targetDir, 0755, true);
-                        }
-
-                        // Save as highly compressed JPEG
-                        $filename = 'task_submissions/'.Str::random(40).'.jpg';
-                        imagejpeg($image, storage_path('app/public/'.$filename), 50); // 50% quality for high compression
-                        imagedestroy($image);
-
-                        $paths[] = $filename;
-
-                        continue;
-                    }
-                }
-
-                // Fallback for non-images (PDF, Word, PPT) with strict extension whitelist and randomized safe filename
                 $extension = strtolower($file->getClientOriginalExtension());
-                $allowedExtensions = ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx', 'ppt', 'pptx'];
                 if (! in_array($extension, $allowedExtensions)) {
                     continue;
                 }
@@ -434,11 +428,11 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
         $today = date('Y-m-d');
 
         // Cari materi/kelas yang evaluasinya sudah dibuka oleh Admin
-        // dan trainee hadir (status != alpha/belum),
+        // dan trainee hadir (status == hadir),
         // tapi trainee belum mengisi evaluasi.
         $pendingClasses = DailyClass::where('is_evaluation_open', true)
             ->whereHas('attendances', function ($query) use ($trainee) {
-                $query->where('trainee_id', $trainee->id);
+                $query->where('trainee_id', $trainee->id)->where('status', 'hadir');
             })
             ->whereDoesntHave('traineeEvaluations', function ($query) use ($trainee) {
                 $query->where('trainee_id', $trainee->id);
@@ -466,13 +460,14 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
             return response()->json(['message' => 'Anda sudah mengisi evaluasi untuk sesi ini.'], 400);
         }
 
-        // Verifikasi pendaftaran kelas
+        // Verifikasi bahwa trainee sudah absen hadir di kelas ini
         $hasAttended = Attendance::where('trainee_id', $trainee->id)
             ->where('daily_class_id', $dailyClass->id)
+            ->where('status', 'hadir')
             ->exists();
 
         if (! $hasAttended) {
-            return response()->json(['message' => 'Anda tidak terdaftar dalam kelas ini.'], 403);
+            return response()->json(['message' => 'Anda harus melakukan absensi kehadiran terlebih dahulu sebelum dapat mengisi evaluasi.'], 403);
         }
 
         $validated = $request->validate([

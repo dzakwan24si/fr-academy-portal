@@ -33,30 +33,31 @@
         </div>
     @endif
 
-    <!-- Filter & Search Card -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-4 mb-6">
-        <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div class="relative w-full sm:w-80 md:w-96">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+    <!-- Card Wrapper -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden mb-6">
+        <!-- Search Bar Header (Original Clean Style) -->
+        <div class="p-4 border-b border-gray-100 bg-gray-50/50">
+            <form method="GET" action="{{ route('admin.users.index') }}" class="flex flex-col sm:flex-row items-center gap-3">
+                <div class="flex-1 relative w-full">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    </div>
+                    <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama, email, atau NIK..." class="w-full bg-white border border-gray-300 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-[#509c38] focus:border-[#509c38] transition">
                 </div>
-                <input type="text" name="search" value="{{ $search }}" placeholder="Cari nama, email, atau NIK..." class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#509c38] focus:border-transparent transition">
-            </div>
-            <div class="flex items-center gap-2 w-full sm:w-auto">
-                <button type="submit" class="px-5 py-2.5 bg-[#509c38] text-white text-sm font-semibold rounded-xl hover:bg-[#3d7a2b] transition shadow-sm">
-                    Cari
-                </button>
-                @if($search)
-                <a href="{{ route('admin.users.index') }}" class="px-4 py-2.5 bg-gray-100 text-gray-600 text-sm font-semibold rounded-xl hover:bg-gray-200 transition">
-                    Reset
-                </a>
-                @endif
-            </div>
-        </form>
-    </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-xl text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#509c38] transition-colors">
+                        Cari
+                    </button>
+                    @if($search)
+                    <a href="{{ route('admin.users.index') }}" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-xl text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors">
+                        Reset
+                    </a>
+                    @endif
+                </div>
+            </form>
+        </div>
 
-    <!-- Table Card -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+        <!-- Table Data Pengguna -->
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 text-left">
                 <thead class="bg-gray-50/75 border-b border-gray-200 text-gray-500 font-semibold text-xs uppercase tracking-wider">
@@ -164,32 +165,34 @@
                                 <span class="text-xs text-gray-400">Belum pernah</span>
                             @endif
                         </td>
-                        <td class="py-4 px-6 text-right whitespace-nowrap space-x-1">
-                            <a href="{{ route('admin.users.edit', $user->id) }}" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors inline-block" title="Edit Akun">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                            </a>
+                        <td class="py-4 px-6 text-right whitespace-nowrap">
+                            <div class="inline-flex items-center justify-end gap-1.5">
+                                <a href="{{ route('admin.users.edit', $user->id) }}" class="inline-flex items-center justify-center w-8 h-8 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Edit Akun">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                                </a>
 
-                            @if($user->id !== auth()->id())
-                            <form action="{{ route('admin.users.toggle-status', $user->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin {{ ($user->is_active ?? true) ? 'menonaktifkan' : 'mengaktifkan' }} akun ini?');">
-                                @csrf
-                                @method('PATCH')
-                                <button type="submit" class="p-2 {{ ($user->is_active ?? true) ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50' }} rounded-lg transition-colors inline-block" title="{{ ($user->is_active ?? true) ? 'Nonaktifkan Akun' : 'Aktifkan Akun' }}">
-                                    @if($user->is_active ?? true)
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
-                                    @else
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                    @endif
-                                </button>
-                            </form>
+                                @if($user->id !== auth()->id())
+                                <form action="{{ route('admin.users.toggle-status', $user->id) }}" method="POST" class="inline-flex items-center m-0 p-0" onsubmit="return confirm('Apakah Anda yakin ingin {{ ($user->is_active ?? true) ? 'menonaktifkan' : 'mengaktifkan' }} akun ini?');">
+                                    @csrf
+                                    @method('PATCH')
+                                    <button type="submit" class="inline-flex items-center justify-center w-8 h-8 {{ ($user->is_active ?? true) ? 'text-amber-500 hover:bg-amber-50' : 'text-emerald-600 hover:bg-emerald-50' }} rounded-lg transition-colors" title="{{ ($user->is_active ?? true) ? 'Nonaktifkan Akun' : 'Aktifkan Akun' }}">
+                                        @if($user->is_active ?? true)
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path></svg>
+                                        @else
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        @endif
+                                    </button>
+                                </form>
 
-                            <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Apakah Anda yakin ingin menghapus akun ini secara permanen? Tindakan ini tidak dapat dibatalkan.');">
-                                @csrf
-                                @method('DELETE')
-                                <button type="submit" class="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Hapus Akun">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                                </button>
-                            </form>
-                            @endif
+                                <form action="{{ route('admin.users.destroy', $user->id) }}" method="POST" class="inline-flex items-center m-0 p-0" onsubmit="return confirm('Apakah Anda yakin ingin menghapus akun ini secara permanen? Tindakan ini tidak dapat dibatalkan.');">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="inline-flex items-center justify-center w-8 h-8 text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Hapus Akun">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                    </button>
+                                </form>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                     @empty

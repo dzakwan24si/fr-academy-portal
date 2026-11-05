@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -20,6 +21,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        if (str_starts_with((string) config('app.url'), 'https://') || app()->isProduction()) {
+            URL::forceScheme('https');
+        }
+
         Gate::before(function ($user, $ability) {
             // Superadmin has universal access
             if ($user->hasRole('Superadmin')) {
@@ -28,7 +33,7 @@ class AppServiceProvider extends ServiceProvider
 
             // Auto-grant Read access if user already has Edit permission for the module
             if (str_starts_with($ability, 'view_')) {
-                $editAbility = 'edit_' . substr($ability, 5);
+                $editAbility = 'edit_'.substr($ability, 5);
                 try {
                     if ($user->hasPermissionTo($editAbility)) {
                         return true;
