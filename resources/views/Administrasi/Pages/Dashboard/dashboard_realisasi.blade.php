@@ -672,16 +672,22 @@
         const maxProgram = Math.max(...programData, 1);
 
         // Cari rasio tertinggi program/peserta untuk memastikan garis selalu di dalam bar
+        // Hanya hitung pada bulan dengan peserta signifikan (>= 50) agar data kecil (misal 1 peserta 1 program) tidak merusak skala
         let maxRatio = 0.05;
         for (let i = 0; i < pesertaData.length; i++) {
-            if (pesertaData[i] > 0 && programData[i] > 0) {
+            if (pesertaData[i] >= 50 && programData[i] > 0) {
                 const ratio = programData[i] / pesertaData[i];
                 if (ratio > maxRatio) maxRatio = ratio;
             }
         }
+        maxRatio = Math.min(maxRatio, 0.08);
 
         const yPesertaMax = Math.ceil((maxPeserta * 1.15) / 50) * 50;
-        const yProgramMax = Math.max(20, Math.ceil((maxRatio * yPesertaMax * 1.35) / 5) * 5);
+        const computedProgramMax = Math.ceil((maxRatio * yPesertaMax * 1.35) / 5) * 5;
+        const yProgramMax = Math.min(
+            Math.max(20, computedProgramMax),
+            Math.max(20, Math.ceil((maxProgram * 3) / 10) * 10)
+        );
 
         const ctxMonthly = document.getElementById('monthlyTrainingChart').getContext('2d');
         new Chart(ctxMonthly, {
