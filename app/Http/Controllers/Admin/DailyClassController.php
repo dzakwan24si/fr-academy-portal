@@ -11,6 +11,7 @@ use App\Models\Trainee;
 use App\Models\TrainingProgram;
 use App\Services\EvaluationExportService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class DailyClassController extends Controller
@@ -146,6 +147,23 @@ class DailyClassController extends Controller
         $task->delete();
 
         return back()->with('success', 'Tugas berhasil dihapus.');
+    }
+
+    public function destroyTaskSubmission(Task $task, TaskSubmission $submission)
+    {
+        if ($submission->file_path) {
+            $files = is_array($submission->file_path) ? $submission->file_path : [$submission->file_path];
+            foreach ($files as $filePath) {
+                if (Storage::disk('public')->exists($filePath)) {
+                    Storage::disk('public')->delete($filePath);
+                }
+            }
+        }
+
+        $traineeName = $submission->trainee ? $submission->trainee->name : 'Peserta';
+        $submission->delete();
+
+        return back()->with('success', "Pengumpulan tugas dari {$traineeName} berhasil dihapus.");
     }
 
     public function toggleEvaluation(DailyClass $dailyClass)

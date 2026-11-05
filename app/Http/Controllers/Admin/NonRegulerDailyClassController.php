@@ -21,6 +21,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -628,6 +629,23 @@ class NonRegulerDailyClassController extends Controller
         return back()->with('success', 'Tugas berhasil dihapus.');
     }
 
+    public function destroyTaskSubmission(Task $task, TaskSubmission $submission)
+    {
+        if ($submission->file_path) {
+            $files = is_array($submission->file_path) ? $submission->file_path : [$submission->file_path];
+            foreach ($files as $filePath) {
+                if (Storage::disk('public')->exists($filePath)) {
+                    Storage::disk('public')->delete($filePath);
+                }
+            }
+        }
+
+        $traineeName = $submission->trainee ? $submission->trainee->name : 'Peserta';
+        $submission->delete();
+
+        return back()->with('success', "Pengumpulan tugas dari {$traineeName} berhasil dihapus.");
+    }
+
     public function removeTrainee(DailyClass $dailyClass, Trainee $trainee)
     {
         // Delete all attendances for this trainee in this daily class
@@ -790,22 +808,11 @@ class NonRegulerDailyClassController extends Controller
 
     public function destroy(DailyClass $dailyClass)
     {
-        // Get all trainee IDs and clean up training_records created for this class if any
-        $trainees = Trainee::whereIn('id', Attendance::where('daily_class_id', $dailyClass->id)->pluck('trainee_id'))->get();
-        foreach ($trainees as $t) {
-            DB::table('training_records')
-                ->where('participant_identifier', $t->nik)
-                ->where('nama_pelatihan', $dailyClass->title)
-                ->delete();
-        }
-        Cache::forever('tr_cache_version', ((int) Cache::get('tr_cache_version', 1)) + 1);
-        Cache::forget('tr_years');
-        Cache::forever('dashboard_cache_version', ((int) Cache::get('dashboard_cache_version', 1)) + 1);
-        Cache::forever('rvb_cache_version', ((int) Cache::get('rvb_cache_version', 1)) + 1);
+        // Ambil daftar trainee yang terhubung ke kelas ini
+        $traineeIds = Attendance::where('daily_class_id', $dailyClass->id)->pluck('trainee_id')->unique();
 
-        $traineeIds = $trainees->pluck('id')->unique();
-
-        // Delete all attendances for this class
+        // Hapus absensi dan tugas di kelas ini (Learning Activity)
+        // CATATAN: Data di tabel `training_records` sengaja TIDAK dihapus agar riwayat rekam jejak pelatihan karyawan tetap aman tersimpan secara permanen.
         Attendance::where('daily_class_id', $dailyClass->id)->delete();
 
         // Delete all task submissions and tasks for this class
@@ -824,7 +831,7 @@ class NonRegulerDailyClassController extends Controller
         // Finally, delete the class
         $dailyClass->delete();
 
-        return back()->with('success', 'Program beserta pesertanya berhasil dihapus permanen.');
+        return back()->with('success', 'Program riwayat berhasil dihapus permanen. Data histori di Training Record tetap aman tersimpan.');
     }
 
     public function previewCertificate(Request $request, DailyClass $dailyClass)
