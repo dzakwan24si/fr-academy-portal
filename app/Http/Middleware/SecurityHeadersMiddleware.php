@@ -33,7 +33,7 @@ class SecurityHeadersMiddleware
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://unpkg.com https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://cdn.tailwindcss.com",
             "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
             "img-src 'self' data: blob: https:",
-            "connect-src 'self' https://challenges.cloudflare.com",
+            "connect-src 'self' https://challenges.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net",
             "frame-src 'self' https://www.google.com https://maps.google.com https://challenges.cloudflare.com",
             "object-src 'none'",
             "base-uri 'self'",
