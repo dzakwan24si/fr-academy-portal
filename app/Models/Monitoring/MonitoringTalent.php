@@ -2,10 +2,12 @@
 
 namespace App\Models\Monitoring;
 
+use App\Models\Talent\ProfilTalent;
 use App\Services\RegionHelper;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class MonitoringTalent extends Model
 {
@@ -14,6 +16,9 @@ class MonitoringTalent extends Model
     protected static $logModuleName = 'Monitoring Talent';
 
     protected $table = 'monitoring_talents';
+
+    public static bool $isSyncDeleting = false;
+    public static bool $isSyncUpdating = false;
 
     protected $fillable = [
         'no',
@@ -34,6 +39,54 @@ class MonitoringTalent extends Model
         'catatan_tambahan',
         'kategori',
     ];
+
+    protected static function booted()
+    {
+        // Two-way sync: Sync status (status penugasan) changes to Profil Talent (status_ojt)
+        static::updated(function ($talent) {
+            if (static::$isSyncUpdating) {
+                return;
+            }
+
+            if ($talent->wasChanged('status')) {
+                $nik = trim((string) $talent->employee_id);
+                $newStatus = $talent->status;
+                if (!empty($nik) && $newStatus !== null) {
+                    try {
+                        ProfilTalent::$isSyncUpdating = true;
+                        ProfilTalent::where('employee_id', $nik)->get()->each(function ($pt) use ($newStatus) {
+                            $pt->update(['status_ojt' => $newStatus]);
+                        });
+                    } finally {
+                        ProfilTalent::$isSyncUpdating = false;
+                    }
+                }
+            }
+        });
+
+        // Two-way sync: Delete corresponding record in Profil Talent by employee_id (NIK)
+        static::deleted(function ($talent) {
+            // Invalidate monitoring dashboard cache whenever a talent is deleted
+            Cache::put('dreal_cache_version', time());
+            Cache::put('dashboard_cache_version', time());
+
+            if (static::$isSyncDeleting) {
+                return;
+            }
+
+            $nik = trim((string) $talent->employee_id);
+            if (!empty($nik)) {
+                try {
+                    ProfilTalent::$isSyncDeleting = true;
+                    ProfilTalent::where('employee_id', $nik)->get()->each(function ($pt) {
+                        $pt->delete();
+                    });
+                } finally {
+                    ProfilTalent::$isSyncDeleting = false;
+                }
+            }
+        });
+    }
 
     /**
      * Scope filter by category.

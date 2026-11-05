@@ -193,7 +193,7 @@
 <!-- SECTION: Talent -->
         @canany(['view_talent', 'edit_talent'])
         <details class="group"
-            {{ request()->routeIs('administrasi.monitoring-talent.*', 'administrasi.talent-pool.*') ? 'open' : '' }}>
+            {{ request()->routeIs('administrasi.monitoring-talent.*', 'administrasi.talent-pool.*', 'administrasi.profil-talent.*') ? 'open' : '' }}>
             <summary
                 class="flex cursor-pointer list-none items-center justify-between rounded-lg px-4 py-3 mt-2 text-xs font-bold uppercase tracking-widest text-[#A1A1AA] hover:bg-[#F9FAFB] [&::-webkit-details-marker]:hidden">
                 <span>Talent</span>
@@ -209,7 +209,15 @@
                     <span>Monitoring Talent</span>
                 </a>
 
-                <!-- 2. Talent Pool -->
+                <!-- 2. Profil Talent -->
+                <a href="{{ route('administrasi.profil-talent.index') }}"
+                    class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors
+                          {{ request()->routeIs('administrasi.profil-talent.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">
+                    <i data-lucide="user-check" class="w-4 h-4 shrink-0"></i>
+                    <span>Profil Talent</span>
+                </a>
+
+                <!-- 3. Talent Pool -->
                 <a href="{{ route('administrasi.talent-pool.index') }}"
                     class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm transition-colors
                           {{ request()->routeIs('administrasi.talent-pool.*') ? 'bg-[#509c38] text-white font-semibold shadow-sm' : 'text-[#52525B] hover:bg-[#F4F4F5] hover:text-[#18181B] font-medium' }}">

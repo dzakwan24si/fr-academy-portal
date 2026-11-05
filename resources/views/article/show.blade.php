@@ -10,7 +10,7 @@
             @endif
         </div>
         
-        <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+        <div class="relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 w-full">
             <!-- Breadcrumbs -->
             <nav class="flex text-sm text-gray-300 mb-4" aria-label="Breadcrumb">
                 <ol class="inline-flex items-center space-x-1 md:space-x-3">
@@ -32,18 +32,18 @@
                 </ol>
             </nav>
 
-            <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight max-w-4xl">
+            <h1 class="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight max-w-5xl">
                 {{ $article->title }}
             </h1>
         </div>
     </div>
 
-    <!-- Main Content Area -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div class="flex flex-col lg:flex-row gap-12">
+    <!-- Main Content Area (Diperlebar ke kanan dengan max-w-[1440px]) -->
+    <div class="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="flex flex-col lg:flex-row gap-8 items-start">
             
-            <!-- Left Sidebar (30%) -->
-            <div class="w-full lg:w-1/3 space-y-10 order-2 lg:order-1">
+            <!-- Left Sidebar (Lebar tetap ringkas 280-320px agar artikel bisa maksimal ke kanan) -->
+            <div class="w-full lg:w-72 xl:w-80 shrink-0 space-y-10 order-2 lg:order-1">
                 
                 <!-- Kategori Lainnya -->
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors duration-300">
@@ -51,7 +51,7 @@
                     <ul class="space-y-4">
                         @foreach($categories as $cat)
                         <li><a href="/artikel?category={{ $cat->id }}" class="flex items-center text-gray-600 dark:text-gray-300 hover:text-green-accent dark:hover:text-green-400 transition">
-                            <svg class="w-4 h-4 mr-3 text-green-accent dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            <svg class="w-4 h-4 mr-3 text-green-accent dark:text-green-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             {{ $cat->name }}
                         </a></li>
                         @endforeach
@@ -92,15 +92,15 @@
                 </div>
             </div>
 
-            <!-- Right Main Content (70%) -->
-            <div class="w-full lg:w-2/3 order-1 lg:order-2">
-                <article class="bg-white dark:bg-gray-800 p-8 md:p-10 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors duration-300">
+            <!-- Right Main Content (Mengisi sisa lebar penuh ke kanan) -->
+            <div class="w-full lg:flex-1 min-w-0 order-1 lg:order-2">
+                <article class="bg-white dark:bg-gray-800 p-8 md:p-12 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors duration-300 w-full">
                     <!-- Article Body -->
-                    <div class="prose prose-teal dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 space-y-6 article-body">
+                    <div class="prose prose-teal dark:prose-invert max-w-none w-full text-gray-700 dark:text-gray-300 space-y-6 article-body" style="max-width: 100%;">
                         {!! $article->content !!}
                     </div>
 
-                    <!-- Article Meta -->
+                    <!-- Article Meta (Penulis & Tanggal di bawah persis semula) -->
                     <div class="mt-12 pt-8 border-t border-gray-100 dark:border-gray-700 flex flex-col sm:flex-row sm:items-center gap-6">
                         <div class="flex items-center text-sm text-gray-500 dark:text-gray-400">
                             <div class="w-8 h-8 rounded-full bg-teal-primary text-white flex items-center justify-center mr-3 shadow-sm">

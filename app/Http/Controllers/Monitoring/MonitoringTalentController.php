@@ -212,10 +212,18 @@ class MonitoringTalentController extends Controller
     public function destroy($id)
     {
         $talent = MonitoringTalent::findOrFail($id);
+        $name = $talent->employee_name;
+        $nik = $talent->employee_id;
+
         $talent->delete();
         $this->clearDashboardCache();
 
-        return back()->with('success', 'Data peserta talent berhasil dihapus.');
+        $msg = "Data peserta talent {$name} berhasil dihapus.";
+        if (!empty($nik)) {
+            $msg = "Data peserta talent {$name} (NIK: {$nik}) berhasil dihapus dan disinkronkan dari Profil Talent.";
+        }
+
+        return back()->with('success', $msg);
     }
 
     /**
