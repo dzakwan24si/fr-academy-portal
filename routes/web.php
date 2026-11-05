@@ -46,6 +46,7 @@ use App\Http\Controllers\Program\ProgramBatchController;
 use App\Http\Controllers\Program\RealisasiVsBatchController;
 use App\Http\Controllers\Program\TrainingRecordController;
 use App\Http\Controllers\ProgramPublicController;
+use App\Http\Controllers\Talent\ProfilTalentController;
 use App\Http\Controllers\Talent\TalentPoolController;
 use App\Models\Article;
 use App\Models\CareerProgram;
@@ -658,6 +659,21 @@ Route::middleware('auth')->group(function () {
                 Route::delete('/destroy-all', [TalentPoolController::class, 'destroyAll'])->name('destroyAll');
                 Route::delete('/{id}', [TalentPoolController::class, 'destroy'])->name('destroy');
                 Route::post('/import', [TalentPoolController::class, 'import'])->name('import');
+            });
+        });
+
+        // Administrasi - Profil Talent Routes
+        Route::prefix('administrasi/profil-talent')->name('administrasi.profil-talent.')->group(function () {
+            Route::get('/', [ProfilTalentController::class, 'index'])->name('index');
+            Route::get('/export', [ProfilTalentController::class, 'export'])->name('export');
+            Route::get('/template', [ProfilTalentController::class, 'downloadTemplate'])->name('template');
+
+            Route::middleware('can:edit_talent')->group(function () {
+                Route::post('/store', [ProfilTalentController::class, 'store'])->name('store');
+                Route::put('/{id}', [ProfilTalentController::class, 'update'])->name('update');
+                Route::delete('/destroy-all', [ProfilTalentController::class, 'deleteAll'])->name('destroyAll');
+                Route::delete('/{id}', [ProfilTalentController::class, 'destroy'])->name('destroy');
+                Route::post('/import', [ProfilTalentController::class, 'import'])->name('import');
             });
         });
     });
