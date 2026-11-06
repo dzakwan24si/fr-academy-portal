@@ -6,8 +6,10 @@
     <title>Login - Admin FR Academy</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
+    @if(config('services.turnstile.enabled', false))
     <!-- Script Cloudflare Turnstile -->
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    @endif
 </head>
 <body class="bg-white min-h-screen font-sans text-gray-900">
     <div class="flex min-h-screen">
@@ -85,10 +87,12 @@
                         </div>
                     </div>
 
+                    @if(config('services.turnstile.enabled', false))
                     <!-- Widget Cloudflare Turnstile -->
                     <div class="my-2 min-h-[65px] flex items-center">
-                        <div class="cf-turnstile" data-sitekey="0x4AAAAAAEzPGJLBNyo86KAl" data-theme="light"></div>
+                        <div class="cf-turnstile" data-sitekey="{{ config('services.turnstile.key', '0x4AAAAAAEzPGJLBNyo86KAl') }}" data-theme="light"></div>
                     </div>
+                    @endif
 
                     <!-- Options -->
                     <div class="flex items-center justify-between pt-2">
