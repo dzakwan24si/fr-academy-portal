@@ -245,6 +245,38 @@
 </div>
 @endif
 
+{{-- ============================== BREAKDOWN SUB TOTAL PER JENIS BIAYA ============================== --}}
+@if(!empty($subTotalPerJenis) && count($subTotalPerJenis) > 0)
+<div class="bg-white border border-[#E5E7EB] rounded-2xl p-4 mb-5 shadow-2xs">
+    <div class="flex items-center justify-between mb-3 pb-2 border-b border-[#F4F4F5]">
+        <div class="flex items-center gap-2">
+            <div class="w-6 h-6 rounded-md bg-emerald-50 text-[#4B6A34] flex items-center justify-center">
+                <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+            </div>
+            <h3 class="text-xs font-bold text-[#18181B] uppercase tracking-wider">Sub Total per Jenis Biaya Rekruit</h3>
+        </div>
+        <span class="text-[11px] font-semibold text-[#71717A]">{{ count($subTotalPerJenis) }} Kategori</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+        @foreach($subTotalPerJenis as $namaJenis => $stat)
+        <div class="p-3 rounded-xl bg-[#F9FAFB] border border-[#E5E7EB] hover:border-[#4B6A34]/40 transition-colors">
+            <div class="text-[11px] font-semibold text-[#52525B] truncate mb-1" title="{{ $namaJenis }}">
+                {{ $namaJenis }}
+            </div>
+            <div class="flex items-baseline justify-between">
+                <span class="text-sm font-bold text-[#18181B] font-mono">
+                    Rp {{ number_format($stat['total'], 0, ',', '.') }}
+                </span>
+                <span class="text-[10px] text-[#71717A] font-medium">
+                    {{ $stat['count'] }} item
+                </span>
+            </div>
+        </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 {{-- ============================== GROUPED TABLE ============================== --}}
 <div class="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-2xs">
     <table class="w-full text-xs">
@@ -252,6 +284,8 @@
             <tr class="border-b border-[#E5E7EB] bg-[#F9FAFB]">
                 <th class="px-5 py-3.5 text-left text-xs font-bold text-[#71717A] uppercase tracking-wider w-32">Tanggal</th>
                 <th class="px-5 py-3.5 text-left text-xs font-bold text-[#71717A] uppercase tracking-wider">Nama / Referensi</th>
+                <th class="px-5 py-3.5 text-left text-xs font-bold text-[#71717A] uppercase tracking-wider w-56">Jenis Biaya Rekruit</th>
+                <th class="px-5 py-3.5 text-left text-xs font-bold text-[#71717A] uppercase tracking-wider w-44">PIC Rekruiter</th>
                 <th class="px-5 py-3.5 text-right text-xs font-bold text-[#71717A] uppercase tracking-wider w-44">Total Biaya</th>
                 <th class="px-5 py-3.5 text-center text-xs font-bold text-[#71717A] uppercase tracking-wider w-24">Action</th>
             </tr>
@@ -262,14 +296,23 @@
                 {{-- LEVEL 1: Jenis Rekruit — GREEN row --}}
                 <tr class="bg-[#4B6A34]">
                     <td colspan="4" class="px-5 py-2.5 text-xs font-bold text-white tracking-wide">
-                        {{ $jenis }}
+                        <div class="flex items-center justify-between">
+                            <span>{{ $jenis }}</span>
+                            <span class="text-[11px] font-normal text-emerald-100 font-mono">
+                                {{ $subTotalPerJenis[$jenis]['count'] ?? 0 }} transaksi
+                            </span>
+                        </div>
                     </td>
+                    <td class="px-5 py-2.5 text-right text-xs font-bold text-white font-mono whitespace-nowrap">
+                        Rp {{ number_format($subTotalPerJenis[$jenis]['total'] ?? 0, 0, ',', '.') }}
+                    </td>
+                    <td></td>
                 </tr>
 
                 @foreach($pjGroups as $pj => $items)
                     {{-- LEVEL 2: Penanggung Jawab — AMBER row --}}
                     <tr class="bg-amber-400">
-                        <td colspan="4" class="px-5 py-2 text-xs font-semibold text-white">
+                        <td colspan="6" class="px-5 py-2 text-xs font-semibold text-white">
                             {{ $pj }}
                         </td>
                     </tr>
@@ -282,6 +325,14 @@
                         </td>
                         <td class="px-5 py-3 text-xs text-[#18181B] font-medium leading-relaxed">
                             {{ $row->nama }}
+                        </td>
+                        <td class="px-5 py-3 text-xs text-[#52525B]">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                                {{ $row->jenis_rekruit ?: 'Biaya Operasional Rekrutmen' }}
+                            </span>
+                        </td>
+                        <td class="px-5 py-3 text-xs text-[#52525B] font-medium">
+                            {{ $row->penanggung_jawab ?: '—' }}
                         </td>
                         <td class="px-5 py-3 text-right text-xs font-semibold text-[#18181B] font-mono whitespace-nowrap">
                             Rp {{ number_format($row->total_biaya, 0, ',', '.') }}
@@ -304,9 +355,20 @@
                     @endforeach
                 @endforeach
 
+                {{-- SUB TOTAL ROW FOR JENIS BIAYA REKRUIT --}}
+                <tr class="bg-emerald-50/70 border-t-2 border-emerald-200 border-b-2 border-emerald-200">
+                    <td colspan="4" class="px-5 py-2.5 text-xs font-bold text-emerald-900 text-right uppercase tracking-wider">
+                        Sub Total {{ $jenis }} :
+                    </td>
+                    <td class="px-5 py-2.5 text-right text-xs font-bold text-emerald-800 font-mono whitespace-nowrap">
+                        Rp {{ number_format($subTotalPerJenis[$jenis]['total'] ?? 0, 0, ',', '.') }}
+                    </td>
+                    <td></td>
+                </tr>
+
             @empty
             <tr>
-                <td colspan="4" class="px-5 py-16 text-center text-[#A1A1AA]">
+                <td colspan="6" class="px-5 py-16 text-center text-[#A1A1AA]">
                     <i data-lucide="inbox" class="w-12 h-12 mx-auto mb-3 opacity-30"></i>
                     <p class="text-sm font-semibold text-[#18181B]">Belum ada data biaya rekruit</p>
                     @can('edit_cost')
@@ -321,7 +383,7 @@
         @if(count($grouped) > 0)
         <tfoot>
             <tr class="bg-blue-50 border-t-2 border-blue-200">
-                <td colspan="2" class="px-5 py-3.5 text-xs font-bold text-blue-800 uppercase tracking-wide text-right">
+                <td colspan="4" class="px-5 py-3.5 text-xs font-bold text-blue-800 uppercase tracking-wide text-right">
                     Total Biaya Rekruit
                 </td>
                 <td class="px-5 py-3.5 text-right text-sm font-bold text-blue-700 font-mono">
@@ -407,7 +469,7 @@
                     </a>
                 </div>
                 <p class="text-[#64748B] font-mono text-[10px] break-all leading-relaxed">
-                    tanggal, nama, pic_rekruiter, total_biaya
+                    tanggal, nama, jenis_biaya_rekruit, pic_rekruiter, total_biaya
                 </p>
             </div>
 
@@ -463,7 +525,7 @@
             <div class="border-t border-[#E5E7EB] pt-4 space-y-3">
                 <p class="text-[11px] text-[#A1A1AA] font-medium">Informasi Klasifikasi &amp; PIC</p>
                 <div>
-                    <label class="block text-xs font-semibold text-[#374151] mb-1.5">Jenis Rekruit</label>
+                    <label class="block text-xs font-semibold text-[#374151] mb-1.5">Jenis Biaya Rekruit</label>
                     <input type="text" name="jenis_rekruit" placeholder="Kosongkan untuk deteksi otomatis"
                            class="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-xs focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34] outline-none">
                 </div>
@@ -520,7 +582,7 @@
             <div class="border-t border-[#E5E7EB] pt-4 space-y-3">
                 <p class="text-[11px] text-[#A1A1AA] font-medium">Informasi Klasifikasi &amp; PIC</p>
                 <div>
-                    <label class="block text-xs font-semibold text-[#374151] mb-1.5">Jenis Rekruit</label>
+                    <label class="block text-xs font-semibold text-[#374151] mb-1.5">Jenis Biaya Rekruit</label>
                     <input type="text" name="jenis_rekruit" id="edit_jenis_rekruit"
                            class="w-full px-3 py-2.5 border border-[#E5E7EB] rounded-lg text-xs focus:ring-2 focus:ring-[#4B6A34]/20 focus:border-[#4B6A34] outline-none">
                 </div>

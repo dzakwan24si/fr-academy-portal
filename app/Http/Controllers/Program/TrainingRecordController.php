@@ -606,7 +606,9 @@ class TrainingRecordController extends Controller
 
     private function findActivity(array $item): ?array
     {
-        return $this->findActivityCached($this->activities(), $item);
+        $activities = $this->activities();
+
+        return $this->findActivityCached($activities, $item);
     }
 
     private function findActivityCached(Collection &$activities, array $item): ?array
@@ -662,8 +664,21 @@ class TrainingRecordController extends Controller
             return null;
         }
 
-        // 2. Exact match
-        $matches = $activities->filter(fn ($activity) => strtolower(trim($activity['name'])) === $name);
+        // 2. Exact match (check activity label, raw Training_Program, or jenis_pelatihan)
+        $matches = $activities->filter(function ($activity) use ($name) {
+            if (strtolower(trim($activity['name'])) === $name) {
+                return true;
+            }
+            $model = $activity['model'] ?? null;
+            if ($model) {
+                $rawProg = strtolower(trim((string) ($model->Training_Program ?? $model->jenis_pelatihan ?? '')));
+                if ($rawProg === $name) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
 
         // 3. Flexible match (prefix, word matching) if no exact match
         if ($matches->isEmpty()) {
@@ -769,6 +784,17 @@ class TrainingRecordController extends Controller
             return true;
         }
 
+        // Year consistency check: If both strings contain 4-digit years, they MUST match
+        preg_match_all('/\b(20\d\d)\b/', $inputName, $inYearMatches);
+        preg_match_all('/\b(20\d\d)\b/', $activityName, $actYearMatches);
+        $inYears = $inYearMatches[1] ?? [];
+        $actYears = $actYearMatches[1] ?? [];
+        if (! empty($inYears) && ! empty($actYears)) {
+            if (empty(array_intersect($inYears, $actYears))) {
+                return false;
+            }
+        }
+
         // Check reguler acronyms: FAT, AAT, MAT, TAT, DMT, PMT, PKT, OAT
         $regAcronyms = ['fat', 'aat', 'mat', 'tat', 'dmt', 'pmt', 'pkt', 'oat'];
         $inWords = explode(' ', $inputName);
@@ -788,6 +814,11 @@ class TrainingRecordController extends Controller
             $inRoman = $inWords[1] ?? '';
             $actRoman = $actWords[1] ?? '';
             if ($inRoman !== '' && $actRoman !== '' && $inRoman !== $actRoman) {
+                return false;
+            }
+
+            // For reguler programs, if input has a year, the activity must match that year
+            if (! empty($inYears) && ! empty($actYears) && empty(array_intersect($inYears, $actYears))) {
                 return false;
             }
 
@@ -847,7 +878,11 @@ class TrainingRecordController extends Controller
 
         $name = trim((string) $activity->Training_Program);
         $batch = trim((string) $activity->Batch);
-        if ($batch !== '' && ! str_contains(strtolower($name), strtolower($batch))) {
+
+        $normName = preg_replace('/[^a-zA-Z0-9]/', '', strtolower($name));
+        $normBatch = preg_replace('/[^a-zA-Z0-9]/', '', strtolower($batch));
+
+        if ($normBatch !== '' && ! str_contains($normName, $normBatch)) {
             $name .= ' - '.$batch;
         }
 

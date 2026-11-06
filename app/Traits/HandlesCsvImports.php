@@ -79,19 +79,24 @@ trait HandlesCsvImports
             return (float) $default;
         }
 
-        if (is_numeric($val)) {
+        if (is_int($val) || is_float($val)) {
             return (float) $val;
         }
 
-        $str = trim((string) $val);
+        $raw = trim((string) $val);
+
+        // Check if string contains currency indicators (e.g., 'Rp', 'IDR')
+        $hasCurrency = (bool) preg_match('/(?:rp|idr)/i', $raw);
+
         // Remove currency prefixes/letters and whitespace, keep digits, separators, signs, scientific notation
-        $str = preg_replace('/[^\d.,\-+eE]/', '', $str);
+        $str = preg_replace('/[^\d.,\-+eE]/', '', $raw);
 
         if ($str === '' || $str === '-' || $str === '+') {
             return (float) $default;
         }
 
-        if (is_numeric($str)) {
+        // Plain integer without dots or commas (e.g. "850000", "-500")
+        if (preg_match('/^[+-]?\d+$/', $str)) {
             return (float) $str;
         }
 
@@ -111,14 +116,24 @@ trait HandlesCsvImports
             }
         } elseif ($hasComma) {
             if (substr_count($str, ',') > 1) {
+                // Multiple commas: 2,460,660 -> remove commas
+                $str = str_replace(',', '', $str);
+            } elseif (preg_match('/^[+-]?\d{1,3},\d{3}$/', $str)) {
+                // Single comma with exactly 3 digits after (US thousands format, e.g. 187,338)
                 $str = str_replace(',', '', $str);
             } else {
+                // Indonesian decimal format (e.g. 187,50 -> 187.50)
                 $str = str_replace(',', '.', $str);
             }
         } elseif ($hasDot) {
             if (substr_count($str, '.') > 1) {
+                // Multiple dots: 2.460.660 -> remove dots
+                $str = str_replace('.', '', $str);
+            } elseif ($hasCurrency || preg_match('/^[+-]?[1-9]\d{0,2}\.\d{3}$/', $str)) {
+                // Single dot thousands separator (Indonesian format, e.g. "Rp 187.338" or "187.338" or "31.846")
                 $str = str_replace('.', '', $str);
             }
+            // Otherwise, keep the dot as decimal (e.g. "12.5", "12.50", "0.75")
         }
 
         return is_numeric($str) ? (float) $str : (float) $default;

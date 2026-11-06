@@ -110,9 +110,22 @@ class TrainingRecord extends Model
         }
 
         $name = trim((string) $activity->Training_Program);
-        $batch = trim((string) $activity->Batch);
 
-        return $batch !== '' && ! str_contains(strtolower($name), strtolower($batch))
+        // Safeguard: If the record has an explicit nama_pelatihan with a year (e.g. 2027)
+        // that conflicts with the linked activity's year (e.g. 2026), prefer raw nama_pelatihan.
+        if (! empty($this->nama_pelatihan)) {
+            preg_match('/\b(20\d\d)\b/', (string) $this->nama_pelatihan, $mRaw);
+            preg_match('/\b(20\d\d)\b/', $name, $mProg);
+            if (! empty($mRaw[1]) && ! empty($mProg[1]) && $mRaw[1] !== $mProg[1]) {
+                return $this->nama_pelatihan;
+            }
+        }
+
+        $batch = trim((string) $activity->Batch);
+        $normName = preg_replace('/[^a-zA-Z0-9]/', '', strtolower($name));
+        $normBatch = preg_replace('/[^a-zA-Z0-9]/', '', strtolower($batch));
+
+        return ($normBatch !== '' && ! str_contains($normName, $normBatch))
             ? $name.' - '.$batch
             : $name;
     }

@@ -325,7 +325,8 @@ class DashboardRealisasiController extends Controller
         // 2. Compute KPI Cards
         $kpiCards = $this->computeKpiCards(
             $year, $selectedMonthNum, $region, $programType, $category, $selectedProgram,
-            $regulerPrograms, $allTrainingRecords, $mtData['stafRencana'], $trainingRecordQuery
+            $regulerPrograms, $allTrainingRecords, $mtData['stafRencana'], $trainingRecordQuery,
+            $mtData['stafKelas']
         );
 
         // 3. Compute Monthly Chart Data
@@ -538,7 +539,7 @@ class DashboardRealisasiController extends Controller
         );
     }
 
-    protected function computeKpiCards(int $year, ?int $selectedMonthNum, string $region, string $programType, string $category, string $selectedProgram, $regulerPrograms, $allTrainingRecords, int $stafRencana, $trainingRecordQuery): array
+    protected function computeKpiCards(int $year, ?int $selectedMonthNum, string $region, string $programType, string $category, string $selectedProgram, $regulerPrograms, $allTrainingRecords, int $stafRencana, $trainingRecordQuery, ?int $stafKelas = null): array
     {
         $cleanStr = fn ($str) => SpreadsheetReader::cleanString($str);
 
@@ -630,21 +631,25 @@ class DashboardRealisasiController extends Controller
             }
         }
 
-        $remainingUnassigned = array_filter($unassignedRegRecs, fn ($r) => ! isset($matchedUnassignedIds[$r->id]));
-        if (! empty($remainingUnassigned)) {
-            $groupedUnbudget = collect($remainingUnassigned)->groupBy(fn ($r) => trim($r->notes ?: $r->nama_pelatihan ?: 'Reguler Unbudget'));
-            foreach ($groupedUnbudget as $uRecs) {
-                $seen = [];
-                $uPartCount = 0;
-                foreach ($uRecs as $r) {
-                    $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
-                    if (! isset($seen[$ident])) {
-                        $seen[$ident] = true;
-                        $uPartCount++;
+        if ($stafKelas !== null) {
+            $regRealPart = $stafKelas;
+        } else {
+            $remainingUnassigned = array_filter($unassignedRegRecs, fn ($r) => ! isset($matchedUnassignedIds[$r->id]));
+            if (! empty($remainingUnassigned)) {
+                $groupedUnbudget = collect($remainingUnassigned)->groupBy(fn ($r) => trim($r->notes ?: $r->nama_pelatihan ?: 'Reguler Unbudget'));
+                foreach ($groupedUnbudget as $uRecs) {
+                    $seen = [];
+                    $uPartCount = 0;
+                    foreach ($uRecs as $r) {
+                        $ident = strtolower(trim($r->participant_identifier ?: $r->participant_name ?: (string) $r->id));
+                        if (! isset($seen[$ident])) {
+                            $seen[$ident] = true;
+                            $uPartCount++;
+                        }
                     }
-                }
-                if ($uPartCount > 0) {
-                    $regRealPart += $uPartCount;
+                    if ($uPartCount > 0) {
+                        $regRealPart += $uPartCount;
+                    }
                 }
             }
         }

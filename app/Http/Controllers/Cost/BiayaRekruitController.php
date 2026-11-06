@@ -78,6 +78,23 @@ class BiayaRekruitController extends Controller
             $grouped[$jenis][$pj][] = $row;
         }
 
+        // Calculate Sub Total per Jenis Biaya Rekruit
+        $subTotalPerJenis = [];
+        foreach ($grouped as $jenis => $pjGroups) {
+            $sum = 0;
+            $count = 0;
+            foreach ($pjGroups as $pjItems) {
+                foreach ($pjItems as $item) {
+                    $sum += (float) $item->total_biaya;
+                    $count++;
+                }
+            }
+            $subTotalPerJenis[$jenis] = [
+                'total' => $sum,
+                'count' => $count,
+            ];
+        }
+
         // Annual calculation for Peserta Join & Cost per Person
         $targetYear = ($selectedYear !== 'all' && is_numeric($selectedYear)) ? (int) $selectedYear : (int) date('Y');
 
@@ -100,7 +117,7 @@ class BiayaRekruitController extends Controller
         ];
 
         return view('Administrasi.Pages.Cost.biaya_rekruit', compact(
-            'grouped', 'summary', 'search', 'years', 'selectedYear', 'selectedMonth', 'months'
+            'grouped', 'subTotalPerJenis', 'summary', 'search', 'years', 'selectedYear', 'selectedMonth', 'months'
         ));
     }
 
@@ -109,6 +126,10 @@ class BiayaRekruitController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->has('jenis_biaya_rekruit') && ! $request->has('jenis_rekruit')) {
+            $request->merge(['jenis_rekruit' => $request->get('jenis_biaya_rekruit')]);
+        }
+
         $validated = $request->validate([
             'tanggal' => 'required|date',
             'nama' => 'required|string|max:255',
@@ -161,6 +182,10 @@ class BiayaRekruitController extends Controller
     public function update(Request $request, $id)
     {
         $record = BiayaRekruit::findOrFail($id);
+
+        if ($request->has('jenis_biaya_rekruit') && ! $request->has('jenis_rekruit')) {
+            $request->merge(['jenis_rekruit' => $request->get('jenis_biaya_rekruit')]);
+        }
 
         $validated = $request->validate([
             'tanggal' => 'required|date',
@@ -221,10 +246,10 @@ class BiayaRekruitController extends Controller
      */
     public function downloadTemplate()
     {
-        $headers = ['tanggal', 'nama', 'pic_rekruiter', 'total_biaya'];
+        $headers = ['tanggal', 'nama', 'jenis_biaya_rekruit', 'pic_rekruiter', 'total_biaya'];
         $sampleRows = [
-            ['2026-05-31', 'REKRUT FAT II 2026 : REALISASI LPJ AN JOSEFHINE E DINAS REKRUT (Sewa Ruangan Meeting Betaive Coworking)', 'Josefhine E', 709091],
-            ['2026-01-31', 'MAT I 2026 : KLAIM BY PERJDIN AN.BENYAMIN BY DLM RANGKA REKRUT MAT I 2026 & TAT I 2026 KE MEDAN DAN YOGYA', 'Benyamin Basuki Yulianto & Pinondang Lindarto Simanungkalit', 2460660],
+            ['2026-05-31', 'REKRUT FAT II 2026 : REALISASI LPJ AN JOSEFHINE E DINAS REKRUT (Sewa Ruangan Meeting Betaive Coworking)', 'Perjalanan Dinas & Akomodasi Recruiter', 'Josefhine E', 709091],
+            ['2026-01-31', 'MAT I 2026 : KLAIM BY PERJDIN AN.BENYAMIN BY DLM RANGKA REKRUT MAT I 2026 & TAT I 2026 KE MEDAN DAN YOGYA', 'Perjalanan Dinas & Akomodasi Recruiter', 'Benyamin Basuki Yulianto & Pinondang Lindarto Simanungkalit', 2460660],
         ];
 
         return ExcelExporter::download('Template_Import_Biaya_Rekruit.xlsx', $headers, $sampleRows, 'Biaya Rekruit');
@@ -271,7 +296,7 @@ class BiayaRekruitController extends Controller
                 $headerMap['nama'] = $index;
             } elseif (in_array($clean, ['picrekruiter', 'pic', 'penanggungjawab', 'penanggung_jawab', 'pj', 'rekruiter', 'picrecruiter'])) {
                 $headerMap['penanggung_jawab'] = $index;
-            } elseif (in_array($clean, ['jenisrekruit', 'jenis', 'kategori', 'kategorirekruit'])) {
+            } elseif (in_array($clean, ['jenisrekruit', 'jenis_rekruit', 'jenisbiayarekruit', 'jenis_biaya_rekruit', 'jenisbiaya', 'jenis_biaya', 'jenis', 'kategori', 'kategorirekruit'])) {
                 $headerMap['jenis_rekruit'] = $index;
             } elseif (in_array($clean, ['totalbiaya', 'biaya', 'total', 'nominal', 'amount', 'harga'])) {
                 $headerMap['total_biaya'] = $index;
