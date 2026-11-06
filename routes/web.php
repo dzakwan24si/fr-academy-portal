@@ -877,6 +877,8 @@ Route::middleware('auth')->prefix('training-reguler')->group(function () {
     Route::get('tasks/{task}', [DailyClassController::class, 'showTask'])->name('training-reguler.tasks.show');
     Route::delete('tasks/{task}', [DailyClassController::class, 'destroyTask'])->name('training-reguler.daily-classes.tasks.destroy');
     Route::delete('tasks/{task}/submissions/{submission}', [DailyClassController::class, 'destroyTaskSubmission'])->name('training-reguler.tasks.submissions.destroy');
+    Route::get('tasks/{task}/submissions/{submission}/download', [DailyClassController::class, 'downloadSubmission'])->name('training-reguler.tasks.submissions.download');
+    Route::get('tasks/{task}/download-all', [DailyClassController::class, 'downloadAllSubmissions'])->name('training-reguler.tasks.download-all');
     Route::get('daily-classes/{daily_class}/export-evaluations', [DailyClassController::class, 'exportEvaluations'])->name('training-reguler.daily-classes.export-evaluations');
     Route::resource('daily-classes', DailyClassController::class)->except(['create', 'edit', 'destroy'])->names('training-reguler.daily-classes');
 });
@@ -961,6 +963,8 @@ Route::middleware('auth')->prefix('training-non-reguler')->group(function () {
     Route::get('tasks/{task}', [NonRegulerDailyClassController::class, 'showTask'])->name('training-non-reguler.tasks.show');
     Route::delete('tasks/{task}', [NonRegulerDailyClassController::class, 'destroyTask'])->name('training-non-reguler.daily-classes.tasks.destroy');
     Route::delete('tasks/{task}/submissions/{submission}', [NonRegulerDailyClassController::class, 'destroyTaskSubmission'])->name('training-non-reguler.tasks.submissions.destroy');
+    Route::get('tasks/{task}/submissions/{submission}/download', [NonRegulerDailyClassController::class, 'downloadSubmission'])->name('training-non-reguler.tasks.submissions.download');
+    Route::get('tasks/{task}/download-all', [NonRegulerDailyClassController::class, 'downloadAllSubmissions'])->name('training-non-reguler.tasks.download-all');
     Route::delete('daily-classes/{daily_class}/trainees', [NonRegulerDailyClassController::class, 'removeAllTrainees'])->name('training-non-reguler.daily-classes.trainees.destroy-all');
     Route::delete('daily-classes/{daily_class}/trainees/{trainee}', [NonRegulerDailyClassController::class, 'removeTrainee'])->name('training-non-reguler.daily-classes.trainees.destroy');
     Route::put('daily-classes/{daily_class}/trainees/{trainee}', [NonRegulerDailyClassController::class, 'updateTrainee'])->name('training-non-reguler.daily-classes.trainees.update');

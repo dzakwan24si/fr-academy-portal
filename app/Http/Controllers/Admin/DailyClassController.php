@@ -166,6 +166,97 @@ class DailyClassController extends Controller
         return back()->with('success', "Pengumpulan tugas dari {$traineeName} berhasil dihapus.");
     }
 
+    public function downloadSubmission(Task $task, TaskSubmission $submission)
+    {
+        $rawFiles = $submission->file_path;
+        $files = is_array($rawFiles) ? $rawFiles : (is_string($rawFiles) ? [$rawFiles] : []);
+        $existingFiles = [];
+        foreach ($files as $f) {
+            if (Storage::disk('public')->exists($f)) {
+                $existingFiles[] = $f;
+            }
+        }
+
+        if (empty($existingFiles)) {
+            return back()->with('error', 'File pengumpulan tugas tidak ditemukan di server.');
+        }
+
+        if (count($existingFiles) === 1) {
+            return Storage::disk('public')->download($existingFiles[0]);
+        }
+
+        $traineeName = $submission->trainee ? Str::slug($submission->trainee->name . '_' . $submission->trainee->nik) : 'tugas_' . $submission->id;
+        $zipFileName = 'Tugas_' . $traineeName . '.zip';
+        $tempDir = storage_path('app/temp');
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        $tempPath = $tempDir . '/' . uniqid('sub_') . '.zip';
+
+        $zip = new \ZipArchive();
+        if ($zip->open($tempPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            foreach ($existingFiles as $idx => $f) {
+                $absPath = Storage::disk('public')->path($f);
+                $cleanName = ($idx + 1) . '_' . basename($f);
+                $zip->addFile($absPath, $cleanName);
+            }
+            $zip->close();
+
+            return response()->download($tempPath, $zipFileName)->deleteFileAfterSend(true);
+        }
+
+        return back()->with('error', 'Gagal membuat arsip ZIP.');
+    }
+
+    public function downloadAllSubmissions(Task $task)
+    {
+        $task->load(['submissions.trainee']);
+        $validSubmissions = $task->submissions->filter(function($sub) {
+            return $sub->status == 'sudah' && !empty($sub->file_path);
+        });
+
+        if ($validSubmissions->isEmpty()) {
+            return back()->with('error', 'Belum ada pengumpulan tugas dari peserta.');
+        }
+
+        $tempDir = storage_path('app/temp');
+        if (!file_exists($tempDir)) {
+            mkdir($tempDir, 0755, true);
+        }
+        $taskSlug = Str::slug($task->title);
+        $zipFileName = 'Semua_Tugas_' . $taskSlug . '.zip';
+        $tempPath = $tempDir . '/' . uniqid('all_') . '.zip';
+
+        $zip = new \ZipArchive();
+        if ($zip->open($tempPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+            $hasFiles = false;
+            foreach ($validSubmissions as $sub) {
+                $rawFiles = $sub->file_path;
+                $files = is_array($rawFiles) ? $rawFiles : (is_string($rawFiles) ? [$rawFiles] : []);
+                $folderName = $sub->trainee ? Str::slug($sub->trainee->nik . '_' . $sub->trainee->name) : 'peserta_' . $sub->id;
+
+                foreach ($files as $idx => $f) {
+                    if (Storage::disk('public')->exists($f)) {
+                        $absPath = Storage::disk('public')->path($f);
+                        $fileNameInZip = $folderName . '/' . ($idx + 1) . '_' . basename($f);
+                        $zip->addFile($absPath, $fileNameInZip);
+                        $hasFiles = true;
+                    }
+                }
+            }
+            $zip->close();
+
+            if (!$hasFiles) {
+                @unlink($tempPath);
+                return back()->with('error', 'Tidak ada file fisik yang dapat diunduh.');
+            }
+
+            return response()->download($tempPath, $zipFileName)->deleteFileAfterSend(true);
+        }
+
+        return back()->with('error', 'Gagal membuat file ZIP.');
+    }
+
     public function toggleEvaluation(DailyClass $dailyClass)
     {
         $dailyClass->update([
