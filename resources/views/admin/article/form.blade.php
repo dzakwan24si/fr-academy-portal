@@ -155,6 +155,32 @@
                 relative_urls: false,
                 remove_script_host: false,
                 convert_urls: false,
+                media_live_embeds: true,
+                media_url_resolver: function (data, resolve) {
+                    if (data.url.indexOf('youtube') !== -1 || data.url.indexOf('youtu.be') !== -1) {
+                        let videoId = '';
+                        const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+                        const match = data.url.match(regExp);
+                        if (match && match[2].length === 11) {
+                            videoId = match[2];
+                        }
+                        if (videoId) {
+                            const embedHtml = '<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; margin: 20px 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" src="https://www.youtube.com/embed/' + videoId + '" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe></div>';
+                            resolve({ html: embedHtml });
+                            return;
+                        }
+                    }
+                    if (data.url.indexOf('vimeo.com') !== -1) {
+                        const regExp = /vimeo.*\/(\d+)/i;
+                        const match = data.url.match(regExp);
+                        if (match && match[1]) {
+                            const embedHtml = '<div style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; max-width: 100%; border-radius: 12px; margin: 20px 0;"><iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border: 0;" src="https://player.vimeo.com/video/' + match[1] + '" frameborder="0" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe></div>';
+                            resolve({ html: embedHtml });
+                            return;
+                        }
+                    }
+                    resolve({ html: '' });
+                },
                 // Handle image upload via AJAX to server storage
                 images_upload_handler: function (blobInfo, progress) {
                     return new Promise(function (resolve, reject) {

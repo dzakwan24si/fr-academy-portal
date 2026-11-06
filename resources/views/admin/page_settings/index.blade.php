@@ -710,7 +710,7 @@
                         </div>
                         <div>
                             <h2 class="text-lg font-bold text-gray-900">Hero Header & Latar Belakang</h2>
-                            <p class="text-xs text-gray-500">Judul besar bagian atas halaman Tentang Kami beserta 2 paragraf pengantar dan foto latar.</p>
+                            <p class="text-xs text-gray-500">Judul besar bagian atas halaman Tentang Kami beserta teks pengantar dan foto latar belakang.</p>
                         </div>
                     </div>
 
@@ -726,13 +726,13 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Teks Pengantar Kolom Kiri <span class="text-rose-500">*</span></label>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Teks Pengantar Hero (Deskripsi) <span class="text-rose-500">*</span></label>
                             <textarea name="about_hero_col1" rows="3" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">{{ old('about_hero_col1', $tentang['about_hero_col1']) }}</textarea>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Teks Pengantar Kolom Kanan <span class="text-rose-500">*</span></label>
-                            <textarea name="about_hero_col2" rows="3" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">{{ old('about_hero_col2', $tentang['about_hero_col2']) }}</textarea>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Teks Pengantar Tambahan (Opsional)</label>
+                            <textarea name="about_hero_col2" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">{{ old('about_hero_col2', $tentang['about_hero_col2']) }}</textarea>
                         </div>
 
                         <!-- Foto Background Hero -->
@@ -742,22 +742,47 @@
                             </div>
                             <div class="flex-grow w-full">
                                 <span class="text-xs font-bold text-gray-700 block mb-1">Foto Latar Belakang Hero (Background)</span>
-                                <p class="text-xs text-gray-500 mb-3">Foto ini akan tampil dengan aksen warna dark teal di bagian atas halaman Tentang Kami.</p>
+                                <p class="text-xs text-gray-500 mb-3">Foto ini akan tampil sebagai latar belakang banner utama di bagian paling atas halaman Tentang Kami.</p>
                                 <input type="file" name="about_hero_bg" accept="image/*" class="text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#509c38] file:text-white hover:file:bg-green-600 transition">
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Card 2: Profil & Misi -->
+                <!-- Card 2: Sejarah Perjalanan Kami -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+                    <div class="flex items-center gap-3 border-b border-gray-100 pb-4 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-800 flex items-center justify-center font-bold">
+                            <i data-lucide="calendar" class="w-5 h-5 text-amber-600"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900">Perjalanan Kami (Timeline Sejarah)</h2>
+                            <p class="text-xs text-gray-500">Judul dan sub-judul pengantar untuk alur sejarah perjalanan FR Academy dari 1996 hingga kini.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Judul Bagian Sejarah</label>
+                            <input type="text" name="about_sejarah_title" value="{{ old('about_sejarah_title', $tentang['about_sejarah_title'] ?? 'Perjalanan Kami') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Deskripsi / Sub-judul Pengantar Sejarah</label>
+                            <textarea name="about_sejarah_desc" rows="2" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">{{ old('about_sejarah_desc', $tentang['about_sejarah_desc'] ?? 'Dari pusat pelatihan awal hingga menjadi Center of Excellence yang terintegrasi.') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3: Tenaga Pengajar & Keunggulan Kami -->
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
                     <div class="flex items-center gap-3 border-b border-gray-100 pb-4 mb-6">
                         <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-800 flex items-center justify-center font-bold">
-                            <i data-lucide="book-open" class="w-5 h-5 text-[#509c38]"></i>
+                            <i data-lucide="graduation-cap" class="w-5 h-5 text-[#509c38]"></i>
                         </div>
                         <div>
-                            <h2 class="text-lg font-bold text-gray-900">Profil & Misi ([ 01 / PROFIL & MISI ])</h2>
-                            <p class="text-xs text-gray-500">Narasi komprehensif profil FR Academy serta foto dokumentasi kegiatan perkebunan lebar.</p>
+                            <h2 class="text-lg font-bold text-gray-900">Tenaga Pengajar Praktisi & Metode Belajar</h2>
+                            <p class="text-xs text-gray-500">Narasi keunggulan pengajar Subject Matter Expert (SME), formula 70:20:10, serta foto dokumentasi pengajar.</p>
                         </div>
                     </div>
 
@@ -768,19 +793,19 @@
                         </div>
 
                         <div>
-                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Judul Profil <span class="text-rose-500">*</span></label>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Judul Keunggulan <span class="text-rose-500">*</span></label>
                             <input type="text" name="about_profile_title" required value="{{ old('about_profile_title', $tentang['about_profile_title']) }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
                         </div>
 
                         <div class="md:col-span-2">
-                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Narasi Lengkap Profil <span class="text-rose-500">*</span></label>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Narasi Lengkap Keunggulan <span class="text-rose-500">*</span></label>
                             <textarea name="about_profile_desc" rows="4" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">{{ old('about_profile_desc', $tentang['about_profile_desc']) }}</textarea>
                         </div>
 
-                        <!-- Foto Dokumentasi Lebar -->
+                        <!-- Foto Dokumentasi Pengajar -->
                         <div class="md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-200/80">
-                            <span class="text-xs font-bold text-gray-700 block mb-2">Foto Dokumentasi Lebar</span>
-                            <div class="w-full h-48 rounded-lg overflow-hidden bg-gray-200 mb-4 border border-gray-300">
+                            <span class="text-xs font-bold text-gray-700 block mb-2">Foto Dokumentasi Pengajar / Pembelajaran</span>
+                            <div class="w-full sm:w-64 h-44 rounded-lg overflow-hidden bg-gray-200 mb-4 border border-gray-300">
                                 <img src="{{ $tentang['about_profile_img'] }}" alt="Profile Documentation" class="w-full h-full object-cover">
                             </div>
                             
@@ -790,7 +815,7 @@
                                     <input type="text" name="about_profile_img_caption" value="{{ old('about_profile_img_caption', $tentang['about_profile_img_caption']) }}" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Teks Lokasi Foto</label>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">Sub-keterangan / Lokasi Foto</label>
                                     <input type="text" name="about_profile_img_location" value="{{ old('about_profile_img_location', $tentang['about_profile_img_location']) }}" class="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
                                 </div>
                             </div>
@@ -801,15 +826,15 @@
                     </div>
                 </div>
 
-                <!-- Card 3: Filosofi & Skala -->
+                <!-- Card 4: Infrastruktur & Fasilitas Kampus -->
                 <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
                     <div class="flex items-center gap-3 border-b border-gray-100 pb-4 mb-6">
                         <div class="w-10 h-10 rounded-xl bg-teal-50 text-teal-800 flex items-center justify-center font-bold">
-                            <i data-lucide="compass" class="w-5 h-5 text-[#509c38]"></i>
+                            <i data-lucide="building-2" class="w-5 h-5 text-[#509c38]"></i>
                         </div>
                         <div>
-                            <h2 class="text-lg font-bold text-gray-900">Filosofi & Stat Headline ([ 02 / FILOSOFI & SKALA ])</h2>
-                            <p class="text-xs text-gray-500">Pernyataan komitmen filosofi pelatihan.</p>
+                            <h2 class="text-lg font-bold text-gray-900">Infrastruktur & Fasilitas Kampus</h2>
+                            <p class="text-xs text-gray-500">Badge, judul, dan pengantar untuk area 4 fasilitas utama (Lahan 300 Ha, Kelas, Asrama, Olahraga).</p>
                         </div>
                     </div>
 
@@ -819,9 +844,50 @@
                             <input type="text" name="about_philosophy_badge" value="{{ old('about_philosophy_badge', $tentang['about_philosophy_badge']) }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
                         </div>
 
+                        <div>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Judul Bagian Fasilitas <span class="text-rose-500">*</span></label>
+                            <input type="text" name="about_philosophy_title" required value="{{ old('about_philosophy_title', $tentang['about_philosophy_title']) }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
                         <div class="md:col-span-2">
-                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Pernyataan Filosofi (Center Headline) <span class="text-rose-500">*</span></label>
-                            <textarea name="about_philosophy_title" rows="3" required class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">{{ old('about_philosophy_title', $tentang['about_philosophy_title']) }}</textarea>
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Deskripsi Pengantar Fasilitas</label>
+                            <textarea name="about_fasilitas_desc" rows="2" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">{{ old('about_fasilitas_desc', $tentang['about_fasilitas_desc'] ?? 'Kami menyediakan lingkungan yang dirancang khusus untuk mendukung proses belajar mengajar secara optimal.') }}</textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5: Ekspansi Learning Station -->
+                <div class="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 sm:p-8">
+                    <div class="flex items-center gap-3 border-b border-gray-100 pb-4 mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-800 flex items-center justify-center font-bold">
+                            <i data-lucide="map" class="w-5 h-5 text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900">Ekspansi Learning Station</h2>
+                            <p class="text-xs text-gray-500">Judul, deskripsi pengantar pos pembelajaran operasional, serta gambar peta persebaran.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Judul Bagian Ekspansi</label>
+                            <input type="text" name="about_station_title" value="{{ old('about_station_title', $tentang['about_station_title'] ?? 'Ekspansi Learning Station') }}" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold uppercase text-gray-600 mb-1.5">Deskripsi Ekspansi</label>
+                            <textarea name="about_station_desc" rows="3" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">{{ old('about_station_desc', $tentang['about_station_desc'] ?? 'Kami terus berkembang dengan mendirikan pos pembelajaran di lokasi operasional strategis yang berfokus pada persiapan kedisiplinan dan teknis tenaga supervisi seperti Mandor dan Kerani.') }}</textarea>
+                        </div>
+
+                        <!-- Foto Peta -->
+                        <div class="md:col-span-2 bg-gray-50 p-4 rounded-xl border border-gray-200/80">
+                            <span class="text-xs font-bold text-gray-700 block mb-2">Gambar / Peta Persebaran Learning Station</span>
+                            <div class="w-full sm:w-80 h-44 rounded-lg overflow-hidden bg-white mb-4 border border-gray-300 p-2 flex items-center justify-center">
+                                <img src="{{ $tentang['about_station_img'] }}" alt="Peta Persebaran" class="max-w-full max-h-full object-contain">
+                            </div>
+
+                            <label class="block text-[11px] font-semibold text-gray-500 uppercase mb-1">Ganti Gambar Peta:</label>
+                            <input type="file" name="about_station_img" accept="image/*" class="text-xs text-gray-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-[#509c38] file:text-white hover:file:bg-green-600 transition">
                         </div>
                     </div>
                 </div>
