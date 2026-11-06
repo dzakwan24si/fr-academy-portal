@@ -869,6 +869,7 @@ Route::middleware('auth')->prefix('training-reguler')->group(function () {
     Route::post('daily-classes/{daily_class}/attendance', [DailyClassController::class, 'updateAttendance'])->name('training-reguler.daily-classes.attendance.update');
     Route::post('daily-classes/{daily_class}/generate-qr', [DailyClassController::class, 'generateQr'])->name('training-reguler.daily-classes.generate-qr');
     Route::post('daily-classes/{daily_class}/toggle-evaluation', [DailyClassController::class, 'toggleEvaluation'])->name('training-reguler.daily-classes.toggle-evaluation');
+    Route::delete('daily-classes/{daily_class}/clear-evaluation', [DailyClassController::class, 'clearEvaluation'])->name('training-reguler.daily-classes.clear-evaluation');
     Route::post('daily-classes/{daily_class}/toggle-completed', [DailyClassController::class, 'toggleCompleted'])->name('training-reguler.daily-classes.toggle-completed');
     Route::get('daily-classes/{daily_class}/print-qr', [DailyClassController::class, 'printQr'])->name('training-reguler.daily-classes.print-qr');
     Route::get('daily-classes/{daily_class}/print-tasks', [DailyClassController::class, 'printTasks'])->name('training-reguler.daily-classes.print-tasks');

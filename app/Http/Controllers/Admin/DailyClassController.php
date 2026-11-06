@@ -179,6 +179,13 @@ class DailyClassController extends Controller
         return back()->with('success', $message);
     }
 
+    public function clearEvaluation(DailyClass $dailyClass)
+    {
+        $dailyClass->traineeEvaluations()->delete();
+
+        return back()->with('success', 'Semua respons evaluasi untuk sesi ini berhasil dihapus.');
+    }
+
     public function exportEvaluations(DailyClass $dailyClass)
     {
         return EvaluationExportService::export($dailyClass);
