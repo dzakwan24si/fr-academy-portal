@@ -10,7 +10,9 @@ use App\Models\TaskSubmission;
 use App\Models\Trainee;
 use App\Models\TrainingProgram;
 use App\Services\EvaluationExportService;
+use App\Services\FileArchiveService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -168,93 +170,121 @@ class DailyClassController extends Controller
 
     public function downloadSubmission(Task $task, TaskSubmission $submission)
     {
-        $rawFiles = $submission->file_path;
-        $files = is_array($rawFiles) ? $rawFiles : (is_string($rawFiles) ? [$rawFiles] : []);
-        $existingFiles = [];
-        foreach ($files as $f) {
-            if (Storage::disk('public')->exists($f)) {
-                $existingFiles[] = $f;
+        try {
+            $rawFiles = $submission->file_path;
+            $files = is_array($rawFiles) ? $rawFiles : (is_string($rawFiles) ? [$rawFiles] : []);
+            $existingFiles = [];
+            foreach ($files as $f) {
+                if (Storage::disk('public')->exists($f)) {
+                    $existingFiles[] = $f;
+                }
             }
-        }
 
-        if (empty($existingFiles)) {
-            return back()->with('error', 'File pengumpulan tugas tidak ditemukan di server.');
-        }
+            if (empty($existingFiles)) {
+                return back()->with('error', 'File pengumpulan tugas tidak ditemukan di server.');
+            }
 
-        if (count($existingFiles) === 1) {
-            return Storage::disk('public')->download($existingFiles[0]);
-        }
+            $traineeName = $submission->trainee ? Str::slug($submission->trainee->name.'_'.$submission->trainee->nik) : 'tugas_'.$submission->id;
 
-        $traineeName = $submission->trainee ? Str::slug($submission->trainee->name . '_' . $submission->trainee->nik) : 'tugas_' . $submission->id;
-        $zipFileName = 'Tugas_' . $traineeName . '.zip';
-        $tempDir = storage_path('app/temp');
-        if (!file_exists($tempDir)) {
-            mkdir($tempDir, 0755, true);
-        }
-        $tempPath = $tempDir . '/' . uniqid('sub_') . '.zip';
+            // Jika hanya 1 file, unduh langsung tanpa zip
+            if (count($existingFiles) === 1) {
+                $ext = pathinfo($existingFiles[0], PATHINFO_EXTENSION);
+                $singleName = 'Tugas_'.$traineeName.($ext ? ('.'.$ext) : '');
 
-        $zip = new \ZipArchive();
-        if ($zip->open($tempPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
+                return Storage::disk('public')->download($existingFiles[0], $singleName);
+            }
+
+            // Lebih dari 1 file: kemas dalam file ZIP
+            $zipFileName = 'Tugas_'.$traineeName.'.zip';
+            $tempDir = storage_path('app/temp');
+            if (! is_dir($tempDir)) {
+                @mkdir($tempDir, 0755, true);
+            }
+            $tempPath = $tempDir.'/'.uniqid('sub_').'.zip';
+
+            $filesToArchive = [];
             foreach ($existingFiles as $idx => $f) {
                 $absPath = Storage::disk('public')->path($f);
-                $cleanName = ($idx + 1) . '_' . basename($f);
-                $zip->addFile($absPath, $cleanName);
+                $cleanName = ($idx + 1).'_'.basename($f);
+                $filesToArchive[] = [
+                    'path' => $absPath,
+                    'name' => $cleanName,
+                ];
             }
-            $zip->close();
 
-            return response()->download($tempPath, $zipFileName)->deleteFileAfterSend(true);
+            $created = FileArchiveService::createZip($filesToArchive, $tempPath);
+            if ($created && file_exists($tempPath) && filesize($tempPath) > 0) {
+                return response()->download($tempPath, $zipFileName)->deleteFileAfterSend(true);
+            }
+
+            return back()->with('error', 'Gagal membuat arsip ZIP. Silakan unduh file satu per satu melalui tombol Lihat.');
+        } catch (\Throwable $e) {
+            Log::error('Error downloading task submission: '.$e->getMessage(), [
+                'task_id' => $task->id,
+                'submission_id' => $submission->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', 'Terjadi kendala saat mengunduh tugas: '.$e->getMessage());
         }
-
-        return back()->with('error', 'Gagal membuat arsip ZIP.');
     }
 
     public function downloadAllSubmissions(Task $task)
     {
-        $task->load(['submissions.trainee']);
-        $validSubmissions = $task->submissions->filter(function($sub) {
-            return $sub->status == 'sudah' && !empty($sub->file_path);
-        });
+        try {
+            $task->load(['submissions.trainee']);
+            $validSubmissions = $task->submissions->filter(function ($sub) {
+                return $sub->status == 'sudah' && ! empty($sub->file_path);
+            });
 
-        if ($validSubmissions->isEmpty()) {
-            return back()->with('error', 'Belum ada pengumpulan tugas dari peserta.');
-        }
+            if ($validSubmissions->isEmpty()) {
+                return back()->with('error', 'Belum ada pengumpulan tugas dari peserta.');
+            }
 
-        $tempDir = storage_path('app/temp');
-        if (!file_exists($tempDir)) {
-            mkdir($tempDir, 0755, true);
-        }
-        $taskSlug = Str::slug($task->title);
-        $zipFileName = 'Semua_Tugas_' . $taskSlug . '.zip';
-        $tempPath = $tempDir . '/' . uniqid('all_') . '.zip';
+            $tempDir = storage_path('app/temp');
+            if (! is_dir($tempDir)) {
+                @mkdir($tempDir, 0755, true);
+            }
+            $taskSlug = Str::slug($task->title ?: 'tugas');
+            $zipFileName = 'Semua_Tugas_'.$taskSlug.'.zip';
+            $tempPath = $tempDir.'/'.uniqid('all_').'.zip';
 
-        $zip = new \ZipArchive();
-        if ($zip->open($tempPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE) === true) {
-            $hasFiles = false;
+            $filesToArchive = [];
             foreach ($validSubmissions as $sub) {
                 $rawFiles = $sub->file_path;
                 $files = is_array($rawFiles) ? $rawFiles : (is_string($rawFiles) ? [$rawFiles] : []);
-                $folderName = $sub->trainee ? Str::slug($sub->trainee->nik . '_' . $sub->trainee->name) : 'peserta_' . $sub->id;
+                $folderName = $sub->trainee ? Str::slug($sub->trainee->nik.'_'.$sub->trainee->name) : 'peserta_'.$sub->id;
 
                 foreach ($files as $idx => $f) {
                     if (Storage::disk('public')->exists($f)) {
                         $absPath = Storage::disk('public')->path($f);
-                        $fileNameInZip = $folderName . '/' . ($idx + 1) . '_' . basename($f);
-                        $zip->addFile($absPath, $fileNameInZip);
-                        $hasFiles = true;
+                        $fileNameInZip = $folderName.'/'.($idx + 1).'_'.basename($f);
+                        $filesToArchive[] = [
+                            'path' => $absPath,
+                            'name' => $fileNameInZip,
+                        ];
                     }
                 }
             }
-            $zip->close();
 
-            if (!$hasFiles) {
-                @unlink($tempPath);
-                return back()->with('error', 'Tidak ada file fisik yang dapat diunduh.');
+            if (empty($filesToArchive)) {
+                return back()->with('error', 'Tidak ada file fisik tugas yang tersimpan di server untuk diunduh.');
             }
 
-            return response()->download($tempPath, $zipFileName)->deleteFileAfterSend(true);
-        }
+            $created = FileArchiveService::createZip($filesToArchive, $tempPath);
+            if ($created && file_exists($tempPath) && filesize($tempPath) > 0) {
+                return response()->download($tempPath, $zipFileName)->deleteFileAfterSend(true);
+            }
 
-        return back()->with('error', 'Gagal membuat file ZIP.');
+            return back()->with('error', 'Gagal membuat file ZIP gabungan tugas.');
+        } catch (\Throwable $e) {
+            Log::error('Error downloading all task submissions: '.$e->getMessage(), [
+                'task_id' => $task->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', 'Terjadi kendala saat mengunduh seluruh tugas: '.$e->getMessage());
+        }
     }
 
     public function toggleEvaluation(DailyClass $dailyClass)
@@ -291,8 +321,8 @@ class DailyClassController extends Controller
         ]);
 
         $message = $newStatus
-            ? 'Status pelatihan untuk materi "' . $dailyClass->title . '" berhasil diubah menjadi: Pelatihan Selesai!'
-            : 'Status pelatihan untuk materi "' . $dailyClass->title . '" berhasil diubah kembali menjadi aktif/berjalan.';
+            ? 'Status pelatihan untuk materi "'.$dailyClass->title.'" berhasil diubah menjadi: Pelatihan Selesai!'
+            : 'Status pelatihan untuk materi "'.$dailyClass->title.'" berhasil diubah kembali menjadi aktif/berjalan.';
 
         return back()->with('success', $message);
     }
