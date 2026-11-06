@@ -78,7 +78,7 @@ class PortalProgram extends Model
     public function getResolvedImageUrl(): string
     {
         if (empty($this->image)) {
-            return asset('images/programs/fat_estate.jpg');
+            return asset('images/welcomefr.jpg');
         }
 
         if (str_starts_with($this->image, 'http://') || str_starts_with($this->image, 'https://')) {
@@ -98,7 +98,7 @@ class PortalProgram extends Model
     public function getResolvedHeroImageUrl(): string
     {
         if (empty($this->hero_image)) {
-            return '';
+            return asset('images/welcomefr.jpg');
         }
 
         if (str_starts_with($this->hero_image, 'http://') || str_starts_with($this->hero_image, 'https://')) {
