@@ -612,14 +612,23 @@
     <div class="lg:col-span-7 bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-xs flex flex-col justify-between">
         <div>
             {{-- Header Banner --}}
-            <div class="bg-[#1b4332] text-white px-4 py-3 flex items-center justify-between">
+            <div class="bg-[#1b4332] text-white px-4 py-2.5 flex items-center justify-between gap-3">
                 <div class="flex items-center gap-2">
                     <i data-lucide="chart-column-increasing" class="w-4 h-4 shrink-0"></i>
                     <h3 class="text-xs font-bold uppercase tracking-wide">GRAFIK JLH PESERTA TRAINING & PROGRAM TRAINING</h3>
                 </div>
-                <span class="text-[10px] font-semibold bg-white/10 px-2.5 py-0.5 rounded-full">
-                    Januari - Desember {{ $year }}
-                </span>
+                {{-- Filter Tipe Program Grafik --}}
+                <div class="relative">
+                    <select
+                        id="chartProgramTypeFilter"
+                        onchange="updateChartProgramType(this.value)"
+                        class="text-[11px] font-bold bg-[#2d5a27] text-white border border-emerald-400/40 rounded-lg px-2.5 py-1 outline-none cursor-pointer hover:bg-[#34682d] transition-all shadow-xs"
+                    >
+                        <option value="all" class="text-slate-800 bg-white" {{ ($monthlyData['current_mode'] ?? 'all') === 'all' ? 'selected' : '' }}>Semua Program</option>
+                        <option value="reguler" class="text-slate-800 bg-white" {{ ($monthlyData['current_mode'] ?? '') === 'reguler' ? 'selected' : '' }}>Program Reguler</option>
+                        <option value="non_reguler" class="text-slate-800 bg-white" {{ ($monthlyData['current_mode'] ?? '') === 'non_reguler' ? 'selected' : '' }}>Program Non Reguler</option>
+                    </select>
+                </div>
             </div>
 
             {{-- Chart Container (Larger Height for spacious visibility) --}}
@@ -639,7 +648,7 @@
                 <div class="text-left">
                     <p class="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">TOTAL PESERTA (YTD)</p>
                     <p class="text-xl font-extrabold text-[#18181B] leading-tight mt-0.5">
-                        {{ number_format($monthlyData['total_peserta_ytd'], 0, ',', '.') }} <span class="text-xs font-semibold text-[#71717A]">orang</span>
+                        <span id="chartYtdPeserta">{{ number_format($monthlyData['total_peserta_ytd'], 0, ',', '.') }}</span> <span class="text-xs font-semibold text-[#71717A]">orang</span>
                     </p>
                 </div>
             </div>
@@ -651,7 +660,7 @@
                 <div class="text-left">
                     <p class="text-[10px] font-bold uppercase tracking-wider text-[#71717A]">TOTAL PROGRAM (YTD)</p>
                     <p class="text-xl font-extrabold text-[#18181B] leading-tight mt-0.5">
-                        {{ $monthlyData['total_program_ytd'] }} <span class="text-xs font-semibold text-[#71717A]">program</span>
+                        <span id="chartYtdProgram">{{ $monthlyData['total_program_ytd'] }}</span> <span class="text-xs font-semibold text-[#71717A]">program</span>
                     </p>
                 </div>
             </div>
@@ -665,39 +674,52 @@
     document.addEventListener('DOMContentLoaded', function() {
 
         // 1. Dual Axis Monthly Chart
-        const pesertaData = @json($monthlyData['peserta']);
-        const programData = @json($monthlyData['program']);
+        const chartDataSets = @json($monthlyData['by_type'] ?? []);
+        const currentChartType = @json($monthlyData['current_mode'] ?? 'all');
 
-        const maxPeserta = Math.max(...pesertaData, 10);
-        const maxProgram = Math.max(...programData, 1);
+        function calculateChartScales(pesertaArr, programArr) {
+            const maxPeserta = Math.max(...(pesertaArr || []), 10);
+            const maxProgram = Math.max(...(programArr || []), 1);
 
-        // Cari rasio tertinggi program/peserta untuk memastikan garis selalu di dalam bar
-        // Hanya hitung pada bulan dengan peserta signifikan (>= 50) agar data kecil (misal 1 peserta 1 program) tidak merusak skala
-        let maxRatio = 0.05;
-        for (let i = 0; i < pesertaData.length; i++) {
-            if (pesertaData[i] >= 50 && programData[i] > 0) {
-                const ratio = programData[i] / pesertaData[i];
-                if (ratio > maxRatio) maxRatio = ratio;
+            let maxRatio = 0.05;
+            for (let i = 0; i < (pesertaArr || []).length; i++) {
+                if (pesertaArr[i] >= 50 && programArr[i] > 0) {
+                    const ratio = programArr[i] / pesertaArr[i];
+                    if (ratio > maxRatio) maxRatio = ratio;
+                }
             }
-        }
-        maxRatio = Math.min(maxRatio, 0.08);
+            maxRatio = Math.min(maxRatio, 0.08);
 
-        const yPesertaMax = Math.ceil((maxPeserta * 1.15) / 50) * 50;
-        const computedProgramMax = Math.ceil((maxRatio * yPesertaMax * 1.35) / 5) * 5;
-        const yProgramMax = Math.min(
-            Math.max(20, computedProgramMax),
-            Math.max(20, Math.ceil((maxProgram * 3) / 10) * 10)
-        );
+            const yPesertaMax = Math.ceil((maxPeserta * 1.15) / 50) * 50;
+            const computedProgramMax = Math.ceil((maxRatio * yPesertaMax * 1.35) / 5) * 5;
+            const yProgramMax = Math.min(
+                Math.max(20, computedProgramMax),
+                Math.max(20, Math.ceil((maxProgram * 3) / 10) * 10)
+            );
+
+            return { yPesertaMax, yProgramMax };
+        }
+
+        const initialDataset = (chartDataSets && chartDataSets[currentChartType])
+            ? chartDataSets[currentChartType]
+            : {
+                peserta: @json($monthlyData['peserta']),
+                program: @json($monthlyData['program']),
+                total_peserta_ytd: {{ $monthlyData['total_peserta_ytd'] ?? 0 }},
+                total_program_ytd: {{ $monthlyData['total_program_ytd'] ?? 0 }}
+            };
+
+        const initialScales = calculateChartScales(initialDataset.peserta, initialDataset.program);
 
         const ctxMonthly = document.getElementById('monthlyTrainingChart').getContext('2d');
-        new Chart(ctxMonthly, {
+        const monthlyTrainingChart = new Chart(ctxMonthly, {
             type: 'bar',
             data: {
                 labels: @json($monthlyData['labels']),
                 datasets: [
                     {
                         label: 'Jumlah Peserta (Orang)',
-                        data: pesertaData,
+                        data: initialDataset.peserta,
                         backgroundColor: '#1b4332',
                         hoverBackgroundColor: '#2d5a27',
                         borderRadius: 4,
@@ -706,7 +728,7 @@
                     },
                     {
                         label: 'Jumlah Program (Program)',
-                        data: programData,
+                        data: initialDataset.program,
                         borderColor: '#ea580c',
                         backgroundColor: '#ea580c',
                         borderWidth: 2.5,
@@ -755,7 +777,7 @@
                         display: true,
                         position: 'left',
                         beginAtZero: true,
-                        max: yPesertaMax,
+                        max: initialScales.yPesertaMax,
                         grid: { color: '#F4F4F5' },
                         ticks: { font: { size: 9 }, color: '#71717A' },
                         title: { display: false }
@@ -765,7 +787,7 @@
                         display: true,
                         position: 'right',
                         beginAtZero: true,
-                        max: yProgramMax,
+                        max: initialScales.yProgramMax,
                         grid: { drawOnChartArea: false },
                         ticks: { font: { size: 9 }, color: '#71717A' },
                         title: { display: false }
@@ -773,6 +795,28 @@
                 }
             }
         });
+
+        window.updateChartProgramType = function(type) {
+            if (!chartDataSets || !chartDataSets[type]) return;
+            const ds = chartDataSets[type];
+
+            monthlyTrainingChart.data.datasets[0].data = ds.peserta;
+            monthlyTrainingChart.data.datasets[1].data = ds.program;
+
+            const scales = calculateChartScales(ds.peserta, ds.program);
+            monthlyTrainingChart.options.scales.yPeserta.max = scales.yPesertaMax;
+            monthlyTrainingChart.options.scales.yProgram.max = scales.yProgramMax;
+            monthlyTrainingChart.update();
+
+            const elPeserta = document.getElementById('chartYtdPeserta');
+            if (elPeserta) {
+                elPeserta.textContent = new Intl.NumberFormat('id-ID').format(ds.total_peserta_ytd);
+            }
+            const elProgram = document.getElementById('chartYtdProgram');
+            if (elProgram) {
+                elProgram.textContent = ds.total_program_ytd;
+            }
+        };
 
         // 2. Evaluation Gauge/Donut Chart
         const gaugeEl = document.getElementById('evaluationGaugeChart');

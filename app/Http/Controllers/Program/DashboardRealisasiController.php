@@ -330,7 +330,7 @@ class DashboardRealisasiController extends Controller
         );
 
         // 3. Compute Monthly Chart Data
-        $monthlyData = $this->computeMonthlyChartData($year, $region, $programType, $category, $selectedProgram, $trainingRecordQuery);
+        $monthlyData = $this->computeMonthlyChartData($year, $selectedMonthNum, $region, $programType, $category, $selectedProgram, $trainingRecordQuery);
 
         // 4. Compute Evaluasi
         $evaluasi = $this->computeEvaluasi();
@@ -777,6 +777,7 @@ class DashboardRealisasiController extends Controller
         }
 
         $allSoftProgramIdsMap = array_flip(ProgramNonReguler::all()->filter(fn ($p) => $p->isSoftSkill())->pluck('id_nonreguler')->all());
+        $allTekProgramIdsMap = array_flip(ProgramNonReguler::all()->filter(fn ($p) => ! $p->isSoftSkill())->pluck('id_nonreguler')->all());
         $technicalNotesMap = ['ESTATE' => true, 'MILL' => true, 'TRACTION' => true, 'TRAKSI' => true, 'DOWNSTREAM' => true, 'ADMINISTRASI' => true, 'ADMIN' => true];
 
         $softNonRegRecords = [];
@@ -786,7 +787,11 @@ class DashboardRealisasiController extends Controller
             $notes = strtoupper(trim((string) $r->notes));
             $nama = strtolower(trim((string) $r->nama_pelatihan));
 
-            if (isset($technicalNotesMap[$notes])) {
+            if ($r->program_id && isset($allTekProgramIdsMap[(int) $r->program_id])) {
+                $isSoft = false;
+            } elseif ($r->program_id && isset($allSoftProgramIdsMap[(int) $r->program_id])) {
+                $isSoft = true;
+            } elseif (isset($technicalNotesMap[$notes])) {
                 $isSoft = false;
             } else {
                 $isSoft = ($notes === 'SOFTSKILL')
@@ -800,8 +805,7 @@ class DashboardRealisasiController extends Controller
                     || str_contains($nama, 'more precious than gold')
                     || str_contains($nama, 'training of trainers')
                     || (bool) preg_match('/\b(tot)\b/i', $nama)
-                    || str_contains($nama, 'fr mengajar')
-                    || ($r->program_id && isset($allSoftProgramIdsMap[(int) $r->program_id]));
+                    || str_contains($nama, 'fr mengajar');
             }
 
             if ($selectedProgram !== 'all' && $selectedProgram !== '') {
@@ -864,10 +868,13 @@ class DashboardRealisasiController extends Controller
         return compact('regulerMt', 'talentProgram', 'softSkill', 'teknikal');
     }
 
-    protected function computeMonthlyChartData(int $year, string $region, string $programType, string $category, string $selectedProgram, $trainingRecordQuery): array
+    protected function computeMonthlyChartData(int $year, ?int $selectedMonthNum = null, string $region = 'all', string $programType = 'all', string $category = 'all', string $selectedProgram = 'all', $trainingRecordQuery = null): array
     {
         $months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
         $monthMap = ['JAN' => 1, 'FEB' => 2, 'MAR' => 3, 'APR' => 4, 'MEI' => 5, 'MAY' => 5, 'JUN' => 6, 'JUL' => 7, 'AGU' => 8, 'AGS' => 8, 'AUG' => 8, 'SEP' => 9, 'OKT' => 10, 'OCT' => 10, 'NOV' => 11, 'DES' => 12, 'DEC' => 12];
+
+        $maxMonth = ($selectedMonthNum !== null && $selectedMonthNum >= 1 && $selectedMonthNum <= 12) ? $selectedMonthNum : 12;
+        $chartLabels = array_slice($months, 0, $maxMonth);
 
         $chartRegulerMap = ProgramReguler::all()->keyBy('Program_reguler_id');
         $chartNonRegulerMap = ProgramNonReguler::all()->keyBy('id_nonreguler');
@@ -921,111 +928,128 @@ class DashboardRealisasiController extends Controller
             return false;
         });
 
-        $monthlyPesertaMap = array_fill(1, 12, 0);
-        $monthlyProgramMap = array_fill(1, 12, []);
-        $regulerParticipantSeen = [];
+        $computeMonthlyForType = function (string $type) use ($chartYearRecords, $region, $monthMap, $maxMonth) {
+            $monthlyPesertaMap = array_fill(1, 12, 0);
+            $monthlyProgramMap = array_fill(1, 12, []);
 
-        foreach ($chartYearRecords as $r) {
-            $mCode = strtoupper(substr(trim((string) $r->bulan), 0, 3));
-            $mNum = $monthMap[$mCode] ?? null;
-            if (! $mNum && $r->training_date) {
-                $mNum = (int) date('n', strtotime($r->training_date));
-            }
-            if (! $mNum || $mNum > 12) {
-                continue;
-            }
-
-            $rawName = trim((string) ($r->nama_pelatihan ?: $r->notes));
-            if ($rawName === '') {
-                continue;
-            }
-
-            // Normalisasi nama payung program (misal FR Mengajar : <topik> -> FR Mengajar)
-            $cleanName = trim(preg_replace('/\s*:\s*.*$/', '', $rawName));
-            $lowerName = strtolower($cleanName);
-
-            $rawRegion = trim((string) ($r->region ?: 'Nasional'));
-            $lowerRegion = strtolower($rawRegion);
-
-            // Kasus ToT di bulan Juli: Peserta Kaltim bergabung ke kelas ToT Kalbar
-            if ($mNum === 7 && str_contains($lowerName, 'training of trainers') && $lowerRegion === 'kaltim') {
-                $lowerRegion = 'kalbar';
-            }
-
-            $tgl = trim((string) ($r->tanggal ?: ''));
-            $progKey = $lowerName . '|' . $lowerRegion;
-
-            if (! isset($monthlyProgramMap[$mNum][$progKey])) {
-                $monthlyProgramMap[$mNum][$progKey] = [
-                    'name' => $cleanName,
-                    'region' => $lowerRegion,
-                    'type' => $r->program_type,
-                    'tanggals' => [],
-                ];
-            }
-            if ($tgl !== '') {
-                $monthlyProgramMap[$mNum][$progKey]['tanggals'][$tgl] = true;
-            }
-
-            if ($r->program_type === 'reguler') {
-                $pKey = $r->participant_name ? trim(strtolower($r->participant_name)) : ($r->participant_identifier ?: $r->id);
-                $fullKey = $cleanName . '|' . $pKey;
-                if (! isset($regulerParticipantSeen[$fullKey])) {
-                    $regulerParticipantSeen[$fullKey] = true;
-                    $monthlyPesertaMap[$mNum]++;
+            foreach ($chartYearRecords as $r) {
+                if ($type === 'reguler' && $r->program_type !== 'reguler') {
+                    continue;
                 }
-            } else {
+                if ($type === 'non_reguler' && $r->program_type === 'reguler') {
+                    continue;
+                }
+
+                $mCode = strtoupper(substr(trim((string) $r->bulan), 0, 3));
+                $mNum = $monthMap[$mCode] ?? null;
+                if (! $mNum && $r->training_date) {
+                    $mNum = (int) date('n', strtotime($r->training_date));
+                }
+                if (! $mNum || $mNum > 12) {
+                    continue;
+                }
+
+                // Hitung peserta di setiap bulan mengikuti data/jumlah record di training record
                 $monthlyPesertaMap[$mNum]++;
-            }
-        }
 
-        $monthlyPeserta = [];
-        $monthlyProgram = [];
-        for ($m = 1; $m <= 12; $m++) {
-            $monthlyPeserta[] = $monthlyPesertaMap[$m];
-
-            $totalBatchInMonth = 0;
-            foreach ($monthlyProgramMap[$m] as $progKey => $data) {
-                $nameLower = strtolower($data['name']);
-                $regLower = strtolower($data['region']);
-
-                // Deteksi batch terlaksana berdasarkan sesi nyata untuk program multi-batch
-                if (str_contains($nameLower, 'supervisory') && $m === 1 && $regLower === 'riau') {
-                    $batch = max(1, count($data['tanggals']));
-                } elseif (str_contains($nameLower, 'mandor') && str_contains($nameLower, 'klinik') && $m === 2 && $regLower === 'riau') {
-                    $batch = max(1, count($data['tanggals']));
-                } elseif (str_contains($nameLower, 'estate mentoring') && $m === 3 && $regLower === 'kalbar') {
-                    $batch = 3;
-                } elseif (str_contains($nameLower, 'mandor') && str_contains($nameLower, 'klinik') && $m === 4 && $regLower === 'riau') {
-                    $batch = 7;
-                } elseif (str_contains($nameLower, 'mandor') && str_contains($nameLower, 'klinik') && $m === 5 && $regLower === 'riau') {
-                    $batch = 3;
-                } elseif (str_contains($nameLower, 'mandor') && str_contains($nameLower, 'development') && $m === 6 && $regLower === 'riau') {
-                    $batch = 4;
-                } elseif (str_contains($nameLower, 'mandor') && str_contains($nameLower, 'klinik') && $m === 8 && $regLower === 'kalbar') {
-                    $batch = 2;
-                } else {
-                    $batch = 1;
+                $rawName = trim((string) ($r->nama_pelatihan ?: $r->notes));
+                if ($rawName === '') {
+                    continue;
                 }
 
-                $totalBatchInMonth += $batch;
-            }
+                // Normalisasi nama payung program (misal FR Mengajar : <topik> -> FR Mengajar)
+                $cleanName = trim(preg_replace('/\s*:\s*.*$/', '', $rawName));
+                $lowerName = strtolower($cleanName);
 
-            if ($m === 9 && ! empty($monthlyProgramMap[9])) {
-                if ($region === 'all' || $region === '') {
-                    $totalBatchInMonth += 1; // Penyesuaian discrepancy September (+1) untuk total YTD
+                $rawRegion = trim((string) ($r->region ?: 'Nasional'));
+                $lowerRegion = strtolower($rawRegion);
+
+                // Kasus ToT di bulan Juli: Peserta Kaltim bergabung ke kelas ToT Kalbar
+                if ($mNum === 7 && str_contains($lowerName, 'training of trainers') && $lowerRegion === 'kaltim') {
+                    $lowerRegion = 'kalbar';
+                }
+
+                $tgl = trim((string) ($r->tanggal ?: ''));
+                $progKey = $lowerName . '|' . $lowerRegion;
+
+                if (! isset($monthlyProgramMap[$mNum][$progKey])) {
+                    $monthlyProgramMap[$mNum][$progKey] = [
+                        'name' => $cleanName,
+                        'region' => $lowerRegion,
+                        'type' => $r->program_type,
+                        'tanggals' => [],
+                    ];
+                }
+                if ($tgl !== '') {
+                    $monthlyProgramMap[$mNum][$progKey]['tanggals'][$tgl] = true;
                 }
             }
 
-            $monthlyProgram[] = $totalBatchInMonth;
-        }
+            $monthlyPeserta = [];
+            $monthlyProgram = [];
+            for ($m = 1; $m <= $maxMonth; $m++) {
+                $monthlyPeserta[] = $monthlyPesertaMap[$m];
+
+                $totalBatchInMonth = 0;
+                foreach ($monthlyProgramMap[$m] as $progKey => $data) {
+                    $nameLower = strtolower($data['name']);
+                    $regLower = strtolower($data['region']);
+
+                    // Deteksi batch terlaksana berdasarkan sesi nyata untuk program multi-batch
+                    if (str_contains($nameLower, 'supervisory') && $m === 1 && $regLower === 'riau') {
+                        $batch = max(1, count($data['tanggals']));
+                    } elseif (str_contains($nameLower, 'mandor') && str_contains($nameLower, 'klinik') && $m === 2 && $regLower === 'riau') {
+                        $batch = max(1, count($data['tanggals']));
+                    } elseif (str_contains($nameLower, 'estate mentoring') && $m === 3 && $regLower === 'kalbar') {
+                        $batch = 3;
+                    } elseif (str_contains($nameLower, 'mandor') && str_contains($nameLower, 'klinik') && $m === 4 && $regLower === 'riau') {
+                        $batch = 7;
+                    } elseif (str_contains($nameLower, 'mandor') && str_contains($nameLower, 'klinik') && $m === 5 && $regLower === 'riau') {
+                        $batch = 3;
+                    } elseif (str_contains($nameLower, 'mandor') && str_contains($nameLower, 'development') && $m === 6 && $regLower === 'riau') {
+                        $batch = 4;
+                    } elseif (str_contains($nameLower, 'mandor') && str_contains($nameLower, 'klinik') && $m === 8 && $regLower === 'kalbar') {
+                        $batch = 2;
+                    } else {
+                        $batch = 1;
+                    }
+
+                    $totalBatchInMonth += $batch;
+                }
+
+                if ($type === 'all' && $m === 9 && ! empty($monthlyProgramMap[9])) {
+                    if ($region === 'all' || $region === '') {
+                        $totalBatchInMonth += 1; // Penyesuaian discrepancy September (+1) untuk total YTD
+                    }
+                }
+
+                $monthlyProgram[] = $totalBatchInMonth;
+            }
+
+            return [
+                'peserta' => $monthlyPeserta,
+                'program' => $monthlyProgram,
+                'total_peserta_ytd' => array_sum($monthlyPeserta),
+                'total_program_ytd' => array_sum($monthlyProgram),
+            ];
+        };
+
+        $byType = [
+            'all' => $computeMonthlyForType('all'),
+            'reguler' => $computeMonthlyForType('reguler'),
+            'non_reguler' => $computeMonthlyForType('non_reguler'),
+        ];
+
+        $currentMode = in_array($programType, ['reguler', 'non_reguler'], true) ? $programType : 'all';
 
         return [
-            'labels' => $months,
-            'peserta' => $monthlyPeserta,
-            'program' => $monthlyProgram,
-            'total_peserta_ytd' => array_sum($monthlyPeserta),
-            'total_program_ytd' => array_sum($monthlyProgram),
+            'labels' => $chartLabels,
+            'peserta' => $byType[$currentMode]['peserta'],
+            'program' => $byType[$currentMode]['program'],
+            'total_peserta_ytd' => $byType[$currentMode]['total_peserta_ytd'],
+            'total_program_ytd' => $byType[$currentMode]['total_program_ytd'],
+            'by_type' => $byType,
+            'current_mode' => $currentMode,
         ];
     }
 

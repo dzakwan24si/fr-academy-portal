@@ -290,6 +290,7 @@ class DashboardController extends Controller
 
         $technicalNotes = ['ESTATE' => true, 'MILL' => true, 'TRACTION' => true, 'TRAKSI' => true, 'DOWNSTREAM' => true, 'ADMINISTRASI' => true, 'ADMIN' => true];
         $allSoftProgramIds = array_flip($softProgramIds);
+        $allTekProgramIds = array_flip($tekPrograms->pluck('id_nonreguler')->all());
 
         $softRecords = [];
         $tekRecords = [];
@@ -300,12 +301,28 @@ class DashboardController extends Controller
             $notes = strtoupper(trim((string) $r->notes));
             $nama = strtolower(trim((string) $r->nama_pelatihan));
 
+            // Priority 1: If program_id explicitly maps to Technical Master Program
+            if ($r->program_id && isset($allTekProgramIds[(int) $r->program_id])) {
+                $tekRecords[] = $r;
+                if ($r->nama_pelatihan) $tekPelatihanNames[$r->nama_pelatihan] = true;
+                continue;
+            }
+
+            // Priority 2: If program_id explicitly maps to Softskill Master Program
+            if ($r->program_id && isset($allSoftProgramIds[(int) $r->program_id])) {
+                $softRecords[] = $r;
+                if ($r->nama_pelatihan) $softPelatihanNames[$r->nama_pelatihan] = true;
+                continue;
+            }
+
+            // Priority 3: Fallback based on notes keyword
             if (isset($technicalNotes[$notes])) {
                 $tekRecords[] = $r;
                 if ($r->nama_pelatihan) $tekPelatihanNames[$r->nama_pelatihan] = true;
                 continue;
             }
 
+            // Priority 4: Softskill name / notes heuristics
             $isSoft = ($notes === 'SOFTSKILL')
                 || str_contains($notes, 'SOFT')
                 || str_contains($nama, 'soft')
@@ -317,8 +334,7 @@ class DashboardController extends Controller
                 || str_contains($nama, 'more precious than gold')
                 || str_contains($nama, 'training of trainers')
                 || (bool) preg_match('/\b(tot)\b/i', $nama)
-                || str_contains($nama, 'fr mengajar')
-                || ($r->program_id && isset($allSoftProgramIds[(int) $r->program_id]));
+                || str_contains($nama, 'fr mengajar');
 
             if ($isSoft) {
                 $softRecords[] = $r;
@@ -781,8 +797,14 @@ class DashboardController extends Controller
             $technicalNotes = ['ESTATE', 'MILL', 'TRACTION', 'TRAKSI', 'DOWNSTREAM', 'ADMINISTRASI', 'ADMIN'];
             $matchingProgIds = $matchingProgs->pluck('id_nonreguler')->all();
             $matchingProgIdsFlip = array_flip($matchingProgIds);
+            $allTekProgIdsFlip = array_flip($nonRegAll->filter(fn ($p) => ! $p->isSoftSkill())->pluck('id_nonreguler')->map(fn ($id) => (int) $id)->all());
 
-            $matchingRecs = $records->filter(function ($r) use ($matchingProgIdsFlip, $regKey, $regulerPrefixes, $technicalNotes) {
+            $matchingRecs = $records->filter(function ($r) use ($matchingProgIdsFlip, $allTekProgIdsFlip, $regKey, $regulerPrefixes, $technicalNotes) {
+                // Exclude if program_id explicitly belongs to technical programs
+                if ($r->program_id && isset($allTekProgIdsFlip[(int) $r->program_id])) {
+                    return false;
+                }
+
                 $notes = strtoupper(trim((string) $r->notes));
                 foreach ($regulerPrefixes as $prefix) {
                     if (str_starts_with($notes, $prefix)) {
@@ -793,7 +815,8 @@ class DashboardController extends Controller
                     return false;
                 }
                 $nama = strtolower(trim((string) $r->nama_pelatihan));
-                $isSoft = ($notes === 'SOFTSKILL')
+                $isSoft = ($r->program_id && isset($matchingProgIdsFlip[$r->program_id]))
+                    || ($notes === 'SOFTSKILL')
                     || str_contains($notes, 'SOFT')
                     || str_contains($nama, 'soft')
                     || str_contains($nama, 'leadership')
@@ -804,8 +827,7 @@ class DashboardController extends Controller
                     || str_contains($nama, 'more precious than gold')
                     || str_contains($nama, 'training of trainers')
                     || (bool) preg_match('/\b(tot)\b/i', $nama)
-                    || str_contains($nama, 'fr mengajar')
-                    || ($r->program_id && isset($matchingProgIdsFlip[$r->program_id]));
+                    || str_contains($nama, 'fr mengajar');
 
                 if (! $isSoft) {
                     return false;
