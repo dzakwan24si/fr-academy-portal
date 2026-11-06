@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Jobs\UpdateTrainingRecordJob;
 use App\Models\Attendance;
 use App\Models\DailyClass;
-use App\Models\PortalProgram;
 use App\Models\Program\ProgramNonReguler;
 use App\Models\Task;
 use App\Models\TaskSubmission;
@@ -15,6 +14,7 @@ use App\Models\TrainingProgram;
 use App\Notifications\WebPushBlastNotification;
 use App\Services\EvaluationExportService;
 use App\Services\ExcelExporter;
+use App\Services\FileArchiveService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -79,10 +79,10 @@ class NonRegulerDailyClassController extends Controller
                 'kategori' => trim((string) ($item->kategori_pelatihan ?? '')),
                 'sub_kategori' => trim((string) ($item->sub_kategori ?? '')),
             ];
-        })->filter(fn ($item) => !empty($item['title']))->values();
+        })->filter(fn ($item) => ! empty($item['title']))->values();
 
         $availableYears = $trainingProgramCatalog->pluck('year')->filter()->unique()->sort()->values();
-        $availableRegions = $trainingProgramCatalog->pluck('region')->filter(fn ($r) => $r !== '-' && !empty($r))->unique()->sort()->values();
+        $availableRegions = $trainingProgramCatalog->pluck('region')->filter(fn ($r) => $r !== '-' && ! empty($r))->unique()->sort()->values();
 
         return view('admin.non-reguler.daily_classes.index', compact('programs', 'dailyClasses', 'trainingProgramCatalog', 'availableYears', 'availableRegions'));
     }
@@ -646,6 +646,125 @@ class NonRegulerDailyClassController extends Controller
         return back()->with('success', "Pengumpulan tugas dari {$traineeName} berhasil dihapus.");
     }
 
+    public function downloadSubmission(Task $task, TaskSubmission $submission)
+    {
+        try {
+            $rawFiles = $submission->file_path;
+            $files = is_array($rawFiles) ? $rawFiles : (is_string($rawFiles) ? [$rawFiles] : []);
+            $existingFiles = [];
+            foreach ($files as $f) {
+                if (Storage::disk('public')->exists($f)) {
+                    $existingFiles[] = $f;
+                }
+            }
+
+            if (empty($existingFiles)) {
+                return back()->with('error', 'File pengumpulan tugas tidak ditemukan di server.');
+            }
+
+            $traineeName = $submission->trainee ? Str::slug($submission->trainee->name.'_'.$submission->trainee->nik) : 'tugas_'.$submission->id;
+
+            // Jika hanya 1 file, unduh langsung tanpa zip
+            if (count($existingFiles) === 1) {
+                $ext = pathinfo($existingFiles[0], PATHINFO_EXTENSION);
+                $singleName = 'Tugas_'.$traineeName.($ext ? ('.'.$ext) : '');
+
+                return Storage::disk('public')->download($existingFiles[0], $singleName);
+            }
+
+            // Lebih dari 1 file: kemas dalam file ZIP
+            $zipFileName = 'Tugas_'.$traineeName.'.zip';
+            $tempDir = storage_path('app/temp');
+            if (! is_dir($tempDir)) {
+                @mkdir($tempDir, 0755, true);
+            }
+            $tempPath = $tempDir.'/'.uniqid('sub_').'.zip';
+
+            $filesToArchive = [];
+            foreach ($existingFiles as $idx => $f) {
+                $absPath = Storage::disk('public')->path($f);
+                $cleanName = ($idx + 1).'_'.basename($f);
+                $filesToArchive[] = [
+                    'path' => $absPath,
+                    'name' => $cleanName,
+                ];
+            }
+
+            $created = FileArchiveService::createZip($filesToArchive, $tempPath);
+            if ($created && file_exists($tempPath) && filesize($tempPath) > 0) {
+                return response()->download($tempPath, $zipFileName)->deleteFileAfterSend(true);
+            }
+
+            return back()->with('error', 'Gagal membuat arsip ZIP. Silakan unduh file satu per satu melalui tombol Lihat.');
+        } catch (\Throwable $e) {
+            Log::error('Error downloading non-reguler task submission: '.$e->getMessage(), [
+                'task_id' => $task->id,
+                'submission_id' => $submission->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', 'Terjadi kendala saat mengunduh tugas: '.$e->getMessage());
+        }
+    }
+
+    public function downloadAllSubmissions(Task $task)
+    {
+        try {
+            $task->load(['submissions.trainee']);
+            $validSubmissions = $task->submissions->filter(function ($sub) {
+                return $sub->status == 'sudah' && ! empty($sub->file_path);
+            });
+
+            if ($validSubmissions->isEmpty()) {
+                return back()->with('error', 'Belum ada pengumpulan tugas dari peserta.');
+            }
+
+            $tempDir = storage_path('app/temp');
+            if (! is_dir($tempDir)) {
+                @mkdir($tempDir, 0755, true);
+            }
+            $taskSlug = Str::slug($task->title ?: 'tugas');
+            $zipFileName = 'Semua_Tugas_'.$taskSlug.'.zip';
+            $tempPath = $tempDir.'/'.uniqid('all_').'.zip';
+
+            $filesToArchive = [];
+            foreach ($validSubmissions as $sub) {
+                $rawFiles = $sub->file_path;
+                $files = is_array($rawFiles) ? $rawFiles : (is_string($rawFiles) ? [$rawFiles] : []);
+                $folderName = $sub->trainee ? Str::slug($sub->trainee->nik.'_'.$sub->trainee->name) : 'peserta_'.$sub->id;
+
+                foreach ($files as $idx => $f) {
+                    if (Storage::disk('public')->exists($f)) {
+                        $absPath = Storage::disk('public')->path($f);
+                        $fileNameInZip = $folderName.'/'.($idx + 1).'_'.basename($f);
+                        $filesToArchive[] = [
+                            'path' => $absPath,
+                            'name' => $fileNameInZip,
+                        ];
+                    }
+                }
+            }
+
+            if (empty($filesToArchive)) {
+                return back()->with('error', 'Tidak ada file fisik tugas yang tersimpan di server untuk diunduh.');
+            }
+
+            $created = FileArchiveService::createZip($filesToArchive, $tempPath);
+            if ($created && file_exists($tempPath) && filesize($tempPath) > 0) {
+                return response()->download($tempPath, $zipFileName)->deleteFileAfterSend(true);
+            }
+
+            return back()->with('error', 'Gagal membuat file ZIP gabungan tugas.');
+        } catch (\Throwable $e) {
+            Log::error('Error downloading all non-reguler task submissions: '.$e->getMessage(), [
+                'task_id' => $task->id,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', 'Terjadi kendala saat mengunduh seluruh tugas: '.$e->getMessage());
+        }
+    }
+
     public function removeTrainee(DailyClass $dailyClass, Trainee $trainee)
     {
         // Delete all attendances for this trainee in this daily class
@@ -773,7 +892,7 @@ class NonRegulerDailyClassController extends Controller
                 ]);
             }
 
-            $message = 'Program "' . $dailyClass->title . '" telah selesai dan dipindahkan ke Riwayat Program.';
+            $message = 'Program "'.$dailyClass->title.'" telah selesai dan dipindahkan ke Riwayat Program.';
         } else {
             // Aktifkan kembali dari riwayat:
             // Jika ada card placeholder kosong yang belum terpakai untuk materi ini, hapus dulu agar tidak double
@@ -796,10 +915,10 @@ class NonRegulerDailyClassController extends Controller
                 'completed_at' => null,
             ]);
 
-            $message = 'Program "' . $dailyClass->title . '" berhasil dikembalikan ke Daftar Program Aktif.';
+            $message = 'Program "'.$dailyClass->title.'" berhasil dikembalikan ke Daftar Program Aktif.';
         }
 
-        if (request()->headers->get('referer') && str_contains(request()->headers->get('referer'), 'daily-classes/' . $dailyClass->id)) {
+        if (request()->headers->get('referer') && str_contains(request()->headers->get('referer'), 'daily-classes/'.$dailyClass->id)) {
             return redirect()->route('training-non-reguler.daily-classes.index')->with('success', $message);
         }
 
@@ -895,15 +1014,15 @@ class NonRegulerDailyClassController extends Controller
                 $trQuery = DB::table('training_records')
                     ->where('participant_identifier', $trainee->nik)
                     ->where('nama_pelatihan', $namaPelatihan);
-                    
+
                 if ($dailyClass->training_program_id) {
-                    $trQuery->orWhere(function($q) use ($trainee, $dailyClass) {
+                    $trQuery->orWhere(function ($q) use ($trainee, $dailyClass) {
                         $q->where('participant_identifier', $trainee->nik)
-                          ->where('program_id', $dailyClass->training_program_id)
-                          ->where('program_type', 'non_reguler');
+                            ->where('program_id', $dailyClass->training_program_id)
+                            ->where('program_type', 'non_reguler');
                     });
                 }
-                
+
                 $trRecord = $trQuery->first();
 
                 if ($trRecord) {

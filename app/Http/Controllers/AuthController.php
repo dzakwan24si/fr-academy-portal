@@ -15,32 +15,42 @@ class AuthController extends Controller
 
     public function login(Request $request)
     {
+        $turnstileEnabled = (bool) config('services.turnstile.enabled', false);
+
         // 1. Validasi input
-        $request->validate([
+        $rules = [
             'identifier' => ['required', 'string'],
             'password' => ['required', 'string'],
-            'cf-turnstile-response' => ['required', 'string'],
-        ], [
-            'cf-turnstile-response.required' => 'Harap selesaikan verifikasi keamanan Cloudflare.',
-        ]);
+        ];
 
-        // 2. Kirim token ke API Cloudflare untuk divalidasi keasliannya
-        $http = Http::asForm();
-        if (app()->isLocal()) {
-            $http = $http->withoutVerifying();
-        }
-        $turnstileResponse = $http->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
-            'secret' => '0x4AAAAAAEzPGKSsKiRsoVbsX1tzF-N7x8k',
-            'response' => $request->input('cf-turnstile-response'),
-            'remoteip' => $request->ip(),
-        ]);
-        if (! $turnstileResponse->json('success')) {
-            return back()->withErrors([
-                'identifier' => 'Sistem mendeteksi aktivitas mencurigakan. Silakan refresh halaman dan coba lagi.',
-            ])->onlyInput('identifier');
+        $messages = [];
+
+        if ($turnstileEnabled) {
+            $rules['cf-turnstile-response'] = ['required', 'string'];
+            $messages['cf-turnstile-response.required'] = 'Harap selesaikan verifikasi keamanan Cloudflare.';
         }
 
-        // 4. Jika Turnstile sukses, lanjutkan ke proses login asli milikmu
+        $request->validate($rules, $messages);
+
+        // 2. Kirim token ke API Cloudflare untuk divalidasi keasliannya jika Turnstile diaktifkan
+        if ($turnstileEnabled) {
+            $http = Http::asForm();
+            if (app()->isLocal()) {
+                $http = $http->withoutVerifying();
+            }
+            $turnstileResponse = $http->post('https://challenges.cloudflare.com/turnstile/v0/siteverify', [
+                'secret' => config('services.turnstile.secret', '0x4AAAAAAEzPGKSsKiRsoVbsX1tzF-N7x8k'),
+                'response' => $request->input('cf-turnstile-response'),
+                'remoteip' => $request->ip(),
+            ]);
+            if (! $turnstileResponse->json('success')) {
+                return back()->withErrors([
+                    'identifier' => 'Sistem mendeteksi aktivitas mencurigakan. Silakan refresh halaman dan coba lagi.',
+                ])->onlyInput('identifier');
+            }
+        }
+
+        // 3. Lanjutkan ke proses login
         $identifier = $request->input('identifier');
 
         $fieldType = filter_var($identifier, FILTER_VALIDATE_EMAIL) ? 'email' : 'nik';

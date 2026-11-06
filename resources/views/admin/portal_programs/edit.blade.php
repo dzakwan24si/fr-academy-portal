@@ -330,26 +330,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-gray-100">
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-gray-700 mb-1.5">
-                                Badge Khusus (Opsional)
-                            </label>
-                            <input type="text" name="badge" value="{{ old('badge', $portal_program->badge) }}" placeholder="Contoh: Agronomi & Kebun" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-gray-700 mb-1.5">
-                                Target Posisi / Peran (Opsional)
-                            </label>
-                            <input type="text" name="target_role" value="{{ old('target_role', $portal_program->target_role) }}" placeholder="Contoh: Calon Asisten Kebun" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold uppercase text-gray-700 mb-1.5">
-                                Durasi Program (Opsional)
-                            </label>
-                            <input type="text" name="duration" value="{{ old('duration', $portal_program->duration) }}" placeholder="Contoh: 6 Bulan Terjadwal" class="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-sm focus:border-[#509c38] focus:ring-1 focus:ring-[#509c38] transition">
-                        </div>
-                    </div>
+
                 </div>
             </div>
 

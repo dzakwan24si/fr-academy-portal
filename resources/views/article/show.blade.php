@@ -96,8 +96,8 @@
             <div class="w-full lg:flex-1 min-w-0 order-1 lg:order-2">
                 <article class="bg-white dark:bg-gray-800 p-8 md:p-12 rounded-2xl border border-gray-100 dark:border-gray-700 shadow-sm transition-colors duration-300 w-full">
                     <!-- Article Body -->
-                    <div class="prose prose-teal dark:prose-invert max-w-none w-full text-gray-700 dark:text-gray-300 space-y-6 article-body" style="max-width: 100%;">
-                        {!! $article->content !!}
+                    <div class="article-body prose prose-teal dark:prose-invert max-w-none w-full text-gray-700 dark:text-gray-300" style="max-width: 100%;">
+                        {!! $article->rendered_content !!}
                     </div>
 
                     <!-- Article Meta (Penulis & Tanggal di bawah persis semula) -->
@@ -130,4 +130,194 @@
             
         </div>
     </div>
+
+    <!-- Typography & List Styling for TinyMCE Content -->
+    <style>
+        .article-body {
+            font-size: 1.05rem;
+            line-height: 1.8;
+            word-break: break-word;
+        }
+        .article-body p {
+            margin-top: 1.15rem;
+            margin-bottom: 1.15rem;
+            line-height: 1.8;
+        }
+        .article-body h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1.25;
+            margin-top: 2.5rem;
+            margin-bottom: 1.25rem;
+            color: #114045;
+        }
+        .article-body h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1.3;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #114045;
+        }
+        .article-body h3 {
+            font-size: 1.375rem;
+            font-weight: 700;
+            line-height: 1.4;
+            margin-top: 1.75rem;
+            margin-bottom: 0.75rem;
+            color: #114045;
+        }
+        .article-body h4 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            line-height: 1.45;
+            margin-top: 1.5rem;
+            margin-bottom: 0.5rem;
+            color: #114045;
+        }
+        .dark .article-body h1,
+        .dark .article-body h2,
+        .dark .article-body h3,
+        .dark .article-body h4 {
+            color: #f9fafb;
+        }
+        /* Bullet Lists */
+        .article-body ul {
+            list-style-type: disc !important;
+            margin-top: 1.15rem !important;
+            margin-bottom: 1.15rem !important;
+            padding-left: 2rem !important;
+        }
+        .article-body ul ul {
+            list-style-type: circle !important;
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+            padding-left: 1.5rem !important;
+        }
+        .article-body ul ul ul {
+            list-style-type: square !important;
+        }
+        /* Numbered Lists */
+        .article-body ol {
+            list-style-type: decimal !important;
+            margin-top: 1.15rem !important;
+            margin-bottom: 1.15rem !important;
+            padding-left: 2rem !important;
+        }
+        .article-body ol ol {
+            list-style-type: lower-alpha !important;
+            margin-top: 0.5rem !important;
+            margin-bottom: 0.5rem !important;
+            padding-left: 1.5rem !important;
+        }
+        .article-body ol ol ol {
+            list-style-type: lower-roman !important;
+        }
+        /* List Items & Markers */
+        .article-body li {
+            display: list-item !important;
+            margin-top: 0.45rem !important;
+            margin-bottom: 0.45rem !important;
+            line-height: 1.75 !important;
+            padding-left: 0.25rem !important;
+        }
+        .article-body li::marker {
+            color: #59A338;
+            font-weight: 700;
+        }
+        .dark .article-body li::marker {
+            color: #78c649;
+        }
+        /* Text Format */
+        .article-body strong, .article-body b {
+            font-weight: 700;
+        }
+        .article-body em, .article-body i {
+            font-style: italic;
+        }
+        .article-body u {
+            text-decoration: underline;
+        }
+        .article-body s, .article-body strike, .article-body del {
+            text-decoration: line-through;
+        }
+        /* Links */
+        .article-body a {
+            color: #59A338;
+            text-decoration: underline;
+            font-weight: 500;
+        }
+        .article-body a:hover {
+            color: #114045;
+        }
+        .dark .article-body a {
+            color: #78c649;
+        }
+        /* Blockquote */
+        .article-body blockquote {
+            border-left: 4px solid #59A338;
+            padding: 0.75rem 1.25rem;
+            margin: 1.75rem 0;
+            background-color: rgba(89, 163, 56, 0.05);
+            border-radius: 0 0.75rem 0.75rem 0;
+            font-style: italic;
+            color: #4b5563;
+        }
+        .dark .article-body blockquote {
+            background-color: rgba(255, 255, 255, 0.04);
+            color: #d1d5db;
+            border-left-color: #78c649;
+        }
+        /* Tables */
+        .article-body table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.75rem 0;
+            font-size: 0.95rem;
+        }
+        .article-body th, .article-body td {
+            border: 1px solid #e5e7eb;
+            padding: 0.75rem 1rem;
+            text-align: left;
+        }
+        .dark .article-body th, .dark .article-body td {
+            border-color: #374151;
+        }
+        .article-body th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #114045;
+        }
+        .dark .article-body th {
+            background-color: #1f2937;
+            color: #f9fafb;
+        }
+        /* Images */
+        .article-body img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.75rem;
+            margin: 1.75rem auto;
+            display: block;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+        }
+        /* Videos & Iframes (YouTube, etc) */
+        .article-body iframe {
+            max-width: 100%;
+            aspect-ratio: 16 / 9;
+            height: auto;
+            border-radius: 0.75rem;
+            margin: 1.75rem auto;
+            display: block;
+            border: 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.08);
+        }
+        .article-body video {
+            max-width: 100%;
+            height: auto;
+            border-radius: 0.75rem;
+            margin: 1.75rem auto;
+            display: block;
+        }
+    </style>
 </x-layout>

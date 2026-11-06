@@ -112,7 +112,7 @@
                             <div class="relative group cursor-pointer rounded-xl overflow-hidden bg-gray-50 dark:bg-gray-800 flex items-center justify-center" @click="zoomModal = true">
                                 <img src="{{ asset($program['image']) }}" 
                                      alt="Foto Program {{ $program['title'] }}" 
-                                     class="w-full h-auto min-h-[480px] sm:min-h-[560px] lg:min-h-[640px] max-h-[820px] object-contain rounded-xl shadow-inner transition duration-500 group-hover:scale-[1.02]">
+                                     class="w-full h-auto max-h-[720px] object-contain rounded-xl shadow-inner transition duration-500 group-hover:scale-[1.02]">
                                 <div class="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white px-3 py-1.5 rounded-xl text-xs font-semibold backdrop-blur-sm transition flex items-center gap-1.5 shadow-md">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>
                                     Perbesar
@@ -206,7 +206,7 @@
                             <div class="relative group cursor-pointer rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center" @click="zoomModal = true">
                                 <img src="{{ asset($program['image'] ?? $program['hero_image']) }}" 
                                      alt="{{ $program['title'] }}" 
-                                     class="w-full h-auto min-h-[380px] sm:min-h-[460px] lg:min-h-[540px] xl:min-h-[580px] max-h-[660px] object-cover rounded-xl shadow-inner border border-gray-100 dark:border-gray-800 transition duration-500 group-hover:scale-[1.02]">
+                                     class="w-full h-auto max-h-[660px] object-cover rounded-xl shadow-inner border border-gray-100 dark:border-gray-800 transition duration-500 group-hover:scale-[1.02]">
                                 <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-between p-4">
                                     <span class="text-white text-xs font-semibold flex items-center gap-1.5 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-lg shadow-sm">
                                         <svg class="w-3.5 h-3.5 text-green-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg>

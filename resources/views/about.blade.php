@@ -1,20 +1,53 @@
 <x-layout>
+    @php
+        $heroBadge = \App\Models\AppSetting::get('about_hero_badge', 'TENTANG KAMI');
+        $heroTitle = \App\Models\AppSetting::get('about_hero_title', 'Sejarah & Profil <span class="text-green-accent">FR Academy</span>');
+        $heroCol1 = \App\Models\AppSetting::get('about_hero_col1', 'Menjadi Center of Excellence dalam membentuk sumber daya manusia yang handal dan berkarakter unggul sejak tahun 1996.');
+        $heroCol2 = \App\Models\AppSetting::get('about_hero_col2', '');
+        $heroBg = \App\Models\AppSetting::getImageUrl('about_hero_bg', 'images/welcomefr.jpg');
+
+        $sejarahTitle = \App\Models\AppSetting::get('about_sejarah_title', 'Perjalanan Kami');
+        $sejarahDesc = \App\Models\AppSetting::get('about_sejarah_desc', 'Dari pusat pelatihan awal hingga menjadi Center of Excellence yang terintegrasi.');
+
+        $profileBadge = \App\Models\AppSetting::get('about_profile_badge', 'KEUNGGULAN KAMI');
+        $profileTitle = \App\Models\AppSetting::get('about_profile_title', 'Pengajar Praktisi & Metode 70:20:10');
+        $profileDesc = \App\Models\AppSetting::get('about_profile_desc', 'Kami meyakini bahwa pembelajaran terbaik berasal dari mereka yang mengalaminya langsung. Pengajar di FR Academy didominasi oleh internal First Resources Group, mulai dari level <strong>Direktur, Controller, hingga Manager</strong> yang bertindak sebagai <em>Subject Matter Expert (SME)</em>.');
+        $profileImg = \App\Models\AppSetting::getImageUrl('about_profile_img', 'images/slide4.png');
+        $profileImgCaption = \App\Models\AppSetting::get('about_profile_img_caption', 'Subject Matter Expert (SME)');
+        $profileImgLocation = \App\Models\AppSetting::get('about_profile_img_location', 'Praktisi andal dari internal perusahaan');
+
+        $fasilitasBadge = \App\Models\AppSetting::get('about_philosophy_badge', 'INFRASTRUKTUR');
+        $fasilitasTitle = \App\Models\AppSetting::get('about_philosophy_title', 'Fasilitas FR Academy');
+        $fasilitasDesc = \App\Models\AppSetting::get('about_fasilitas_desc', 'Kami menyediakan lingkungan yang dirancang khusus untuk mendukung proses belajar mengajar secara optimal.');
+
+        $stationTitle = \App\Models\AppSetting::get('about_station_title', 'Ekspansi Learning Station');
+        $stationDesc = \App\Models\AppSetting::get('about_station_desc', 'Kami terus berkembang dengan mendirikan pos pembelajaran di lokasi operasional strategis yang berfokus pada persiapan kedisiplinan dan teknis tenaga supervisi seperti Mandor dan Kerani.');
+        $stationImg = \App\Models\AppSetting::getImageUrl('about_station_img', 'images/peta.png');
+    @endphp
+
     <!-- Hero Section -->
     <section class="relative h-[350px] md:h-[400px] pt-20 overflow-hidden flex items-center justify-center">
         <div class="absolute inset-0 z-0">
-            <img src="{{ asset('images/welcomefr.jpg') }}" alt="Tentang FR Academy" class="w-full h-full object-cover object-center" data-aos="zoom-out" data-aos-duration="2000">
+            <img src="{{ $heroBg }}" alt="{{ strip_tags($heroTitle) }}" class="w-full h-full object-cover object-center" data-aos="zoom-out" data-aos-duration="2000">
             <div class="absolute inset-0 bg-black/50"></div>
         </div>
         <div class="relative z-10 text-center px-4 max-w-4xl mx-auto" data-aos="fade-up" data-aos-duration="1000">
-            <span class="text-green-accent font-bold tracking-widest uppercase text-sm mb-4 block">
-                TENTANG KAMI
-            </span>
+            @if(!empty($heroBadge))
+                <span class="text-green-accent font-bold tracking-widest uppercase text-sm mb-4 block">
+                    {{ $heroBadge }}
+                </span>
+            @endif
             <h1 class="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-6">
-                Sejarah & Profil <span class="text-green-accent">FR Academy</span>
+                {!! $heroTitle !!}
             </h1>
             <p class="text-lg md:text-xl text-teal-100 max-w-2xl mx-auto font-light">
-                Menjadi Center of Excellence dalam membentuk sumber daya manusia yang handal dan berkarakter unggul sejak tahun 1996.
+                {{ $heroCol1 }}
             </p>
+            @if(!empty($heroCol2))
+                <p class="text-sm md:text-base text-teal-200/90 max-w-2xl mx-auto font-light mt-3">
+                    {{ $heroCol2 }}
+                </p>
+            @endif
         </div>
     </section>
 
@@ -22,8 +55,10 @@
     <section class="py-20 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16" data-aos="fade-up">
-                <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white">Perjalanan Kami</h2>
-                <p class="text-gray-600 dark:text-gray-400 mt-4 max-w-2xl mx-auto">Dari pusat pelatihan awal hingga menjadi Center of Excellence yang terintegrasi.</p>
+                <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white">{{ $sejarahTitle }}</h2>
+                @if(!empty($sejarahDesc))
+                    <p class="text-gray-600 dark:text-gray-400 mt-4 max-w-2xl mx-auto">{{ $sejarahDesc }}</p>
+                @endif
             </div>
             
             <div class="relative max-w-4xl mx-auto">
@@ -80,23 +115,31 @@
             <div class="flex flex-col lg:flex-row items-center gap-16">
                 <div class="lg:w-1/2" data-aos="fade-right">
                     <div class="relative rounded-2xl overflow-hidden shadow-2xl aspect-video lg:aspect-square group">
-                        <img src="{{ asset('images/slide4.png') }}" alt="Tenaga Pengajar" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
+                        <img src="{{ $profileImg }}" alt="{{ $profileImgCaption }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-700">
                         <div class="absolute inset-0 bg-gradient-to-t from-teal-900/80 to-transparent"></div>
-                        <div class="absolute bottom-6 left-6 right-6">
-                            <div class="bg-white/20 backdrop-blur-md rounded-xl p-4 border border-white/30 text-white">
-                                <p class="font-bold text-lg">Subject Matter Expert (SME)</p>
-                                <p class="text-sm opacity-90">Praktisi andal dari internal perusahaan</p>
+                        @if(!empty($profileImgCaption) || !empty($profileImgLocation))
+                            <div class="absolute bottom-6 left-6 right-6">
+                                <div class="bg-white/20 backdrop-blur-md rounded-xl p-4 border border-white/30 text-white">
+                                    @if(!empty($profileImgCaption))
+                                        <p class="font-bold text-lg">{{ $profileImgCaption }}</p>
+                                    @endif
+                                    @if(!empty($profileImgLocation))
+                                        <p class="text-sm opacity-90">{{ $profileImgLocation }}</p>
+                                    @endif
+                                </div>
                             </div>
-                        </div>
+                        @endif
                     </div>
                 </div>
                 
                 <div class="lg:w-1/2" data-aos="fade-left">
-                    <span class="text-green-accent font-bold tracking-wider uppercase text-sm">KEUNGGULAN KAMI</span>
-                    <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white mt-4 mb-6 leading-tight">Pengajar Praktisi & Metode 70:20:10</h2>
-                    <p class="text-gray-600 dark:text-gray-300 text-lg mb-8 leading-relaxed">
-                        Kami meyakini bahwa pembelajaran terbaik berasal dari mereka yang mengalaminya langsung. Pengajar di FR Academy didominasi oleh internal First Resources Group, mulai dari level <strong>Direktur, Controller, hingga Manager</strong> yang bertindak sebagai <em>Subject Matter Expert (SME)</em>.
-                    </p>
+                    @if(!empty($profileBadge))
+                        <span class="text-green-accent font-bold tracking-wider uppercase text-sm">{{ $profileBadge }}</span>
+                    @endif
+                    <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white mt-4 mb-6 leading-tight">{!! $profileTitle !!}</h2>
+                    <div class="text-gray-600 dark:text-gray-300 text-lg mb-8 leading-relaxed">
+                        {!! strip_tags($profileDesc) !== $profileDesc ? $profileDesc : nl2br(e($profileDesc)) !!}
+                    </div>
                     
                     <div class="bg-teal-50 dark:bg-gray-700/50 rounded-2xl p-6 border border-teal-100 dark:border-gray-600">
                         <h4 class="font-bold text-teal-primary dark:text-white mb-4 flex items-center">
@@ -142,9 +185,13 @@
     <section class="py-20 bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16" data-aos="fade-up">
-                <span class="text-green-accent font-bold tracking-wider uppercase text-sm">INFRASTRUKTUR</span>
-                <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white mt-4">Fasilitas FR Academy</h2>
-                <p class="text-gray-600 dark:text-gray-400 mt-4 max-w-2xl mx-auto">Kami menyediakan lingkungan yang dirancang khusus untuk mendukung proses belajar mengajar secara optimal.</p>
+                @if(!empty($fasilitasBadge))
+                    <span class="text-green-accent font-bold tracking-wider uppercase text-sm">{{ $fasilitasBadge }}</span>
+                @endif
+                <h2 class="text-3xl md:text-4xl font-bold text-teal-primary dark:text-white mt-4">{!! $fasilitasTitle !!}</h2>
+                @if(!empty($fasilitasDesc))
+                    <p class="text-gray-600 dark:text-gray-400 mt-4 max-w-2xl mx-auto">{{ $fasilitasDesc }}</p>
+                @endif
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -191,12 +238,12 @@
     <section class="py-20 bg-teal-50 dark:bg-gray-800 transition-colors duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16" data-aos="fade-up">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-teal-primary dark:text-white">Ekspansi Learning Station</h2>
-                <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">Kami terus berkembang dengan mendirikan pos pembelajaran di lokasi operasional strategis yang berfokus pada persiapan kedisiplinan dan teknis tenaga supervisi seperti Mandor dan Kerani.</p>
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-teal-primary dark:text-white">{!! $stationTitle !!}</h2>
+                <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">{{ $stationDesc }}</p>
             </div>
             
             <div class="max-w-4xl mx-auto mt-8 flex justify-center" data-aos="zoom-in">
-                <img src="{{ asset('images/peta.png') }}" alt="Peta Persebaran Learning Station" class="w-full h-auto object-contain drop-shadow-xl">
+                <img src="{{ $stationImg }}" alt="{{ strip_tags($stationTitle) }}" class="w-full h-auto object-contain drop-shadow-xl">
             </div>
         </div>
     </section>

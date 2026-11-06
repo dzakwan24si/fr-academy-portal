@@ -124,16 +124,20 @@ class TraineeApiController extends Controller
 
         // Cek tugas pending
         $pendingTasks = Task::whereHas('dailyClass', function ($q) use ($trainee) {
-            $q->whereHas('attendances', function ($subQ) use ($trainee) {
-                $subQ->where('trainee_id', $trainee->id);
+            $q->where(function ($subQ) use ($trainee) {
+                $subQ->whereHas('attendances', function ($attQ) use ($trainee) {
+                    $attQ->where('trainee_id', $trainee->id);
+                })->orWhere('training_program_id', $trainee->training_program_id);
             });
         })->whereDoesntHave('submissions', function ($q) use ($trainee) {
             $q->where('trainee_id', $trainee->id)->where('status', 'sudah');
         })->count();
 
-$pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
-            ->whereHas('attendances', function ($query) use ($trainee) {
-                $query->where('trainee_id', $trainee->id)->where('status', 'hadir');
+        $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
+            ->where(function ($q) use ($trainee) {
+                $q->whereHas('attendances', function ($query) use ($trainee) {
+                    $query->where('trainee_id', $trainee->id);
+                })->orWhere('training_program_id', $trainee->training_program_id);
             })
             ->whereDoesntHave('traineeEvaluations', function ($query) use ($trainee) {
                 $query->where('trainee_id', $trainee->id);
@@ -190,8 +194,10 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
         $dbTasks = Task::with(['dailyClass', 'submissions' => function ($q) use ($trainee) {
             $q->where('trainee_id', $trainee->id);
         }])->whereHas('dailyClass', function ($q) use ($trainee) {
-            $q->whereHas('attendances', function ($subQ) use ($trainee) {
-                $subQ->where('trainee_id', $trainee->id);
+            $q->where(function ($subQ) use ($trainee) {
+                $subQ->whereHas('attendances', function ($attQ) use ($trainee) {
+                    $attQ->where('trainee_id', $trainee->id);
+                })->orWhere('training_program_id', $trainee->training_program_id);
             });
         })->orderBy('deadline', 'desc')->get();
 
@@ -329,10 +335,10 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
             ], 400);
         }
 
-        // Cek apakah trainee memiliki record absensi di kelas ini (menandakan dia terdaftar di kelas)
+        // Cek apakah trainee memiliki record absensi di kelas ini atau terdaftar di program kelas ini
         $isRegistered = Attendance::where('daily_class_id', $dailyClass->id)
             ->where('trainee_id', $trainee->id)
-            ->exists();
+            ->exists() || ($dailyClass->training_program_id && $dailyClass->training_program_id == $trainee->training_program_id);
 
         if (! $isRegistered) {
             return response()->json([
@@ -422,17 +428,21 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
         ], 404);
     }
 
-    public function pendingEvaluations()
+    public function pendingEvaluations(Request $request)
     {
-        $trainee = auth()->user();
-        $today = date('Y-m-d');
+        $trainee = $request->user();
+        if (! $trainee) {
+            $trainee = auth()->user();
+        }
 
-        // Cari materi/kelas yang evaluasinya sudah dibuka oleh Admin
-        // dan trainee hadir (status == hadir),
+        // Cari materi/kelas yang evaluasinya sudah dibuka oleh Admin/Trainer
+        // dan trainee terdaftar di kelas atau program pelatihan tersebut,
         // tapi trainee belum mengisi evaluasi.
         $pendingClasses = DailyClass::where('is_evaluation_open', true)
-            ->whereHas('attendances', function ($query) use ($trainee) {
-                $query->where('trainee_id', $trainee->id)->where('status', 'hadir');
+            ->where(function ($q) use ($trainee) {
+                $q->whereHas('attendances', function ($query) use ($trainee) {
+                    $query->where('trainee_id', $trainee->id);
+                })->orWhere('training_program_id', $trainee->training_program_id);
             })
             ->whereDoesntHave('traineeEvaluations', function ($query) use ($trainee) {
                 $query->where('trainee_id', $trainee->id);
@@ -444,7 +454,10 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
 
     public function submitEvaluation(Request $request, $dailyClassId)
     {
-        $trainee = auth()->user();
+        $trainee = $request->user();
+        if (! $trainee) {
+            $trainee = auth()->user();
+        }
 
         $dailyClass = DailyClass::findOrFail($dailyClassId);
 
@@ -460,15 +473,20 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
             return response()->json(['message' => 'Anda sudah mengisi evaluasi untuk sesi ini.'], 400);
         }
 
-        // Verifikasi bahwa trainee sudah absen hadir di kelas ini
-        $hasAttended = Attendance::where('trainee_id', $trainee->id)
+        // Verifikasi bahwa trainee terdaftar di kelas atau program pelatihan ini
+        $isRegistered = Attendance::where('trainee_id', $trainee->id)
             ->where('daily_class_id', $dailyClass->id)
-            ->where('status', 'hadir')
-            ->exists();
+            ->exists() || ($dailyClass->training_program_id && $dailyClass->training_program_id == $trainee->training_program_id);
 
-        if (! $hasAttended) {
-            return response()->json(['message' => 'Anda harus melakukan absensi kehadiran terlebih dahulu sebelum dapat mengisi evaluasi.'], 403);
+        if (! $isRegistered) {
+            return response()->json(['message' => 'Anda tidak terdaftar di sesi pelatihan ini.'], 403);
         }
+
+        // Pastikan record absensi tersedia
+        Attendance::firstOrCreate([
+            'daily_class_id' => $dailyClass->id,
+            'trainee_id' => $trainee->id,
+        ]);
 
         $validated = $request->validate([
             'answers' => 'required|array|min:12', // 12 questions
@@ -477,9 +495,11 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
             'kesan_pesan' => 'required|string',
         ]);
 
+        $explanationDe = $validated['explanation_de'] ?? $request->input('explanation_de');
+
         // Validate explanation if D or E is present
         $needsExplanation = in_array('D', $validated['answers']) || in_array('E', $validated['answers']);
-        if ($needsExplanation && empty($validated['explanation_de'])) {
+        if ($needsExplanation && empty($explanationDe)) {
             return response()->json(['message' => 'Penjelasan wajib diisi karena Anda memberikan nilai D atau E.'], 400);
         }
 
@@ -487,7 +507,7 @@ $pendingEvaluationsCount = DailyClass::where('is_evaluation_open', true)
             'trainee_id' => $trainee->id,
             'daily_class_id' => $dailyClass->id,
             'answers' => $validated['answers'],
-            'explanation_de' => $validated['explanation_de'],
+            'explanation_de' => $explanationDe,
             'kesan_pesan' => $validated['kesan_pesan'],
         ]);
 
