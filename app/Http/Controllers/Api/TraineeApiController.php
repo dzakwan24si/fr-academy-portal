@@ -77,6 +77,19 @@ class TraineeApiController extends Controller
     public function profile(Request $request)
     {
         $trainee = $request->user()->load('trainingProgram');
+
+        // Jika trainee tidak terdaftar di kelas manapun, revoke token sesi ini dan tolak akses dengan 401 (trigger auto logout)
+        if (! $trainee->attendances()->exists()) {
+            if ($request->user() && $request->user()->currentAccessToken()) {
+                $request->user()->currentAccessToken()->delete();
+            }
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda sudah tidak terdaftar dalam kelas program pelatihan apapun.',
+            ], 401);
+        }
+
         $today = now()->format('Y-m-d');
         $todayAttendanceRecord = $this->getRelevantAttendanceRecord($trainee, $today);
 
@@ -99,7 +112,7 @@ class TraineeApiController extends Controller
     {
         $trainee = $request->user();
 
-        // Jika trainee tidak terdaftar di kelas manapun, revoke token sesi ini dan tolak akses
+        // Jika trainee tidak terdaftar di kelas manapun, revoke token sesi ini dan tolak akses dengan 401 (trigger auto logout)
         if (! $trainee->attendances()->exists()) {
             if ($request->user() && $request->user()->currentAccessToken()) {
                 $request->user()->currentAccessToken()->delete();
@@ -107,8 +120,8 @@ class TraineeApiController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Anda belum terdaftar dalam kelas program pelatihan apapun.',
-            ], 403);
+                'message' => 'Anda sudah tidak terdaftar dalam kelas program pelatihan apapun.',
+            ], 401);
         }
 
         $today = now()->format('Y-m-d');
@@ -117,9 +130,14 @@ class TraineeApiController extends Controller
 
         $isClassCompleted = (bool) ($todayAttendanceRecord && $todayAttendanceRecord->dailyClass && $todayAttendanceRecord->dailyClass->is_completed);
 
-        $hasActiveClassToday = $todayAttendanceRecord && $todayAttendanceRecord->dailyClass && ! $isClassCompleted;
+        $classStartDate = $todayAttendanceRecord && $todayAttendanceRecord->dailyClass ? \Carbon\Carbon::parse($todayAttendanceRecord->dailyClass->date)->format('Y-m-d') : null;
+        $classEndDate = $todayAttendanceRecord && $todayAttendanceRecord->dailyClass && $todayAttendanceRecord->dailyClass->end_date ? \Carbon\Carbon::parse($todayAttendanceRecord->dailyClass->end_date)->format('Y-m-d') : $classStartDate;
 
-        $todayAttendance = $todayAttendanceRecord && ! $isClassCompleted && in_array(strtolower($todayAttendanceRecord->status), ['hadir', 'izin', 'sakit']);
+        $isClassRunningToday = $classStartDate && ($today >= $classStartDate && $today <= $classEndDate);
+
+        $hasActiveClassToday = $todayAttendanceRecord && $todayAttendanceRecord->dailyClass && ! $isClassCompleted && $isClassRunningToday;
+
+        $todayAttendance = $hasActiveClassToday && in_array(strtolower($todayAttendanceRecord->status), ['hadir', 'izin', 'sakit']) && ($todayAttendanceRecord->attendance_date === $today);
 
         // Cek tugas pending (hanya untuk kelas di mana trainee terdaftar)
         $pendingTasks = Task::whereHas('dailyClass', function ($q) use ($trainee) {
@@ -172,6 +190,18 @@ class TraineeApiController extends Controller
     public function tasks(Request $request)
     {
         $trainee = $request->user();
+
+        // Jika trainee tidak terdaftar di kelas manapun, revoke token sesi ini dan tolak akses dengan 401
+        if (! $trainee->attendances()->exists()) {
+            if ($request->user() && $request->user()->currentAccessToken()) {
+                $request->user()->currentAccessToken()->delete();
+            }
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda sudah tidak terdaftar dalam kelas program pelatihan apapun.',
+            ], 401);
+        }
 
         // Cek apakah trainee sudah melakukan absensi (hadir)
         $hasAttended = Attendance::where('trainee_id', $trainee->id)
@@ -305,10 +335,17 @@ class TraineeApiController extends Controller
         if (empty($rawToken) || strtolower($rawToken) === 'manual') {
             $today = now()->format('Y-m-d');
 
-            // Cari kelas aktif tempat trainee terdaftar (yang belum selesai)
+            // Cari kelas aktif tempat trainee terdaftar (yang belum selesai dan sedang berlangsung hari ini)
             $todayAttendanceRecord = Attendance::where('trainee_id', $trainee->id)
-                ->whereHas('dailyClass', function ($q) {
-                    $q->whereNull('is_completed')->orWhere('is_completed', false);
+                ->whereHas('dailyClass', function ($q) use ($today) {
+                    $q->where(function ($sq) {
+                        $sq->whereNull('is_completed')->orWhere('is_completed', false);
+                    })
+                    ->whereDate('date', '<=', $today)
+                    ->where(function ($sq) use ($today) {
+                        $sq->whereNull('end_date')->whereDate('date', '>=', $today)
+                           ->orWhereDate('end_date', '>=', $today);
+                    });
                 })
                 ->latest('id')
                 ->first();
@@ -335,7 +372,7 @@ class TraineeApiController extends Controller
             if (! $dailyClass) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'QR Code tidak valid atau sudah kadaluarsa.',
+                    'message' => 'QR Code atau token absensi tidak valid.',
                 ], 404);
             }
         }
@@ -345,6 +382,50 @@ class TraineeApiController extends Controller
                 'status' => 'error',
                 'message' => 'Kelas pelatihan ini sudah selesai dan dipindahkan ke riwayat.',
             ], 400);
+        }
+
+        // Validasi tanggal jadwal pelatihan (tidak boleh absen sebelum kelas dimulai)
+        $todayStr = now()->format('Y-m-d');
+        $classStartDate = \Carbon\Carbon::parse($dailyClass->date)->format('Y-m-d');
+        $classEndDate = $dailyClass->end_date ? \Carbon\Carbon::parse($dailyClass->end_date)->format('Y-m-d') : $classStartDate;
+
+        if ($todayStr < $classStartDate) {
+            $formattedStart = \Carbon\Carbon::parse($dailyClass->date)->translatedFormat('d F Y');
+            return response()->json([
+                'status' => 'error',
+                'message' => "Sesi absensi untuk kelas ini belum dibuka. Pelatihan baru akan dimulai pada tanggal {$formattedStart}.",
+            ], 400);
+        }
+
+        if ($todayStr > $classEndDate) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Sesi absensi untuk kelas pelatihan ini telah berakhir.',
+            ], 400);
+        }
+
+        // Validasi jam pelaksanaan kelas (tanpa toleransi: hanya aktif dari start_time s/d end_time)
+        $currentTimeStr = now()->format('H:i:s');
+        if (! empty($dailyClass->start_time)) {
+            $startTimeStr = strlen($dailyClass->start_time) === 5 ? $dailyClass->start_time.':00' : $dailyClass->start_time;
+            if ($currentTimeStr < $startTimeStr) {
+                $formattedStartTime = substr($dailyClass->start_time, 0, 5);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Sesi absensi belum dibuka. Kelas dimulai pukul {$formattedStartTime} WIB.",
+                ], 400);
+            }
+        }
+
+        if (! empty($dailyClass->end_time)) {
+            $endTimeStr = strlen($dailyClass->end_time) === 5 ? $dailyClass->end_time.':00' : $dailyClass->end_time;
+            if ($currentTimeStr > $endTimeStr) {
+                $formattedEndTime = substr($dailyClass->end_time, 0, 5);
+                return response()->json([
+                    'status' => 'error',
+                    'message' => "Sesi absensi mandiri telah ditutup karena waktu kelas telah berakhir (pukul {$formattedEndTime} WIB). Silakan hubungi Admin/Trainer untuk absensi manual.",
+                ], 400);
+            }
         }
 
         // Cek apakah trainee memiliki record absensi di kelas ini
@@ -359,16 +440,23 @@ class TraineeApiController extends Controller
             ], 403);
         }
 
-        // Ambil data absensi, atau BUAT OTOMATIS jika belum ada di database
-        $attendance = Attendance::firstOrCreate(
-            ['daily_class_id' => $dailyClass->id, 'trainee_id' => $trainee->id, 'attendance_date' => $attendanceDate],
-            ['status' => 'belum']
-        );
+        // Ambil data absensi untuk hari ini ($todayStr)
+        $attendance = Attendance::where('daily_class_id', $dailyClass->id)
+            ->where('trainee_id', $trainee->id)
+            ->where('attendance_date', $todayStr)
+            ->first();
+
+        if (! $attendance) {
+            $attendance = Attendance::firstOrCreate(
+                ['daily_class_id' => $dailyClass->id, 'trainee_id' => $trainee->id, 'attendance_date' => $todayStr],
+                ['status' => 'belum']
+            );
+        }
 
         if ($attendance->status === 'hadir') {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Anda sudah melakukan absensi untuk kelas ini sebelumnya.',
+                'message' => 'Anda sudah melakukan absensi untuk sesi hari ini.',
             ], 400);
         }
 
@@ -379,7 +467,7 @@ class TraineeApiController extends Controller
         ]);
 
         // Dispatch job untuk update/create Training Record langsung secara sync
-        UpdateTrainingRecordJob::dispatchSync($trainee->id, $dailyClass->id, $attendanceDate);
+        UpdateTrainingRecordJob::dispatchSync($trainee->id, $dailyClass->id, $todayStr);
 
         return response()->json([
             'status' => 'success',
@@ -391,14 +479,38 @@ class TraineeApiController extends Controller
     {
         $trainee = $request->user();
 
+        // Jika trainee tidak terdaftar di kelas manapun, revoke token sesi ini dan tolak akses dengan 401
+        if (! $trainee->attendances()->exists()) {
+            if ($request->user() && $request->user()->currentAccessToken()) {
+                $request->user()->currentAccessToken()->delete();
+            }
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda sudah tidak terdaftar dalam kelas program pelatihan apapun.',
+            ], 401);
+        }
+
+        // Bersihkan data absensi prematur yang dibuat sebelum tanggal kelas dimulai
+        Attendance::where('trainee_id', $trainee->id)
+            ->whereHas('dailyClass', function ($q) {
+                $q->whereColumn('attendances.attendance_date', '<', 'daily_classes.date');
+            })
+            ->delete();
+
         $history = Attendance::with('dailyClass')
             ->where('trainee_id', $trainee->id)
+            ->whereHas('dailyClass', function ($q) {
+                // Hanya tampilkan riwayat kelas yang tanggal mulainya sudah dimulai atau lewat
+                $q->whereDate('date', '<=', now()->toDateString());
+            })
+            ->orderBy('attendance_date', 'desc')
             ->orderBy('updated_at', 'desc')
             ->get()->map(function ($att) {
                 return [
                     'id' => $att->id,
                     'session' => $att->dailyClass ? $att->dailyClass->title : 'Materi',
-                    'date' => $att->dailyClass ? Carbon::parse($att->dailyClass->date)->format('d M Y') : '-',
+                    'date' => $att->attendance_date ? Carbon::parse($att->attendance_date)->format('d M Y') : ($att->dailyClass ? Carbon::parse($att->dailyClass->date)->format('d M Y') : '-'),
                     'status' => ucfirst($att->status),
                 ];
             });
