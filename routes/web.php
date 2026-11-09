@@ -104,21 +104,15 @@ Route::get('/career-qr', function (Request $request) {
 })->name('career.qr');
 
 Route::get('/download-app', function () {
-    $rootPath = base_path('LearningActivity.apk');
     $publicPath = public_path('downloads/LearningActivity.apk');
+    $rootPath = base_path('LearningActivity.apk');
 
     $targetFile = null;
 
-    if (file_exists($rootPath)) {
-        if (! file_exists(public_path('downloads'))) {
-            @mkdir(public_path('downloads'), 0755, true);
-        }
-        if (! file_exists($publicPath) || filemtime($rootPath) > filemtime($publicPath)) {
-            @copy($rootPath, $publicPath);
-        }
-        $targetFile = $rootPath;
-    } elseif (file_exists($publicPath)) {
+    if (file_exists($publicPath)) {
         $targetFile = $publicPath;
+    } elseif (file_exists($rootPath)) {
+        $targetFile = $rootPath;
     } else {
         abort(404, 'File APK belum tersedia.');
     }
