@@ -39,6 +39,7 @@ class TrainingRecordController extends Controller
         $month = (int) $request->input('month', 0);
         $type = $request->input('type', 'all');
         $category = trim((string) $request->input('category', 'all'));
+        $region = trim((string) $request->input('region', 'all'));
 
         if (! in_array($type, ['all', 'reguler', 'non_reguler', 'non_reguler_soft_skill', 'non_reguler_teknikal', 'soft_skill', 'teknikal'], true)) {
             $type = 'all';
@@ -48,6 +49,25 @@ class TrainingRecordController extends Controller
 
         $years = Cache::remember('tr_years', 300, function () {
             return ProgramFilterHelper::getAvailableYears();
+        });
+
+        $regions = Cache::remember('tr_regions', 300, function () {
+            $dbRegions = TrainingRecord::whereNotNull('region')
+                ->where('region', '!=', '')
+                ->distinct()
+                ->pluck('region')
+                ->map(function ($r) {
+                    $norm = strtolower(trim((string) $r));
+                    if (str_contains($norm, 'riau')) return 'Riau';
+                    if (str_contains($norm, 'kalbar')) return 'Kalbar';
+                    if (str_contains($norm, 'kaltim')) return 'Kaltim';
+                    return ucfirst($norm);
+                })
+                ->unique()
+                ->values()
+                ->all();
+
+            return ! empty($dbRegions) ? $dbRegions : ['Riau', 'Kalbar', 'Kaltim'];
         });
 
         $nonRegulerSubCategories = Cache::remember('tr_non_reg_subcats', 300, function () {
@@ -77,7 +97,7 @@ class TrainingRecordController extends Controller
         );
         $months = self::MONTHS;
 
-        return view('Administrasi.Pages.Program.training_record', compact('records', 'activities', 'year', 'rawYear', 'month', 'type', 'category', 'years', 'months', 'nonRegulerSubCategories'));
+        return view('Administrasi.Pages.Program.training_record', compact('records', 'activities', 'year', 'rawYear', 'month', 'type', 'category', 'region', 'regions', 'years', 'months', 'nonRegulerSubCategories'));
     }
 
     private function clearTrCache(): void
@@ -85,6 +105,7 @@ class TrainingRecordController extends Controller
         TrainingRecord::invalidateDashboardCaches();
         Cache::forever('tr_cache_version', ((int) Cache::get('tr_cache_version', 1)) + 1);
         Cache::forget('tr_years');
+        Cache::forget('tr_regions');
         Cache::forget('tr_non_reg_subcats');
         Cache::forever('dashboard_cache_version', ((int) Cache::get('dashboard_cache_version', 1)) + 1);
         Cache::forever('rvb_cache_version', ((int) Cache::get('rvb_cache_version', 1)) + 1);
@@ -476,7 +497,23 @@ class TrainingRecordController extends Controller
                 });
             }
 
-            foreach (['company', 'work_location', 'group_name', 'region', 'position', 'internal_external', 'level'] as $field) {
+            $region = trim((string) $clone->input('region', 'all'));
+            if ($region !== 'all' && $region !== '') {
+                if (strcasecmp($region, 'Kaltim') === 0 || strcasecmp($region, 'Kaltim FR') === 0) {
+                    $query->where(function ($q) {
+                        $q->where('region', 'LIKE', '%kaltim%')
+                            ->orWhere('region', 'LIKE', '%kulbar%');
+                    });
+                } elseif (strcasecmp($region, 'Kalbar') === 0) {
+                    $query->where('region', 'LIKE', '%kalbar%');
+                } elseif (strcasecmp($region, 'Riau') === 0) {
+                    $query->where('region', 'LIKE', '%riau%');
+                } else {
+                    $query->where('region', 'LIKE', '%'.$region.'%');
+                }
+            }
+
+            foreach (['company', 'work_location', 'group_name', 'position', 'internal_external', 'level'] as $field) {
                 if ($clone->filled($field)) {
                     $query->where($field, $clone->input($field));
                 }
@@ -579,7 +616,31 @@ class TrainingRecordController extends Controller
             if ($search !== '' && ! str_contains(strtolower(implode(' ', [$record->participant_identifier, $record->participant_name, $record->company, $record->department, $record->work_location, $record->group_name, $record->region, $record->position, $record->bulan, $record->tahun, $record->jml_hari, $record->total_jam, $record->activityName()])), $search)) {
                 return false;
             }
-            foreach (['company', 'work_location', 'group_name', 'region', 'position', 'internal_external', 'level'] as $field) {
+
+            // 6. Region filter validation
+            $regFilter = trim((string) $clone->input('region', 'all'));
+            if ($regFilter !== 'all' && $regFilter !== '') {
+                $recReg = strtolower(trim((string) $record->region));
+                if (strcasecmp($regFilter, 'Kaltim') === 0 || strcasecmp($regFilter, 'Kaltim FR') === 0) {
+                    if (! str_contains($recReg, 'kaltim') && ! str_contains($recReg, 'kulbar')) {
+                        return false;
+                    }
+                } elseif (strcasecmp($regFilter, 'Kalbar') === 0) {
+                    if (! str_contains($recReg, 'kalbar')) {
+                        return false;
+                    }
+                } elseif (strcasecmp($regFilter, 'Riau') === 0) {
+                    if (! str_contains($recReg, 'riau')) {
+                        return false;
+                    }
+                } else {
+                    if (! str_contains($recReg, strtolower($regFilter))) {
+                        return false;
+                    }
+                }
+            }
+
+            foreach (['company', 'work_location', 'group_name', 'position', 'internal_external', 'level'] as $field) {
                 if ($clone->filled($field) && strtolower((string) $record->{$field}) !== strtolower((string) $clone->input($field))) {
                     return false;
                 }

@@ -57,6 +57,21 @@
             @endforeach
         </div>
 
+        {{-- Filter Region --}}
+        <div class="flex flex-wrap items-center gap-2">
+            <span class="mr-2 text-xs font-bold uppercase tracking-wider text-[#71717A] min-w-16">Region</span>
+            <a href="{{ route('administrasi.training-record.index', array_merge(request()->query(), ['region' => 'all'])) }}" 
+               class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all {{ ($region === 'all' || !$region) ? 'border-[#4B6A34] bg-[#4B6A34] text-white shadow-xs' : 'border-[#E5E7EB] text-[#52525B] hover:bg-slate-50' }}">
+                Semua Region
+            </a>
+            @foreach($regions as $regOption)
+                <a href="{{ route('administrasi.training-record.index', array_merge(request()->query(), ['region' => $regOption])) }}" 
+                   class="rounded-lg border px-3 py-1.5 text-xs font-semibold transition-all {{ (strcasecmp($region, $regOption) === 0) ? 'border-[#4B6A34] bg-[#4B6A34] text-white shadow-xs' : 'border-[#E5E7EB] text-[#52525B] hover:bg-slate-50' }}">
+                    {{ $regOption }}
+                </a>
+            @endforeach
+        </div>
+
         {{-- Filter Jenis Tipe Program --}}
         <div class="flex flex-wrap items-center gap-2">
             <span class="mr-2 text-xs font-bold uppercase tracking-wider text-[#71717A] min-w-16">Jenis</span>
@@ -129,6 +144,7 @@
         {{-- Search Input --}}
         <div class="flex gap-2">
             @if(request('year')) <input type="hidden" name="year" value="{{ request('year') }}"> @endif
+            @if(request('region') && request('region') !== 'all') <input type="hidden" name="region" value="{{ request('region') }}"> @endif
             @if(request('type')) <input type="hidden" name="type" value="{{ request('type') }}"> @endif
             @if(request('category')) <input type="hidden" name="category" value="{{ request('category') }}"> @endif
             @if(request('month')) <input type="hidden" name="month" value="{{ request('month') }}"> @endif
