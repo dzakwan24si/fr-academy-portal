@@ -67,13 +67,14 @@ class TraineeApiController extends Controller
                 ->first();
 
             if ($class) {
-                $record = Attendance::firstOrCreate([
+                // Objek in-memory untuk membaca info kelas tanpa memasukkan trainee ke database attendances
+                $record = new Attendance([
                     'daily_class_id' => $class->id,
                     'trainee_id' => $trainee->id,
-                ], [
                     'status' => 'belum',
                     'attendance_date' => $today,
                 ]);
+                $record->setRelation('dailyClass', $class);
             }
         }
 
