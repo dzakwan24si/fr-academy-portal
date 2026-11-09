@@ -10,6 +10,7 @@ use App\Models\Program\ProgramNonReguler;
 use App\Models\Task;
 use App\Models\TaskSubmission;
 use App\Models\Trainee;
+use App\Models\TraineeEvaluation;
 use App\Models\TrainingProgram;
 use App\Notifications\WebPushBlastNotification;
 use App\Services\EvaluationExportService;
@@ -356,12 +357,13 @@ class NonRegulerDailyClassController extends Controller
 
                 $trainee = Trainee::where('nik', $employeeId)->first();
                 if ($trainee) {
-                    // Update jika ada field yang masih kosong
+                    // Update jika ada field yang masih kosong dan pastikan status aktif
                     $trainee->update([
                         'name' => $employeeName, // Update nama terbaru dari Excel/Record
                         'unit' => empty(trim($trainee->unit)) ? $unit : $trainee->unit,
                         'origin' => empty(trim($trainee->origin)) ? $region : $trainee->origin,
                         'talent_to' => empty(trim($trainee->talent_to)) ? $talentTo : $trainee->talent_to,
+                        'status' => 'aktif',
                     ]);
                 } else {
                     // Buat baru dengan data hasil copy
@@ -437,6 +439,7 @@ class NonRegulerDailyClassController extends Controller
                     'unit' => $request->unit,
                     'origin' => $request->region,
                     'talent_to' => $request->talent_to,
+                    'status' => 'aktif',
                 ]);
             } else {
                 $trainee = Trainee::create([
@@ -778,6 +781,17 @@ class NonRegulerDailyClassController extends Controller
             ->where('trainee_id', $trainee->id)
             ->delete();
 
+        // Also remove any evaluation submissions by this trainee for this class
+        TraineeEvaluation::where('daily_class_id', $dailyClass->id)
+            ->where('trainee_id', $trainee->id)
+            ->delete();
+
+        // Jika trainee tidak lagi terdaftar di kelas manapun, ubah status jadi nonaktif & revoke token login mobile
+        if (! $trainee->attendances()->exists()) {
+            $trainee->update(['status' => 'nonaktif']);
+            $trainee->tokens()->delete();
+        }
+
         return back()->with('success', "Trainee {$trainee->name} berhasil dihapus dari sesi ini.");
     }
 
@@ -811,10 +825,19 @@ class NonRegulerDailyClassController extends Controller
 
     public function removeAllTrainees(DailyClass $dailyClass)
     {
-        $traineeIds = Attendance::where('daily_class_id', $dailyClass->id)->pluck('trainee_id');
+        $traineeIds = Attendance::where('daily_class_id', $dailyClass->id)->pluck('trainee_id')->unique();
         Attendance::where('daily_class_id', $dailyClass->id)->delete();
         $taskIds = $dailyClass->tasks()->pluck('id');
         TaskSubmission::whereIn('task_id', $taskIds)->whereIn('trainee_id', $traineeIds)->delete();
+        TraineeEvaluation::where('daily_class_id', $dailyClass->id)->whereIn('trainee_id', $traineeIds)->delete();
+
+        foreach ($traineeIds as $tId) {
+            $t = Trainee::find($tId);
+            if ($t && ! $t->attendances()->exists()) {
+                $t->update(['status' => 'nonaktif']);
+                $t->tokens()->delete();
+            }
+        }
 
         $dailyClass->update([
             'date' => null,
