@@ -242,6 +242,24 @@ class TraineeApiController extends Controller
             ], 403);
         }
 
+        // Periksa jika ada file yang ditolak oleh konfigurasi server (PHP upload_max_filesize)
+        if ($request->hasFile('task_files') || isset($_FILES['task_files'])) {
+            $rawFiles = $request->allFiles()['task_files'] ?? [];
+            if (! is_array($rawFiles)) {
+                $rawFiles = [$rawFiles];
+            }
+            foreach ($rawFiles as $f) {
+                if ($f instanceof \Illuminate\Http\UploadedFile && ! $f->isValid()) {
+                    if ($f->getError() === UPLOAD_ERR_INI_SIZE || $f->getError() === UPLOAD_ERR_FORM_SIZE) {
+                        return response()->json([
+                            'status' => 'error',
+                            'message' => 'Ukuran file ' . $f->getClientOriginalName() . ' melebihi kapasitas upload server PHP (upload_max_filesize). Maksimal file adalah 10MB.',
+                        ], 422);
+                    }
+                }
+            }
+        }
+
         $request->validate([
             'task_files' => 'required|array',
             'task_files.*' => 'required|file|mimes:jpg,jpeg,png,pdf,doc,docx,ppt,pptx|max:10240', // max 10MB per file
