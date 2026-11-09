@@ -68,8 +68,16 @@ class DashboardMonitoringTahunanController extends Controller
         $regions = RegionHelper::getCanonicalRegions($rawRegions);
 
         // 1. Fetch Master Programs Filtered By Year
+        $regulerPrefixes = ['FAT', 'MAT', 'TAT', 'AAT', 'DMT', 'ECT', 'PMT', 'PKT'];
         $regulerAll = ProgramReguler::all()->filter(fn ($p) => $this->resolveProgramRegulerYear($p) === $year);
-        $nonRegulerAll = ProgramNonReguler::all()->filter(fn ($p) => $this->resolveProgramNonRegulerYear($p) === $year);
+        $nonRegulerAll = ProgramNonReguler::all()->filter(fn ($p) => $this->resolveProgramNonRegulerYear($p) === $year)
+            ->filter(function ($p) use ($regulerPrefixes) {
+                $name = strtoupper(trim((string) $p->jenis_pelatihan));
+                foreach ($regulerPrefixes as $prefix) {
+                    if (str_starts_with($name, $prefix)) return false;
+                }
+                return true;
+            });
 
         // 2. Fetch Records from TrainingRecord & Pre-filter for Current Tab, Year & Cumulative Month
         $allTrainingRecords = TrainingRecord::where('status', 'valid')->get();
@@ -83,6 +91,9 @@ class DashboardMonitoringTahunanController extends Controller
 
         $matchesProg = function ($rNorm, $bNorm, $rRaw, $bRaw) {
             if ($rNorm === $bNorm) {
+                return true;
+            }
+            if (str_starts_with($rNorm, 'dmt') && str_starts_with($bNorm, 'dmt')) {
                 return true;
             }
             if (str_starts_with($rNorm, 'frmengajar') && (str_starts_with($bNorm, 'frmengajar') || str_contains($bRaw, 'fr mengajar'))) {
@@ -120,9 +131,26 @@ class DashboardMonitoringTahunanController extends Controller
             return false;
         };
 
+        $isRegulerRecord = function ($r) use ($regulerPrefixes) {
+            if ($r->program_type === 'reguler') {
+                return true;
+            }
+            $notes = strtoupper(trim((string) ($r->notes ?: $r->nama_pelatihan)));
+            foreach ($regulerPrefixes as $prefix) {
+                if (str_starts_with($notes, $prefix)) {
+                    return true;
+                }
+            }
+            return false;
+        };
+
         // Filter training records by current tab, year, and cumulative month
-        $filteredRecords = $allTrainingRecords->filter(function ($r) use ($tab, $year, $selectedMonthNum) {
-            if ($r->program_type !== $tab) {
+        $filteredRecords = $allTrainingRecords->filter(function ($r) use ($tab, $year, $selectedMonthNum, $isRegulerRecord) {
+            $isReg = $isRegulerRecord($r);
+            if ($tab === 'reguler' && ! $isReg) {
+                return false;
+            }
+            if ($tab === 'non_reguler' && $isReg) {
                 return false;
             }
 
