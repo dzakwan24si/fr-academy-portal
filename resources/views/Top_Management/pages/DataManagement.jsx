@@ -187,6 +187,7 @@ const DataManagement = () => {
   // Import Modal State
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
   const [importFile, setImportFile] = useState(null);
+  const [importMode, setImportMode] = useState('append');
   const [importLoading, setImportLoading] = useState(false);
   const [importMessage, setImportMessage] = useState(null);
 
@@ -200,6 +201,7 @@ const DataManagement = () => {
     try {
       const form = new FormData();
       form.append('file', importFile);
+      form.append('import_mode', importMode);
 
       const response = await fetch('/administrasi/program-batch/import', {
         method: 'POST',
@@ -2467,11 +2469,15 @@ const DataManagement = () => {
                 </div>
               </div>
 
-              {/* File Input */}
+              {/* File Input / Dropzone */}
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">Pilih File Excel / CSV <span className="text-red-500">*</span></label>
-                <div className="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-[#4B6A34] transition-colors bg-slate-50/50">
-                  <FileSpreadsheet size={32} className="text-slate-400 mx-auto mb-2" />
+                <label className="block text-xs font-semibold text-[#374151] mb-2">Pilih File Excel / CSV <span className="text-red-500">*</span></label>
+                <label className="border-2 border-dashed border-[#CBD5E1] hover:border-[#4B6A34] rounded-xl p-6 text-center cursor-pointer transition-colors bg-[#F9FAFB] block">
+                  <FileSpreadsheet size={40} className="text-[#4B6A34] mx-auto mb-2" />
+                  <p className="text-xs font-semibold text-[#18181B]">
+                    {importFile ? importFile.name : 'Klik atau seret file Excel/CSV ke sini'}
+                  </p>
+                  <p className="text-[11px] text-[#71717A] mt-1">Format: .xlsx, .csv, .txt (Maks 20 MB)</p>
                   <input
                     type="file"
                     accept=".csv,.xlsx,.txt"
@@ -2480,19 +2486,57 @@ const DataManagement = () => {
                       setImportFile(e.target.files[0] || null);
                       setImportMessage(null);
                     }}
-                    className="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-[#4B6A34] hover:file:bg-emerald-100 cursor-pointer"
+                    className="hidden"
                   />
-                  <p className="text-[11px] text-slate-400 mt-2">Maksimal ukuran file: 20MB (.xlsx, .csv)</p>
+                </label>
+              </div>
+
+              {/* Mode Import Selection */}
+              <div>
+                <label className="block text-xs font-semibold text-[#374151] mb-2">Mode Import</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className={`flex items-start gap-2.5 p-3 border rounded-xl cursor-pointer transition-colors ${importMode === 'append' ? 'border-[#4B6A34] bg-[#F0F5EB]/30' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>
+                    <input
+                      type="radio"
+                      name="import_mode"
+                      value="append"
+                      checked={importMode === 'append'}
+                      onChange={() => setImportMode('append')}
+                      className="mt-0.5 text-[#4B6A34] focus:ring-[#4B6A34]"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-[#18181B] block">Tambah / Update</span>
+                      <span className="text-[11px] text-[#71717A]">Update jika batch sama, tambahkan baris baru</span>
+                    </div>
+                  </label>
+
+                  <label className={`flex items-start gap-2.5 p-3 border rounded-xl cursor-pointer transition-colors ${importMode === 'replace' ? 'border-red-500 bg-red-50/30' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>
+                    <input
+                      type="radio"
+                      name="import_mode"
+                      value="replace"
+                      checked={importMode === 'replace'}
+                      onChange={() => setImportMode('replace')}
+                      className="mt-0.5 text-red-600 focus:ring-red-500"
+                    />
+                    <div>
+                      <span className="text-xs font-bold text-red-600 block">Timpa Seluruhnya</span>
+                      <span className="text-[11px] text-[#71717A]">Hapus semua data program jenis ini lalu isi dari file</span>
+                    </div>
+                  </label>
                 </div>
               </div>
 
               {/* Info Format */}
-              <div className="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5 flex items-start gap-3">
-                <Info size={16} className="text-[#4B6A34] shrink-0 mt-0.5" />
-                <div className="text-[11px] text-slate-600 space-y-1">
-                  <p className="font-semibold text-[#4B6A34]">Format Program Reguler & Non-Reguler:</p>
-                  <p className="text-slate-500">Sistem otomatis mendeteksi kolom program reguler (Batch, Mulai/Selesai Program, Promosi Mandor, Fresh Graduate) maupun non-reguler (Jenis Pelatihan, Total Batch, Trainer).</p>
+              <div className="bg-blue-50/60 border border-blue-100 rounded-xl p-3 text-[11px] text-[#334155] space-y-1">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-blue-900 flex items-center gap-1.5">
+                    <Info size={14} className="text-blue-600" /> Deteksi Otomatis Format
+                  </span>
                 </div>
+                <p className="text-[#64748B] text-[10px] leading-relaxed">
+                  Sistem otomatis mengenali file Program Reguler (Training Program, Batch, Periode, Peserta) maupun Non-Reguler (Jenis Pelatihan, TD Total, Lokasi).
+                </p>
               </div>
 
               {/* Footer */}

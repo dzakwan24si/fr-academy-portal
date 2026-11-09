@@ -145,17 +145,17 @@
         @endif
 
         {{-- TOP HEADER BAR --}}
-        <div class="bg-[#1F3E22] text-white rounded-2xl px-5 py-4 shadow-md no-print w-full">
+        <div class="bg-[#1F3E22] text-white rounded-2xl px-5 py-4 shadow-md no-print w-full" style="background-color: #1F3E22 !important; color: #ffffff !important;">
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-3.5">
-                    <div class="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0">
-                        <i data-lucide="sprout" class="w-6 h-6 text-emerald-300"></i>
+                    <div class="w-11 h-11 rounded-xl bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center shrink-0" style="background-color: rgba(16, 185, 129, 0.2) !important; border: 1px solid rgba(52, 211, 153, 0.3) !important;">
+                        <i data-lucide="sprout" class="w-6 h-6 text-emerald-300" style="color: #6ee7b7 !important;"></i>
                     </div>
                     <div>
-                        <h1 class="text-lg md:text-xl font-black tracking-tight text-white flex items-center gap-2">
+                        <h1 class="text-lg md:text-xl font-black tracking-tight text-white flex items-center gap-2" style="color: #ffffff !important;">
                             DASHBOARD TALENT DEVELOPMENT {{ date('Y') }}
                         </h1>
-                        <p class="text-xs text-emerald-200/80 font-medium">
+                        <p class="text-xs text-emerald-200/80 font-medium" style="color: rgba(167, 243, 208, 0.8) !important;">
                             First Resources Group &bull; Talent Management System
                         </p>
                     </div>
@@ -163,33 +163,33 @@
 
                 <div class="flex flex-wrap items-center gap-2">
                     {{-- Download Template --}}
-                    <a href="{{ route('administrasi.profil-talent.template') }}" class="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold text-white transition-all">
-                        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+                    <a href="{{ route('administrasi.profil-talent.template') }}" class="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold text-white transition-all" style="background-color: rgba(255, 255, 255, 0.15) !important; border: 1px solid rgba(255, 255, 255, 0.3) !important; color: #ffffff !important;">
+                        <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5" style="color: #ffffff !important;"></i>
                         <span>Template Excel</span>
                     </a>
 
                     {{-- Export Excel --}}
-                    <a href="{{ route('administrasi.profil-talent.export', request()->query()) }}" class="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold text-white transition-all">
-                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    <a href="{{ route('administrasi.profil-talent.export', request()->query()) }}" class="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold text-white transition-all" style="background-color: rgba(255, 255, 255, 0.15) !important; border: 1px solid rgba(255, 255, 255, 0.3) !important; color: #ffffff !important;">
+                        <i data-lucide="download" class="w-3.5 h-3.5" style="color: #ffffff !important;"></i>
                         <span>Export Excel</span>
                     </a>
 
                     {{-- Import Modal Trigger --}}
-                    <button type="button" onclick="openImportModal()" class="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold text-white transition-all">
-                        <i data-lucide="upload" class="w-3.5 h-3.5 text-emerald-300"></i>
+                    <button type="button" onclick="openImportModal()" class="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold text-white transition-all cursor-pointer" style="background-color: rgba(255, 255, 255, 0.15) !important; border: 1px solid rgba(255, 255, 255, 0.3) !important; color: #ffffff !important;">
+                        <i data-lucide="upload" class="w-3.5 h-3.5 text-emerald-300" style="color: #6ee7b7 !important;"></i>
                         <span>Import CSV/Excel</span>
                     </button>
 
                     {{-- Tambah Data Talent --}}
-                    <button type="button" onclick="openAddModal()" class="inline-flex items-center gap-1.5 rounded-xl bg-[#509c38] hover:bg-[#43832f] text-white px-3.5 py-1.5 text-xs font-bold shadow-sm transition-all">
-                        <i data-lucide="plus" class="w-4 h-4"></i>
+                    <button type="button" onclick="openAddModal()" class="inline-flex items-center gap-1.5 rounded-xl bg-[#509c38] hover:bg-[#43832f] text-white px-3.5 py-1.5 text-xs font-bold shadow-sm transition-all cursor-pointer" style="background-color: #509c38 !important; color: #ffffff !important;">
+                        <i data-lucide="plus" class="w-4 h-4" style="color: #ffffff !important;"></i>
                         <span>+ Tambah Talent</span>
                     </button>
 
                     @if($talents->count() > 0)
                     {{-- Hapus Semua Data --}}
-                    <button type="button" onclick="openDeleteAllModal()" class="inline-flex items-center gap-1.5 rounded-xl border border-rose-400/40 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 px-3 py-1.5 text-xs font-bold transition-all">
-                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    <button type="button" onclick="openDeleteAllModal()" class="inline-flex items-center gap-1.5 rounded-xl border border-rose-400/40 bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 px-3 py-1.5 text-xs font-bold transition-all cursor-pointer" style="background-color: rgba(244, 63, 94, 0.2) !important; border: 1px solid rgba(251, 113, 133, 0.4) !important; color: #fecdd3 !important;">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5" style="color: #fecdd3 !important;"></i>
                         <span>Hapus Semua</span>
                     </button>
                     @endif

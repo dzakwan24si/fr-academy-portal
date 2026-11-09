@@ -266,62 +266,87 @@
 
 {{-- ============================== MODAL: IMPORT TRAINING RECORD ============================== --}}
 <div id="modalImportTrainingRecord" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity" onclick="closeImportModal()"></div>
-    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div class="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity" onclick="closeImportModal()"></div>
+    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden z-10 animate-in fade-in duration-150">
         {{-- Header --}}
-        <div class="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-[#E5E7EB] bg-[#F9FAFB]">
             <div class="flex items-center gap-2.5">
-                <div class="w-9 h-9 rounded-xl bg-emerald-50 text-[#4B6A34] flex items-center justify-center">
-                    <i data-lucide="upload" class="w-5 h-5"></i>
+                <div class="w-8 h-8 rounded-lg bg-emerald-50 text-[#4B6A34] flex items-center justify-center">
+                    <i data-lucide="upload-cloud" class="w-4 h-4"></i>
                 </div>
                 <div>
-                    <h2 class="text-sm font-bold text-slate-800">Import Data Training Record</h2>
-                    <p class="text-xs text-slate-500">Mendukung format file Excel (.xlsx) atau CSV (.csv)</p>
+                    <h2 class="text-base font-bold text-[#18181B]">Import Training Record</h2>
+                    <p class="text-xs text-[#71717A]">Unggah file Excel (.xlsx) atau CSV (.csv)</p>
                 </div>
             </div>
-            <button type="button" onclick="closeImportModal()" class="w-8 h-8 rounded-lg hover:bg-slate-100 flex items-center justify-center text-slate-400 hover:text-slate-600 transition-colors">
-                <i data-lucide="x" class="w-4 h-4"></i>
+            <button type="button" onclick="closeImportModal()" class="p-1 hover:bg-gray-200 rounded-lg text-[#71717A] cursor-pointer">
+                <i data-lucide="x" class="w-5 h-5"></i>
             </button>
         </div>
 
-        <form method="POST" action="{{ route('administrasi.training-record.import') }}" enctype="multipart/form-data" class="p-6 space-y-4">
+        <form method="POST" action="{{ route('administrasi.training-record.import') }}" enctype="multipart/form-data" class="p-6 space-y-5">
             @csrf
 
-            {{-- File Input / Dropzone --}}
+            {{-- File Upload Dropzone --}}
             <div>
-                <label class="block text-xs font-semibold text-slate-700 mb-1.5">Pilih File Excel / CSV <span class="text-red-500">*</span></label>
-                <div class="border-2 border-dashed border-slate-200 rounded-xl p-5 text-center hover:border-[#4B6A34] transition-colors bg-slate-50/50">
-                    <i data-lucide="file-spreadsheet" class="w-8 h-8 text-slate-400 mx-auto mb-2"></i>
-                    <input type="file" name="file" accept=".csv,.xlsx,.txt" required
-                           class="block w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-[#4B6A34] hover:file:bg-emerald-100 cursor-pointer">
-                    <p class="text-[11px] text-slate-400 mt-2">Maksimal ukuran file: 20MB (format .xlsx, .csv)</p>
+                <label class="block text-xs font-semibold text-[#374151] mb-2">Pilih File Excel / CSV <span class="text-red-500">*</span></label>
+                <div class="border-2 border-dashed border-[#CBD5E1] hover:border-[#4B6A34] rounded-xl p-6 text-center cursor-pointer transition-colors bg-[#F9FAFB]"
+                     onclick="document.getElementById('trFileInput').click()">
+                    <i data-lucide="file-spreadsheet" class="w-10 h-10 mx-auto text-[#4B6A34] mb-2"></i>
+                    <p class="text-xs font-semibold text-[#18181B]" id="trFileNameDisplay">Klik atau seret file Excel/CSV ke sini</p>
+                    <p class="text-[11px] text-[#71717A] mt-1">Format: .xlsx, .csv, .txt (Maks 20 MB)</p>
+                    <input type="file" name="file" id="trFileInput" accept=".csv,.xlsx,.txt" required class="hidden"
+                           onchange="handleTrFileSelected(this)">
                 </div>
             </div>
 
-            {{-- Info Format Kolom & Template --}}
-            <div class="bg-emerald-50/70 border border-emerald-100 rounded-xl p-3.5 flex items-start gap-3">
-                <i data-lucide="info" class="w-4 h-4 text-[#4B6A34] flex-shrink-0 mt-0.5"></i>
-                <div class="text-[11px] text-slate-600 space-y-1">
-                    <p class="font-semibold text-[#4B6A34]">Format Kolom Utama yang Dibutuhkan:</p>
-                    <p class="font-mono text-[10px] bg-white/80 p-1.5 rounded border border-emerald-200/50 text-slate-700">NIK, Nama Peserta, Nama Pelatihan, Region, Lokasi Kerja, Gol, Jabatan, Tanggal</p>
-                    <div class="pt-1">
-                        <a href="{{ route('administrasi.training-record.template') }}" class="inline-flex items-center gap-1 font-bold text-[#4B6A34] hover:underline">
-                            <i data-lucide="download" class="w-3.5 h-3.5"></i> Unduh File Template Excel
-                        </a>
-                    </div>
+            <!-- Import Mode Selection -->
+            <div>
+                <label class="block text-xs font-semibold text-[#374151] mb-2">Mode Import</label>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex items-start gap-2.5 p-3 border border-[#E5E7EB] rounded-xl cursor-pointer hover:bg-[#F9FAFB] transition-colors has-[:checked]:border-[#4B6A34] has-[:checked]:bg-[#F0F5EB]/30">
+                        <input type="radio" name="import_mode" value="append" checked class="mt-0.5 text-[#4B6A34] focus:ring-[#4B6A34]">
+                        <div>
+                            <span class="text-xs font-bold text-[#18181B] block">Tambah / Update</span>
+                            <span class="text-[11px] text-[#71717A]">Tambahkan data baru ke database</span>
+                        </div>
+                    </label>
+
+                    <label class="flex items-start gap-2.5 p-3 border border-[#E5E7EB] rounded-xl cursor-pointer hover:bg-[#F9FAFB] transition-colors has-[:checked]:border-red-500 has-[:checked]:bg-red-50/30">
+                        <input type="radio" name="import_mode" value="replace" class="mt-0.5 text-red-600 focus:ring-red-500">
+                        <div>
+                            <span class="text-xs font-bold text-red-600 block">Timpa Seluruhnya</span>
+                            <span class="text-[11px] text-[#71717A]">Hapus semua data training record lalu isi dari file</span>
+                        </div>
+                    </label>
                 </div>
+            </div>
+
+            <!-- Columns Supported Info -->
+            <div class="bg-blue-50/60 border border-blue-100 rounded-xl p-3 text-[11px] text-[#334155] space-y-1">
+                <div class="flex items-center justify-between">
+                    <span class="font-bold text-blue-900 flex items-center gap-1.5">
+                        <i data-lucide="info" class="w-3.5 h-3.5 text-blue-600"></i> Struktur Kolom File
+                    </span>
+                    <a href="{{ route('administrasi.training-record.template') }}" class="text-blue-700 hover:underline font-semibold flex items-center gap-1">
+                        Download Template <i data-lucide="arrow-down-to-line" class="w-3 h-3"></i>
+                    </a>
+                </div>
+                <p class="text-[#64748B] font-mono text-[10px] break-all leading-relaxed">
+                    NIK, Nama, Jenis Kelamin, Nama PT, Department, Lokasi Kerja, Group, Region, Gol, Jabatan, Tgl, Bln, Thn, Jml Hari, Jam Pelatihan, Nama Pelatihan...
+                </p>
             </div>
 
             {{-- Footer Buttons --}}
-            <div class="flex justify-end gap-2.5 pt-2 border-t border-slate-100">
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-[#E5E7EB]">
                 <button type="button" onclick="closeImportModal()"
-                        class="px-4 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors">
+                        class="px-4 py-2 text-xs font-semibold text-[#374151] bg-white border border-[#E5E7EB] rounded-lg hover:bg-[#F9FAFB] transition-colors cursor-pointer">
                     Batal
                 </button>
                 <button type="submit"
-                        class="px-5 py-2 text-xs font-bold text-white bg-[#4B6A34] rounded-xl hover:bg-[#3d572b] transition-colors shadow-xs flex items-center gap-1.5">
+                        class="px-5 py-2 text-xs font-semibold text-white bg-[#4B6A34] rounded-lg hover:bg-[#3d5829] shadow-sm flex items-center gap-2 cursor-pointer">
                     <i data-lucide="upload" class="w-3.5 h-3.5"></i>
-                    <span>Mulai Import Data</span>
+                    <span>Mulai Import</span>
                 </button>
             </div>
         </form>
@@ -500,6 +525,15 @@ function proceedDeleteAll() {
     } else {
         // Step 3 confirmed -> submit form
         document.getElementById('formDeleteAllTrainingRecord').submit();
+    }
+}
+
+function handleTrFileSelected(input) {
+    if (input.files && input.files[0]) {
+        const display = document.getElementById('trFileNameDisplay');
+        if (display) {
+            display.innerText = input.files[0].name;
+        }
     }
 }
 

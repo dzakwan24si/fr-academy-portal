@@ -544,7 +544,11 @@ class ProgramBatchController extends Controller
 
     public function import(Request $request)
     {
-        $request->validate(['file' => 'required|file|mimes:csv,txt,xlsx|max:20480']);
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt,xlsx|max:20480',
+            'import_mode' => 'nullable|string|in:append,replace',
+        ]);
+        $importMode = $request->input('import_mode', 'append');
         $file = $request->file('file');
         $rows = SpreadsheetReader::read($file->getRealPath(), $file->getClientOriginalExtension());
         if (count($rows) < 2) {
@@ -593,6 +597,14 @@ class ProgramBatchController extends Controller
             }
 
             return back()->withErrors(['file' => 'Header tidak dikenali. Gunakan template batch non-reguler atau reguler.']);
+        }
+
+        if ($importMode === 'replace') {
+            if ($table === 'reg') {
+                ProgramReguler::query()->delete();
+            } elseif ($table === 'non') {
+                ProgramNonReguler::query()->delete();
+            }
         }
 
         $imported = 0;
