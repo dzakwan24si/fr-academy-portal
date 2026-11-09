@@ -916,22 +916,22 @@ class DashboardController extends Controller
         foreach ($categories as $cat) {
             $catKey = strtolower($cat);
             $catProgs = $nonReg->filter(function ($p) use ($catKey) {
+                $sub = strtolower(trim((string) ($p->sub_kategori ?? '')));
                 $haystack = strtolower(($p->kategori_pelatihan ?? '').' '.($p->sub_kategori ?? '').' '.($p->jenis_pelatihan ?? ''));
                 if ($catKey === 'estate') {
-                    return str_contains($haystack, 'estate') || str_contains($haystack, 'tanaman') || str_contains($haystack, 'agronomi') || str_contains($haystack, 'kebun')
-                        || (! str_contains($haystack, 'mill') && ! str_contains($haystack, 'pabrik') && ! str_contains($haystack, 'traction') && ! str_contains($haystack, 'traksi') && ! str_contains($haystack, 'downstream') && ! str_contains($haystack, 'administrasi') && ! str_contains($haystack, 'admin'));
+                    return $sub === 'estate' || str_contains($haystack, 'estate') || str_contains($haystack, 'tanaman') || str_contains($haystack, 'agronomi') || str_contains($haystack, 'kebun');
                 }
                 if ($catKey === 'mill') {
-                    return str_contains($haystack, 'mill') || str_contains($haystack, 'pabrik') || str_contains($haystack, 'processing');
+                    return $sub === 'mill' || str_contains($haystack, 'mill') || str_contains($haystack, 'pabrik') || str_contains($haystack, 'processing');
                 }
                 if ($catKey === 'traction') {
-                    return str_contains($haystack, 'traction') || str_contains($haystack, 'traksi') || str_contains($haystack, 'bengkel') || str_contains($haystack, 'workshop');
+                    return in_array($sub, ['traksi', 'traction']) || str_contains($haystack, 'traction') || str_contains($haystack, 'traksi') || str_contains($haystack, 'bengkel') || str_contains($haystack, 'workshop');
                 }
                 if ($catKey === 'downstream') {
-                    return str_contains($haystack, 'downstream') || str_contains($haystack, 'refinery') || str_contains($haystack, 'biodiesel');
+                    return $sub === 'downstream' || str_contains($haystack, 'downstream') || str_contains($haystack, 'refinery') || str_contains($haystack, 'biodiesel');
                 }
                 if ($catKey === 'administrasi') {
-                    return str_contains($haystack, 'administrasi') || str_contains($haystack, 'admin') || str_contains($haystack, 'finance') || str_contains($haystack, 'accounting') || str_contains($haystack, 'hrd') || str_contains($haystack, 'ktu');
+                    return in_array($sub, ['administrasi', 'admin']) || str_contains($haystack, 'administrasi') || str_contains($haystack, 'admin') || str_contains($haystack, 'finance') || str_contains($haystack, 'accounting') || str_contains($haystack, 'hrd') || str_contains($haystack, 'ktu');
                 }
 
                 return false;
@@ -948,8 +948,7 @@ class DashboardController extends Controller
             $unlinkedRecs = $recordsWithoutProgId->filter(function ($r) use ($catKey) {
                 $notes = strtolower((string) ($r->notes ?: $r->nama_pelatihan));
                 if ($catKey === 'estate') {
-                    return str_contains($notes, 'estate') || str_contains($notes, 'tanaman') || str_contains($notes, 'agronomi')
-                        || (! str_contains($notes, 'mill') && ! str_contains($notes, 'pabrik') && ! str_contains($notes, 'traction') && ! str_contains($notes, 'traksi') && ! str_contains($notes, 'downstream') && ! str_contains($notes, 'administrasi') && ! str_contains($notes, 'admin'));
+                    return str_contains($notes, 'estate') || str_contains($notes, 'tanaman') || str_contains($notes, 'agronomi') || str_contains($notes, 'kebun');
                 }
                 if ($catKey === 'mill') {
                     return str_contains($notes, 'mill') || str_contains($notes, 'pabrik');

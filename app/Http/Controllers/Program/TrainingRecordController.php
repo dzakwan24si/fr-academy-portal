@@ -791,46 +791,8 @@ class TrainingRecordController extends Controller
             return $aliasMatch;
         }
 
-        // Fallback 5: Auto-create missing unbudgeted ProgramNonReguler entry with 0 target
-        $rawPelatihanName = trim((string) ($item['nama pelatihan'] ?? $item['training program'] ?? $item['program'] ?? ''));
-        if ($rawPelatihanName === '') {
-            return null;
-        }
-
-        try {
-            $formattedRegion = $rowRegion ? ($rowRegion === 'riau' ? 'Riau' : ($rowRegion === 'kalbar' ? 'Kalbar' : 'Kaltim FR')) : 'Riau';
-            $isSoft = str_contains(strtolower($rawPelatihanName), 'soft') || str_contains(strtolower($rawPelatihanName), 'leadership') || str_contains(strtolower($rawPelatihanName), 'managerial');
-
-            $newNonReg = ProgramNonReguler::create([
-                'jenis_pelatihan' => $rawPelatihanName,
-                'kategori_pelatihan' => $isSoft ? 'Managerial and Leadership' : 'Technical',
-                'sub_kategori' => $isSoft ? 'Softskill' : 'Technical',
-                'region' => $formattedRegion,
-                'trainer' => $item['instruktur'] ?? 'Internal',
-                'lokasi_training' => $item['lokasi kerja'] ?? 'FR Academy',
-                'tahun' => ! empty($item['tahun']) ? (int) $item['tahun'] : (! empty($item['thn']) ? (int) $item['thn'] : (int) date('Y')),
-                'TARGET_BATCH' => 0,
-                'TARGET_PESERTA' => 0,
-                'target_total' => 0,
-                'total_batch' => 0,
-            ]);
-
-            $id = $newNonReg->getKey();
-            $newAct = [
-                'type' => 'non_reguler',
-                'sub_type' => $isSoft ? 'soft_skill' : 'teknikal',
-                'type_label' => $isSoft ? 'Non Reguler - Soft Skill' : 'Non Reguler - Teknikal',
-                'id' => $id,
-                'name' => $newNonReg->jenis_pelatihan,
-                'model' => $newNonReg,
-            ];
-
-            $activities->put('non_reguler:'.$id, $newAct);
-
-            return $newAct;
-        } catch (\Exception $e) {
-            return null;
-        }
+        // Program tidak ditemukan di master program: tidak di-auto-create, kembalikan null
+        return null;
     }
 
     private function matchActivityNames(string $inputName, string $activityName): bool
@@ -980,16 +942,6 @@ class TrainingRecordController extends Controller
 
         $progType = $matched['type'] ?? null;
         $progId = $matched['id'] ?? null;
-
-        if (! $progType) {
-            $regNonReg = strtolower(trim((string) ($item['reg / non reg'] ?? '')));
-            $notes = strtoupper(trim((string) ($item['keterangan'] ?? '')));
-            $pelatihan = strtoupper(trim((string) ($item['nama pelatihan'] ?? '')));
-            $isReg = ($regNonReg === 'reguler')
-                || preg_match('/\b(FAT|MAT|TAT|AAT|DMT|ECT|PMT|PKT|OAT)\b/', $notes)
-                || preg_match('/\b(FAT|MAT|TAT|AAT|DMT|ECT|PMT|PKT|OAT)\b/', $pelatihan);
-            $progType = $isReg ? 'reguler' : 'non_reguler';
-        }
 
         return [
             'program_type' => $progType,
