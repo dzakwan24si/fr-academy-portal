@@ -1048,6 +1048,9 @@
                     <div>
                         <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Pilih File CSV <span class="text-red-500">*</span></label>
                         <input type="file" name="file" accept=".csv" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 font-medium transition-all" required>
+                        <p class="text-[11px] text-slate-500 mt-1.5 font-medium">
+                            Kolom wajib CSV: <span class="font-bold text-slate-700">No, Employee ID, Employee Name, Jabatan, Unit, Region</span>.
+                        </p>
                     </div>
                 </div>
                 

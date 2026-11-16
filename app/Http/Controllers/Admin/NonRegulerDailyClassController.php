@@ -265,7 +265,98 @@ class NonRegulerDailyClassController extends Controller
         ]);
 
         try {
-            // Save the batch information to the DailyClass (Wadah)
+            $path = $request->file('file')->getRealPath();
+            $spreadsheet = IOFactory::load($path);
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray();
+
+            if (empty($rows)) {
+                return back()->with('error', 'Gagal import: File CSV kosong.');
+            }
+
+            // Cari baris header dan cocokkan kolom
+            $headerRowIndex = null;
+            $headerMap = [];
+
+            foreach ($rows as $index => $row) {
+                $tempMap = [];
+                foreach ($row as $colIdx => $colName) {
+                    if ($colName === null) {
+                        continue;
+                    }
+
+                    $colClean = strtolower(trim((string) $colName));
+                    $colAlnum = preg_replace('/[^a-z0-9]/', '', $colClean);
+
+                    if ($colAlnum === 'no' || $colAlnum === 'nomor') {
+                        $tempMap['no'] = $colIdx;
+                    } elseif ($colAlnum === 'employeeid' || $colAlnum === 'nik' || str_contains($colAlnum, 'employeeid') || str_contains($colAlnum, 'idkaryawan')) {
+                        $tempMap['nik'] = $colIdx;
+                    } elseif ($colAlnum === 'employeename' || $colAlnum === 'nama' || str_contains($colAlnum, 'employeename') || str_contains($colAlnum, 'namakaryawan') || str_contains($colAlnum, 'namapeserta')) {
+                        $tempMap['name'] = $colIdx;
+                    } elseif ($colAlnum === 'jabatan' || $colAlnum === 'talentto' || str_contains($colAlnum, 'jabatan') || str_contains($colAlnum, 'talent')) {
+                        $tempMap['talent_to'] = $colIdx;
+                    } elseif ($colAlnum === 'unit' || str_contains($colAlnum, 'unit')) {
+                        $tempMap['unit'] = $colIdx;
+                    } elseif ($colAlnum === 'region' || str_contains($colAlnum, 'region')) {
+                        $tempMap['region'] = $colIdx;
+                    }
+                }
+
+                // Baris header terdeteksi jika mengandung Employee ID dan Employee Name
+                if (isset($tempMap['nik']) && isset($tempMap['name'])) {
+                    $headerRowIndex = $index;
+                    $headerMap = $tempMap;
+                    break;
+                }
+            }
+
+            // Daftar kolom wajib
+            $requiredColumns = [
+                'no' => 'No',
+                'nik' => 'Employee ID',
+                'name' => 'Employee Name',
+                'talent_to' => 'Jabatan',
+                'unit' => 'Unit',
+                'region' => 'Region',
+            ];
+
+            if ($headerRowIndex === null) {
+                return back()->with('error', 'Gagal import: Format kolom file CSV tidak sesuai. File wajib memiliki kolom: No, Employee ID, Employee Name, Jabatan, Unit, Region.');
+            }
+
+            // Validasi apakah semua kolom wajib ada di file
+            $missingColumns = [];
+            foreach ($requiredColumns as $key => $label) {
+                if (! isset($headerMap[$key])) {
+                    $missingColumns[] = $label;
+                }
+            }
+
+            if (! empty($missingColumns)) {
+                return back()->with('error', 'Gagal import: Kolom berikut tidak ditemukan pada file CSV: '.implode(', ', $missingColumns).'. Harap gunakan format template yang sesuai: No, Employee ID, Employee Name, Jabatan, Unit, Region.');
+            }
+
+            // Hapus baris sampai dengan baris header
+            for ($i = 0; $i <= $headerRowIndex; $i++) {
+                unset($rows[$i]);
+            }
+
+            // Filter baris data yang valid (memiliki NIK dan Nama)
+            $validDataRows = [];
+            foreach ($rows as $r) {
+                $checkNik = trim((string) ($r[$headerMap['nik']] ?? ''));
+                $checkName = trim((string) ($r[$headerMap['name']] ?? ''));
+                if (! empty($checkNik) || ! empty($checkName)) {
+                    $validDataRows[] = $r;
+                }
+            }
+
+            if (empty($validDataRows)) {
+                return back()->with('error', 'Gagal import: File CSV tidak memiliki baris data peserta yang valid.');
+            }
+
+            // Simpan detail batch ke DailyClass hanya jika file CSV sudah tervalidasi dengan benar
             $dailyClass->update([
                 'date' => $request->date,
                 'end_date' => $request->end_date,
@@ -278,44 +369,6 @@ class NonRegulerDailyClassController extends Controller
                 'region' => $request->region,
             ]);
 
-            $path = $request->file('file')->getRealPath();
-            $spreadsheet = IOFactory::load($path);
-            $sheet = $spreadsheet->getActiveSheet();
-            $rows = $sheet->toArray();
-
-            // Find header row dynamically (some templates have titles in rows 1-4)
-            $headerRowIndex = 0;
-            $headerMap = ['nik' => 1, 'name' => 2, 'talent_to' => 3, 'unit' => 4, 'region' => 5]; // default map
-            foreach ($rows as $index => $row) {
-                // Strip all spaces and newlines for robust checking
-                $rowString = strtolower(preg_replace('/\s+/', '', implode('', array_filter(array_map(fn ($v) => trim((string) $v), $row)))));
-
-                if (str_contains($rowString, 'employeeid') || str_contains($rowString, 'nik') || str_contains($rowString, 'employeename')) {
-                    $headerRowIndex = $index;
-                    // Map headers dynamically
-                    foreach ($row as $colIdx => $colName) {
-                        $colClean = strtolower(preg_replace('/\s+/', '', (string) $colName));
-                        if (str_contains($colClean, 'employeeid') || str_contains($colClean, 'nik')) {
-                            $headerMap['nik'] = $colIdx;
-                        } elseif (str_contains($colClean, 'name') || str_contains($colClean, 'nama')) {
-                            $headerMap['name'] = $colIdx;
-                        } elseif (str_contains($colClean, 'talent') || str_contains($colClean, 'jabatan') || str_contains($colClean, 'posisi') || str_contains($colClean, 'role')) {
-                            $headerMap['talent_to'] = $colIdx;
-                        } elseif (str_contains($colClean, 'unit')) {
-                            $headerMap['unit'] = $colIdx;
-                        } elseif (str_contains($colClean, 'region') || str_contains($colClean, 'asal')) {
-                            $headerMap['region'] = $colIdx;
-                        }
-                    }
-                    break;
-                }
-            }
-
-            // Remove all rows up to and including the header row
-            for ($i = 0; $i <= $headerRowIndex; $i++) {
-                unset($rows[$i]);
-            }
-
             $importedCount = 0;
 
             // Build dates array for attendances based on the inputted date
@@ -327,17 +380,12 @@ class NonRegulerDailyClassController extends Controller
             }
 
             DB::beginTransaction();
-            foreach ($rows as $index => $row) {
-                // If it's empty row, skip (check the dynamic nik and name indices)
-                if (empty(trim($row[$headerMap['nik']] ?? '')) && empty(trim($row[$headerMap['name']] ?? ''))) {
-                    continue;
-                }
-
-                $employeeId = trim($row[$headerMap['nik']] ?? '');
-                $employeeName = trim($row[$headerMap['name']] ?? '');
-                $talentTo = trim($row[$headerMap['talent_to']] ?? '');
-                $unit = trim($row[$headerMap['unit']] ?? '');
-                $region = trim($row[$headerMap['region']] ?? '');
+            foreach ($validDataRows as $row) {
+                $employeeId = trim((string) ($row[$headerMap['nik']] ?? ''));
+                $employeeName = trim((string) ($row[$headerMap['name']] ?? ''));
+                $talentTo = trim((string) ($row[$headerMap['talent_to']] ?? ''));
+                $unit = trim((string) ($row[$headerMap['unit']] ?? ''));
+                $region = trim((string) ($row[$headerMap['region']] ?? ''));
 
                 if (empty($employeeId) || empty($employeeName)) {
                     continue; // Skip if mandatory fields missing
