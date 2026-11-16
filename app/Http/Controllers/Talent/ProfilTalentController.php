@@ -248,18 +248,23 @@ class ProfilTalentController extends Controller
 
         $talent = ProfilTalent::findOrFail($id);
 
-        // Prepare Base64 Logo for DomPDF to avoid path/network issues
+        $isHtml = $request->query('html') == '1' || $request->query('print') == '1';
+        $hasGd = extension_loaded('gd');
+
+        // Prepare Base64 Logo (hanya jika ekstensi GD aktif atau jika dilihat via browser)
         $logoBase64 = null;
-        $logoPath = public_path('images/logofr.png');
-        if (file_exists($logoPath)) {
-            $logoData = @file_get_contents($logoPath);
-            if ($logoData !== false) {
-                $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+        if ($hasGd || $isHtml) {
+            $logoPath = public_path('images/logofr.png');
+            if (file_exists($logoPath)) {
+                $logoData = @file_get_contents($logoPath);
+                if ($logoData !== false) {
+                    $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+                }
             }
         }
 
-        // Prepare Photo (Base64 for DomPDF to ensure flawless embedding)
-        $photoBase64 = $talent->photo_base64;
+        // Prepare Photo (Base64 for DomPDF, memerlukan GD jika di-render oleh DomPDF server)
+        $photoBase64 = ($hasGd || $isHtml) ? $talent->photo_base64 : null;
 
         // Grade evaluation info
         $grade = $talent->evaluation_grade;
@@ -305,7 +310,7 @@ class ProfilTalentController extends Controller
             'desember' => 'Desember',
         ];
 
-        if ($request->query('html') == '1') {
+        if ($isHtml) {
             return view('Administrasi.Pages.Talent.pdf_report', compact(
                 'talent',
                 'logoBase64',

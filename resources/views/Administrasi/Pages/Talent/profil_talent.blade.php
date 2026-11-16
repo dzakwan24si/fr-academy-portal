@@ -344,10 +344,11 @@
                             </button>
 
                             <div class="flex items-center gap-2">
-                                <a href="{{ route('administrasi.profil-talent.export-pdf', $selectedTalent->id) }}" target="_blank"
-                                   class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#509c38] hover:bg-[#43832f] text-white font-bold text-xs py-2 shadow-xs transition-colors">
-                                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
-                                    <span>Export PDF (Summary)</span>
+                                <a href="{{ route('administrasi.profil-talent.export-pdf', ['id' => $selectedTalent->id, 'print' => 1]) }}" target="_blank"
+                                   class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#509c38] hover:bg-[#43832f] text-white font-bold text-xs py-2 shadow-xs transition-colors"
+                                   title="Cetak / Simpan PDF (Lengkap dengan Foto)">
+                                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
+                                    <span>Cetak PDF (Summary)</span>
                                 </a>
 
                                 <button type="button" onclick="openDeleteSingleModal({{ $selectedTalent->id }}, '{{ addslashes($selectedTalent->nama) }}')"
@@ -511,10 +512,10 @@
                                 <span class="text-slate-400">Masa Kerja</span>
                                 <span class="font-bold text-slate-800">{{ $selectedTalent->masa_kerja ?? '-' }}</span>
                             </div>
-                            <div class="flex items-center justify-between border-b border-slate-50 pb-1.5">
-                                <span class="text-slate-400">Alumni</span>
-                                <span class="font-bold text-slate-800 text-right truncate max-w-[170px]" title="{{ $selectedTalent->alumni }}">
-                                    {{ $selectedTalent->alumni ?? '-' }}
+                            <div class="flex items-start justify-between border-b border-slate-50 pb-1.5 gap-2">
+                                <span class="text-slate-400 shrink-0">Alumni</span>
+                                <span class="font-bold text-slate-800 text-right leading-snug" title="{{ $selectedTalent->alumni }}">
+                                    {!! nl2br(e(wordwrap($selectedTalent->alumni ?: '-', 20, "\n", false))) !!}
                                 </span>
                             </div>
                             <div class="flex items-center justify-between border-b border-slate-50 pb-1.5">

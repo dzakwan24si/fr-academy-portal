@@ -31,11 +31,13 @@
 
         /* Card container */
         .card {
-            background-color: #ffffff;
-            border: 1px solid #e2e8f0;
+            background-color: #f0f6ff;
+            background-color: rgba(238, 245, 255, 0.7);
+            border: 1px solid #d0e3fc;
             border-radius: 8px;
             padding: 6px 8px;
             margin-bottom: 5px;
+            page-break-inside: avoid;
         }
         .card-header-title {
             font-size: 7.5pt;
@@ -46,11 +48,13 @@
 
         /* Banner Card */
         .banner-card {
-            border: 1px solid #0b1a30;
+            border: 1px solid #d0e3fc;
             border-radius: 8px;
             overflow: hidden;
-            background-color: #ffffff;
+            background-color: #f0f6ff;
+            background-color: rgba(238, 245, 255, 0.7);
             margin-bottom: 5px;
+            page-break-inside: avoid;
         }
         .banner-header {
             background-color: #0b1a30;
@@ -77,16 +81,110 @@
 
         /* Score Pills */
         .score-pill {
-            border: 1px solid #e2e8f0;
+            border: 1px solid #bfdbfe;
             border-radius: 10px;
             padding: 2px 7px;
             margin-bottom: 2.5px;
             font-size: 6.5pt;
             background-color: #ffffff;
         }
+
+        /* Screen Preview Mode (A4 Centered Sheet) */
+        @media screen {
+            body {
+                background-color: #0b1329;
+                padding-top: 80px;
+                padding-bottom: 40px;
+                margin: 0;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                min-height: 100vh;
+            }
+            .a4-page {
+                width: 210mm;
+                min-height: 297mm;
+                max-width: 210mm;
+                background-color: #ffffff;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7);
+                border-radius: 4px;
+                padding: 7mm 8mm;
+                margin: 0 auto;
+                box-sizing: border-box;
+            }
+        }
+
+        /* Print Mode */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 6mm 8mm;
+            }
+            .no-print {
+                display: none !important;
+            }
+            html, body {
+                background: #ffffff !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
+            .a4-page {
+                width: 100% !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                box-shadow: none !important;
+                border-radius: 0 !important;
+                page-break-after: avoid;
+                page-break-inside: avoid;
+            }
+        }
     </style>
 </head>
 <body>
+
+    @if(request()->query('html') == '1' || request()->query('print') == '1')
+    {{-- TOP PREVIEW & PRINT BAR (Matching Exact Design) --}}
+    <div class="no-print" style="position: fixed; top: 0; left: 0; right: 0; height: 64px; background-color: #0b1329; border-bottom: 1px solid #1e293b; z-index: 99999; display: flex; align-items: center; justify-content: space-between; padding: 0 24px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+        {{-- Left: Icon & Title --}}
+        <div style="display: flex; align-items: center; gap: 14px;">
+            <div style="width: 42px; height: 42px; border-radius: 10px; background-color: #14532d; display: flex; align-items: center; justify-content: center; color: #4ade80; flex-shrink: 0;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+            </div>
+            <div>
+                <div style="color: #ffffff; font-weight: 800; font-size: 14px; letter-spacing: 0.5px;">
+                    PRATINJAU CETAK LAPORAN PDF A4
+                </div>
+                <div style="color: #94a3b8; font-size: 11.5px; margin-top: 2px;">
+                    Seluruh card telah diperbesar secara presisi, teks mudah dibaca &amp; pas penuh 1 halaman A4.
+                </div>
+            </div>
+        </div>
+
+        {{-- Right: Actions --}}
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button onclick="window.print()" style="background-color: #2e7d32; hover:background-color: #1b5e20; color: #ffffff; border: none; border-radius: 8px; padding: 9px 18px; font-size: 12.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 2px 8px rgba(46, 125, 50, 0.4); font-family: inherit;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                <span>Simpan PDF / Cetak</span>
+            </button>
+
+            <button onclick="window.close()" style="background-color: #1e293b; border: 1px solid #334155; color: #ffffff; border-radius: 8px; padding: 9px 18px; font-size: 12.5px; font-weight: 700; cursor: pointer; font-family: inherit;">
+                Tutup
+            </button>
+        </div>
+    </div>
+    @endif
+
+    {{-- A4 PAGE SHEET CONTAINER --}}
+    <div class="a4-page">
 
     {{-- 1. TOP HEADER BANNER (Navy Background) --}}
     <div style="background-color: #0b1a30; border-radius: 10px; padding: 10px 14px; margin-bottom: 6px;">
@@ -170,8 +268,8 @@
                             <td style="color: #0f172a; font-weight: bold; padding: 1.5px 0;">: {{ $talent->masa_kerja ? (str_contains(strtolower($talent->masa_kerja), 'tahun') ? $talent->masa_kerja : $talent->masa_kerja . ' Tahun') : '-' }}</td>
                         </tr>
                         <tr>
-                            <td style="color: #64748b; padding: 1.5px 0;">&bull; Alumni</td>
-                            <td style="color: #0f172a; font-weight: bold; padding: 1.5px 0;">: {{ $talent->alumni ?: '-' }}</td>
+                            <td style="color: #64748b; padding: 1.5px 0; vertical-align: top;">&bull; Alumni</td>
+                            <td style="color: #0f172a; font-weight: bold; padding: 1.5px 0; vertical-align: top;">: {!! nl2br(e(wordwrap($talent->alumni ?: '-', 20, "\n", false))) !!}</td>
                         </tr>
                     </table>
                 </div>
@@ -484,6 +582,8 @@
             </tr>
         </table>
     </div>
+
+    </div> <!-- /.a4-page -->
 
 </body>
 </html>
