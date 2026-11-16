@@ -232,40 +232,9 @@ class ExcelExporter
         array $dataRows = [],
         string $sheetTitle = 'Daftar Hadir'
     ): StreamedResponse {
-        // Fallback generator ke CSV jika server tidak mendukung ZipArchive/Excel
-        $downloadCsv = function () use ($filename, $title, $subtitle, $details, $headers, $dataRows) {
-            $csvFilename = preg_replace('/\.[^.]+$/', '', $filename).'.csv';
-            $responseHeaders = [
-                'Content-Type' => 'text/csv; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="'.$csvFilename.'"',
-                'Cache-Control' => 'max-age=0, must-revalidate',
-                'Pragma' => 'public',
-            ];
-
-            return new StreamedResponse(function () use ($title, $subtitle, $details, $headers, $dataRows) {
-                if (ob_get_length()) {
-                    @ob_end_clean();
-                }
-                $handle = fopen('php://output', 'w');
-                // UTF-8 BOM
-                fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
-                fputcsv($handle, [$title]);
-                fputcsv($handle, [$subtitle]);
-                fputcsv($handle, []);
-                foreach ($details as $d) {
-                    fputcsv($handle, $d);
-                }
-                fputcsv($handle, []);
-                fputcsv($handle, $headers);
-                foreach ($dataRows as $row) {
-                    fputcsv($handle, (array) $row);
-                }
-                fclose($handle);
-            }, 200, $responseHeaders);
-        };
-
-        if (! class_exists('\ZipArchive') || str_ends_with(strtolower($filename), '.csv')) {
-            return $downloadCsv();
+        // Jika server tidak memiliki ZipArchive (tidak bisa membuat .xlsx), gunakan XML Spreadsheet (.xls) yang sudah diformat penuh tanpa butuh zip
+        if (! class_exists('\ZipArchive')) {
+            return self::downloadXmlSpreadsheet($filename, $title, $subtitle, $details, $headers, $dataRows, $sheetTitle);
         }
 
         try {
@@ -438,9 +407,118 @@ class ExcelExporter
                 $writer->save('php://output');
             }, 200, $responseHeaders);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('Excel generation failed, falling back to CSV: '.$e->getMessage());
+            \Illuminate\Support\Facades\Log::warning('Excel .xlsx generation failed, falling back to formatted XML Spreadsheet: '.$e->getMessage());
 
-            return $downloadCsv();
+            return self::downloadXmlSpreadsheet($filename, $title, $subtitle, $details, $headers, $dataRows, $sheetTitle);
         }
+    }
+
+    /**
+     * Download formatted Excel spreadsheet using XML Spreadsheet 2003 format (.xls).
+     * This requires ZERO server extensions (no ZipArchive, no GD) and opens natively in Excel with full formatting, colors, and borders.
+     */
+    public static function downloadXmlSpreadsheet(
+        string $filename,
+        string $title,
+        string $subtitle,
+        array $details,
+        array $headers,
+        array $dataRows = [],
+        string $sheetTitle = 'Daftar Hadir'
+    ): StreamedResponse {
+        $xlsFilename = preg_replace('/\.[^.]+$/', '', $filename).'.xls';
+        $numCols = count($headers);
+        $mergeAcross = max(0, $numCols - 1);
+
+        $responseHeaders = [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$xlsFilename.'"',
+            'Cache-Control' => 'max-age=0, must-revalidate',
+            'Pragma' => 'public',
+        ];
+
+        return new StreamedResponse(function () use ($title, $subtitle, $details, $headers, $dataRows, $sheetTitle, $numCols, $mergeAcross) {
+            if (ob_get_length()) {
+                @ob_end_clean();
+            }
+
+            echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+            echo "<?mso-application progid=\"Excel.Sheet\"?>\n";
+            echo "<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"\n";
+            echo " xmlns:o=\"urn:schemas-microsoft-com:office:office\"\n";
+            echo " xmlns:x=\"urn:schemas-microsoft-com:office:excel\"\n";
+            echo " xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n";
+            echo " xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n";
+            echo " <Styles>\n";
+            echo "  <Style ss:ID=\"Default\" ss:Name=\"Normal\"><Alignment ss:Vertical=\"Center\"/><Borders/><Font ss:FontName=\"Calibri\" ss:Size=\"11\" ss:Color=\"#000000\"/></Style>\n";
+            echo "  <Style ss:ID=\"Title\"><Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\"/><Font ss:FontName=\"Calibri\" ss:Size=\"14\" ss:Bold=\"1\" ss:Color=\"#111827\"/></Style>\n";
+            echo "  <Style ss:ID=\"Subtitle\"><Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\"/><Font ss:FontName=\"Calibri\" ss:Size=\"10\" ss:Italic=\"1\" ss:Color=\"#6B7280\"/></Style>\n";
+            echo "  <Style ss:ID=\"MetaLabel\"><Alignment ss:Horizontal=\"Left\" ss:Vertical=\"Center\"/><Font ss:FontName=\"Calibri\" ss:Size=\"10\" ss:Bold=\"1\" ss:Color=\"#374151\"/></Style>\n";
+            echo "  <Style ss:ID=\"MetaVal\"><Alignment ss:Horizontal=\"Left\" ss:Vertical=\"Center\"/><Font ss:FontName=\"Calibri\" ss:Size=\"10\" ss:Color=\"#111827\"/></Style>\n";
+            echo "  <Style ss:ID=\"Header\"><Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\" ss:WrapText=\"1\"/><Borders><Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#000000\"/><Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#000000\"/><Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#000000\"/><Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#000000\"/></Borders><Font ss:FontName=\"Calibri\" ss:Size=\"11\" ss:Bold=\"1\" ss:Color=\"#FFFFFF\"/><Interior ss:Color=\"#008000\" ss:Pattern=\"Solid\"/></Style>\n";
+            echo "  <Style ss:ID=\"Data\"><Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\"/><Borders><Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/></Borders><Font ss:FontName=\"Calibri\" ss:Size=\"10\"/></Style>\n";
+            echo " </Styles>\n";
+
+            $cleanSheetTitle = htmlspecialchars(substr($sheetTitle, 0, 31), ENT_XML1);
+            echo " <Worksheet ss:Name=\"{$cleanSheetTitle}\">\n";
+            echo "  <Table ss:DefaultColumnWidth=\"60\" ss:DefaultRowHeight=\"20\">\n";
+
+            // Define column widths
+            $colWidths = [40, 110, 170, 100, 90, 90, 120, 110];
+            for ($i = 0; $i < $numCols; $i++) {
+                $w = $colWidths[$i] ?? 100;
+                echo "   <Column ss:Width=\"{$w}\"/>\n";
+            }
+
+            // Title
+            $titleSafe = htmlspecialchars($title, ENT_XML1);
+            echo "   <Row ss:Height=\"26\"><Cell ss:MergeAcross=\"{$mergeAcross}\" ss:StyleID=\"Title\"><Data ss:Type=\"String\">{$titleSafe}</Data></Cell></Row>\n";
+
+            // Subtitle
+            $subSafe = htmlspecialchars($subtitle, ENT_XML1);
+            echo "   <Row ss:Height=\"18\"><Cell ss:MergeAcross=\"{$mergeAcross}\" ss:StyleID=\"Subtitle\"><Data ss:Type=\"String\">{$subSafe}</Data></Cell></Row>\n";
+            echo "   <Row ss:Height=\"8\"/>\n";
+
+            // Details rows
+            $rightMerge = max(0, $numCols - 5);
+            foreach ($details as $d) {
+                $d0 = htmlspecialchars((string) ($d[0] ?? ''), ENT_XML1);
+                $d1 = htmlspecialchars((string) ($d[1] ?? ''), ENT_XML1);
+                $d2 = htmlspecialchars((string) ($d[2] ?? ''), ENT_XML1);
+                $d3 = htmlspecialchars((string) ($d[3] ?? ''), ENT_XML1);
+                echo "   <Row ss:Height=\"20\">\n";
+                echo "    <Cell ss:StyleID=\"MetaLabel\"><Data ss:Type=\"String\">{$d0}</Data></Cell>\n";
+                echo "    <Cell ss:MergeAcross=\"2\" ss:StyleID=\"MetaVal\"><Data ss:Type=\"String\">{$d1}</Data></Cell>\n";
+                echo "    <Cell ss:StyleID=\"MetaLabel\"><Data ss:Type=\"String\">{$d2}</Data></Cell>\n";
+                echo "    <Cell ss:MergeAcross=\"{$rightMerge}\" ss:StyleID=\"MetaVal\"><Data ss:Type=\"String\">{$d3}</Data></Cell>\n";
+                echo "   </Row>\n";
+            }
+
+            echo "   <Row ss:Height=\"10\"/>\n";
+
+            // Header Row
+            echo "   <Row ss:Height=\"28\">\n";
+            foreach ($headers as $h) {
+                $hSafe = htmlspecialchars((string) $h, ENT_XML1);
+                echo "    <Cell ss:StyleID=\"Header\"><Data ss:Type=\"String\">{$hSafe}</Data></Cell>\n";
+            }
+            echo "   </Row>\n";
+
+            // Data Rows
+            foreach ($dataRows as $row) {
+                echo "   <Row ss:Height=\"22\">\n";
+                foreach ((array) $row as $val) {
+                    $valStr = (string) $val;
+                    $dataType = (is_numeric($val) && strlen($valStr) < 10 && ! str_starts_with($valStr, '0')) ? 'Number' : 'String';
+                    $valSafe = htmlspecialchars($valStr, ENT_XML1);
+                    echo "    <Cell ss:StyleID=\"Data\"><Data ss:Type=\"{$dataType}\">{$valSafe}</Data></Cell>\n";
+                }
+                echo "   </Row>\n";
+            }
+
+            echo "  </Table>\n";
+            echo " </Worksheet>\n";
+            echo "</Workbook>\n";
+        }, 200, $responseHeaders);
     }
 }
