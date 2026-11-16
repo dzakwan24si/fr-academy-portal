@@ -1177,7 +1177,7 @@ class NonRegulerDailyClassController extends Controller
         foreach ($attendances as $attendance) {
             $trainee = $attendance->trainee;
             if ($trainee) {
-                // Coba cari record di tabel training_records yang sudah dibuat oleh Job (prioritas NIK, fallback Nama persis)
+                // Coba cari record di tabel training_records yang sudah dibuat oleh Job (prioritas NIK, fallback Nama persis) untuk bulan & tahun yang sama
                 $trQuery = DB::table('training_records')
                     ->where(function ($q) use ($trainee) {
                         $q->where('participant_identifier', $trainee->nik);
@@ -1185,20 +1185,9 @@ class NonRegulerDailyClassController extends Controller
                             $q->orWhere(DB::raw('LOWER(TRIM(participant_name))'), strtolower(trim($trainee->name)));
                         }
                     })
-                    ->where('nama_pelatihan', $namaPelatihan);
-
-                if ($dailyClass->training_program_id) {
-                    $trQuery->orWhere(function ($q) use ($trainee, $dailyClass) {
-                        $q->where(function ($subQ) use ($trainee) {
-                            $subQ->where('participant_identifier', $trainee->nik);
-                            if (! empty(trim($trainee->name))) {
-                                $subQ->orWhere(DB::raw('LOWER(TRIM(participant_name))'), strtolower(trim($trainee->name)));
-                            }
-                        })
-                        ->where('program_id', $dailyClass->training_program_id)
-                        ->where('program_type', 'non_reguler');
-                    });
-                }
+                    ->where('nama_pelatihan', $namaPelatihan)
+                    ->where('bulan', $bulanAbsen)
+                    ->where('tahun', $tahunAbsen);
 
                 $trRecord = $trQuery->first();
 
