@@ -37,7 +37,7 @@ class NonRegulerDailyClassController extends Controller
             $query->where('training_program_id', $request->program_id);
         }
 
-        $pastClasses = $query->orderBy('completed_at', 'desc')->orderBy('end_date', 'desc')->get();
+        $pastClasses = $query->orderBy('completed_at', 'desc')->orderBy('end_date', 'desc')->paginate(15)->withQueryString();
         $programs = TrainingProgram::where('type', 'non-reguler')->get();
 
         return view('admin.non-reguler.history.index', compact('pastClasses', 'programs'));
@@ -110,6 +110,19 @@ class NonRegulerDailyClassController extends Controller
             'title.required' => 'Nama pelatihan wajib dipilih.',
         ]);
 
+        // Cegah program duplikat jika nama pelatihan dan region-nya sama pada kategori ini
+        $exists = DailyClass::where('training_program_id', $validated['training_program_id'])
+            ->where('title', $validated['title'])
+            ->where('region', $validated['region'])
+            ->where(function ($q) {
+                $q->whereNull('is_completed')->orWhere('is_completed', false);
+            })
+            ->exists();
+
+        if ($exists) {
+            return back()->withInput()->with('error', "Program \"{$validated['title']}\" untuk region \"{$validated['region']}\" sudah ada dan masih aktif. Tidak boleh membuat program yang sama.");
+        }
+
         // date and trainer_name will be null initially
         $dailyClass = DailyClass::create($validated);
 
@@ -175,6 +188,23 @@ class NonRegulerDailyClassController extends Controller
         $validated['material_url'] = $request->input('material_url') ?: null;
         $validated['mess_url'] = $request->input('mess_url') ?: null;
         $validated['certificate_link'] = $request->input('certificate_link') ?: null;
+
+        // Cegah duplikasi saat edit: jika judul dan region sudah ada di kelas lain yang aktif
+        if (! empty($validated['title']) && ! empty($validated['region'])) {
+            $progId = $validated['training_program_id'] ?? $dailyClass->training_program_id;
+            $exists = DailyClass::where('training_program_id', $progId)
+                ->where('title', $validated['title'])
+                ->where('region', $validated['region'])
+                ->where('id', '!=', $dailyClass->id)
+                ->where(function ($q) {
+                    $q->whereNull('is_completed')->orWhere('is_completed', false);
+                })
+                ->exists();
+
+            if ($exists) {
+                return back()->withInput()->with('error', "Program \"{$validated['title']}\" untuk region \"{$validated['region']}\" sudah ada dan masih aktif. Tidak boleh duplikat.");
+            }
+        }
 
         $dailyClass->update($validated);
 
@@ -391,10 +421,17 @@ class NonRegulerDailyClassController extends Controller
                     continue; // Skip if mandatory fields missing
                 }
 
-                // Cari NIK di tabel training_records untuk meng-copy data profil
+                // Cari NIK di tabel training_records untuk meng-copy data profil (prioritas NIK, fallback Nama persis)
                 $record = DB::table('training_records')
                     ->where('participant_identifier', $employeeId)
                     ->first();
+
+                if (! $record && ! empty($employeeName)) {
+                    $record = DB::table('training_records')
+                        ->where(DB::raw('LOWER(TRIM(participant_name))'), strtolower(trim($employeeName)))
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                }
 
                 // Kalau ketemu, timpa data Excel yang kosong dengan data dari database
                 if ($record) {
@@ -404,6 +441,12 @@ class NonRegulerDailyClassController extends Controller
                 }
 
                 $trainee = Trainee::where('nik', $employeeId)->first();
+                if (! $trainee && ! empty($employeeName)) {
+                    $trainee = Trainee::where(DB::raw('LOWER(TRIM(name))'), strtolower(trim($employeeName)))->first();
+                    if ($trainee) {
+                        $trainee->update(['nik' => $employeeId]);
+                    }
+                }
                 if ($trainee) {
                     // Update jika ada field yang masih kosong dan pastikan status aktif
                     $trainee->update([
@@ -631,11 +674,64 @@ class NonRegulerDailyClassController extends Controller
     {
         $printDate = $request->query('date', $dailyClass->date ? Carbon::parse($dailyClass->date)->format('Y-m-d') : now()->format('Y-m-d'));
 
-        $dailyClass->load(['trainingProgram', 'attendances' => function ($query) use ($printDate) {
-            $query->where('attendance_date', $printDate)->with('trainee');
-        }]);
+        // Ambil seluruh peserta yang terdaftar pada kelas ini (sama seperti tampilan tabel di halaman show)
+        $traineeIds = Attendance::where('daily_class_id', $dailyClass->id)->pluck('trainee_id')->unique();
+        $trainees = Trainee::whereIn('id', $traineeIds)->orderBy('id', 'asc')->get();
 
-        return view('admin.non-reguler.daily_classes.print_attendance', compact('dailyClass', 'printDate'));
+        // Jika ada parameter format=print atau view, tampilkan halaman cetak HTML biasa
+        if ($request->query('format') === 'print' || $request->query('format') === 'html') {
+            $dailyClass->load('trainingProgram');
+
+            return view('admin.non-reguler.daily_classes.print_attendance', compact('dailyClass', 'printDate', 'trainees'));
+        }
+
+        // Default: Export ke format Excel (.xlsx)
+        $headers = [
+            'No',
+            'Employee ID',
+            'Employee Name',
+            'Jabatan',
+            'Unit',
+            'Region',
+            'Tanggal Pelatihan',
+            'Status Kehadiran',
+        ];
+
+        $tglSesiFormatted = Carbon::parse($printDate)->translatedFormat('d F Y');
+
+        $dataRows = [];
+        foreach ($trainees as $index => $trainee) {
+            $attendance = Attendance::where('daily_class_id', $dailyClass->id)
+                ->where('trainee_id', $trainee->id)
+                ->where('attendance_date', $printDate)
+                ->first();
+
+            $statusRaw = strtolower($attendance->status ?? 'tidak_hadir');
+            $statusText = match ($statusRaw) {
+                'hadir' => 'Hadir',
+                'sakit' => 'Sakit',
+                'izin' => 'Izin',
+                'alpha', 'tidak_hadir' => 'Tidak Hadir',
+                'belum' => 'Belum Absen',
+                default => ucwords(str_replace('_', ' ', $statusRaw)),
+            };
+
+            $dataRows[] = [
+                $index + 1,
+                $trainee->nik ?? '-',
+                $trainee->name ?? '-',
+                $trainee->talent_to ?? '-',
+                $trainee->unit ?? '-',
+                $trainee->origin ?: ($dailyClass->region ?: '-'),
+                $tglSesiFormatted,
+                $statusText,
+            ];
+        }
+
+        $dateSuffix = ($printDate && $printDate !== 'all') ? Carbon::parse($printDate)->format('Ymd') : date('Ymd');
+        $filename = 'Absensi_'.Str::slug($dailyClass->title).'_'.$dateSuffix.'.xlsx';
+
+        return ExcelExporter::download($filename, $headers, $dataRows, 'Presensi Peserta');
     }
 
     public function printTasks(DailyClass $dailyClass)
@@ -1081,16 +1177,26 @@ class NonRegulerDailyClassController extends Controller
         foreach ($attendances as $attendance) {
             $trainee = $attendance->trainee;
             if ($trainee) {
-                // Coba cari record di tabel training_records yang sudah dibuat oleh Job
+                // Coba cari record di tabel training_records yang sudah dibuat oleh Job (prioritas NIK, fallback Nama persis)
                 $trQuery = DB::table('training_records')
-                    ->where('participant_identifier', $trainee->nik)
+                    ->where(function ($q) use ($trainee) {
+                        $q->where('participant_identifier', $trainee->nik);
+                        if (! empty(trim($trainee->name))) {
+                            $q->orWhere(DB::raw('LOWER(TRIM(participant_name))'), strtolower(trim($trainee->name)));
+                        }
+                    })
                     ->where('nama_pelatihan', $namaPelatihan);
 
                 if ($dailyClass->training_program_id) {
                     $trQuery->orWhere(function ($q) use ($trainee, $dailyClass) {
-                        $q->where('participant_identifier', $trainee->nik)
-                            ->where('program_id', $dailyClass->training_program_id)
-                            ->where('program_type', 'non_reguler');
+                        $q->where(function ($subQ) use ($trainee) {
+                            $subQ->where('participant_identifier', $trainee->nik);
+                            if (! empty(trim($trainee->name))) {
+                                $subQ->orWhere(DB::raw('LOWER(TRIM(participant_name))'), strtolower(trim($trainee->name)));
+                            }
+                        })
+                        ->where('program_id', $dailyClass->training_program_id)
+                        ->where('program_type', 'non_reguler');
                     });
                 }
 
@@ -1106,27 +1212,80 @@ class NonRegulerDailyClassController extends Controller
                     $internalExternal = $trRecord->internal_external;
                     $level = $trRecord->level;
                 } else {
+                    $gender = '-';
+                    $gol = null;
+                    $company = $trainee->unit ?: '-';
+                    $workLoc = $trainee->unit ?: '-';
+                    $group = $trainee->group ?: 'FR';
+                    $region = $trainee->origin ?: '-';
+                    $internalExternal = $dailyClass->provider ?: 'Internal';
+                    $level = null;
+                }
 
+                // Jika data masih '-' atau null, cari dari riwayat peserta sebelumnya
+                $pastRecord = null;
+                if (! empty($trainee->nik)) {
                     $pastRecord = DB::table('training_records')
                         ->where('participant_identifier', $trainee->nik)
                         ->orderBy('created_at', 'desc')
                         ->first();
+                }
+                if (! $pastRecord && ! empty(trim($trainee->name))) {
+                    $pastRecord = DB::table('training_records')
+                        ->where(DB::raw('LOWER(TRIM(participant_name))'), strtolower(trim($trainee->name)))
+                        ->orderBy('created_at', 'desc')
+                        ->first();
+                }
 
-                    $gender = ($pastRecord && $pastRecord->gender && $pastRecord->gender !== '-') ? $pastRecord->gender : ($trainee->gender ?: '-');
-                    $company = ($pastRecord && $pastRecord->company && $pastRecord->company !== '-') ? $pastRecord->company : ($trainee->unit ?: '-');
-                    $workLoc = ($pastRecord && $pastRecord->work_location && $pastRecord->work_location !== '-') ? $pastRecord->work_location : ($trainee->unit ?: '-');
-                    $group = ($pastRecord && $pastRecord->group_name && $pastRecord->group_name !== '-') ? $pastRecord->group_name : ($trainee->group ?: '-');
-                    $region = ($pastRecord && $pastRecord->region && $pastRecord->region !== '-') ? $pastRecord->region : ($trainee->origin ?: '-');
-                    $level = ($pastRecord && $pastRecord->level && $pastRecord->level !== '-') ? $pastRecord->level : '-';
-                    $internalExternal = $dailyClass->provider ?: 'Internal';
+                if ($pastRecord) {
+                    if (empty($gender) || $gender === '-') $gender = $pastRecord->gender ?: '-';
+                    if (empty($company) || $company === '-') $company = $pastRecord->company ?: ($trainee->unit ?: '-');
+                    if (empty($workLoc) || $workLoc === '-') $workLoc = $pastRecord->work_location ?: ($trainee->unit ?: '-');
+                    if (empty($group) || $group === '-') $group = $pastRecord->group_name ?: 'FR';
+                    if (empty($region) || $region === '-') $region = $pastRecord->region ?: ($trainee->origin ?: '-');
+                    if (empty($gol) || $gol === '-') $gol = $pastRecord->gol;
+                    if (empty($level) || $level === '-') $level = $pastRecord->level;
+                }
 
-                    $jabatan = strtolower($trainee->talent_to ?? '');
-                    if (str_contains($jabatan, 'askep') || str_contains($jabatan, 'asst') || str_contains($jabatan, 'manager') || str_contains($jabatan, 'staff') || str_contains($jabatan, 'ktu')) {
-                        $gol = 'Staf';
-                    } elseif (str_contains($jabatan, 'mandor') || str_contains($jabatan, 'kerani') || str_contains($jabatan, 'pekerja')) {
-                        $gol = 'Non Staf';
-                    } else {
-                        $gol = '-';
+                // Dynamic GOL
+                if (empty($gol) || $gol === '-') {
+                    if (! empty($trainee->talent_to)) {
+                        $gol = DB::table('training_records')
+                            ->where('position', $trainee->talent_to)
+                            ->whereNotNull('gol')
+                            ->where('gol', '!=', '-')
+                            ->orderBy('id', 'desc')
+                            ->value('gol');
+                    }
+                    if (! $gol) {
+                        $jabatanLower = strtolower($trainee->talent_to ?? '');
+                        if (str_contains($jabatanLower, 'askep') || str_contains($jabatanLower, 'asst') || str_contains($jabatanLower, 'asisten') || str_contains($jabatanLower, 'manager') || str_contains($jabatanLower, 'staff') || str_contains($jabatanLower, 'staf') || str_contains($jabatanLower, 'ktu') || str_contains($jabatanLower, 'gmk') || str_contains($jabatanLower, 'head')) {
+                            $gol = 'Staf';
+                        } else {
+                            $gol = 'Non Staf';
+                        }
+                    }
+                }
+
+                // Dynamic LEVEL
+                if (empty($level) || $level === '-') {
+                    if (! empty($trainee->talent_to)) {
+                        $level = DB::table('training_records')
+                            ->where('position', $trainee->talent_to)
+                            ->whereNotNull('level')
+                            ->where('level', '!=', '-')
+                            ->orderBy('id', 'desc')
+                            ->value('level');
+                    }
+                    if (! $level) {
+                        $jabatanLower = strtolower($trainee->talent_to ?? '');
+                        if (str_contains($jabatanLower, 'direktur') || str_contains($jabatanLower, 'director') || str_contains($jabatanLower, 'head')) {
+                            $level = 'Senior';
+                        } elseif (str_contains($jabatanLower, 'manager') || str_contains($jabatanLower, 'gm') || str_contains($jabatanLower, 'manajer')) {
+                            $level = 'Middle';
+                        } else {
+                            $level = 'workers';
+                        }
                     }
                 }
 

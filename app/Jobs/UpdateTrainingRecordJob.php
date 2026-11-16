@@ -121,9 +121,130 @@ class UpdateTrainingRecordJob implements ShouldQueue
         // Total jam adalah durasi jam per hari dikalikan jumlah hari pelatihan
         $totalJam = $jamPerHari * ($jmlHari > 0 ? $jmlHari : 1);
 
-        // Cari record yang sudah ada
+        // Cari riwayat data peserta sebelumnya (Prioritas 1: NIK, Prioritas 2: Nama persis)
+        $pastRecord = null;
+        if (! empty($trainee->nik)) {
+            $pastRecord = DB::table('training_records')
+                ->where('participant_identifier', $trainee->nik)
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+
+        if (! $pastRecord && ! empty(trim($trainee->name))) {
+            $pastRecord = DB::table('training_records')
+                ->where(DB::raw('LOWER(TRIM(participant_name))'), strtolower(trim($trainee->name)))
+                ->orderBy('created_at', 'desc')
+                ->first();
+        }
+
+        // 1. GOLONGAN (Dinamis: copy dari riwayat peserta, atau lookup dari jabatan/posisi di database, atau fallback cerdas)
+        $gol = ($pastRecord && $pastRecord->gol && $pastRecord->gol !== '-') ? $pastRecord->gol : null;
+        if (! $gol && ! empty($trainee->talent_to)) {
+            $gol = DB::table('training_records')
+                ->where('position', $trainee->talent_to)
+                ->whereNotNull('gol')
+                ->where('gol', '!=', '-')
+                ->orderBy('id', 'desc')
+                ->value('gol');
+        }
+        if (! $gol) {
+            $jabatanLower = strtolower($trainee->talent_to ?? '');
+            if (str_contains($jabatanLower, 'askep') || str_contains($jabatanLower, 'asst') || str_contains($jabatanLower, 'asisten') || str_contains($jabatanLower, 'manager') || str_contains($jabatanLower, 'staff') || str_contains($jabatanLower, 'staf') || str_contains($jabatanLower, 'ktu') || str_contains($jabatanLower, 'gmk') || str_contains($jabatanLower, 'head')) {
+                $gol = 'Staf';
+            } elseif (str_contains($jabatanLower, 'mandor') || str_contains($jabatanLower, 'kerani') || str_contains($jabatanLower, 'pekerja') || str_contains($jabatanLower, 'operator') || str_contains($jabatanLower, 'supir') || str_contains($jabatanLower, 'mekanik')) {
+                $gol = 'Non Staf';
+            } else {
+                $gol = 'Non Staf';
+            }
+        }
+
+        // 2. LEVEL (Dinamis: copy dari riwayat peserta, atau lookup dari jabatan/posisi di database, atau fallback cerdas)
+        $level = ($pastRecord && $pastRecord->level && $pastRecord->level !== '-') ? $pastRecord->level : null;
+        if (! $level && ! empty($trainee->talent_to)) {
+            $level = DB::table('training_records')
+                ->where('position', $trainee->talent_to)
+                ->whereNotNull('level')
+                ->where('level', '!=', '-')
+                ->orderBy('id', 'desc')
+                ->value('level');
+        }
+        if (! $level) {
+            $jabatanLower = strtolower($trainee->talent_to ?? '');
+            if (str_contains($jabatanLower, 'direktur') || str_contains($jabatanLower, 'director') || str_contains($jabatanLower, 'head')) {
+                $level = 'Senior';
+            } elseif (str_contains($jabatanLower, 'manager') || str_contains($jabatanLower, 'gm') || str_contains($jabatanLower, 'manajer')) {
+                $level = 'Middle';
+            } else {
+                $level = 'workers';
+            }
+        }
+
+        // 3. DEPARTMENT
+        $department = ($pastRecord && $pastRecord->department && $pastRecord->department !== '-') ? $pastRecord->department : null;
+        if (! $department && ! empty($trainee->talent_to)) {
+            $department = DB::table('training_records')
+                ->where('position', $trainee->talent_to)
+                ->whereNotNull('department')
+                ->where('department', '!=', '-')
+                ->orderBy('id', 'desc')
+                ->value('department');
+        }
+        if (! $department) {
+            $jabatanLower = strtolower($trainee->talent_to ?? '');
+            if (str_contains($jabatanLower, 'kebun') || str_contains($jabatanLower, 'askep') || str_contains($jabatanLower, 'mandor') || str_contains($jabatanLower, 'agronomi') || str_contains($jabatanLower, 'estate')) {
+                $department = 'ESTATE';
+            } elseif (str_contains($jabatanLower, 'mill') || str_contains($jabatanLower, 'pks') || str_contains($jabatanLower, 'proses') || str_contains($jabatanLower, 'lab')) {
+                $department = 'MILL';
+            } elseif (str_contains($jabatanLower, 'traksi') || str_contains($jabatanLower, 'mekanik')) {
+                $department = 'TRAKSI';
+            } else {
+                $department = '-';
+            }
+        }
+
+        // 4. GENDER
+        $gender = ($pastRecord && $pastRecord->gender && $pastRecord->gender !== '-') ? $pastRecord->gender : ($trainee->gender ?: null);
+        if (! $gender) {
+            // Cek di tabel asisten jika ada
+            $asistenGender = DB::table('asisten')
+                ->where(function ($q) use ($trainee) {
+                    if (! empty($trainee->nik)) {
+                        $q->where('nik_employee', $trainee->nik)->orWhere('nik', $trainee->nik);
+                    }
+                    if (! empty(trim($trainee->name))) {
+                        $q->orWhere(DB::raw('LOWER(TRIM(nama))'), strtolower(trim($trainee->name)));
+                    }
+                })
+                ->value('jenis_kelamin');
+            $gender = $asistenGender ?: '-';
+        }
+
+        // 5. PROFILE FIELDS LAINNYA
+        $company = ($pastRecord && $pastRecord->company && $pastRecord->company !== '-') ? $pastRecord->company : ($trainee->unit ?: '-');
+        $workLoc = ($pastRecord && $pastRecord->work_location && $pastRecord->work_location !== '-') ? $pastRecord->work_location : ($trainee->unit ?: '-');
+        $group = ($pastRecord && $pastRecord->group_name && $pastRecord->group_name !== '-') ? $pastRecord->group_name : ($trainee->group ?: 'FR');
+        $region = ($pastRecord && $pastRecord->region && $pastRecord->region !== '-') ? $pastRecord->region : ($trainee->origin ?: '-');
+
+        // Menentukan Keterangan (Notes) berdasarkan Nama Program
+        $judul = strtolower($dailyClass->title . ' ' . ($dailyClass->trainingProgram->name ?? ''));
+        if (str_contains($judul, 'managerial') || str_contains($judul, 'leadership')) {
+            $keterangan = 'Softskill';
+        } elseif (str_contains($judul, 'estate')) {
+            $keterangan = 'Estate';
+        } elseif (str_contains($judul, 'traksi')) {
+            $keterangan = 'Traksi';
+        } else {
+            $keterangan = $subKategori ?: '-';
+        }
+
+        // Cari record yang sudah ada (prioritas NIK, fallback Nama persis)
         $existingQuery = DB::table('training_records')
-            ->where('participant_identifier', $trainee->nik)
+            ->where(function ($q) use ($trainee) {
+                $q->where('participant_identifier', $trainee->nik);
+                if (! empty(trim($trainee->name))) {
+                    $q->orWhere(DB::raw('LOWER(TRIM(participant_name))'), strtolower(trim($trainee->name)));
+                }
+            })
             ->where(function ($q) use ($dailyClass, $idNonReguler) {
                 $q->where('nama_pelatihan', $dailyClass->title);
                 if ($idNonReguler) {
@@ -141,66 +262,53 @@ class UpdateTrainingRecordJob implements ShouldQueue
                 'program_type' => 'non_reguler',
                 'program_id' => $idNonReguler ?: $existingRecord->program_id,
                 'reg_non_reg' => 'Non Reguler',
+                'participant_identifier' => $trainee->nik ?: $existingRecord->participant_identifier,
+                'participant_name' => $trainee->name ?: $existingRecord->participant_name,
+                'nama_pelatihan' => $dailyClass->title ?: $existingRecord->nama_pelatihan,
                 'tanggal' => $tanggalFormatted,
+                'bulan' => $bulanAbsen,
+                'tahun' => $tahunAbsen,
+                'periode' => $periode,
+                'training_date' => $this->attendanceDate,
                 'total_jam' => $totalJam,
                 'jml_hari' => $jmlHari,
                 'instructor' => $trainer,
                 'tempat_pelatihan' => $dailyClass->location ?: ($existingRecord->tempat_pelatihan ?: '-'),
-                'notes' => $existingRecord->notes && $existingRecord->notes !== '-' ? $existingRecord->notes : $subKategori,
+                'notes' => $existingRecord->notes && $existingRecord->notes !== '-' ? $existingRecord->notes : $keterangan,
                 'status' => 'valid',
                 'updated_at' => now(),
             ];
+
+            // Update kolom profil yang masih '-' atau kosong jika ada data yang lebih lengkap/dinamis
+            if (empty($existingRecord->gol) || $existingRecord->gol === '-') {
+                $updatePayload['gol'] = $gol;
+            }
+            if (empty($existingRecord->level) || $existingRecord->level === '-') {
+                $updatePayload['level'] = $level;
+            }
+            if (empty($existingRecord->department) || $existingRecord->department === '-') {
+                $updatePayload['department'] = $department;
+            }
+            if (empty($existingRecord->gender) || $existingRecord->gender === '-') {
+                $updatePayload['gender'] = $gender;
+            }
+            if (empty($existingRecord->group_name) || $existingRecord->group_name === '-') {
+                $updatePayload['group_name'] = $group;
+            }
+            if (empty($existingRecord->company) || $existingRecord->company === '-') {
+                $updatePayload['company'] = $company;
+            }
+            if (empty($existingRecord->work_location) || $existingRecord->work_location === '-') {
+                $updatePayload['work_location'] = $workLoc;
+            }
+            if (empty($existingRecord->region) || $existingRecord->region === '-') {
+                $updatePayload['region'] = $region;
+            }
 
             DB::table('training_records')
                 ->where('id', $existingRecord->id)
                 ->update($updatePayload);
         } else {
-            // Coba cari Golongan dari riwayat pelatihan sebelumnya
-            $gol = DB::table('training_records')
-                ->where('participant_identifier', $trainee->nik)
-                ->whereNotNull('gol')
-                ->where('gol', '!=', '-')
-                ->orderBy('created_at', 'desc')
-                ->value('gol');
-
-            if (! $gol) {
-                // Mapping sederhana tebak golongan jika tidak ada history
-                $jabatan = strtolower($trainee->talent_to ?? '');
-                if (str_contains($jabatan, 'askep') || str_contains($jabatan, 'asst') || str_contains($jabatan, 'manager') || str_contains($jabatan, 'staff') || str_contains($jabatan, 'ktu')) {
-                    $gol = 'Staf';
-                } elseif (str_contains($jabatan, 'mandor') || str_contains($jabatan, 'kerani') || str_contains($jabatan, 'pekerja')) {
-                    $gol = 'Non Staf';
-                } else {
-                    $gol = '-';
-                }
-            }
-
-            // Coba cari data dari riwayat pelatihan sebelumnya (prioritas pertama)
-            $pastRecord = DB::table('training_records')
-                ->where('participant_identifier', $trainee->nik)
-                ->orderBy('created_at', 'desc')
-                ->first();
-
-            $gender = ($pastRecord && $pastRecord->gender && $pastRecord->gender !== '-') ? $pastRecord->gender : ($trainee->gender ?: '-');
-            $company = ($pastRecord && $pastRecord->company && $pastRecord->company !== '-') ? $pastRecord->company : ($trainee->unit ?: '-');
-            $workLoc = ($pastRecord && $pastRecord->work_location && $pastRecord->work_location !== '-') ? $pastRecord->work_location : ($trainee->unit ?: '-');
-            $group = ($pastRecord && $pastRecord->group_name && $pastRecord->group_name !== '-') ? $pastRecord->group_name : ($trainee->group ?: '-');
-            $region = ($pastRecord && $pastRecord->region && $pastRecord->region !== '-') ? $pastRecord->region : ($trainee->origin ?: '-');
-            $level = ($pastRecord && $pastRecord->level && $pastRecord->level !== '-') ? $pastRecord->level : '-';
-            $department = ($pastRecord && $pastRecord->department && $pastRecord->department !== '-') ? $pastRecord->department : '-';
-
-            // Menentukan Keterangan (Notes) berdasarkan Nama Program
-            $judul = strtolower($dailyClass->title . ' ' . ($dailyClass->trainingProgram->name ?? ''));
-            if (str_contains($judul, 'managerial') || str_contains($judul, 'leadership')) {
-                $keterangan = 'Softskill';
-            } elseif (str_contains($judul, 'estate')) {
-                $keterangan = 'Estate';
-            } elseif (str_contains($judul, 'traksi')) {
-                $keterangan = 'Traksi';
-            } else {
-                $keterangan = $subKategori ?: '-';
-            }
-
             // Create record baru
             DB::table('training_records')->insert([
                 'program_type' => 'non_reguler',

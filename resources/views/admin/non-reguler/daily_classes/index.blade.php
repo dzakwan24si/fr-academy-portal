@@ -136,9 +136,6 @@
                             @endif
                         </div>
                         <div class="flex items-center gap-1 shrink-0">
-                            <button onclick="document.getElementById('editModal_{{ $class->id }}').classList.remove('hidden')" class="p-2 text-slate-400 hover:bg-slate-100 hover:text-emerald-600 rounded-xl transition-colors shrink-0 tooltip" title="Edit Program">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                            </button>
                             <form action="{{ route('training-non-reguler.daily-classes.destroy', $class->id) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus program pelatihan ini secara permanen? Semua data peserta dan absensi di dalamnya akan ikut terhapus!');">
                                 @csrf
                                 @method('DELETE')
@@ -169,44 +166,6 @@
                             Kelola Peserta & Jadwal
                             <svg class="w-4 h-4 transform group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                         </a>
-                    </div>
-                </div>
-                
-                <!-- Edit Modal -->
-                <div id="editModal_{{ $class->id }}" class="fixed inset-0 z-[100] flex items-center justify-center hidden bg-slate-900/50 backdrop-blur-sm transition-opacity text-left p-4">
-                    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden transform transition-all scale-100 opacity-100">
-                        <div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50">
-                            <h3 class="text-lg font-black text-slate-800">Edit Program</h3>
-                            <button type="button" onclick="document.getElementById('editModal_{{ $class->id }}').classList.add('hidden')" class="text-slate-400 hover:text-red-500 transition-colors">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            </button>
-                        </div>
-                        
-                        <form id="editForm_{{ $class->id }}" action="{{ route('training-non-reguler.daily-classes.update', $class->id) }}" method="POST" class="p-6">
-                            @csrf
-                            @method('PUT')
-                            <div class="space-y-4">
-                                <input type="hidden" name="training_program_id" value="{{ $class->training_program_id }}">
-
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Nama Pelatihan <span class="text-red-500">*</span></label>
-                                    <input type="text" id="editTitle_{{ $class->id }}" name="title" value="{{ $class->title }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] focus:border-[#28844b] font-medium transition-all" required>
-                                </div>
-
-                                <div>
-                                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Region <span class="text-red-500">*</span></label>
-                                    <select name="region" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-[#28844b] focus:border-[#28844b] font-medium transition-all text-sm" required>
-                                        @foreach($availableRegions as $regOption)
-                                            <option value="{{ $regOption }}" {{ $class->region == $regOption ? 'selected' : '' }}>{{ $regOption }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="mt-8 flex justify-end gap-3 pt-6 border-t border-slate-100">
-                                <button type="button" onclick="document.getElementById('editModal_{{ $class->id }}').classList.add('hidden')" class="px-6 py-2.5 rounded-xl text-slate-600 font-bold hover:bg-slate-100 transition-colors">Batal</button>
-                                <button type="submit" class="px-6 py-2.5 rounded-xl bg-[#28844b] text-white font-bold hover:bg-[#1d6b3a] active:scale-95 transition-all shadow-md">Simpan Perubahan</button>
-                            </div>
-                        </form>
                     </div>
                 </div>
                 @endforeach
@@ -314,7 +273,7 @@
                             </p>
 
                             <div x-show="filteredCatalogTitles.length === 0" class="mt-2.5 p-3.5 bg-slate-50 rounded-xl border border-dashed border-slate-300 text-xs text-slate-500 text-center">
-                                Tidak ada program pelatihan yang cocok untuk Region <strong x-text="filterRegion"></strong> pada Tahun ini.
+                                Tidak ada program pelatihan yang tersedia untuk Region <strong x-text="filterRegion"></strong> (sudah pernah ditambahkan atau belum ada di master Program Training).
                             </div>
                         </div>
                     </div>
@@ -341,7 +300,12 @@
                 ],
                 dailyClasses: [
                     @foreach($dailyClasses as $class)
-                        { id: '{{ $class->id }}', training_program_id: '{{ $class->training_program_id }}' },
+                        { 
+                            id: '{{ $class->id }}', 
+                            training_program_id: '{{ $class->training_program_id }}',
+                            title: {!! json_encode($class->title) !!},
+                            region: {!! json_encode($class->region) !!}
+                        },
                     @endforeach
                 ],
                 classCounts: {
@@ -381,7 +345,13 @@
                     if (!this.activeProgram || !this.filterRegion) return [];
                     const activeProg = this.programsData.find(p => p.id == this.activeProgram);
                     const activeName = (activeProg?.name || '').toLowerCase().trim();
+                    const selectedReg = (this.filterRegion || '').toLowerCase().trim();
                     
+                    // Ambil daftar judul program yang sudah aktif dibuat pada kategori dan region ini
+                    const existingTitles = this.dailyClasses
+                        .filter(c => String(c.training_program_id) === String(this.activeProgram) && (c.region || '').toLowerCase().trim() === selectedReg)
+                        .map(c => (c.title || '').toLowerCase().trim());
+
                     let list = this.trainingCatalog.filter(item => {
                         const kat = (item.kategori || '').toLowerCase();
                         const sub = (item.sub_kategori || '').toLowerCase();
@@ -398,7 +368,12 @@
                             return false;
                         }
 
-                        if (item.region.toLowerCase() !== this.filterRegion.toLowerCase()) {
+                        if ((item.region || '').toLowerCase().trim() !== selectedReg) {
+                            return false;
+                        }
+
+                        // Tidak boleh double jika nama pelatihan untuk region ini sudah dibuat
+                        if (existingTitles.includes((item.title || '').toLowerCase().trim())) {
                             return false;
                         }
 

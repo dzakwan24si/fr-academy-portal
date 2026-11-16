@@ -68,7 +68,7 @@
             <td class="label">Provider</td>
             <td>: {{ $dailyClass->provider ?? 'Internal' }}</td>
             <td class="label">Total Peserta</td>
-            <td>: {{ $dailyClass->attendances->count() }} Orang</td>
+            <td>: {{ isset($trainees) ? $trainees->count() : $dailyClass->attendances->count() }} Orang</td>
         </tr>
     </table>
 
@@ -84,34 +84,66 @@
             </tr>
         </thead>
         <tbody>
-            @forelse($dailyClass->attendances as $index => $attendance)
-                <tr>
-                    <td style="text-align: center;">{{ $index + 1 }}</td>
-                    <td>{{ $attendance->trainee->nik ?? '-' }}</td>
-                    <td style="font-weight: bold;">{{ $attendance->trainee->name ?? '-' }}</td>
-                    <td>{{ $attendance->trainee->talent_to ?? '-' }}</td>
-                    <td>{{ $attendance->trainee->unit ?? '-' }} {{ $attendance->trainee->origin ? '('.$attendance->trainee->origin.')' : '' }}</td>
-                    <td style="text-align: center; text-transform: uppercase; font-size: 10px;">
-                        @if($attendance->status == 'hadir')
-                            <span class="status-hadir">HADIR</span>
-                        @elseif($attendance->status == 'sakit')
-                            <span class="status-sakit">SAKIT</span>
-                        @elseif($attendance->status == 'izin')
-                            <span class="status-izin">IZIN</span>
-                        @elseif($attendance->status == 'alpha')
-                            <span class="status-alpha">ALPHA</span>
-                        @else
-                            <span class="status-belum">BELUM ABSEN</span>
-                        @endif
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="6" style="text-align: center; padding: 20px; font-style: italic; color: #666;">
-                        Belum ada data peserta (peserta belum di-import atau belum dimasukkan ke kelas ini).
-                    </td>
-                </tr>
-            @endforelse
+            @if(isset($trainees) && $trainees->isNotEmpty())
+                @foreach($trainees as $index => $trainee)
+                    @php
+                        $attendance = \App\Models\Attendance::where('daily_class_id', $dailyClass->id)
+                            ->where('trainee_id', $trainee->id)
+                            ->where('attendance_date', $printDate)
+                            ->first();
+                        $status = $attendance ? strtolower($attendance->status) : 'tidak_hadir';
+                    @endphp
+                    <tr>
+                        <td style="text-align: center;">{{ $index + 1 }}</td>
+                        <td>{{ $trainee->nik ?? '-' }}</td>
+                        <td style="font-weight: bold;">{{ $trainee->name ?? '-' }}</td>
+                        <td>{{ $trainee->talent_to ?? '-' }}</td>
+                        <td>{{ $trainee->unit ?? '-' }} {{ $trainee->origin ? '('.$trainee->origin.')' : '' }}</td>
+                        <td style="text-align: center; text-transform: uppercase; font-size: 10px;">
+                            @if($status == 'hadir')
+                                <span class="status-hadir">HADIR</span>
+                            @elseif($status == 'sakit')
+                                <span class="status-sakit">SAKIT</span>
+                            @elseif($status == 'izin')
+                                <span class="status-izin">IZIN</span>
+                            @elseif($status == 'alpha' || $status == 'tidak_hadir')
+                                <span class="status-alpha">TIDAK HADIR</span>
+                            @else
+                                <span class="status-belum">BELUM ABSEN</span>
+                            @endif
+                        </td>
+                    </tr>
+                @endforeach
+            @else
+                @forelse($dailyClass->attendances as $index => $attendance)
+                    <tr>
+                        <td style="text-align: center;">{{ $index + 1 }}</td>
+                        <td>{{ $attendance->trainee->nik ?? '-' }}</td>
+                        <td style="font-weight: bold;">{{ $attendance->trainee->name ?? '-' }}</td>
+                        <td>{{ $attendance->trainee->talent_to ?? '-' }}</td>
+                        <td>{{ $attendance->trainee->unit ?? '-' }} {{ $attendance->trainee->origin ? '('.$attendance->trainee->origin.')' : '' }}</td>
+                        <td style="text-align: center; text-transform: uppercase; font-size: 10px;">
+                            @if($attendance->status == 'hadir')
+                                <span class="status-hadir">HADIR</span>
+                            @elseif($attendance->status == 'sakit')
+                                <span class="status-sakit">SAKIT</span>
+                            @elseif($attendance->status == 'izin')
+                                <span class="status-izin">IZIN</span>
+                            @elseif($attendance->status == 'alpha')
+                                <span class="status-alpha">ALPHA</span>
+                            @else
+                                <span class="status-belum">BELUM ABSEN</span>
+                            @endif
+                        </td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px; font-style: italic; color: #666;">
+                            Belum ada data peserta (peserta belum di-import atau belum dimasukkan ke kelas ini).
+                        </td>
+                    </tr>
+                @endforelse
+            @endif
         </tbody>
     </table>
 
