@@ -237,7 +237,7 @@ class UpdateTrainingRecordJob implements ShouldQueue
             $keterangan = $subKategori ?: '-';
         }
 
-        // Cari record yang sudah ada (prioritas NIK, fallback Nama persis)
+        // Cari record yang sudah ada khusus untuk pelatihan di bulan & tahun yang sama (agar pelatihan di bulan berbeda menjadi record baru/copy riwayat)
         $existingQuery = DB::table('training_records')
             ->where(function ($q) use ($trainee) {
                 $q->where('participant_identifier', $trainee->nik);
@@ -253,7 +253,9 @@ class UpdateTrainingRecordJob implements ShouldQueue
                            ->where('program_type', 'non_reguler');
                     });
                 }
-            });
+            })
+            ->where('bulan', $bulanAbsen)
+            ->where('tahun', $tahunAbsen);
 
         $existingRecord = $existingQuery->first();
 
