@@ -734,7 +734,7 @@
                             <div class="w-full text-center py-2">
                                 <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Keterangan Evaluasi</span>
                                 <span class="text-xs font-bold text-slate-600 mt-1 uppercase block">
-                                    {{ $selectedTalent->keterangan_evaluasi ?: 'Belum Dinilai / Data Kosong' }}
+                                    {{ (!empty($selectedTalent->nilai_ojt) || !empty($selectedTalent->nilai_evaluasi_panelis) || !empty($selectedTalent->nilai_akhir)) && !empty($selectedTalent->keterangan_evaluasi) ? $selectedTalent->keterangan_evaluasi : 'Belum Dinilai / Data Kosong' }}
                                 </span>
                             </div>
                         @endif
@@ -1424,8 +1424,11 @@
             const titleEl = document.getElementById(`edit_grade_title_${id}`);
             const bulletsEl = document.getElementById(`edit_grade_bullets_${id}`);
 
-            const ojtRaw = ojtInput?.value !== '' ? parseFloat(ojtInput?.value) : NaN;
-            const panelisRaw = panelisInput?.value !== '' ? parseFloat(panelisInput?.value) : NaN;
+            const ojtVal = ojtInput ? ojtInput.value.trim() : '';
+            const panelisVal = panelisInput ? panelisInput.value.trim() : '';
+
+            const ojtRaw = ojtVal !== '' ? parseFloat(ojtVal) : NaN;
+            const panelisRaw = panelisVal !== '' ? parseFloat(panelisVal) : NaN;
 
             if (!isNaN(ojtRaw) || !isNaN(panelisRaw)) {
                 const ojt = !isNaN(ojtRaw) ? ojtRaw : 0;
@@ -1445,6 +1448,18 @@
                     }
                     if (bulletsEl) {
                         bulletsEl.textContent = info.bullets.join(' • ');
+                    }
+                } else {
+                    if (badgeEl) {
+                        badgeEl.className = 'w-10 h-10 rounded-lg bg-slate-200 text-slate-700 font-black text-lg flex items-center justify-center shrink-0';
+                        badgeEl.textContent = '-';
+                    }
+                    if (titleEl) {
+                        titleEl.className = 'text-xs font-bold text-slate-800 block';
+                        titleEl.textContent = 'Belum Dinilai';
+                    }
+                    if (bulletsEl) {
+                        bulletsEl.textContent = 'Masukkan Nilai OJT & Nilai Panelis';
                     }
                 }
             } else {
@@ -1471,8 +1486,11 @@
             const titleEl = document.getElementById('add_grade_title');
             const bulletsEl = document.getElementById('add_grade_bullets');
 
-            const ojtRaw = ojtInput?.value !== '' ? parseFloat(ojtInput?.value) : NaN;
-            const panelisRaw = panelisInput?.value !== '' ? parseFloat(panelisInput?.value) : NaN;
+            const ojtVal = ojtInput ? ojtInput.value.trim() : '';
+            const panelisVal = panelisInput ? panelisInput.value.trim() : '';
+
+            const ojtRaw = ojtVal !== '' ? parseFloat(ojtVal) : NaN;
+            const panelisRaw = panelisVal !== '' ? parseFloat(panelisVal) : NaN;
 
             if (!isNaN(ojtRaw) || !isNaN(panelisRaw)) {
                 const ojt = !isNaN(ojtRaw) ? ojtRaw : 0;
@@ -1492,6 +1510,18 @@
                     }
                     if (bulletsEl) {
                         bulletsEl.textContent = info.bullets.join(' • ');
+                    }
+                } else {
+                    if (badgeEl) {
+                        badgeEl.className = 'w-10 h-10 rounded-lg bg-slate-200 text-slate-700 font-black text-lg flex items-center justify-center shrink-0';
+                        badgeEl.textContent = '-';
+                    }
+                    if (titleEl) {
+                        titleEl.className = 'text-xs font-bold text-slate-800 block';
+                        titleEl.textContent = 'Belum Dinilai';
+                    }
+                    if (bulletsEl) {
+                        bulletsEl.textContent = 'Masukkan Nilai OJT & Nilai Panelis';
                     }
                 }
             } else {

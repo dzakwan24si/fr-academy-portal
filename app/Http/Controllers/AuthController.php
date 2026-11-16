@@ -71,17 +71,8 @@ class AuthController extends Controller
             $request->session()->regenerate();
             $user->update(['last_login_at' => now()]);
 
-            if ($user->hasRole('Top Management')) {
-                return redirect()->route('administrasi.dashboard-realisasi.index');
-            }
-
-            // Trainer without administrasi access goes to Learning Activity dashboard
-            if (! $user->can('access_administrasi') && ($user->can('access_learning_activity') || $user->hasRole('Trainer'))) {
-                return redirect()->route('training-non-reguler.dashboard');
-            }
-
-            // All other logged in users go straight to Dashboard Realisasi Program
-            return redirect()->route('administrasi.dashboard-realisasi.index');
+            // Arahkan ke landing page sesuai hak akses dan peran (role) pengguna
+            return redirect($user->getDefaultLandingUrl());
         }
 
         return back()->withErrors([

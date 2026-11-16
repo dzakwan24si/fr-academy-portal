@@ -36,8 +36,6 @@ class ProfilTrainee extends Model
         'pengalaman_praktek_kerja_magang',
         'prestasi_diri',
         'hobi',
-        'riwayat_kesehatan',
-        'catatan_riwayat_kesehatan',
         'pekerjaan_orangtua',
     ];
 

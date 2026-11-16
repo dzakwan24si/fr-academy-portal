@@ -629,26 +629,6 @@
                     </div>
                 </div>
 
-                <!-- Section E: Riwayat Kesehatan -->
-                <div class="border-t border-[#E5E7EB] pt-5">
-                    <h4 class="text-xs font-bold text-[#509c38] uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                        <i data-lucide="heart-pulse" class="w-4 h-4"></i> Riwayat Kesehatan
-                    </h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-[#18181B] mb-1">Status Riwayat Kesehatan</label>
-                            <select name="riwayat_kesehatan" class="w-full text-xs sm:text-sm px-3 py-2 border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-[#509c38]/20 focus:border-[#509c38]">
-                                <option value="Tidak Ada">Tidak Ada (Sehat)</option>
-                                <option value="Ada">Ada Riwayat Penyakit</option>
-                            </select>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-semibold text-[#18181B] mb-1">Catatan Riwayat Kesehatan</label>
-                            <input type="text" name="catatan_riwayat_kesehatan" placeholder="Rincian alergi, riwayat operasi, atau penyakit tertentu (jika ada)"
-                                   class="w-full text-xs sm:text-sm px-3 py-2 border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-[#509c38]/20 focus:border-[#509c38]">
-                        </div>
-                    </div>
-                </div>
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#E5E7EB]">
                     <button type="button" onclick="closeAddModal()"
@@ -844,26 +824,6 @@
                     </div>
                 </div>
 
-                <!-- Section E: Riwayat Kesehatan -->
-                <div class="border-t border-[#E5E7EB] pt-5">
-                    <h4 class="text-xs font-bold text-[#509c38] uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                        <i data-lucide="heart-pulse" class="w-4 h-4"></i> Riwayat Kesehatan
-                    </h4>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-xs font-semibold text-[#18181B] mb-1">Status Riwayat Kesehatan</label>
-                            <select id="edit_riwayat_kesehatan" name="riwayat_kesehatan" class="w-full text-xs sm:text-sm px-3 py-2 border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-[#509c38]/20 focus:border-[#509c38]">
-                                <option value="Tidak Ada">Tidak Ada (Sehat)</option>
-                                <option value="Ada">Ada Riwayat Penyakit</option>
-                            </select>
-                        </div>
-                        <div class="sm:col-span-2">
-                            <label class="block text-xs font-semibold text-[#18181B] mb-1">Catatan Riwayat Kesehatan</label>
-                            <input type="text" id="edit_catatan_riwayat_kesehatan" name="catatan_riwayat_kesehatan"
-                                   class="w-full text-xs sm:text-sm px-3 py-2 border border-[#E5E7EB] rounded-xl focus:ring-2 focus:ring-[#509c38]/20 focus:border-[#509c38]">
-                        </div>
-                    </div>
-                </div>
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t border-[#E5E7EB]">
                     <button type="button" onclick="closeEditModal()"
@@ -997,22 +957,6 @@
                     </div>
                 </div>
 
-                <!-- Kesehatan -->
-                <div class="space-y-3">
-                    <h4 class="font-bold text-[#18181B] text-xs uppercase tracking-wider flex items-center gap-1.5 pb-2 border-b border-[#E5E7EB]">
-                        <i data-lucide="heart-pulse" class="w-4 h-4 text-[#509c38]"></i> Riwayat Kesehatan
-                    </h4>
-                    <div class="p-3 bg-gray-50 rounded-xl border border-gray-100">
-                        <div class="flex items-center gap-2 mb-1">
-                            <span class="text-[11px] text-[#71717A]">Status:</span>
-                            <span id="detail_riwayat_kesehatan" class="font-semibold">-</span>
-                        </div>
-                        <div>
-                            <span class="text-[11px] text-[#71717A] block">Catatan Medis:</span>
-                            <p id="detail_catatan_kesehatan" class="text-xs text-[#18181B] mt-0.5 leading-relaxed whitespace-pre-line">-</p>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <div class="p-4 border-t border-[#E5E7EB] bg-[#F9FAFB] rounded-b-2xl flex justify-end">
@@ -1225,8 +1169,6 @@
                         document.getElementById('edit_pengalaman_praktek_kerja_magang').value = d.pengalaman_praktek_kerja_magang || '';
                         document.getElementById('edit_prestasi_diri').value = d.prestasi_diri || '';
                         document.getElementById('edit_hobi').value = d.hobi || '';
-                        document.getElementById('edit_riwayat_kesehatan').value = d.riwayat_kesehatan || 'Tidak Ada';
-                        document.getElementById('edit_catatan_riwayat_kesehatan').value = d.catatan_riwayat_kesehatan || '';
 
                         document.getElementById('editModal').classList.remove('hidden');
                         document.getElementById('editModal').classList.add('flex');
@@ -1272,9 +1214,6 @@
                         document.getElementById('detail_magang').innerText = d.pengalaman_praktek_kerja_magang || 'Tidak ada catatan magang / PKL.';
                         document.getElementById('detail_prestasi').innerText = d.prestasi_diri || 'Tidak ada catatan prestasi diri.';
                         document.getElementById('detail_hobi').innerText = d.hobi || '-';
-
-                        document.getElementById('detail_riwayat_kesehatan').innerText = d.riwayat_kesehatan || 'Tidak Ada (Sehat)';
-                        document.getElementById('detail_catatan_kesehatan').innerText = d.catatan_riwayat_kesehatan || 'Kondisi kesehatan baik tanpa keluhan khusus.';
 
                         document.getElementById('detailModal').classList.remove('hidden');
                         document.getElementById('detailModal').classList.add('flex');

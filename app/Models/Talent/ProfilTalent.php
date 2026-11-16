@@ -91,12 +91,19 @@ class ProfilTalent extends Model
                 $grade = self::getGradeInfo($talent->nilai_akhir);
                 if ($grade) {
                     $talent->keterangan_evaluasi = $grade['title'] . ' (Grade ' . $grade['grade'] . ')';
+                } else {
+                    $talent->keterangan_evaluasi = null;
                 }
-            } elseif ($talent->nilai_akhir !== null && is_numeric($talent->nilai_akhir)) {
+            } elseif ($talent->nilai_akhir !== null && $talent->nilai_akhir !== '' && is_numeric($talent->nilai_akhir)) {
                 $grade = self::getGradeInfo((float) $talent->nilai_akhir);
                 if ($grade && empty($talent->keterangan_evaluasi)) {
                     $talent->keterangan_evaluasi = $grade['title'] . ' (Grade ' . $grade['grade'] . ')';
                 }
+            } else {
+                $talent->nilai_ojt = null;
+                $talent->nilai_evaluasi_panelis = null;
+                $talent->nilai_akhir = null;
+                $talent->keterangan_evaluasi = null;
             }
         });
 

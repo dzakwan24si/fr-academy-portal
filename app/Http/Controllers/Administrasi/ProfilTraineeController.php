@@ -310,8 +310,6 @@ class ProfilTraineeController extends Controller
             'Pengalaman Praktek Kerja / Magang',
             'Prestasi Diri',
             'Hobi',
-            'Riwayat Kesehatan',
-            'Catatan Riwayat Kesehatan',
             'Pekerjaan Orangtua',
         ];
 
@@ -339,8 +337,6 @@ class ProfilTraineeController extends Controller
                 $t->pengalaman_praktek_kerja_magang ?? '',
                 $t->prestasi_diri ?? '',
                 $t->hobi ?? '',
-                $t->riwayat_kesehatan ?? '',
-                $t->catatan_riwayat_kesehatan ?? '',
                 $t->pekerjaan_orangtua ?? '',
             ];
         }
@@ -375,8 +371,6 @@ class ProfilTraineeController extends Controller
             'Pengalaman Praktek Kerja / Magang',
             'Prestasi Diri',
             'Hobi',
-            'Riwayat Kesehatan',
-            'Catatan Riwayat Kesehatan',
             'Pekerjaan Orangtua',
         ];
 
@@ -402,8 +396,6 @@ class ProfilTraineeController extends Controller
                 'Magang Agronomi di PT Perkebunan Nusantara (6 Bulan)',
                 'Juara 1 Lomba Karya Tulis Ilmiah Pertanian Nasional',
                 'Futsal, Membaca',
-                'Tidak Ada',
-                'Sehat, tidak memiliki alergi atau penyakit bawaan',
                 'Wiraswasta',
             ],
             [
@@ -427,8 +419,6 @@ class ProfilTraineeController extends Controller
                 'Praktik Kerja Lapangan di Pusat Penelitian Bioteknologi',
                 'Penerima Beasiswa Prestasi Akademik',
                 'Menulis, Badminton',
-                'Tidak Ada',
-                'Sehat jasmani dan rohani',
                 'PNS',
             ]
         ];
@@ -480,8 +470,6 @@ class ProfilTraineeController extends Controller
                 'pengalamanpraktekkerjamagang', 'pengalamanmagang', 'magang', 'pkl' => 'pengalaman_praktek_kerja_magang',
                 'prestasidiri', 'prestasi' => 'prestasi_diri',
                 'hobi', 'hobby' => 'hobi',
-                'riwayatkesehatan', 'kesehatan' => 'riwayat_kesehatan',
-                'catatanriwayatkesehatan', 'catatankesehatan' => 'catatan_riwayat_kesehatan',
                 'pekerjaanorangtua', 'pekerjaanortu', 'ortu' => 'pekerjaan_orangtua',
                 default => null,
             };
@@ -586,8 +574,6 @@ class ProfilTraineeController extends Controller
             'pengalaman_praktek_kerja_magang' => 'nullable|string',
             'prestasi_diri' => 'nullable|string',
             'hobi' => 'nullable|string|max:255',
-            'riwayat_kesehatan' => 'nullable|string|max:255',
-            'catatan_riwayat_kesehatan' => 'nullable|string',
             'pekerjaan_orangtua' => 'nullable|string|max:255',
         ]);
     }

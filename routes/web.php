@@ -181,16 +181,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 // Admin Routes (Protected)
 Route::middleware('auth')->prefix('admin')->group(function () {
     Route::get('/', function () {
-        $user = auth()->user();
-        if ($user->hasRole('Top Management')) {
-            return redirect()->route('administrasi.dashboard-realisasi.index');
-        }
-
-        if (! $user->can('access_administrasi') && ($user->can('access_learning_activity') || $user->hasRole('Trainer'))) {
-            return redirect()->route('training-non-reguler.dashboard');
-        }
-
-        return redirect()->route('administrasi.dashboard-realisasi.index');
+        return redirect(auth()->user()->getDefaultLandingUrl());
     })->name('admin.dashboard');
 
     Route::post('artikel/upload-image', [AdminArticleController::class, 'uploadImage'])->name('admin.artikel.upload-image')->middleware('can:manage_articles');

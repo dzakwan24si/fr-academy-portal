@@ -534,6 +534,7 @@ class ProfilTalentController extends Controller
             'nilai_ojt' => 'nullable|numeric',
             'nilai_evaluasi_panelis' => 'nullable|numeric',
             'nilai_akhir' => 'nullable|numeric',
+            'keterangan_evaluasi' => 'nullable|string',
             'keterangan_penugasan' => 'nullable|string',
             'periode_penugasan' => 'nullable|string|max:255',
             'alasan' => 'nullable|string',
@@ -560,8 +561,8 @@ class ProfilTalentController extends Controller
         }
 
         // Auto calculate Nilai Akhir: (OJT * 40%) + (Panelis * 60%)
-        $hasOjt = isset($validated['nilai_ojt']) && is_numeric($validated['nilai_ojt']);
-        $hasPanelis = isset($validated['nilai_evaluasi_panelis']) && is_numeric($validated['nilai_evaluasi_panelis']);
+        $hasOjt = isset($validated['nilai_ojt']) && $validated['nilai_ojt'] !== '' && is_numeric($validated['nilai_ojt']);
+        $hasPanelis = isset($validated['nilai_evaluasi_panelis']) && $validated['nilai_evaluasi_panelis'] !== '' && is_numeric($validated['nilai_evaluasi_panelis']);
 
         if ($hasOjt || $hasPanelis) {
             $ojt = $hasOjt ? (float) $validated['nilai_ojt'] : 0;
@@ -571,7 +572,14 @@ class ProfilTalentController extends Controller
             $gradeInfo = ProfilTalent::getGradeInfo($validated['nilai_akhir']);
             if ($gradeInfo) {
                 $validated['keterangan_evaluasi'] = $gradeInfo['title'] . ' (Grade ' . $gradeInfo['grade'] . ')';
+            } else {
+                $validated['keterangan_evaluasi'] = null;
             }
+        } else {
+            $validated['nilai_ojt'] = null;
+            $validated['nilai_evaluasi_panelis'] = null;
+            $validated['nilai_akhir'] = null;
+            $validated['keterangan_evaluasi'] = null;
         }
 
         return $validated;
