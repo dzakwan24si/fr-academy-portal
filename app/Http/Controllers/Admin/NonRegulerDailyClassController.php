@@ -1226,81 +1226,28 @@ class NonRegulerDailyClassController extends Controller
                     $internalExternal = $trRecord->internal_external;
                     $level = $trRecord->level;
                 } else {
-                    $gender = '-';
-                    $gol = null;
-                    $company = $trainee->unit ?: '-';
-                    $workLoc = $trainee->unit ?: '-';
-                    $group = $trainee->group ?: 'FR';
-                    $region = $trainee->origin ?: '-';
+                    $pastRecord = null;
+                    if (! empty($trainee->nik)) {
+                        $pastRecord = DB::table('training_records')
+                            ->where('participant_identifier', $trainee->nik)
+                            ->orderBy('created_at', 'desc')
+                            ->first();
+                    }
+                    if (! $pastRecord && ! empty(trim($trainee->name))) {
+                        $pastRecord = DB::table('training_records')
+                            ->where(DB::raw('LOWER(TRIM(participant_name))'), strtolower(trim($trainee->name)))
+                            ->orderBy('created_at', 'desc')
+                            ->first();
+                    }
+
+                    $gender = ($pastRecord && $pastRecord->gender && $pastRecord->gender !== '-') ? $pastRecord->gender : ($trainee->gender ?: '-');
+                    $company = ($pastRecord && $pastRecord->company && $pastRecord->company !== '-') ? $pastRecord->company : ($trainee->unit ?: '-');
+                    $workLoc = ($pastRecord && $pastRecord->work_location && $pastRecord->work_location !== '-') ? $pastRecord->work_location : ($trainee->unit ?: '-');
+                    $group = ($pastRecord && $pastRecord->group_name && $pastRecord->group_name !== '-') ? $pastRecord->group_name : ($trainee->group ?: 'FR');
+                    $region = ($pastRecord && $pastRecord->region && $pastRecord->region !== '-') ? $pastRecord->region : ($trainee->origin ?: ($dailyClass->region ?: '-'));
+                    $gol = ($pastRecord && $pastRecord->gol && $pastRecord->gol !== '-') ? $pastRecord->gol : '-';
+                    $level = ($pastRecord && $pastRecord->level && $pastRecord->level !== '-') ? $pastRecord->level : '-';
                     $internalExternal = $dailyClass->provider ?: 'Internal';
-                    $level = null;
-                }
-
-                // Jika data masih '-' atau null, cari dari riwayat peserta sebelumnya
-                $pastRecord = null;
-                if (! empty($trainee->nik)) {
-                    $pastRecord = DB::table('training_records')
-                        ->where('participant_identifier', $trainee->nik)
-                        ->orderBy('created_at', 'desc')
-                        ->first();
-                }
-                if (! $pastRecord && ! empty(trim($trainee->name))) {
-                    $pastRecord = DB::table('training_records')
-                        ->where(DB::raw('LOWER(TRIM(participant_name))'), strtolower(trim($trainee->name)))
-                        ->orderBy('created_at', 'desc')
-                        ->first();
-                }
-
-                if ($pastRecord) {
-                    if (empty($gender) || $gender === '-') $gender = $pastRecord->gender ?: '-';
-                    if (empty($company) || $company === '-') $company = $pastRecord->company ?: ($trainee->unit ?: '-');
-                    if (empty($workLoc) || $workLoc === '-') $workLoc = $pastRecord->work_location ?: ($trainee->unit ?: '-');
-                    if (empty($group) || $group === '-') $group = $pastRecord->group_name ?: 'FR';
-                    if (empty($region) || $region === '-') $region = $pastRecord->region ?: ($trainee->origin ?: '-');
-                    if (empty($gol) || $gol === '-') $gol = $pastRecord->gol;
-                    if (empty($level) || $level === '-') $level = $pastRecord->level;
-                }
-
-                // Dynamic GOL
-                if (empty($gol) || $gol === '-') {
-                    if (! empty($trainee->talent_to)) {
-                        $gol = DB::table('training_records')
-                            ->where('position', $trainee->talent_to)
-                            ->whereNotNull('gol')
-                            ->where('gol', '!=', '-')
-                            ->orderBy('id', 'desc')
-                            ->value('gol');
-                    }
-                    if (! $gol) {
-                        $jabatanLower = strtolower($trainee->talent_to ?? '');
-                        if (str_contains($jabatanLower, 'askep') || str_contains($jabatanLower, 'asst') || str_contains($jabatanLower, 'asisten') || str_contains($jabatanLower, 'manager') || str_contains($jabatanLower, 'staff') || str_contains($jabatanLower, 'staf') || str_contains($jabatanLower, 'ktu') || str_contains($jabatanLower, 'gmk') || str_contains($jabatanLower, 'head')) {
-                            $gol = 'Staf';
-                        } else {
-                            $gol = 'Non Staf';
-                        }
-                    }
-                }
-
-                // Dynamic LEVEL
-                if (empty($level) || $level === '-') {
-                    if (! empty($trainee->talent_to)) {
-                        $level = DB::table('training_records')
-                            ->where('position', $trainee->talent_to)
-                            ->whereNotNull('level')
-                            ->where('level', '!=', '-')
-                            ->orderBy('id', 'desc')
-                            ->value('level');
-                    }
-                    if (! $level) {
-                        $jabatanLower = strtolower($trainee->talent_to ?? '');
-                        if (str_contains($jabatanLower, 'direktur') || str_contains($jabatanLower, 'director') || str_contains($jabatanLower, 'head')) {
-                            $level = 'Senior';
-                        } elseif (str_contains($jabatanLower, 'manager') || str_contains($jabatanLower, 'gm') || str_contains($jabatanLower, 'manajer')) {
-                            $level = 'Middle';
-                        } else {
-                            $level = 'workers';
-                        }
-                    }
                 }
 
                 $dataRows[] = [
