@@ -237,14 +237,25 @@ class ProfilTalentController extends Controller
      */
     public function exportPdf(Request $request, $id)
     {
+        @ini_set('memory_limit', '256M');
+        @set_time_limit(120);
+
+        // Ensure storage/fonts directory exists for DomPDF font cache
+        $fontDir = storage_path('fonts');
+        if (!is_dir($fontDir)) {
+            @mkdir($fontDir, 0775, true);
+        }
+
         $talent = ProfilTalent::findOrFail($id);
 
         // Prepare Base64 Logo for DomPDF to avoid path/network issues
         $logoBase64 = null;
         $logoPath = public_path('images/logofr.png');
         if (file_exists($logoPath)) {
-            $logoData = file_get_contents($logoPath);
-            $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+            $logoData = @file_get_contents($logoPath);
+            if ($logoData !== false) {
+                $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+            }
         }
 
         // Prepare Photo (Base64 for DomPDF to ensure flawless embedding)
@@ -253,13 +264,13 @@ class ProfilTalentController extends Controller
         // Grade evaluation info
         $grade = $talent->evaluation_grade;
 
-        // Split text fields into bullet lists
-        $historiList = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $talent->histori_pekerjaan), fn($l) => trim($l) !== ''));
-        $achievementList = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $talent->achievement), fn($l) => trim($l) !== ''));
-        $strengthList = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $talent->strength), fn($l) => trim($l) !== ''));
-        $weaknessList = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $talent->weakness), fn($l) => trim($l) !== ''));
-        $catatanMentorList = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $talent->catatan_mentor_general), fn($l) => trim($l) !== ''));
-        $devSuggestionList = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $talent->development_suggestion_general), fn($l) => trim($l) !== ''));
+        // Split text fields into numbered lists
+        $historiList = $this->splitNumberedList($talent->histori_pekerjaan);
+        $achievementList = $this->splitNumberedList($talent->achievement);
+        $strengthList = $this->splitNumberedList($talent->strength);
+        $weaknessList = $this->splitNumberedList($talent->weakness);
+        $catatanMentorList = $this->splitNumberedList($talent->catatan_mentor_general);
+        $devSuggestionList = $this->splitNumberedList($talent->development_suggestion_general);
 
         // Determine months to show: If Jan-Jun have non-empty values, show all 12, else show Jul-Dec (Semester 2)
         $hasJanJun = false;
@@ -310,35 +321,46 @@ class ProfilTalentController extends Controller
             ));
         }
 
-        $pdf = Pdf::loadView('Administrasi.Pages.Talent.pdf_report', compact(
-            'talent',
-            'logoBase64',
-            'photoBase64',
-            'grade',
-            'historiList',
-            'achievementList',
-            'strengthList',
-            'weaknessList',
-            'catatanMentorList',
-            'devSuggestionList',
-            'displayedMonths'
-        ))->setPaper('a4', 'portrait');
+        try {
+            $pdf = Pdf::loadView('Administrasi.Pages.Talent.pdf_report', compact(
+                'talent',
+                'logoBase64',
+                'photoBase64',
+                'grade',
+                'historiList',
+                'achievementList',
+                'strengthList',
+                'weaknessList',
+                'catatanMentorList',
+                'devSuggestionList',
+                'displayedMonths'
+            ))->setPaper('a4', 'portrait')
+              ->setOption('fontDir', $fontDir)
+              ->setOption('fontCache', $fontDir);
 
-        $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $talent->nama);
-        $filename = "Individual_Summary_Report_{$safeName}.pdf";
+            $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $talent->nama);
+            $filename = "Individual_Summary_Report_{$safeName}.pdf";
 
-        ActivityLog::log(
-            action: 'Export PDF',
-            module: 'Profil Talent',
-            description: "Export Individual Summary Report PDF untuk {$talent->nama}",
-            properties: ['talent_id' => $talent->id, 'nama' => $talent->nama]
-        );
+            ActivityLog::log(
+                action: 'Export PDF',
+                module: 'Profil Talent',
+                description: "Export Individual Summary Report PDF untuk {$talent->nama}",
+                properties: ['talent_id' => $talent->id, 'nama' => $talent->nama]
+            );
 
-        if ($request->query('download') == '1') {
-            return $pdf->download($filename);
+            if ($request->query('download') == '1') {
+                return $pdf->download($filename);
+            }
+
+            return $pdf->stream($filename);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('DomPDF Export Error: ' . $e->getMessage(), [
+                'exception' => $e,
+            ]);
+
+            return response("<h3>Gagal Mengekspor PDF (Error 500)</h3><p><strong>Pesan Error:</strong> " . htmlspecialchars($e->getMessage()) . "</p><p><strong>File:</strong> " . htmlspecialchars($e->getFile()) . " (Baris: " . $e->getLine() . ")</p><p><em>Tips: Pastikan folder <code>storage/fonts</code> dan <code>storage/framework/cache</code> memiliki izin tulis (chmod 775/777) dan ekstensi PHP GD aktif di server hosting.</em></p>", 500)
+                ->header('Content-Type', 'text/html; charset=utf-8');
         }
-
-        return $pdf->stream($filename);
     }
 
     /**
@@ -560,8 +582,8 @@ class ProfilTalentController extends Controller
                     'mentor' => $get(['Mentor', 'Mentor Lapangan', 'Mentor Utama']),
                     'mentor_frlc' => $get(['Mentor FRLC']),
                     'masa_kerja' => $get(['Masa Kerja']),
-                    'histori_pekerjaan' => $get(['Histori Pekerjaan', 'Riwayat Pekerjaan']),
-                    'achievement' => $get(['Achievement', 'Prestasi']),
+                    'histori_pekerjaan' => $this->normalizeNumberedList($get(['Histori Pekerjaan', 'Riwayat Pekerjaan'])),
+                    'achievement' => $this->normalizeNumberedList($get(['Achievement', 'Prestasi'])),
                     'keterangan_penugasan' => $get(['Keterangan']),
                     'periode_penugasan' => $get(['Periode Penugasan']),
                     'alasan' => $get(['Alasan']),
@@ -572,10 +594,10 @@ class ProfilTalentController extends Controller
                     'teknis' => $get(['Teknis']),
                     'leadership' => $get(['Leadership']),
                     'training' => $get(['Training']),
-                    'catatan_mentor_general' => $get(['Catatan Mentor']),
-                    'strength' => $get(['Strength']),
-                    'weakness' => $get(['Weakness']),
-                    'development_suggestion_general' => $get(['Development Suggestion']),
+                    'catatan_mentor_general' => $this->normalizeNumberedList($get(['Catatan Mentor'])),
+                    'strength' => $this->normalizeNumberedList($get(['Strength'])),
+                    'weakness' => $this->normalizeNumberedList($get(['Weakness'])),
+                    'development_suggestion_general' => $this->normalizeNumberedList($get(['Development Suggestion'])),
                     'nilai_ojt' => is_numeric($get(['Nilai OJT'])) ? (float) $get(['Nilai OJT']) : null,
                     'nilai_evaluasi_panelis' => is_numeric($get(['Nilai Evaluasi Panelis', 'Nilai Panelis'])) ? (float) $get(['Nilai Evaluasi Panelis', 'Nilai Panelis']) : null,
                     'nilai_akhir' => is_numeric($get(['Nilai Ahir', 'Nilai Akhir'])) ? (float) $get(['Nilai Ahir', 'Nilai Akhir']) : null,
@@ -608,10 +630,10 @@ class ProfilTalentController extends Controller
                     $data["nilai_{$m}"] = (is_numeric($valScore)) ? (float) $valScore : null;
 
                     $catatan = $get(["Catatan Mentor {$m}", "Catatan {$m}"]);
-                    $data["catatan_mentor_{$m}"] = !empty($catatan) ? $catatan : null;
+                    $data["catatan_mentor_{$m}"] = $this->normalizeNumberedList($catatan);
 
                     $suggestion = $get(["Development Suggestion {$m}", "Suggestion {$m}", "Saran {$m}"]);
-                    $data["dev_suggestion_{$m}"] = !empty($suggestion) ? $suggestion : null;
+                    $data["dev_suggestion_{$m}"] = $this->normalizeNumberedList($suggestion);
                 }
 
                 // Update if employee_id exists, otherwise create
@@ -696,6 +718,30 @@ class ProfilTalentController extends Controller
         $validated = $request->validate($rules);
         unset($validated['foto_file']);
 
+        // Rapikan teks multi-baris (Shift+Enter) menjadi daftar bernomor urut
+        $listFields = [
+            'histori_pekerjaan',
+            'achievement',
+            'strength',
+            'weakness',
+            'catatan_mentor_general',
+            'development_suggestion_general',
+        ];
+        foreach ($listFields as $lf) {
+            if (isset($validated[$lf])) {
+                $validated[$lf] = $this->normalizeNumberedList($validated[$lf]);
+            }
+        }
+
+        foreach ($months as $m) {
+            if (isset($validated["catatan_mentor_{$m}"])) {
+                $validated["catatan_mentor_{$m}"] = $this->normalizeNumberedList($validated["catatan_mentor_{$m}"]);
+            }
+            if (isset($validated["dev_suggestion_{$m}"])) {
+                $validated["dev_suggestion_{$m}"] = $this->normalizeNumberedList($validated["dev_suggestion_{$m}"]);
+            }
+        }
+
         // Auto calculate Overall Progress if empty but components exist
         if (empty($validated['overall_progress'])) {
             $progs = array_filter([$validated['refreshment'] ?? null, $validated['softskill'] ?? null, $validated['ojt'] ?? null], fn ($v) => $v !== null && $v !== '');
@@ -755,5 +801,43 @@ class ProfilTalentController extends Controller
         }
 
         return $headers;
+    }
+
+    /**
+     * Rapikan baris teks (Shift+Enter / Alt+Enter) menjadi array list bernomor (1. ..., 2. ...)
+     */
+    protected function splitNumberedList(?string $text): array
+    {
+        if (empty($text)) {
+            return [];
+        }
+
+        $lines = preg_split('/\r\n|\r|\n/', trim($text));
+        $result = [];
+        $no = 1;
+
+        foreach ($lines as $line) {
+            $clean = trim($line);
+            if ($clean === '') {
+                continue;
+            }
+
+            // Bersihkan nomor atau bullet lama jika ada (1., 1), -, *, •)
+            $clean = preg_replace('/^(\d+[\.\-\)]|\-|\*|•)\s*/u', '', $clean);
+
+            $result[] = "{$no}. {$clean}";
+            $no++;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Rapikan teks dari Excel / input menjadi string list bernomor urut dengan spasi antar poin.
+     */
+    protected function normalizeNumberedList(?string $text): ?string
+    {
+        $list = $this->splitNumberedList($text);
+        return !empty($list) ? implode("\n\n", $list) : null;
     }
 }

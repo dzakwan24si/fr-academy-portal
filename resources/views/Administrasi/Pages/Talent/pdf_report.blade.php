@@ -68,8 +68,11 @@
         .bullet-item {
             font-size: 6.8pt;
             color: #334155;
-            line-height: 1.3;
-            margin-bottom: 2px;
+            line-height: 1.35;
+            margin-bottom: 5px;
+        }
+        .bullet-item:last-child {
+            margin-bottom: 0;
         }
 
         /* Score Pills */
@@ -199,12 +202,10 @@
                     </div>
                     @forelse($historiList as $hItem)
                         <div class="bullet-item">
-                            <span style="color: #059669; font-weight: bold; margin-right: 3px;">&#9670;</span>
                             {{ $hItem }}
                         </div>
                     @empty
                         <div class="bullet-item" style="color: #94a3b8;">
-                            <span style="color: #059669; font-weight: bold; margin-right: 3px;">&#9670;</span>
                             Belum ada riwayat histori pekerjaan.
                         </div>
                     @endforelse
@@ -219,12 +220,10 @@
                     </div>
                     @forelse($achievementList as $aItem)
                         <div class="bullet-item">
-                            <span style="color: #f59e0b; font-weight: bold; margin-right: 3px;">&#9733;</span>
                             {{ $aItem }}
                         </div>
                     @empty
                         <div class="bullet-item" style="color: #94a3b8;">
-                            <span style="color: #f59e0b; font-weight: bold; margin-right: 3px;">&#9733;</span>
                             Belum ada data prestasi / achievement.
                         </div>
                     @endforelse
@@ -298,15 +297,11 @@
                     <div class="banner-body">
                         @forelse($strengthList as $sItem)
                             <div class="bullet-item">
-                                <span style="color: #10b981; font-weight: bold; margin-right: 3px;">&#10004;</span>
                                 {{ $sItem }}
                             </div>
                         @empty
                             <div class="bullet-item" style="color: #94a3b8;">
-                                <span style="color: #10b981; font-weight: bold; margin-right: 3px;">&#10004;</span> --
-                            </div>
-                            <div class="bullet-item" style="color: #94a3b8;">
-                                <span style="color: #10b981; font-weight: bold; margin-right: 3px;">&#10004;</span> --
+                                -
                             </div>
                         @endforelse
                     </div>
@@ -323,15 +318,11 @@
                     <div class="banner-body">
                         @forelse($weaknessList as $wItem)
                             <div class="bullet-item">
-                                <span style="color: #ea580c; font-weight: bold; margin-right: 3px;">!</span>
                                 {{ $wItem }}
                             </div>
                         @empty
                             <div class="bullet-item" style="color: #94a3b8;">
-                                <span style="color: #ea580c; font-weight: bold; margin-right: 3px;">!</span> --
-                            </div>
-                            <div class="bullet-item" style="color: #94a3b8;">
-                                <span style="color: #ea580c; font-weight: bold; margin-right: 3px;">!</span> --
+                                -
                             </div>
                         @endforelse
                     </div>
@@ -351,15 +342,11 @@
                     </div>
                     @forelse($catatanMentorList as $cItem)
                         <div class="bullet-item">
-                            <span style="color: #2563eb; font-weight: bold; margin-right: 3px;">&#9670;</span>
                             {{ $cItem }}
                         </div>
                     @empty
                         <div class="bullet-item" style="color: #94a3b8;">
-                            <span style="color: #2563eb; font-weight: bold; margin-right: 3px;">&#9670;</span> -
-                        </div>
-                        <div class="bullet-item" style="color: #94a3b8;">
-                            <span style="color: #2563eb; font-weight: bold; margin-right: 3px;">&#9670;</span> -
+                            -
                         </div>
                     @endforelse
                 </div>
@@ -420,15 +407,11 @@
         </div>
         @forelse($devSuggestionList as $dItem)
             <div class="bullet-item">
-                <span style="color: #059669; font-weight: bold; margin-right: 3px;">&#10004;</span>
                 {{ $dItem }}
             </div>
         @empty
             <div class="bullet-item" style="color: #94a3b8;">
-                <span style="color: #059669; font-weight: bold; margin-right: 3px;">&#10004;</span> --
-            </div>
-            <div class="bullet-item" style="color: #94a3b8;">
-                <span style="color: #059669; font-weight: bold; margin-right: 3px;">&#10004;</span> --
+                -
             </div>
         @endforelse
     </div>

@@ -451,8 +451,8 @@
                             <i data-lucide="briefcase" class="w-4 h-4 text-emerald-700"></i>
                             <span>Histori Pekerjaan</span>
                         </div>
-                        <div class="text-xs text-slate-600 space-y-2 whitespace-pre-line leading-relaxed">
-                            {!! nl2br(e($selectedTalent->histori_pekerjaan ?: 'Belum ada histori pekerjaan.')) !!}
+                        <div class="text-xs text-slate-600 whitespace-pre-line leading-relaxed">
+                            {{ $selectedTalent->histori_pekerjaan ?: 'Belum ada histori pekerjaan.' }}
                         </div>
                     </div>
 
@@ -462,8 +462,8 @@
                             <i data-lucide="trophy" class="w-4 h-4 text-amber-500"></i>
                             <span>Achievement & Prestasi</span>
                         </div>
-                        <div class="text-xs text-slate-600 space-y-2 whitespace-pre-line leading-relaxed">
-                            {!! nl2br(e($selectedTalent->achievement ?: 'Belum ada catatan achievement.')) !!}
+                        <div class="text-xs text-slate-600 whitespace-pre-line leading-relaxed">
+                            {{ $selectedTalent->achievement ?: 'Belum ada catatan achievement.' }}
                         </div>
                     </div>
                 </div>
@@ -534,8 +534,8 @@
                             <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
                             <span>Strength (Kelebihan)</span>
                         </div>
-                        <div class="text-xs text-slate-700 space-y-2 whitespace-pre-line leading-relaxed">
-                            {!! nl2br(e($selectedTalent->strength ?: 'Belum ada catatan kelebihan.')) !!}
+                        <div class="text-xs text-slate-700 whitespace-pre-line leading-relaxed">
+                            {{ $selectedTalent->strength ?: 'Belum ada catatan kelebihan.' }}
                         </div>
                     </div>
 
@@ -545,8 +545,8 @@
                             <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-500"></i>
                             <span>Weakness (Area Pengembangan)</span>
                         </div>
-                        <div class="text-xs text-slate-700 space-y-2 whitespace-pre-line leading-relaxed">
-                            {!! nl2br(e($selectedTalent->weakness ?: 'Belum ada catatan kelemahan.')) !!}
+                        <div class="text-xs text-slate-700 whitespace-pre-line leading-relaxed">
+                            {{ $selectedTalent->weakness ?: 'Belum ada catatan kelemahan.' }}
                         </div>
                     </div>
                 </div>

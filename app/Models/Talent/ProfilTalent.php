@@ -370,10 +370,21 @@ class ProfilTalent extends Model
      */
     public function getPhotoBase64Attribute(): ?string
     {
-        $path = $this->ensureLocalPhoto(true);
-        if ($path && file_exists($path)) {
-            $mime = mime_content_type($path) ?: 'image/png';
-            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+        try {
+            $path = $this->ensureLocalPhoto(true);
+            if ($path && file_exists($path)) {
+                $mime = function_exists('mime_content_type') ? @mime_content_type($path) : null;
+                if (empty($mime)) {
+                    $ext = strtolower(pathinfo($path, PATHINFO_EXTENSION));
+                    $mime = ($ext === 'jpg' || $ext === 'jpeg') ? 'image/jpeg' : 'image/png';
+                }
+                $data = @file_get_contents($path);
+                if ($data !== false && strlen($data) > 0) {
+                    return 'data:' . $mime . ';base64,' . base64_encode($data);
+                }
+            }
+        } catch (\Throwable $e) {
+            // Return null on failure so PDF rendering never crashes
         }
         return null;
     }
