@@ -685,7 +685,24 @@ class NonRegulerDailyClassController extends Controller
             return view('admin.non-reguler.daily_classes.print_attendance', compact('dailyClass', 'printDate', 'trainees'));
         }
 
-        // Default: Export ke format Excel (.xlsx)
+        $dailyClass->load('trainingProgram');
+
+        // Header Metadata Pelatihan (Nama Program, Trainer, Waktu, Lokasi, dll)
+        $waktuStr = ($dailyClass->start_time ? Carbon::parse($dailyClass->start_time)->format('H:i') : '?')
+            . ' - ' . ($dailyClass->end_time ? Carbon::parse($dailyClass->end_time)->format('H:i') : 'Selesai') . ' WIB';
+
+        $lokasiStr = ($dailyClass->room ?: '-') . ($dailyClass->region ? ' (' . $dailyClass->region . ')' : '');
+
+        $tglFormattedIndo = Carbon::parse($printDate)->locale('id')->isoFormat('dddd, DD MMMM Y');
+
+        $details = [
+            ['Nama Program', ': ' . ($dailyClass->trainingProgram->name ?? '-'), 'Tanggal Pelatihan', ': ' . $tglFormattedIndo],
+            ['Program / Kelas', ': ' . $dailyClass->title, 'Waktu', ': ' . $waktuStr],
+            ['Instruktur', ': ' . ($dailyClass->trainer_name ?: '-'), 'Lokasi / Ruang', ': ' . $lokasiStr],
+            ['Provider', ': ' . ($dailyClass->provider ?: 'Internal'), 'Total Peserta', ': ' . count($trainees) . ' Orang'],
+        ];
+
+        // Default: Export ke format Excel (.xlsx) dengan Header Lengkap
         $headers = [
             'No',
             'Employee ID',
@@ -731,7 +748,15 @@ class NonRegulerDailyClassController extends Controller
         $dateSuffix = ($printDate && $printDate !== 'all') ? Carbon::parse($printDate)->format('Ymd') : date('Ymd');
         $filename = 'Absensi_'.Str::slug($dailyClass->title).'_'.$dateSuffix.'.xlsx';
 
-        return ExcelExporter::download($filename, $headers, $dataRows, 'Presensi Peserta');
+        return ExcelExporter::downloadWithHeader(
+            $filename,
+            'DAFTAR HADIR PESERTA PELATIHAN',
+            'FR Academy - Program Non Reguler',
+            $details,
+            $headers,
+            $dataRows,
+            'Daftar Hadir'
+        );
     }
 
     public function printTasks(DailyClass $dailyClass)
