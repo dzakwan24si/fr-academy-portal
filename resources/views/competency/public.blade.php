@@ -142,7 +142,7 @@
             <span class="text-green-accent font-bold tracking-widest uppercase text-xs md:text-sm mb-3 block">Kamus Kompetensi</span>
             <h1 class="text-3xl md:text-5xl font-extrabold text-white mb-3">Standar Kompetensi Teknis</h1>
             <p class="text-base md:text-lg text-teal-100 max-w-2xl mx-auto font-light">
-                Acuan kemampuan setiap jabatan, dari Basic hingga Expert, untuk bidang Estate dan Mill / PKS.
+                Acuan kemampuan setiap jabatan, dari Basic hingga Expert, untuk bidang Estate, Mill / PKS, Traksi, Administrasi, dan Downstream.
             </p>
         </div>
     </section>
