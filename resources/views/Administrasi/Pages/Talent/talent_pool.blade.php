@@ -25,6 +25,7 @@
         </div>
 
         {{-- Action Buttons --}}
+        @can('edit_talent')
         <div class="flex flex-wrap items-center gap-2">
             {{-- Template Excel --}}
             <a href="{{ route('administrasi.talent-pool.template') }}" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-2xs" title="Unduh Format Template Excel Resmi">
@@ -56,6 +57,7 @@
                 <span>Hapus Semua</span>
             </button>
         </div>
+        @endcan
     </div>
 
     {{-- Alert Messages --}}
@@ -254,7 +256,9 @@
                         <th class="px-3.5 py-3.5">Lokasi / Tgl Penempatan</th>
                         <th class="px-3.5 py-3.5">Keterangan</th>
                         <th class="px-3.5 py-3.5">Jenis Kategori</th>
+                        @can('edit_talent')
                         <th class="px-3.5 py-3.5 text-right w-24">Aksi</th>
+                        @endcan
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -327,6 +331,7 @@
                             </td>
 
                             {{-- Actions --}}
+                            @can('edit_talent')
                             <td class="px-3.5 py-3.5 text-right whitespace-nowrap">
                                 <div class="flex items-center justify-end gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
                                     <button type="button" onclick="openEditModal({{ json_encode($item) }})" class="p-1.5 text-slate-500 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors" title="Edit">
@@ -337,10 +342,11 @@
                                     </button>
                                 </div>
                             </td>
+                            @endcan
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="10" class="px-6 py-12 text-center text-slate-400">
+                            <td colspan="{{ auth()->user()->can('edit_talent') ? 10 : 9 }}" class="px-6 py-12 text-center text-slate-400">
                                 <div class="flex flex-col items-center justify-center">
                                     <div class="w-12 h-12 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 mb-3 border border-slate-100">
                                         <i data-lucide="users-round" class="w-6 h-6"></i>
@@ -364,6 +370,7 @@
     </div>
 </div>
 
+@can('edit_talent')
 {{-- ============================== 5. MODALS ============================== --}}
 
 {{-- Modal Tambah --}}
@@ -753,6 +760,7 @@
         </form>
     </div>
 </div>
+@endcan
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

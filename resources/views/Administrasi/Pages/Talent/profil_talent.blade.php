@@ -161,6 +161,7 @@
                     </div>
                 </div>
 
+                @can('edit_talent')
                 <div class="flex flex-wrap items-center gap-2">
                     {{-- Download Template --}}
                     <a href="{{ route('administrasi.profil-talent.template') }}" class="inline-flex items-center gap-1.5 rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold text-white transition-all" style="background-color: rgba(255, 255, 255, 0.15) !important; border: 1px solid rgba(255, 255, 255, 0.3) !important; color: #ffffff !important;">
@@ -194,6 +195,7 @@
                     </button>
                     @endif
                 </div>
+                @endcan
             </div>
         </div>
 
@@ -242,9 +244,12 @@
                            data-cat="{{ $t->talent ?? '' }}"
                            class="talent-item-card block p-3 rounded-xl border transition-all duration-150 {{ $isSelected ? 'bg-emerald-50/80 border-emerald-500 shadow-xs ring-2 ring-emerald-500/30' : 'bg-white border-slate-200/80 hover:bg-slate-50 hover:border-slate-300' }}">
                             <div class="flex items-center gap-3">
-                                {{-- Avatar Initials --}}
-                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 {{ $isSelected ? 'bg-emerald-700 text-white shadow-xs' : 'bg-slate-100 text-slate-700 border border-slate-200' }}">
-                                    {{ $t->initials }}
+                                {{-- Avatar Photo / Initials --}}
+                                <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden relative {{ $isSelected ? 'bg-emerald-700 text-white shadow-xs' : 'bg-slate-100 text-slate-700 border border-slate-200' }}">
+                                    @if($t->photo_url)
+                                        <img src="{{ $t->photo_url }}" alt="{{ $t->nama }}" class="w-full h-full object-cover" referrerpolicy="no-referrer" onerror="this.style.display='none'">
+                                    @endif
+                                    <span class="{{ $t->photo_url ? 'absolute inset-0 -z-1 flex items-center justify-center' : '' }}">{{ $t->initials }}</span>
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex items-center justify-between gap-1">
@@ -287,6 +292,7 @@
                                         @if($selectedTalent->photo_url)
                                             <img src="{{ $selectedTalent->photo_url }}" alt="{{ $selectedTalent->nama }}"
                                                  class="w-full h-full object-cover rounded-xl"
+                                                 referrerpolicy="no-referrer"
                                                  onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode($selectedTalent->nama) }}&background=1F3E22&color=fff&size=200';">
                                         @else
                                             <div class="w-full h-full bg-emerald-800 text-white font-black text-2xl flex items-center justify-center rounded-xl">
@@ -329,6 +335,7 @@
                         </div>
 
                         {{-- Action Buttons --}}
+                        @can('edit_talent')
                         <div class="flex flex-col gap-2 mt-5 no-print">
                             <button type="button" onclick="openEditModal({{ $selectedTalent->id }})"
                                     class="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs py-2.5 shadow-xs transition-colors">
@@ -337,11 +344,11 @@
                             </button>
 
                             <div class="flex items-center gap-2">
-                                <button type="button" onclick="window.print()"
-                                        class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#509c38] hover:bg-[#43832f] text-white font-bold text-xs py-2 shadow-xs transition-colors">
-                                    <i data-lucide="printer" class="w-3.5 h-3.5"></i>
-                                    <span>Export PDF / Cetak</span>
-                                </button>
+                                <a href="{{ route('administrasi.profil-talent.export-pdf', $selectedTalent->id) }}" target="_blank"
+                                   class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#509c38] hover:bg-[#43832f] text-white font-bold text-xs py-2 shadow-xs transition-colors">
+                                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i>
+                                    <span>Export PDF (Summary)</span>
+                                </a>
 
                                 <button type="button" onclick="openDeleteSingleModal({{ $selectedTalent->id }}, '{{ addslashes($selectedTalent->nama) }}')"
                                         class="px-3 py-2 rounded-xl border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold transition-colors"
@@ -350,6 +357,7 @@
                                 </button>
                             </div>
                         </div>
+                        @endcan
                     </div>
 
                     {{-- Right of Hero: Progress IDP Card --}}
@@ -751,6 +759,7 @@
                     <p class="text-xs text-slate-500 max-w-md mx-auto mb-6">
                         Silakan tambahkan data talent satu per satu atau import data dari file Excel / CSV yang Anda miliki.
                     </p>
+                    @can('edit_talent')
                     <div class="flex items-center justify-center gap-3">
                         <button type="button" onclick="openAddModal()" class="px-4 py-2 bg-[#509c38] hover:bg-[#43832f] text-white text-xs font-bold rounded-xl shadow-xs transition-all">
                             + Tambah Talent Baru
@@ -759,6 +768,7 @@
                             Import Excel / CSV
                         </button>
                     </div>
+                    @endcan
                 </div>
                 @endif
 
@@ -766,6 +776,7 @@
         </div>
     </div>
 
+    @can('edit_talent')
     {{-- ==================== MODAL IMPORT EXCEL / CSV ==================== --}}
     <div id="modal-import" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs overflow-y-auto flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden transform transition-all">
@@ -933,6 +944,25 @@
                     </div>
                 </div>
 
+                {{-- Kompetensi Talent (Teknis, Leadership, Training) --}}
+                <div class="space-y-3 pt-2 border-t border-slate-100">
+                    <span class="text-xs font-black uppercase tracking-wider text-slate-700 block">Kompetensi Talent</span>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Teknis</label>
+                            <textarea name="teknis" rows="2" maxlength="255" placeholder="Contoh: Pemupukan, Panen, HPT, dll." class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Managerial & Leadership</label>
+                            <textarea name="leadership" rows="2" maxlength="255" placeholder="Contoh: Komunikasi, Delegasi, Supervisi" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Training</label>
+                            <textarea name="training" rows="2" maxlength="255" placeholder="Contoh: Basic Agronomy, Safety / K3, FRLC" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"></textarea>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Progress & Scores --}}
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2 border-t border-slate-100">
                     <div>
@@ -1072,8 +1102,32 @@
                             <input type="text" name="region" value="{{ $selectedTalent->region }}" class="w-full text-xs border border-slate-200 rounded-xl p-2.5">
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Usia</label>
-                            <input type="text" name="umur" value="{{ $selectedTalent->umur }}" class="w-full text-xs border border-slate-200 rounded-xl p-2.5">
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Usia / Umur</label>
+                            <input type="text" name="umur" value="{{ $selectedTalent->umur }}" placeholder="25 Tahun" class="w-full text-xs border border-slate-200 rounded-xl p-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Masa Kerja</label>
+                            <input type="text" name="masa_kerja" value="{{ $selectedTalent->masa_kerja }}" placeholder="2 Tahun" class="w-full text-xs border border-slate-200 rounded-xl p-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Alumni Universitas</label>
+                            <input type="text" name="alumni" value="{{ $selectedTalent->alumni }}" placeholder="Universitas..." class="w-full text-xs border border-slate-200 rounded-xl p-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Status Pernikahan</label>
+                            <input type="text" name="status_pernikahan" value="{{ $selectedTalent->status_pernikahan }}" placeholder="K/1, TK/0" class="w-full text-xs border border-slate-200 rounded-xl p-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Agama</label>
+                            <input type="text" name="agama" value="{{ $selectedTalent->agama }}" placeholder="Islam, Kristen, dll." class="w-full text-xs border border-slate-200 rounded-xl p-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Mentor Utama</label>
+                            <input type="text" name="mentor" value="{{ $selectedTalent->mentor }}" placeholder="Nama Mentor" class="w-full text-xs border border-slate-200 rounded-xl p-2.5">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-700 mb-1">Mentor FRLC</label>
+                            <input type="text" name="mentor_frlc" value="{{ $selectedTalent->mentor_frlc }}" placeholder="Nama Mentor FRLC" class="w-full text-xs border border-slate-200 rounded-xl p-2.5">
                         </div>
                     </div>
 
@@ -1109,6 +1163,25 @@
                             <div>
                                 <label class="block text-xs font-bold text-slate-700 mb-1">Weakness (Area Pengembangan)</label>
                                 <textarea name="weakness" rows="3" class="w-full text-xs border border-slate-200 rounded-xl p-2.5">{{ $selectedTalent->weakness }}</textarea>
+                            </div>
+                        </div>
+
+                        {{-- Kompetensi Talent (Teknis, Leadership, Training) --}}
+                        <div class="pt-3 border-t border-slate-100">
+                            <span class="text-xs font-black uppercase tracking-wider text-slate-700 block mb-2">Kompetensi Talent</span>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Teknis</label>
+                                    <textarea name="teknis" rows="2" maxlength="255" placeholder="Contoh: Pemupukan, Panen, HPT, dll." class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">{{ $selectedTalent->teknis }}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Managerial & Leadership</label>
+                                    <textarea name="leadership" rows="2" maxlength="255" placeholder="Contoh: Komunikasi, Delegasi, Supervisi" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">{{ $selectedTalent->leadership }}</textarea>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-700 mb-1">Training</label>
+                                    <textarea name="training" rows="2" maxlength="255" placeholder="Contoh: Basic Agronomy, Safety / K3, FRLC" class="w-full text-xs border border-slate-200 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">{{ $selectedTalent->training }}</textarea>
+                                </div>
                             </div>
                         </div>
 
@@ -1280,6 +1353,7 @@
             </form>
         </div>
     </div>
+    @endcan
 
     @push('scripts')
     <script>

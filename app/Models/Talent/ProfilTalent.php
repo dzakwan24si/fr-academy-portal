@@ -262,34 +262,194 @@ class ProfilTalent extends Model
     }
 
     /**
+     * Extract Google Drive ID from any valid Google Drive link format.
+     */
+    public static function extractGoogleDriveId(?string $url): ?string
+    {
+        if (empty($url)) {
+            return null;
+        }
+        if (preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $url, $matches)) {
+            return $matches[1];
+        }
+        if (preg_match('/[?&]id=([a-zA-Z0-9_-]+)/', $url, $matches)) {
+            return $matches[1];
+        }
+        return null;
+    }
+
+    /**
+     * Cache photo locally if it's from Google Drive, returning local asset URL or disk path.
+     */
+    public function ensureLocalPhoto(bool $returnPath = false): ?string
+    {
+        $raw = trim((string) $this->foto_profil);
+        if (empty($raw)) {
+            return null;
+        }
+
+        // 1. Direct local storage path (e.g. storage/profil-talents/...)
+        if (str_starts_with($raw, 'storage/') || str_starts_with($raw, '/storage/')) {
+            $diskPath = public_path(ltrim($raw, '/'));
+            if (file_exists($diskPath)) {
+                return $returnPath ? $diskPath : asset(ltrim($raw, '/'));
+            }
+        }
+
+        // 2. Google Drive Link
+        $driveId = self::extractGoogleDriveId($raw);
+        if ($driveId) {
+            $cacheDir = storage_path('app/public/profil-talents');
+            if (!is_dir($cacheDir)) {
+                @mkdir($cacheDir, 0755, true);
+            }
+            $cacheFile = $cacheDir . "/gdrive_{$driveId}.png";
+            $publicFile = public_path("storage/profil-talents/gdrive_{$driveId}.png");
+
+            // Check if already cached
+            if (file_exists($publicFile) && filesize($publicFile) > 0) {
+                return $returnPath ? $publicFile : asset("storage/profil-talents/gdrive_{$driveId}.png");
+            }
+            if (file_exists($cacheFile) && filesize($cacheFile) > 0) {
+                return $returnPath ? $cacheFile : asset("storage/profil-talents/gdrive_{$driveId}.png");
+            }
+
+            // Download on-the-fly if not yet cached
+            $candidates = [
+                "https://lh3.googleusercontent.com/d/{$driveId}",
+                "https://drive.google.com/uc?export=view&id={$driveId}",
+                "https://drive.google.com/thumbnail?id={$driveId}&sz=w600",
+            ];
+
+            foreach ($candidates as $candidateUrl) {
+                $ch = curl_init($candidateUrl);
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+                curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+                curl_setopt($ch, CURLOPT_TIMEOUT, 6);
+                curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+                curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+                $data = curl_exec($ch);
+                $code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
+
+                if ($code == 200 && !empty($data) && strlen($data) > 500) {
+                    @file_put_contents($cacheFile, $data);
+                    return $returnPath ? $cacheFile : asset("storage/profil-talents/gdrive_{$driveId}.png");
+                }
+            }
+
+            // Fallback: direct CDN link if download fails
+            return $returnPath ? null : "https://lh3.googleusercontent.com/d/{$driveId}";
+        }
+
+        // 3. Other generic web URLs
+        if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) {
+            return $returnPath ? null : $raw;
+        }
+
+        // 4. Default fallback storage path
+        $diskPath = public_path('storage/' . ltrim($raw, '/'));
+        if (file_exists($diskPath)) {
+            return $returnPath ? $diskPath : asset('storage/' . ltrim($raw, '/'));
+        }
+
+        return null;
+    }
+
+    /**
      * Get previewable photo URL, automatically converting Google Drive URLs if present.
      */
     public function getPhotoUrlAttribute(): string
     {
-        $raw = trim((string) $this->foto_profil);
-        if (empty($raw)) {
-            return '';
+        $url = $this->ensureLocalPhoto(false);
+        return $url ?: '';
+    }
+
+    /**
+     * Get Base64 data URI of the photo (vital for DomPDF rendering).
+     */
+    public function getPhotoBase64Attribute(): ?string
+    {
+        $path = $this->ensureLocalPhoto(true);
+        if ($path && file_exists($path)) {
+            $mime = mime_content_type($path) ?: 'image/png';
+            return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+        }
+        return null;
+    }
+
+    /**
+     * Batch cache Google Drive photos in parallel using curl_multi.
+     */
+    public static function batchCacheGoogleDrivePhotos($talents = null): int
+    {
+        $cacheDir = storage_path('app/public/profil-talents');
+        if (!is_dir($cacheDir)) {
+            @mkdir($cacheDir, 0755, true);
         }
 
-        // Check if Google Drive link
-        if (str_contains($raw, 'drive.google.com')) {
-            if (preg_match('/\/d\/([a-zA-Z0-9_-]+)/', $raw, $matches)) {
-                return "https://lh3.googleusercontent.com/d/{$matches[1]}";
+        if ($talents === null) {
+            $talents = self::whereNotNull('foto_profil')->where('foto_profil', '!=', '')->get();
+        }
+
+        $mh = curl_multi_init();
+        $handles = [];
+
+        foreach ($talents as $t) {
+            $raw = is_object($t) ? $t->foto_profil : (string) $t;
+            $driveId = self::extractGoogleDriveId($raw);
+            if (!$driveId) {
+                continue;
             }
-            if (preg_match('/[?&]id=([a-zA-Z0-9_-]+)/', $raw, $matches)) {
-                return "https://lh3.googleusercontent.com/d/{$matches[1]}";
+
+            $cacheFile = $cacheDir . "/gdrive_{$driveId}.png";
+            $publicFile = public_path("storage/profil-talents/gdrive_{$driveId}.png");
+            if ((file_exists($publicFile) && filesize($publicFile) > 0) || (file_exists($cacheFile) && filesize($cacheFile) > 0)) {
+                continue;
+            }
+
+            $ch = curl_init("https://lh3.googleusercontent.com/d/{$driveId}");
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_USERAGENT, 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+            curl_multi_add_handle($mh, $ch);
+            $handles[$driveId] = ['ch' => $ch, 'file' => $cacheFile];
+        }
+
+        if (empty($handles)) {
+            curl_multi_close($mh);
+            return 0;
+        }
+
+        $active = null;
+        do {
+            $mrc = curl_multi_exec($mh, $active);
+        } while ($mrc == CURLM_CALL_MULTI_PERFORM);
+
+        while ($active && $mrc == CURLM_OK) {
+            if (curl_multi_select($mh, 0.5) != -1) {
+                do {
+                    $mrc = curl_multi_exec($mh, $active);
+                } while ($mrc == CURLM_CALL_MULTI_PERFORM);
             }
         }
 
-        if (str_starts_with($raw, 'http://') || str_starts_with($raw, 'https://')) {
-            return $raw;
+        $saved = 0;
+        foreach ($handles as $driveId => $info) {
+            $data = curl_multi_getcontent($info['ch']);
+            $code = curl_getinfo($info['ch'], CURLINFO_HTTP_CODE);
+            if ($code == 200 && !empty($data) && strlen($data) > 500) {
+                @file_put_contents($info['file'], $data);
+                $saved++;
+            }
+            curl_multi_remove_handle($mh, $info['ch']);
+            curl_close($info['ch']);
         }
+        curl_multi_close($mh);
 
-        if (str_starts_with($raw, 'storage/') || str_starts_with($raw, '/storage/')) {
-            return asset(ltrim($raw, '/'));
-        }
-
-        return asset('storage/' . ltrim($raw, '/'));
+        return $saved;
     }
 
     /**

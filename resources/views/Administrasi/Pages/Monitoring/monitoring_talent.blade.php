@@ -26,6 +26,7 @@
         </div>
 
         {{-- Action Buttons --}}
+        @can('edit_talent')
         <div class="flex flex-wrap items-center gap-2">
             <a href="{{ route('administrasi.monitoring-talent.template') }}" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-2xs">
                 <i data-lucide="file-down" class="w-3.5 h-3.5 text-slate-500"></i>
@@ -57,6 +58,7 @@
                 <span>Hapus Semua</span>
             </button>
         </div>
+        @endcan
     </div>
 
     {{-- Alert Messages --}}
@@ -267,7 +269,9 @@
                         <th class="px-3.5 py-3.5">Keterangan / Plt</th>
                         <th class="px-3.5 py-3.5">Periode & Lokasi Baru</th>
                         <th class="px-3.5 py-3.5">Kategori</th>
+                        @can('edit_talent')
                         <th class="px-3.5 py-3.5 text-right w-20">Aksi</th>
+                        @endcan
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -369,6 +373,7 @@
                             </td>
 
                             {{-- Action --}}
+                            @can('edit_talent')
                             <td class="px-3.5 py-3.5 text-right">
                                 <div class="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                     <button type="button" onclick='openEditModal(@json($item))' class="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors" title="Edit Data">
@@ -383,10 +388,11 @@
                                     </form>
                                 </div>
                             </td>
+                            @endcan
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="11" class="px-4 py-12 text-center text-slate-400">
+                            <td colspan="{{ auth()->user()->can('edit_talent') ? 11 : 10 }}" class="px-4 py-12 text-center text-slate-400">
                                 <div class="flex flex-col items-center justify-center gap-2">
                                     <i data-lucide="inbox" class="w-8 h-8 text-slate-300"></i>
                                     <span class="text-sm font-semibold">Tidak ada data peserta talent yang sesuai filter.</span>
@@ -406,6 +412,7 @@
     </div>
 </div>
 
+@can('edit_talent')
 {{-- ============================== MODAL TAMBAH TALENT ============================== --}}
 <div id="modalAddTalent" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-150">
@@ -646,66 +653,73 @@
         </div>
     </div>
 </div>
+@endcan
 
 {{-- ============================== JAVASCRIPT MODAL HANDLERS ============================== --}}
 <script>
     function openAddModal() {
-        document.getElementById('modalAddTalent').classList.remove('hidden');
+        document.getElementById('modalAddTalent')?.classList.remove('hidden');
     }
     function closeAddModal() {
-        document.getElementById('modalAddTalent').classList.add('hidden');
+        document.getElementById('modalAddTalent')?.classList.add('hidden');
     }
 
     function openEditModal(talent) {
         const form = document.getElementById('formEditTalent');
-        form.action = `/administrasi/monitoring-talent/${talent.id}`;
+        if (form) form.action = `/administrasi/monitoring-talent/${talent.id}`;
         
-        document.getElementById('edit_employee_id').value = talent.employee_id || '';
-        document.getElementById('edit_employee_name').value = talent.employee_name || '';
-        document.getElementById('edit_posisi_asal').value = talent.posisi_asal || '';
-        document.getElementById('edit_talent_to').value = talent.talent_to || '';
-        document.getElementById('edit_unit').value = talent.unit || '';
-        document.getElementById('edit_region').value = talent.region || '';
-        document.getElementById('edit_mentor_lapangan').value = talent.mentor_lapangan || '';
-        document.getElementById('edit_mentor_frlc').value = talent.mentor_frlc || '';
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        };
+
+        setVal('edit_employee_id', talent.employee_id || '');
+        setVal('edit_employee_name', talent.employee_name || '');
+        setVal('edit_posisi_asal', talent.posisi_asal || '');
+        setVal('edit_talent_to', talent.talent_to || '');
+        setVal('edit_unit', talent.unit || '');
+        setVal('edit_region', talent.region || '');
+        setVal('edit_mentor_lapangan', talent.mentor_lapangan || '');
+        setVal('edit_mentor_frlc', talent.mentor_frlc || '');
         let stVal = talent.status || 'Sudah Penugasan';
         if (stVal.toLowerCase() === 'akan penugasan') stVal = 'Project Khusus';
-        document.getElementById('edit_status').value = stVal;
-        document.getElementById('edit_kategori').value = talent.kategori || 'TALENT ESTATE TAHUN 2026';
-        document.getElementById('edit_keterangan').value = talent.keterangan || '';
-        document.getElementById('edit_periode_penugasan_lama').value = talent.periode_penugasan_lama || '';
-        document.getElementById('edit_periode_penugasan_baru').value = talent.periode_penugasan_baru || '';
-        document.getElementById('edit_lokasi_penugasan_baru').value = talent.lokasi_penugasan_baru || '';
-        document.getElementById('edit_alasan').value = talent.alasan || '';
+        setVal('edit_status', stVal);
+        setVal('edit_kategori', talent.kategori || 'TALENT ESTATE TAHUN 2026');
+        setVal('edit_keterangan', talent.keterangan || '');
+        setVal('edit_periode_penugasan_lama', talent.periode_penugasan_lama || '');
+        setVal('edit_periode_penugasan_baru', talent.periode_penugasan_baru || '');
+        setVal('edit_lokasi_penugasan_baru', talent.lokasi_penugasan_baru || '');
+        setVal('edit_alasan', talent.alasan || '');
 
-        document.getElementById('modalEditTalent').classList.remove('hidden');
+        document.getElementById('modalEditTalent')?.classList.remove('hidden');
     }
     function closeEditModal() {
-        document.getElementById('modalEditTalent').classList.add('hidden');
+        document.getElementById('modalEditTalent')?.classList.add('hidden');
     }
 
     function openImportModal() {
-        document.getElementById('modalImportCsv').classList.remove('hidden');
+        document.getElementById('modalImportCsv')?.classList.remove('hidden');
     }
     function closeImportModal() {
-        document.getElementById('modalImportCsv').classList.add('hidden');
+        document.getElementById('modalImportCsv')?.classList.add('hidden');
     }
 
     function openDeleteAllModal() {
-        document.getElementById('modalDeleteAll').classList.remove('hidden');
+        document.getElementById('modalDeleteAll')?.classList.remove('hidden');
     }
     function closeDeleteAllModal() {
-        document.getElementById('modalDeleteAll').classList.add('hidden');
+        document.getElementById('modalDeleteAll')?.classList.add('hidden');
     }
 
     function openProgressMateriModal() {
-        document.getElementById('modalProgressMateri').classList.remove('hidden');
+        document.getElementById('modalProgressMateri')?.classList.remove('hidden');
     }
     function closeProgressMateriModal() {
-        document.getElementById('modalProgressMateri').classList.add('hidden');
+        document.getElementById('modalProgressMateri')?.classList.add('hidden');
     }
 </script>
 
+@can('edit_talent')
 {{-- Modal Edit Progres Materi Talent --}}
 <div id="modalProgressMateri" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
@@ -748,5 +762,6 @@
         </form>
     </div>
 </div>
+@endcan
 
 </x-admin-layout>

@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\Talent\ProfilTalent;
 use App\Services\ExcelExporter;
 use App\Services\SpreadsheetReader;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -229,6 +230,142 @@ class ProfilTalentController extends Controller
         ];
 
         return ExcelExporter::download('Template_Import_Profil_Talent.xlsx', $headers, [$sampleRow], 'Template Profil Talent');
+    }
+
+    /**
+     * Export individual summary report as PDF matching executive summary format.
+     */
+    public function exportPdf(Request $request, $id)
+    {
+        $talent = ProfilTalent::findOrFail($id);
+
+        // Prepare Base64 Logo for DomPDF to avoid path/network issues
+        $logoBase64 = null;
+        $logoPath = public_path('images/logofr.png');
+        if (file_exists($logoPath)) {
+            $logoData = file_get_contents($logoPath);
+            $logoBase64 = 'data:image/png;base64,' . base64_encode($logoData);
+        }
+
+        // Prepare Photo (Base64 for DomPDF to ensure flawless embedding)
+        $photoBase64 = $talent->photo_base64;
+
+        // Grade evaluation info
+        $grade = $talent->evaluation_grade;
+
+        // Split text fields into bullet lists
+        $historiList = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $talent->histori_pekerjaan), fn($l) => trim($l) !== ''));
+        $achievementList = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $talent->achievement), fn($l) => trim($l) !== ''));
+        $strengthList = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $talent->strength), fn($l) => trim($l) !== ''));
+        $weaknessList = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $talent->weakness), fn($l) => trim($l) !== ''));
+        $catatanMentorList = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $talent->catatan_mentor_general), fn($l) => trim($l) !== ''));
+        $devSuggestionList = array_values(array_filter(preg_split('/\r\n|\r|\n/', (string) $talent->development_suggestion_general), fn($l) => trim($l) !== ''));
+
+        // Determine months to show: If Jan-Jun have non-empty values, show all 12, else show Jul-Dec (Semester 2)
+        $hasJanJun = false;
+        foreach (['januari', 'februari', 'maret', 'april', 'mei', 'juni'] as $m) {
+            if ($talent->{"nilai_{$m}"} !== null && $talent->{"nilai_{$m}"} !== '') {
+                $hasJanJun = true;
+                break;
+            }
+        }
+
+        $allMonths = [
+            'januari' => 'Januari',
+            'februari' => 'Februari',
+            'maret' => 'Maret',
+            'april' => 'April',
+            'mei' => 'Mei',
+            'juni' => 'Juni',
+            'juli' => 'Juli',
+            'agustus' => 'Agustus',
+            'september' => 'September',
+            'oktober' => 'Oktober',
+            'november' => 'November',
+            'desember' => 'Desember',
+        ];
+
+        $displayedMonths = $hasJanJun ? $allMonths : [
+            'juli' => 'Juli',
+            'agustus' => 'Agustus',
+            'september' => 'September',
+            'oktober' => 'Oktober',
+            'november' => 'November',
+            'desember' => 'Desember',
+        ];
+
+        if ($request->query('html') == '1') {
+            return view('Administrasi.Pages.Talent.pdf_report', compact(
+                'talent',
+                'logoBase64',
+                'photoBase64',
+                'grade',
+                'historiList',
+                'achievementList',
+                'strengthList',
+                'weaknessList',
+                'catatanMentorList',
+                'devSuggestionList',
+                'displayedMonths'
+            ));
+        }
+
+        $pdf = Pdf::loadView('Administrasi.Pages.Talent.pdf_report', compact(
+            'talent',
+            'logoBase64',
+            'photoBase64',
+            'grade',
+            'historiList',
+            'achievementList',
+            'strengthList',
+            'weaknessList',
+            'catatanMentorList',
+            'devSuggestionList',
+            'displayedMonths'
+        ))->setPaper('a4', 'portrait');
+
+        $safeName = preg_replace('/[^a-zA-Z0-9_-]/', '_', $talent->nama);
+        $filename = "Individual_Summary_Report_{$safeName}.pdf";
+
+        ActivityLog::log(
+            action: 'Export PDF',
+            module: 'Profil Talent',
+            description: "Export Individual Summary Report PDF untuk {$talent->nama}",
+            properties: ['talent_id' => $talent->id, 'nama' => $talent->nama]
+        );
+
+        if ($request->query('download') == '1') {
+            return $pdf->download($filename);
+        }
+
+        return $pdf->stream($filename);
+    }
+
+    /**
+     * Stream or serve talent photo with caching and Google Drive resolution.
+     */
+    public function photo($id)
+    {
+        $talent = ProfilTalent::findOrFail($id);
+        $diskPath = $talent->ensureLocalPhoto(true);
+
+        if ($diskPath && file_exists($diskPath)) {
+            $mime = mime_content_type($diskPath) ?: 'image/png';
+            return response()->file($diskPath, [
+                'Content-Type' => $mime,
+                'Cache-Control' => 'public, max-age=86400, immutable',
+            ]);
+        }
+
+        // If it's a direct web link that couldn't be cached, redirect to it
+        $url = $talent->photo_url;
+        if (!empty($url) && (str_starts_with($url, 'http://') || str_starts_with($url, 'https://'))) {
+            return redirect()->away($url);
+        }
+
+        // Fallback default avatar
+        $avatarUrl = 'https://ui-avatars.com/api/?name=' . urlencode($talent->nama) . '&background=1F3E22&color=fff&size=200';
+        return redirect()->away($avatarUrl);
     }
 
     /**
@@ -494,6 +631,13 @@ class ProfilTalentController extends Controller
             description: "Mengimport {$imported} data Profil Talent dari file " . $file->getClientOriginalName(),
             properties: ['filename' => $file->getClientOriginalName(), 'count' => $imported]
         );
+
+        // Pre-cache Google Drive photos in parallel for instant rendering
+        try {
+            ProfilTalent::batchCacheGoogleDrivePhotos();
+        } catch (\Throwable $e) {
+            // Silently continue if network unavailable
+        }
 
         return back()->with('success', "{$imported} data Profil Talent berhasil diimport dan disimpan.");
     }

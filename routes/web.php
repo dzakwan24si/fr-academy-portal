@@ -619,10 +619,10 @@ Route::middleware('auth')->group(function () {
         // Administrasi - Monitoring Talent Routes
         Route::prefix('administrasi/monitoring-talent')->name('administrasi.monitoring-talent.')->group(function () {
             Route::get('/', [MonitoringTalentController::class, 'index'])->name('index');
-            Route::get('/export', [MonitoringTalentController::class, 'export'])->name('export');
-            Route::get('/template', [MonitoringTalentController::class, 'template'])->name('template');
 
             Route::middleware('can:edit_talent')->group(function () {
+                Route::get('/export', [MonitoringTalentController::class, 'export'])->name('export');
+                Route::get('/template', [MonitoringTalentController::class, 'template'])->name('template');
                 Route::post('/store', [MonitoringTalentController::class, 'store'])->name('store');
                 Route::post('/update-progress-materi', [MonitoringTalentController::class, 'updateProgressMateri'])->name('update-progress-materi');
                 Route::put('/{id}', [MonitoringTalentController::class, 'update'])->name('update');
@@ -635,10 +635,10 @@ Route::middleware('auth')->group(function () {
         // Administrasi - Talent Pool Routes
         Route::prefix('administrasi/talent-pool')->name('administrasi.talent-pool.')->group(function () {
             Route::get('/', [TalentPoolController::class, 'index'])->name('index');
-            Route::get('/export', [TalentPoolController::class, 'export'])->name('export');
-            Route::get('/template', [TalentPoolController::class, 'template'])->name('template');
 
             Route::middleware('can:edit_talent')->group(function () {
+                Route::get('/export', [TalentPoolController::class, 'export'])->name('export');
+                Route::get('/template', [TalentPoolController::class, 'template'])->name('template');
                 Route::post('/store', [TalentPoolController::class, 'store'])->name('store');
                 Route::put('/{id}', [TalentPoolController::class, 'update'])->name('update');
                 Route::delete('/destroy-all', [TalentPoolController::class, 'destroyAll'])->name('destroyAll');
@@ -650,10 +650,12 @@ Route::middleware('auth')->group(function () {
         // Administrasi - Profil Talent Routes
         Route::prefix('administrasi/profil-talent')->name('administrasi.profil-talent.')->group(function () {
             Route::get('/', [ProfilTalentController::class, 'index'])->name('index');
-            Route::get('/export', [ProfilTalentController::class, 'export'])->name('export');
-            Route::get('/template', [ProfilTalentController::class, 'downloadTemplate'])->name('template');
+            Route::get('/{id}/photo', [ProfilTalentController::class, 'photo'])->name('photo');
 
             Route::middleware('can:edit_talent')->group(function () {
+                Route::get('/export', [ProfilTalentController::class, 'export'])->name('export');
+                Route::get('/{id}/export-pdf', [ProfilTalentController::class, 'exportPdf'])->name('export-pdf');
+                Route::get('/template', [ProfilTalentController::class, 'downloadTemplate'])->name('template');
                 Route::post('/store', [ProfilTalentController::class, 'store'])->name('store');
                 Route::put('/{id}', [ProfilTalentController::class, 'update'])->name('update');
                 Route::delete('/destroy-all', [ProfilTalentController::class, 'deleteAll'])->name('destroyAll');
