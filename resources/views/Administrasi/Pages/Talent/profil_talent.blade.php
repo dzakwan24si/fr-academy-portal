@@ -334,6 +334,11 @@
                             </div>
                         </div>
 
+                        @php
+                            $availableMonths = $selectedTalent->months_with_notes;
+                            $firstMonthKey = !empty($availableMonths) ? array_key_first($availableMonths) : 'juli';
+                        @endphp
+
                         {{-- Action Buttons --}}
                         @can('edit_talent')
                         <div class="flex flex-col gap-2 mt-5 no-print">
@@ -344,7 +349,10 @@
                             </button>
 
                             <div class="flex items-center gap-2">
-                                <a href="{{ route('administrasi.profil-talent.export-pdf', ['id' => $selectedTalent->id, 'print' => 1]) }}" target="_blank"
+                                <a id="btn-export-pdf"
+                                   href="{{ route('administrasi.profil-talent.export-pdf', ['id' => $selectedTalent->id, 'print' => 1, 'month' => $firstMonthKey]) }}"
+                                   onclick="syncPdfExportMonth(this)"
+                                   target="_blank"
                                    class="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-[#509c38] hover:bg-[#43832f] text-white font-bold text-xs py-2 shadow-xs transition-colors"
                                    title="Cetak / Simpan PDF (Lengkap dengan Foto)">
                                     <i data-lucide="printer" class="w-3.5 h-3.5"></i>
@@ -1383,6 +1391,35 @@
 
             if (fbBox) fbBox.textContent = textCatatan;
             if (sugBox) sugBox.textContent = textSuggestion;
+
+            // Sinkronkan query param 'month' pada tombol Cetak PDF
+            updateExportPdfButtonMonth(monthKey);
+        }
+
+        function updateExportPdfButtonMonth(monthKey) {
+            const exportBtn = document.getElementById('btn-export-pdf');
+            if (exportBtn && monthKey) {
+                try {
+                    const url = new URL(exportBtn.href, window.location.origin);
+                    url.searchParams.set('month', monthKey);
+                    exportBtn.href = url.toString();
+                } catch (e) {
+                    console.error('Gagal sinkronisasi URL export PDF:', e);
+                }
+            }
+        }
+
+        function syncPdfExportMonth(btn) {
+            const monthSelect = document.getElementById('mentor-month-select');
+            if (monthSelect && monthSelect.value) {
+                try {
+                    const url = new URL(btn.href, window.location.origin);
+                    url.searchParams.set('month', monthSelect.value);
+                    btn.href = url.toString();
+                } catch (e) {
+                    console.error('Gagal sinkronisasi URL export PDF saat diklik:', e);
+                }
+            }
         }
 
         // Live Directory Search & Filter

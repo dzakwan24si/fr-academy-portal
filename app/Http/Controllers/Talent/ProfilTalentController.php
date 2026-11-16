@@ -269,24 +269,14 @@ class ProfilTalentController extends Controller
         // Grade evaluation info
         $grade = $talent->evaluation_grade;
 
-        // Split text fields into numbered lists
+        // Split standard text fields into numbered lists
         $historiList = $this->splitNumberedList($talent->histori_pekerjaan);
         $achievementList = $this->splitNumberedList($talent->achievement);
         $strengthList = $this->splitNumberedList($talent->strength);
         $weaknessList = $this->splitNumberedList($talent->weakness);
-        $catatanMentorList = $this->splitNumberedList($talent->catatan_mentor_general);
-        $devSuggestionList = $this->splitNumberedList($talent->development_suggestion_general);
 
-        // Determine months to show: If Jan-Jun have non-empty values, show all 12, else show Jul-Dec (Semester 2)
-        $hasJanJun = false;
-        foreach (['januari', 'februari', 'maret', 'april', 'mei', 'juni'] as $m) {
-            if ($talent->{"nilai_{$m}"} !== null && $talent->{"nilai_{$m}"} !== '') {
-                $hasJanJun = true;
-                break;
-            }
-        }
-
-        $allMonths = [
+        // Resolve selected month for Catatan & Rekomendasi Mentor and Development Suggestion
+        $allMonthNames = [
             'januari' => 'Januari',
             'februari' => 'Februari',
             'maret' => 'Maret',
@@ -300,6 +290,40 @@ class ProfilTalentController extends Controller
             'november' => 'November',
             'desember' => 'Desember',
         ];
+
+        $reqMonth = strtolower(trim((string) $request->query('month')));
+        if (!empty($reqMonth) && isset($allMonthNames[$reqMonth])) {
+            $selectedMonthKey = $reqMonth;
+        } else {
+            // Default to first month available with notes, or 'juli'
+            $monthsWithNotes = $talent->months_with_notes;
+            $selectedMonthKey = !empty($monthsWithNotes) ? array_key_first($monthsWithNotes) : 'juli';
+        }
+
+        $selectedMonthName = $allMonthNames[$selectedMonthKey] ?? ucfirst($selectedMonthKey);
+
+        // Fetch monthly note/suggestion with fallback to general
+        $rawCatatan = !empty($talent->{"catatan_mentor_{$selectedMonthKey}"})
+            ? $talent->{"catatan_mentor_{$selectedMonthKey}"}
+            : $talent->catatan_mentor_general;
+
+        $rawSuggestion = !empty($talent->{"dev_suggestion_{$selectedMonthKey}"})
+            ? $talent->{"dev_suggestion_{$selectedMonthKey}"}
+            : $talent->development_suggestion_general;
+
+        $catatanMentorList = $this->splitNumberedList($rawCatatan);
+        $devSuggestionList = $this->splitNumberedList($rawSuggestion);
+
+        // Determine months to show: If Jan-Jun have non-empty values, show all 12, else show Jul-Dec (Semester 2)
+        $hasJanJun = false;
+        foreach (['januari', 'februari', 'maret', 'april', 'mei', 'juni'] as $m) {
+            if ($talent->{"nilai_{$m}"} !== null && $talent->{"nilai_{$m}"} !== '') {
+                $hasJanJun = true;
+                break;
+            }
+        }
+
+        $allMonths = $allMonthNames;
 
         $displayedMonths = $hasJanJun ? $allMonths : [
             'juli' => 'Juli',
@@ -322,7 +346,9 @@ class ProfilTalentController extends Controller
                 'weaknessList',
                 'catatanMentorList',
                 'devSuggestionList',
-                'displayedMonths'
+                'displayedMonths',
+                'selectedMonthKey',
+                'selectedMonthName'
             ));
         }
 
@@ -338,7 +364,9 @@ class ProfilTalentController extends Controller
                 'weaknessList',
                 'catatanMentorList',
                 'devSuggestionList',
-                'displayedMonths'
+                'displayedMonths',
+                'selectedMonthKey',
+                'selectedMonthName'
             ))->setPaper('a4', 'portrait')
               ->setOption('fontDir', $fontDir)
               ->setOption('fontCache', $fontDir);
