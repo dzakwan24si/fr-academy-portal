@@ -2,6 +2,16 @@
     <x-slot name="title">Histori Aktivitas Sistem | Audit Log</x-slot>
     <x-slot name="header">Histori Aktivitas Sistem</x-slot>
 
+    @push('styles')
+    <style>
+        .activity-log-zoom {
+            zoom: 90%;
+        }
+    </style>
+    @endpush
+
+    <div class="activity-log-zoom w-full pb-8" style="zoom: 90%;">
+
     {{-- PAGE HEADER --}}
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5">
         <div>
@@ -226,6 +236,8 @@
             </div>
         @endif
     </div>
+
+    </div>{{-- End .activity-log-zoom --}}
 
     {{-- MODAL DETAIL LOG --}}
     <div id="modalDetail" class="fixed inset-0 z-50 hidden bg-black/50 flex items-center justify-center p-4 backdrop-blur-xs">
