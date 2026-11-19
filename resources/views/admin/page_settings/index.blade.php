@@ -955,9 +955,9 @@
                                     <p class="text-xs text-gray-400 mt-1 max-w-sm mx-auto">Tambahkan sistem atau website baru melalui formulir di sebelah kanan.</p>
                                 </div>
                             @else
-                                <div class="divide-y divide-gray-100 space-y-3">
+                                <div class="space-y-3">
                                     @foreach($portalLinks as $idx => $link)
-                                        <div class="pt-3 first:pt-0 flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50/70 transition duration-200">
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl border border-gray-100 hover:border-gray-200 hover:bg-gray-50/70 transition duration-200">
                                             <div class="flex items-start gap-3.5 min-w-0">
                                                 <span class="w-7 h-7 rounded-lg bg-teal-50 text-teal-800 text-xs font-mono font-bold flex items-center justify-center shrink-0 mt-0.5">
                                                     #{{ $link['order'] ?? ($idx + 1) }}
