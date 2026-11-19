@@ -56,10 +56,6 @@ class TalentPoolController extends Controller
             ->values()
             ->all();
 
-        if (empty($years)) {
-            $years = [(int) date('Y')];
-        }
-
         // Available Jenis Kategori
         $defaultJenis = ['Estate', 'Mill', 'Traksi', 'Administrasi', 'Downstream'];
         $dbJenis = TalentPool::distinct()->pluck('jenis_kategori')->filter()->values();

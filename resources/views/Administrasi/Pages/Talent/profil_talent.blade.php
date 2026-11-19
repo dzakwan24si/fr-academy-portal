@@ -99,6 +99,11 @@
             }
         }
 
+        /* Page Zoom 90% */
+        .talent-page-zoom {
+            zoom: 90%;
+        }
+
         @media print {
             nav, aside, header, .no-print, .action-buttons, #talent-directory-panel {
                 display: none !important;
@@ -117,7 +122,7 @@
     </style>
     @endpush
 
-    <div class="space-y-5 pb-12 w-full">
+    <div class="space-y-5 pb-12 w-full talent-page-zoom" style="zoom: 90%;">
 
         {{-- FLASH MESSAGES --}}
         @if(session('success'))

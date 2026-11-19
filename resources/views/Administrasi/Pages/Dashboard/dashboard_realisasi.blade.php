@@ -266,22 +266,22 @@
         </div>
     </div>
 
-    {{-- CARD 2: PROGRES TALENT PROGRAM --}}
+    {{-- CARD 2: PROGRESS TALENT --}}
     <div class="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-xs flex flex-col justify-between">
         {{-- Card Header Banner --}}
         <div class="bg-[#1b4332] text-white px-4 py-2.5 flex items-center justify-between gap-2">
             <div class="flex items-center gap-2 overflow-hidden">
                 <i data-lucide="user-check" class="w-4 h-4 shrink-0"></i>
-                <h3 class="text-xs font-bold uppercase tracking-wide truncate">PROGRES TALENT PROGRAM</h3>
+                <h3 class="text-xs font-bold uppercase tracking-wide truncate">PROGRESS TALENT</h3>
             </div>
-            <button type="button" onclick="openTalentProgressModal()" class="p-1 hover:bg-[#2d5a27] rounded transition-colors text-white/80 hover:text-white" title="Edit Progres Materi">
+            <button type="button" onclick="openTalentProgressModal()" class="p-1 hover:bg-[#2d5a27] rounded transition-colors text-white/80 hover:text-white" title="Edit Progress Materi">
                 <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
             </button>
         </div>
 
         <div class="p-4 flex-1 flex flex-col justify-between">
             <div>
-                <p class="text-[11px] font-bold text-[#71717A] uppercase text-center tracking-wider mb-1">PROGRES MATERI TALENT</p>
+                <p class="text-[11px] font-bold text-[#71717A] uppercase text-center tracking-wider mb-1">PROGRESS MATERI TALENT</p>
                 <div class="text-center">
                     <span class="text-4xl font-extrabold text-[#18181B] tracking-tight">{{ $talentProgram['percentage'] }}%</span>
                     <p class="text-[11px] font-semibold text-[#71717A] mt-0.5">{{ $talentProgram['sudah_penugasan'] }} / {{ $talentProgram['jumlah_talent'] }} orang</p>
@@ -317,12 +317,12 @@
         </div>
     </div>
 
-    {{-- CARD 3: PROGRES SOFT SKILL --}}
+    {{-- CARD 3: PROGRESS SOFT SKILL --}}
     <div class="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-xs flex flex-col justify-between">
         {{-- Card Header Banner --}}
         <div class="bg-[#1b4332] text-white px-4 py-2.5 flex items-center gap-2">
             <i data-lucide="message-square" class="w-4 h-4 shrink-0"></i>
-            <h3 class="text-xs font-bold uppercase tracking-wide truncate">PROGRES SOFT SKILL</h3>
+            <h3 class="text-xs font-bold uppercase tracking-wide truncate">PROGRESS SOFT SKILL</h3>
         </div>
 
         <div class="p-4 flex-1 flex flex-col justify-between">
@@ -368,12 +368,12 @@
         </div>
     </div>
 
-    {{-- CARD 4: PROGRES TEKNIKAL --}}
+    {{-- CARD 4: PROGRESS TEKNIKAL --}}
     <div class="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden shadow-xs flex flex-col justify-between">
         {{-- Card Header Banner --}}
         <div class="bg-[#1b4332] text-white px-4 py-2.5 flex items-center gap-2">
             <i data-lucide="wrench" class="w-4 h-4 shrink-0"></i>
-            <h3 class="text-xs font-bold uppercase tracking-wide truncate">PROGRES TEKNIKAL</h3>
+            <h3 class="text-xs font-bold uppercase tracking-wide truncate">PROGRESS TEKNIKAL</h3>
         </div>
 
         <div class="p-4 flex-1 flex flex-col justify-between">
@@ -1241,7 +1241,7 @@
 </script>
 @endpush
 
-{{-- Modal Edit Progres Materi Talent --}}
+{{-- Modal Edit Progress Materi Talent --}}
 <div id="modalEditTalentProgress" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
         <div class="flex items-center justify-between pb-4 border-b border-slate-100">
@@ -1250,8 +1250,8 @@
                     <i data-lucide="edit-3" class="w-5 h-5"></i>
                 </div>
                 <div>
-                    <h3 class="font-black text-slate-900 text-base">Edit Progres Materi Talent</h3>
-                    <p class="text-xs text-slate-500">Input persentase manual progres materi talent program</p>
+                    <h3 class="font-black text-slate-900 text-base">Edit Progress Materi Talent</h3>
+                    <p class="text-xs text-slate-500">Input persentase manual progress materi talent</p>
                 </div>
             </div>
             <button type="button" onclick="closeTalentProgressModal()" class="text-slate-400 hover:text-slate-600 p-1 rounded-lg">
@@ -1262,13 +1262,13 @@
         <form action="{{ route('administrasi.monitoring-talent.update-progress-materi') }}" method="POST" class="mt-4 space-y-4">
             @csrf
             <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Persentase Progres Materi (%)</label>
+                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">Persentase Progress Materi (%)</label>
                 <div class="relative">
                     <input type="number" step="0.1" min="0" max="100" name="progress_materi" value="{{ $talentProgram['percentage'] }}" required
                            class="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-bold text-slate-900 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all">
                     <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-sm font-black text-slate-400">%</span>
                 </div>
-                <p class="text-[11px] text-slate-500 mt-1.5">Nilai persentase ini akan disimpan dan ditampilkan pada KPI Progres Talent Program.</p>
+                <p class="text-[11px] text-slate-500 mt-1.5">Nilai persentase ini akan disimpan dan ditampilkan pada KPI Progress Talent.</p>
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">

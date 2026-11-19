@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 class Article extends Model
 {
@@ -29,6 +30,18 @@ class Article extends Model
     public function author()
     {
         return $this->belongsTo(User::class, 'author_id');
+    }
+
+    /**
+     * Get clean plain text excerpt without HTML tags or HTML entities.
+     */
+    public function excerpt(int $limit = 120): string
+    {
+        $raw = $this->content ?? '';
+        $decoded = html_entity_decode(strip_tags($raw), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $clean = preg_replace('/[\x{00A0}\s]+/u', ' ', $decoded);
+
+        return Str::limit(trim($clean), $limit);
     }
 
     /**
