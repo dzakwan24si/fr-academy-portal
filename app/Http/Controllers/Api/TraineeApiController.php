@@ -34,8 +34,8 @@ class TraineeApiController extends Controller
             ], 401);
         }
 
-        // Hanya peserta yang terdaftar di kelas pelatihan yang boleh login
-        if (! $trainee->attendances()->exists()) {
+        // Hanya peserta yang memiliki program pelatihan atau terdaftar di kelas pelatihan yang boleh login
+        if (! $trainee->attendances()->exists() && ! $trainee->training_program_id) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'NIK Anda belum terdaftar dalam kelas program pelatihan.',
@@ -78,8 +78,8 @@ class TraineeApiController extends Controller
     {
         $trainee = $request->user()->load('trainingProgram');
 
-        // Jika trainee tidak terdaftar di kelas manapun, revoke token sesi ini dan tolak akses dengan 401 (trigger auto logout)
-        if (! $trainee->attendances()->exists()) {
+        // Jika trainee tidak terdaftar di kelas manapun dan tidak punya program pelatihan, revoke token sesi ini dan tolak akses dengan 401
+        if (! $trainee->attendances()->exists() && ! $trainee->training_program_id) {
             if ($request->user() && $request->user()->currentAccessToken()) {
                 $request->user()->currentAccessToken()->delete();
             }
@@ -112,8 +112,8 @@ class TraineeApiController extends Controller
     {
         $trainee = $request->user();
 
-        // Jika trainee tidak terdaftar di kelas manapun, revoke token sesi ini dan tolak akses dengan 401 (trigger auto logout)
-        if (! $trainee->attendances()->exists()) {
+        // Jika trainee tidak terdaftar di kelas manapun dan tidak punya program pelatihan, revoke token sesi ini dan tolak akses dengan 401
+        if (! $trainee->attendances()->exists() && ! $trainee->training_program_id) {
             if ($request->user() && $request->user()->currentAccessToken()) {
                 $request->user()->currentAccessToken()->delete();
             }
@@ -141,8 +141,13 @@ class TraineeApiController extends Controller
 
         // Cek tugas pending (hanya untuk kelas di mana trainee terdaftar)
         $pendingTasks = Task::whereHas('dailyClass', function ($q) use ($trainee) {
-            $q->whereHas('attendances', function ($attQ) use ($trainee) {
-                $attQ->where('trainee_id', $trainee->id);
+            $q->where(function ($sq) use ($trainee) {
+                $sq->whereHas('attendances', function ($attQ) use ($trainee) {
+                    $attQ->where('trainee_id', $trainee->id);
+                });
+                if ($trainee->training_program_id) {
+                    $sq->orWhere('training_program_id', $trainee->training_program_id);
+                }
             });
         })->whereDoesntHave('submissions', function ($q) use ($trainee) {
             $q->where('trainee_id', $trainee->id)->where('status', 'sudah');
@@ -192,7 +197,7 @@ class TraineeApiController extends Controller
         $trainee = $request->user();
 
         // Jika trainee tidak terdaftar di kelas manapun, revoke token sesi ini dan tolak akses dengan 401
-        if (! $trainee->attendances()->exists()) {
+        if (! $trainee->attendances()->exists() && ! $trainee->training_program_id) {
             if ($request->user() && $request->user()->currentAccessToken()) {
                 $request->user()->currentAccessToken()->delete();
             }
@@ -203,25 +208,17 @@ class TraineeApiController extends Controller
             ], 401);
         }
 
-        // Cek apakah trainee sudah melakukan absensi (hadir)
-        $hasAttended = Attendance::where('trainee_id', $trainee->id)
-            ->where('status', 'hadir')
-            ->exists();
-
-        if (! $hasAttended) {
-            return response()->json([
-                'status' => 'success',
-                'data' => [],
-                'message' => 'Silakan lakukan absensi terlebih dahulu untuk melihat dan mengerjakan tugas.',
-            ]);
-        }
-
-        // Ambil daftar tugas untuk program training trainee ini
+        // Ambil daftar tugas untuk program training / kelas trainee ini (tanpa syarat harus absen hadir terlebih dahulu)
         $dbTasks = Task::with(['dailyClass', 'submissions' => function ($q) use ($trainee) {
             $q->where('trainee_id', $trainee->id);
         }])->whereHas('dailyClass', function ($q) use ($trainee) {
-            $q->whereHas('attendances', function ($attQ) use ($trainee) {
-                $attQ->where('trainee_id', $trainee->id);
+            $q->where(function ($sq) use ($trainee) {
+                $sq->whereHas('attendances', function ($attQ) use ($trainee) {
+                    $attQ->where('trainee_id', $trainee->id);
+                });
+                if ($trainee->training_program_id) {
+                    $sq->orWhere('training_program_id', $trainee->training_program_id);
+                }
             });
         })->orderBy('deadline', 'desc')->get();
 
@@ -231,7 +228,7 @@ class TraineeApiController extends Controller
             return [
                 'id' => $task->id,
                 'title' => $task->title,
-                'session' => $task->dailyClass->title,
+                'session' => $task->dailyClass ? $task->dailyClass->title : 'Sesi Pelatihan',
                 'deadline_formatted' => $task->deadline ? $task->deadline->format('d M Y H:i') : '-',
                 'deadline_raw' => $task->deadline,
                 'status' => $sub && $sub->status == 'sudah' ? 'Sudah' : 'Belum',
@@ -252,16 +249,19 @@ class TraineeApiController extends Controller
     {
         $trainee = $request->user();
 
-        // Cek apakah trainee sudah melakukan absensi hadir di kelas
-        $hasAttended = Attendance::where('trainee_id', $trainee->id)
+        // Pastikan trainee terdaftar di kelas tugas ini
+        $isRegistered = Attendance::where('trainee_id', $trainee->id)
             ->where('daily_class_id', $task->daily_class_id)
-            ->where('status', 'hadir')
             ->exists();
 
-        if (! $hasAttended) {
+        if (! $isRegistered && $trainee->training_program_id && $task->dailyClass && $task->dailyClass->training_program_id === $trainee->training_program_id) {
+            $isRegistered = true;
+        }
+
+        if (! $isRegistered) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Anda harus melakukan absensi terlebih dahulu sebelum dapat mengumpulkan tugas.',
+                'message' => 'Anda tidak terdaftar dalam kelas tugas ini.',
             ], 403);
         }
 
@@ -479,8 +479,8 @@ class TraineeApiController extends Controller
     {
         $trainee = $request->user();
 
-        // Jika trainee tidak terdaftar di kelas manapun, revoke token sesi ini dan tolak akses dengan 401
-        if (! $trainee->attendances()->exists()) {
+        // Jika trainee tidak terdaftar di kelas manapun dan tidak punya program pelatihan, revoke token sesi ini dan tolak akses dengan 401
+        if (! $trainee->attendances()->exists() && ! $trainee->training_program_id) {
             if ($request->user() && $request->user()->currentAccessToken()) {
                 $request->user()->currentAccessToken()->delete();
             }
@@ -490,13 +490,6 @@ class TraineeApiController extends Controller
                 'message' => 'Anda sudah tidak terdaftar dalam kelas program pelatihan apapun.',
             ], 401);
         }
-
-        // Bersihkan data absensi prematur yang dibuat sebelum tanggal kelas dimulai
-        Attendance::where('trainee_id', $trainee->id)
-            ->whereHas('dailyClass', function ($q) {
-                $q->whereColumn('attendances.attendance_date', '<', 'daily_classes.date');
-            })
-            ->delete();
 
         $history = Attendance::with('dailyClass')
             ->where('trainee_id', $trainee->id)

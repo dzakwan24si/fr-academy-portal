@@ -153,10 +153,20 @@ Route::get('/tv-display/check', function () {
 })->name('tv.check');
 
 Route::get('/artikel', function () {
+    $search = request('search');
+    $category = request('category');
+
     $query = Article::where('status', 'published')->latest();
 
-    if (request()->has('category')) {
-        $query->where('category_id', request('category'));
+    if ($category) {
+        $query->where('category_id', $category);
+    }
+
+    if ($search) {
+        $query->where(function ($q) use ($search) {
+            $q->where('title', 'like', "%{$search}%")
+                ->orWhere('content', 'like', "%{$search}%");
+        });
     }
 
     $articles = $query->paginate(9)->withQueryString();

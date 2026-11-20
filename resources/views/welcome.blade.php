@@ -458,7 +458,7 @@
                                 {{ $article->published_at ? \Carbon\Carbon::parse($article->published_at)->format('d M Y') : $article->created_at->format('d M Y') }}
                             </div>
                             <h3 class="text-xl font-bold text-teal-primary dark:text-white mb-3 line-clamp-2 hover:text-green-accent dark:hover:text-green-400 transition">{{ $article->title }}</h3>
-                            <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">{{ Str::limit(strip_tags($article->content), 120) }}</p>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">{{ $article->excerpt(120) }}</p>
                         </div>
                         <div class="mt-4">
                             <a href="{{ route('artikel.show', $article->slug) }}" class="text-green-accent dark:text-green-400 font-semibold text-sm inline-flex items-center hover:text-green-600 dark:hover:text-green-300 transition">
