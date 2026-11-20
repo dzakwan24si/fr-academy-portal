@@ -24,34 +24,16 @@ class ExcelExporter
      */
     public static function download(string $filename, array $headers, array $dataRows = [], string $sheetTitle = 'Sheet1'): StreamedResponse
     {
-        // 1. Fallback to CSV if PHP zip extension (ZipArchive) is missing on hosting server
-        if (! class_exists('\ZipArchive')) {
-            $csvFilename = preg_replace('/\.[^.]+$/', '', $filename).'.csv';
-            $responseHeaders = [
-                'Content-Type' => 'text/csv; charset=UTF-8',
-                'Content-Disposition' => 'attachment; filename="'.$csvFilename.'"',
-                'Cache-Control' => 'max-age=0, must-revalidate',
-                'Pragma' => 'public',
-            ];
-
-            return new StreamedResponse(function () use ($headers, $dataRows) {
-                if (ob_get_length()) {
-                    @ob_end_clean();
-                }
-                $handle = fopen('php://output', 'w');
-                // UTF-8 BOM so Excel opens with proper characters
-                fprintf($handle, chr(0xEF).chr(0xBB).chr(0xBF));
-                fputcsv($handle, $headers);
-                foreach ($dataRows as $row) {
-                    fputcsv($handle, (array) $row);
-                }
-                fclose($handle);
-            }, 200, $responseHeaders);
+        // 1. Fallback to XML Spreadsheet (.xls) if PHP zip extension (ZipArchive) is missing on hosting server (e.g. PHP 7.2 live server)
+        // or if requested via config/param. This requires ZERO external libraries and works natively on PHP 7.2.
+        if (! class_exists('\ZipArchive') || request()->query('format') === 'xls' || config('app.export_engine') === 'xml') {
+            return self::downloadStandardXmlSpreadsheet($filename, $headers, $dataRows, $sheetTitle);
         }
 
-        $spreadsheet = new Spreadsheet;
-        $sheet = $spreadsheet->getActiveSheet();
-        $sheet->setTitle(substr($sheetTitle, 0, 31)); // Max sheet name length
+        try {
+            $spreadsheet = new Spreadsheet;
+            $sheet = $spreadsheet->getActiveSheet();
+            $sheet->setTitle(substr($sheetTitle, 0, 31)); // Max sheet name length
 
         // Header Style (Image #1 style): Green Fill (#008000), White Bold Text, Center + Middle Align, Thin Border
         $headerStyle = [
@@ -210,6 +192,11 @@ class ExcelExporter
             $writer = new Xlsx($spreadsheet);
             $writer->save('php://output');
         }, 200, $responseHeaders);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('Excel .xlsx generation failed, falling back to formatted XML Spreadsheet: '.$e->getMessage());
+
+            return self::downloadStandardXmlSpreadsheet($filename, $headers, $dataRows, $sheetTitle);
+        }
     }
 
     /**
@@ -506,12 +493,277 @@ class ExcelExporter
 
             // Data Rows
             foreach ($dataRows as $row) {
-                echo "   <Row ss:Height=\"22\">\n";
-                foreach ((array) $row as $val) {
+                $rowArr = array_values((array) $row);
+                $maxLines = 1;
+                foreach ($rowArr as $val) {
+                    $vStr = (string) $val;
+                    if (str_contains($vStr, "\n")) {
+                        $norm = str_replace(["\r\n", "\r"], "\n", $vStr);
+                        $norm = preg_replace("/\n{2,}/", "\n", $norm);
+                        $cnt = substr_count($norm, "\n") + 1;
+                        if ($cnt > $maxLines) {
+                            $maxLines = $cnt;
+                        }
+                    }
+                }
+                $rHeight = $maxLines > 1 ? min(400, round(($maxLines * 16.5) + 8)) : 22;
+                echo "   <Row ss:AutoFitHeight=\"1\" ss:Height=\"{$rHeight}\">\n";
+                foreach ($rowArr as $val) {
                     $valStr = (string) $val;
+                    $cleanVal = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $valStr);
+                    $cleanVal = str_replace(["\r\n", "\r"], "\n", $cleanVal);
+                    $cleanVal = preg_replace("/\n{2,}/", "\n", $cleanVal);
                     $dataType = (is_numeric($val) && strlen($valStr) < 10 && ! str_starts_with($valStr, '0')) ? 'Number' : 'String';
-                    $valSafe = htmlspecialchars($valStr, ENT_XML1);
+                    $valSafe = htmlspecialchars($cleanVal, ENT_XML1, 'UTF-8');
+                    $valSafe = str_replace("\n", '&#10;', $valSafe);
                     echo "    <Cell ss:StyleID=\"Data\"><Data ss:Type=\"{$dataType}\">{$valSafe}</Data></Cell>\n";
+                }
+                echo "   </Row>\n";
+            }
+
+            echo "  </Table>\n";
+            echo " </Worksheet>\n";
+            echo "</Workbook>\n";
+        }, 200, $responseHeaders);
+    }
+
+    /**
+     * Download formatted standard Excel spreadsheet using Microsoft XML Spreadsheet 2003 format (.xls).
+     * This requires ZERO server extensions (no ZipArchive, no GD, no PhpSpreadsheet)
+     * and is 100% compatible with PHP 7.2. Opens natively in Excel and WPS with
+     * full formatting, green headers, cell borders, text wrapping, and currency styles.
+     */
+    public static function downloadStandardXmlSpreadsheet(
+        string $filename,
+        array $headers,
+        array $dataRows = [],
+        string $sheetTitle = 'Sheet1'
+    ): StreamedResponse {
+        $xlsFilename = preg_replace('/\.[^.]+$/', '', $filename).'.xls';
+        $numCols = count($headers);
+
+        $responseHeaders = [
+            'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$xlsFilename.'"',
+            'Cache-Control' => 'max-age=0, must-revalidate',
+            'Pragma' => 'public',
+        ];
+
+        // Identify currency columns
+        $currencyCols = [];
+        $colIndex = 0;
+        foreach ($headers as $header) {
+            $cleanH = strtolower(trim((string) $header));
+            $isQuantity = str_contains($cleanH, 'batch')
+                || str_contains($cleanH, 'peserta')
+                || str_contains($cleanH, 'orang')
+                || str_contains($cleanH, 'jam')
+                || str_contains($cleanH, 'hari')
+                || str_contains($cleanH, 'bulan')
+                || str_contains($cleanH, 'mandor')
+                || str_contains($cleanH, 'staf')
+                || str_contains($cleanH, 'head')
+                || str_contains($cleanH, 'mgr')
+                || str_contains($cleanH, 'gm')
+                || str_contains($cleanH, 'ast')
+                || str_contains($cleanH, 'askep')
+                || str_contains($cleanH, 'kelas')
+                || str_contains($cleanH, 'program')
+                || str_contains($cleanH, 'lulus')
+                || str_contains($cleanH, 'resign')
+                || str_contains($cleanH, 'tahun')
+                || str_contains($cleanH, 'persen')
+                || str_contains($cleanH, '%');
+
+            if (! $isQuantity) {
+                if (in_array($cleanH, ['budget', 'realisasi', 'budget_tahunan', 'total_biaya', 'biaya', 'harga', 'total_rp', 'upah', 'bbm', 'preventif_maintenance', 'biaya_lainnya', 'total_biaya_bulan', 'debit', 'kredit', 'nominal', 'amount', 'total_budget', 'total_realisasi', 'uang_saku'])
+                    || str_contains($cleanH, 'biaya')
+                    || str_contains($cleanH, 'budget')
+                    || str_contains($cleanH, 'harga')
+                    || str_contains($cleanH, 'uang')
+                    || str_contains($cleanH, 'nominal')
+                    || str_contains($cleanH, 'amount')
+                    || ($cleanH === 'realisasi' || str_contains($cleanH, 'realisasi_biaya') || str_contains($cleanH, 'realisasi_rp') || str_contains($cleanH, 'realisasi rp') || str_contains($cleanH, 'total_realisasi'))) {
+                    $currencyCols[$colIndex] = true;
+                }
+            }
+            $colIndex++;
+        }
+
+        // Calculate column widths and optimize for text wrap
+        $colWidths = [];
+        for ($c = 0; $c < $numCols; $c++) {
+            $headerStr = (string) ($headers[$c] ?? '');
+            $cleanH = strtolower(trim($headerStr));
+            $maxLen = mb_strlen($headerStr, 'UTF-8');
+            $sampleCount = 0;
+            $hasMultiline = false;
+            $maxLineLen = 0;
+
+            foreach ($dataRows as $r) {
+                if ($sampleCount++ > 40) {
+                    break;
+                }
+                $valStr = (string) (((array) $r)[$c] ?? '');
+                if (str_contains($valStr, "\n") || str_contains($valStr, "\r")) {
+                    $hasMultiline = true;
+                }
+                $lines = explode("\n", str_replace(["\r\n", "\r"], "\n", $valStr));
+                foreach ($lines as $line) {
+                    $len = mb_strlen(trim($line), 'UTF-8');
+                    if ($len > $maxLineLen) {
+                        $maxLineLen = $len;
+                    }
+                }
+            }
+
+            // Identify long narrative / text columns that need larger width & wrap
+            $isLongTextCol = str_contains($cleanH, 'profil')
+                || str_contains($cleanH, 'histori')
+                || str_contains($cleanH, 'pekerjaan')
+                || str_contains($cleanH, 'achievement')
+                || str_contains($cleanH, 'keterangan')
+                || str_contains($cleanH, 'alasan')
+                || str_contains($cleanH, 'catatan')
+                || str_contains($cleanH, 'strength')
+                || str_contains($cleanH, 'weakness')
+                || str_contains($cleanH, 'development')
+                || str_contains($cleanH, 'suggestion')
+                || str_contains($cleanH, 'saran')
+                || str_contains($cleanH, 'rekomendasi')
+                || str_contains($cleanH, 'organisasi')
+                || str_contains($cleanH, 'magang')
+                || str_contains($cleanH, 'prestasi')
+                || str_contains($cleanH, 'hobi')
+                || str_contains($cleanH, 'evaluasi')
+                || str_contains($cleanH, 'deskripsi')
+                || str_contains($cleanH, 'training');
+
+            if ($isLongTextCol || $hasMultiline || $maxLineLen > 45) {
+                // Generous width for long text, wraps downward smoothly
+                $colWidths[$c] = round(max(260, min(380, ($maxLineLen * 6.5) + 30)));
+            } elseif (in_array($cleanH, ['no', 'umur', 'usia', 'status', 'agama', 'gender', 'jenis kelamin'])) {
+                $colWidths[$c] = 55;
+            } elseif (in_array($cleanH, ['employee id', 'nik', 'trainee id', 'tahun', 'batch'])) {
+                $colWidths[$c] = 95;
+            } else {
+                $baseLen = max($maxLen, min(35, $maxLineLen));
+                $colWidths[$c] = round(max(70, min(220, ($baseLen * 7.5) + 20)));
+            }
+        }
+
+        return new StreamedResponse(function () use ($headers, $dataRows, $sheetTitle, $numCols, $currencyCols, $colWidths) {
+            if (ob_get_length()) {
+                @ob_end_clean();
+            }
+
+            echo "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n";
+            echo "<?mso-application progid=\"Excel.Sheet\"?>\n";
+            echo "<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"\n";
+            echo " xmlns:o=\"urn:schemas-microsoft-com:office:office\"\n";
+            echo " xmlns:x=\"urn:schemas-microsoft-com:office:excel\"\n";
+            echo " xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"\n";
+            echo " xmlns:html=\"http://www.w3.org/TR/REC-html40\">\n";
+            echo " <Styles>\n";
+            echo "  <Style ss:ID=\"Default\" ss:Name=\"Normal\"><Alignment ss:Vertical=\"Center\"/><Borders/><Font ss:FontName=\"Calibri\" ss:Size=\"11\" ss:Color=\"#000000\"/></Style>\n";
+            echo "  <Style ss:ID=\"Header\"><Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\" ss:WrapText=\"1\"/><Borders><Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#000000\"/><Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#000000\"/><Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#000000\"/><Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#000000\"/></Borders><Font ss:FontName=\"Calibri\" ss:Size=\"11\" ss:Bold=\"1\" ss:Color=\"#FFFFFF\"/><Interior ss:Color=\"#008000\" ss:Pattern=\"Solid\"/></Style>\n";
+            echo "  <Style ss:ID=\"DataCenter\"><Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Top\" ss:WrapText=\"1\"/><Borders><Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/></Borders><Font ss:FontName=\"Calibri\" ss:Size=\"10\" ss:Color=\"#111827\"/></Style>\n";
+            echo "  <Style ss:ID=\"DataLeft\"><Alignment ss:Horizontal=\"Left\" ss:Vertical=\"Top\" ss:WrapText=\"1\"/><Borders><Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/></Borders><Font ss:FontName=\"Calibri\" ss:Size=\"10\" ss:Color=\"#111827\"/></Style>\n";
+            echo "  <Style ss:ID=\"DataRight\"><Alignment ss:Horizontal=\"Right\" ss:Vertical=\"Top\" ss:WrapText=\"1\"/><Borders><Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/></Borders><Font ss:FontName=\"Calibri\" ss:Size=\"10\" ss:Color=\"#111827\"/></Style>\n";
+            echo "  <Style ss:ID=\"Currency\"><Alignment ss:Horizontal=\"Right\" ss:Vertical=\"Top\" ss:WrapText=\"1\"/><Borders><Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/></Borders><Font ss:FontName=\"Calibri\" ss:Size=\"10\" ss:Color=\"#111827\"/><NumberFormat ss:Format=\"&quot;Rp &quot;#,##0\"/></Style>\n";
+            echo "  <Style ss:ID=\"NumberDec\"><Alignment ss:Horizontal=\"Right\" ss:Vertical=\"Top\" ss:WrapText=\"1\"/><Borders><Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/><Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#D3D3D3\"/></Borders><Font ss:FontName=\"Calibri\" ss:Size=\"10\" ss:Color=\"#111827\"/><NumberFormat ss:Format=\"#,##0.00\"/></Style>\n";
+            echo " </Styles>\n";
+
+            $cleanSheetTitle = htmlspecialchars(substr($sheetTitle, 0, 31), ENT_XML1, 'UTF-8');
+            echo " <Worksheet ss:Name=\"{$cleanSheetTitle}\">\n";
+            echo "  <Table ss:DefaultRowHeight=\"20\">\n";
+
+            // Output column widths
+            for ($c = 0; $c < $numCols; $c++) {
+                $w = $colWidths[$c] ?? 90;
+                echo "   <Column ss:Width=\"{$w}\"/>\n";
+            }
+
+            // Header Row
+            echo "   <Row ss:Height=\"28\">\n";
+            foreach ($headers as $h) {
+                $hClean = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', (string) $h);
+                $hSafe = htmlspecialchars($hClean, ENT_XML1, 'UTF-8');
+                echo "    <Cell ss:StyleID=\"Header\"><Data ss:Type=\"String\">{$hSafe}</Data></Cell>\n";
+            }
+            echo "   </Row>\n";
+
+            // Data Rows
+            foreach ($dataRows as $row) {
+                $rowArr = array_values((array) $row);
+
+                // Calculate required row height dynamically based on wrapped and multiline content
+                $maxLinesInRow = 1;
+                for ($c = 0; $c < $numCols; $c++) {
+                    $rawVal = (string) ($rowArr[$c] ?? '');
+                    if ($rawVal === '') {
+                        continue;
+                    }
+                    $colW = $colWidths[$c] ?? 90;
+                    $charsPerLine = max(10, (int) floor(($colW - 14) / 6.2));
+
+                    $normVal = str_replace(["\r\n", "\r"], "\n", $rawVal);
+                    $normVal = preg_replace("/\n{2,}/", "\n", $normVal);
+                    $lines = explode("\n", $normVal);
+
+                    $cellLines = 0;
+                    foreach ($lines as $line) {
+                        $len = mb_strlen(trim($line), 'UTF-8');
+                        if ($len === 0) {
+                            $cellLines += 1;
+                        } else {
+                            $cellLines += (int) ceil($len / $charsPerLine);
+                        }
+                    }
+
+                    if ($cellLines > $maxLinesInRow) {
+                        $maxLinesInRow = $cellLines;
+                    }
+                }
+
+                $rowHeight = $maxLinesInRow > 1
+                    ? min(400, round(($maxLinesInRow * 16.5) + 8))
+                    : 22;
+
+                echo "   <Row ss:AutoFitHeight=\"1\" ss:Height=\"{$rowHeight}\">\n";
+                for ($c = 0; $c < $numCols; $c++) {
+                    $val = $rowArr[$c] ?? '';
+                    $valStr = (string) $val;
+                    $cleanVal = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $valStr);
+                    $cleanVal = str_replace(["\r\n", "\r"], "\n", $cleanVal);
+                    $cleanVal = preg_replace("/\n{2,}/", "\n", $cleanVal);
+
+                    $hName = strtolower(trim((string) ($headers[$c] ?? '')));
+                    $isCurr = isset($currencyCols[$c]);
+
+                    if ($isCurr && is_numeric($val) && trim($cleanVal) !== '') {
+                        $num = (float) $val;
+                        echo "    <Cell ss:StyleID=\"Currency\"><Data ss:Type=\"Number\">{$num}</Data></Cell>\n";
+                    } elseif (str_contains($cleanVal, "\n")) {
+                        $safe = htmlspecialchars($cleanVal, ENT_XML1, 'UTF-8');
+                        $safe = str_replace("\n", '&#10;', $safe);
+                        echo "    <Cell ss:StyleID=\"DataLeft\"><Data ss:Type=\"String\">{$safe}</Data></Cell>\n";
+                    } elseif (is_numeric($val) && ! str_starts_with(trim($valStr), '0') && strlen(trim($valStr)) < 10) {
+                        if (is_float($val) || (is_string($val) && str_contains($val, '.'))) {
+                            $num = (float) $val;
+                            echo "    <Cell ss:StyleID=\"NumberDec\"><Data ss:Type=\"Number\">{$num}</Data></Cell>\n";
+                        } else {
+                            $num = (int) $val;
+                            echo "    <Cell ss:StyleID=\"DataRight\"><Data ss:Type=\"Number\">{$num}</Data></Cell>\n";
+                        }
+                    } else {
+                        $safe = htmlspecialchars($cleanVal, ENT_XML1, 'UTF-8');
+                        $style = 'DataLeft';
+                        if ($c === 0 || in_array($hName, ['no', 'id', 'gender', 'jenis kelamin', 'status', 'agama', 'tahun'])) {
+                            $style = 'DataCenter';
+                        }
+                        echo "    <Cell ss:StyleID=\"{$style}\"><Data ss:Type=\"String\">{$safe}</Data></Cell>\n";
+                    }
                 }
                 echo "   </Row>\n";
             }

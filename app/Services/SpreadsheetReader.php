@@ -16,11 +16,15 @@ class SpreadsheetReader
         }
         $ext = strtolower($extension);
         if ($ext === 'xlsx') {
-            if (! class_exists('\ZipArchive')) {
-                throw new \RuntimeException('Server web development belum mengaktifkan ekstensi PHP Zip (ZipArchive) untuk membaca file .xlsx. Silakan simpan / ubah file Excel Anda menjadi format .CSV lalu upload kembali.');
-            }
-
             return self::readXlsx($path);
+        }
+
+        if ($ext === 'xls' || $ext === 'xml') {
+            // Check if it's a Microsoft XML Spreadsheet 2003 (SpreadsheetML)
+            $peek = @file_get_contents($path, false, null, 0, 512);
+            if ($peek && (str_contains($peek, 'urn:schemas-microsoft-com:office:spreadsheet') || str_contains($peek, '<Workbook'))) {
+                return self::readXlsXml($path);
+            }
         }
 
         return self::readCsv($path);
@@ -406,5 +410,68 @@ class SpreadsheetReader
     public static function cleanString($str): string
     {
         return strtolower(trim(preg_replace('/[\x{200B}-\x{200D}\x{FEFF}\x{2060}\x{00A0}]/u', '', (string) $str)));
+    }
+
+    /**
+     * Read Microsoft XML Spreadsheet 2003 (.xls) without any external PHP extensions.
+     * Fully compatible with PHP 7.2.
+     */
+    public static function readXlsXml(string $path): array
+    {
+        $content = @file_get_contents($path);
+        if (! $content) {
+            return [];
+        }
+
+        // Clean control characters that may invalidate XML
+        $cleanContent = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F]/', '', $content);
+        $xml = @simplexml_load_string($cleanContent);
+        if (! $xml) {
+            return [];
+        }
+
+        $xml->registerXPathNamespace('ss', 'urn:schemas-microsoft-com:office:spreadsheet');
+        $worksheets = $xml->xpath('//ss:Worksheet');
+        if (empty($worksheets)) {
+            return [];
+        }
+
+        $sheet = $worksheets[0];
+        $sheet->registerXPathNamespace('ss', 'urn:schemas-microsoft-com:office:spreadsheet');
+        $rowsXml = $sheet->xpath('.//ss:Row');
+
+        $rows = [];
+        $headerWidth = 0;
+        foreach ($rowsXml as $row) {
+            $row->registerXPathNamespace('ss', 'urn:schemas-microsoft-com:office:spreadsheet');
+            $cells = $row->xpath('.//ss:Cell');
+            $rowValues = [];
+            $colIdx = 0;
+            foreach ($cells as $cell) {
+                $attrs = $cell->attributes('urn:schemas-microsoft-com:office:spreadsheet');
+                if (isset($attrs['Index'])) {
+                    $colIdx = (int) $attrs['Index'] - 1;
+                }
+                $data = $cell->xpath('.//ss:Data');
+                $val = ! empty($data) ? (string) $data[0] : '';
+                $rowValues[$colIdx] = $val;
+                $colIdx++;
+            }
+
+            if (! empty(array_filter($rowValues, fn ($v) => trim((string) $v) !== ''))) {
+                $maxKey = max(array_keys($rowValues));
+                if ($headerWidth === 0) {
+                    $headerWidth = $maxKey + 1;
+                }
+                $rowWidth = max($headerWidth, $maxKey + 1);
+                $fullRow = [];
+                for ($i = 0; $i < $rowWidth; $i++) {
+                    $fullRow[$i] = $rowValues[$i] ?? '';
+                }
+                $rows[] = $fullRow;
+            }
+        }
+
+        return $rows;
     }
 }
